@@ -3,11 +3,19 @@
 -- Zeiterfassung & Dienstplan für 4 Studios
 -- =============================================================================
 -- Rollenmodell
---   admin    : Vollzugriff auf alle Studios
+--   admin    : Geschäftsführung/Verwaltung (eigener Login) – Vollzugriff, Nachträge, Freigaben
 --   manager  : Studioleitung, verwaltet die Studios aus location_managers
 --   employee : Mitarbeiter, Read-Only-Portal + Schichttausch-Anträge
 --   trainee  : Azubi, wie employee + Berufsschul-Gutschrift
 --   Kiosk    : Tablet mit eigenem Auth-Account (kiosk_devices), KEIN users-Eintrag
+--
+-- Buchungsregeln (time_logs)
+--   * Kiosk live       : nur Echtzeit (±5 Min.)                    → sofort gültig
+--   * Kiosk offline    : Nachsync vom selben Tag                   → sofort gültig
+--                        Nachsync von Vortagen (max. 7 Tage)       → wartet auf Admin-OK
+--   * Nachtrag Admin   : bis 7 Tage rückwirkend                    → sofort gültig
+--   * Nachtrag Leitung : nur mit Recht can_backdate, bis 7 Tage   → wartet auf Admin-OK
+--   * Es zählen nur Buchungen mit approval_status = 'approved'
 --
 -- Konventionen
 --   * Zeitpunkte als timestamptz (UTC), Darstellung Europe/Berlin
@@ -36,6 +44,7 @@ create type public.shift_type      as enum ('work', 'vocational_school', 'vacati
 create type public.time_event_type as enum ('clock_in', 'break_start', 'break_end', 'clock_out');
 create type public.time_log_source as enum ('kiosk', 'offline_sync', 'auto_checkout', 'manual');
 create type public.swap_status     as enum ('pending', 'approved', 'rejected', 'cancelled');
+create type public.approval_status as enum ('approved', 'pending', 'rejected');
 
 
 -- -----------------------------------------------------------------------------
@@ -75,8 +84,6 @@ create table public.employment_details (
   work_days_per_week        smallint not null default 5    check (work_days_per_week between 1 and 6),
   -- Azubi: Gutschrift pro Berufsschultag (480 = 8 h Pauschale), null = keine
   school_day_credit_minutes integer check (school_day_credit_minutes between 0 and 720),
-  -- für JArbSchG (Minderjährige: andere Pausen-/Arbeitszeitregeln)
-  birth_date                date,
   employment_start          date,
   employment_end            date,
   created_at                timestamptz not null default now(),
@@ -86,9 +93,10 @@ create table public.employment_details (
 
 -- Studioleitung ↔ Studio (n:m, z. B. Leitung für zwei Studios)
 create table public.location_managers (
-  user_id     uuid not null references public.users (id) on delete cascade,
-  location_id uuid not null references public.locations (id) on delete cascade,
-  created_at  timestamptz not null default now(),
+  user_id      uuid not null references public.users (id) on delete cascade,
+  location_id  uuid not null references public.locations (id) on delete cascade,
+  can_backdate boolean not null default false,  -- darf Nachträge erfassen (immer mit Admin-OK)
+  created_at   timestamptz not null default now(),
   primary key (user_id, location_id)
 );
 create index location_managers_location_idx on public.location_managers (location_id);
@@ -145,7 +153,7 @@ create table public.shifts (
 create index shifts_location_start_idx on public.shifts (location_id, starts_at);
 create index shifts_date_idx           on public.shifts (shift_date);
 
--- Stempelbuchungen (append-only für Kiosk; Korrekturen nur Studioleitung/Admin, auditiert)
+-- Stempelbuchungen (append-only; Korrekturen & Freigaben nur Admin, auditiert)
 create table public.time_logs (
   id              uuid primary key default gen_random_uuid(),
   -- vom Tablet erzeugt (IndexedDB) → idempotenter Offline-Sync via ON CONFLICT DO NOTHING
@@ -160,6 +168,10 @@ create table public.time_logs (
   kiosk_device_id uuid references public.kiosk_devices (id) on delete restrict,
   match_distance  real check (match_distance >= 0),  -- Face-Match-Distanz zur Qualitätskontrolle
   note            text,
+  approval_status public.approval_status not null default 'approved',  -- serverseitig gesetzt (Trigger)
+  reviewed_by     uuid references public.users (id) on delete set null,
+  reviewed_at     timestamptz,
+  review_note     text,
   created_by      uuid references public.users (id) on delete set null,
   received_at     timestamptz not null default now(),
   updated_at      timestamptz not null default now(),
@@ -169,6 +181,7 @@ create table public.time_logs (
 create index time_logs_user_time_idx     on public.time_logs (user_id, recorded_at desc);
 create index time_logs_location_time_idx on public.time_logs (location_id, recorded_at desc);
 create index time_logs_shift_idx         on public.time_logs (shift_id);
+create index time_logs_pending_idx       on public.time_logs (received_at) where approval_status = 'pending';
 
 -- Schichttausch: target_shift_id null = reine Übernahme, sonst Tausch
 create table public.swap_requests (
@@ -272,6 +285,19 @@ language sql stable security definer set search_path = '' as $$
   )
 $$;
 
+-- Studioleitung mit Nachtrags-Recht für diesen Standort (Admins dürfen immer)
+create function private.may_backdate(p_location_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1
+    from public.location_managers lm
+    join public.users u on u.id = lm.user_id
+    where u.auth_user_id = (select auth.uid())
+      and u.is_active and u.role = 'manager'
+      and lm.location_id = p_location_id and lm.can_backdate
+  )
+$$;
+
 -- Kiosk darf für aktiven Mitarbeiter an aktivem (bzw. seinem fest zugewiesenen) Standort buchen
 create function private.kiosk_may_book(p_device_id uuid, p_location_id uuid, p_user_id uuid) returns boolean
 language sql stable security definer set search_path = '' as $$
@@ -298,6 +324,47 @@ create function private.set_created_by() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
   new.created_by := private.current_user_id();
+  return new;
+end $$;
+
+-- Buchungen: Freigabestatus immer serverseitig bestimmen (Client-Werte werden ignoriert)
+create function private.time_logs_approval() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_me    uuid := private.current_user_id();
+  v_today date := (now() at time zone 'Europe/Berlin')::date;
+begin
+  -- System / Service-Role (Auto-Checkout, Freigabe per Telegram-Bot): Werte wie übergeben
+  if auth.uid() is null then
+    if tg_op = 'UPDATE' and new.approval_status is distinct from old.approval_status then
+      new.reviewed_at := now();
+    end if;
+    return new;
+  end if;
+
+  if tg_op = 'INSERT' then
+    new.created_by  := v_me;
+    new.reviewed_by := null;
+    new.reviewed_at := null;
+    new.review_note := null;
+    if new.source = 'manual' and private.is_admin() then
+      new.approval_status := 'approved';            -- Nachtrag Admin: sofort gültig
+      new.reviewed_by := v_me;
+      new.reviewed_at := now();
+    elsif new.source = 'manual'
+       or (new.recorded_at at time zone 'Europe/Berlin')::date < v_today then
+      new.approval_status := 'pending';             -- Nachtrag Leitung / Offline-Sync vom Vortag
+    else
+      new.approval_status := 'approved';            -- Kiosk, selber Tag
+    end if;
+    return new;
+  end if;
+
+  -- UPDATE (per RLS nur Admin): Freigabe/Ablehnung protokollieren
+  if new.approval_status is distinct from old.approval_status then
+    new.reviewed_by := v_me;
+    new.reviewed_at := now();
+  end if;
   return new;
 end $$;
 
@@ -430,8 +497,10 @@ create trigger set_updated_at before update on public.swap_requests      for eac
 
 -- created_by
 create trigger set_created_by before insert on public.shifts          for each row execute function private.set_created_by();
-create trigger set_created_by before insert on public.time_logs       for each row execute function private.set_created_by();
 create trigger set_created_by before insert on public.face_embeddings for each row execute function private.set_created_by();
+
+-- Freigabe-Workflow für Buchungen (setzt auch created_by)
+create trigger approval before insert or update on public.time_logs for each row execute function private.time_logs_approval();
 
 -- Audit (Biometrie bewusst NICHT, damit Widerruf die Daten wirklich entfernt)
 create trigger audit after insert or update or delete on public.shifts             for each row execute function private.audit_changes();
@@ -439,6 +508,7 @@ create trigger audit after update or delete           on public.time_logs       
 create trigger audit after insert or update or delete on public.employment_details for each row execute function private.audit_changes();
 create trigger audit after update or delete           on public.users              for each row execute function private.audit_changes();
 create trigger audit after update                     on public.swap_requests      for each row execute function private.audit_changes();
+create trigger audit after insert or update or delete on public.location_managers  for each row execute function private.audit_changes();
 
 -- Schichttausch-Workflow
 create trigger validate before insert or update on public.swap_requests for each row execute function private.swap_requests_validate();
@@ -494,6 +564,8 @@ create policy location_managers_select on public.location_managers for select to
   using ((select private.is_staff()));
 create policy location_managers_insert on public.location_managers for insert to authenticated
   with check ((select private.is_admin()));
+create policy location_managers_update on public.location_managers for update to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy location_managers_delete on public.location_managers for delete to authenticated
   using ((select private.is_admin()));
 
@@ -530,26 +602,35 @@ create policy shifts_update on public.shifts for update to authenticated
 create policy shifts_delete on public.shifts for delete to authenticated
   using (private.can_plan_shift(location_id, user_id));
 
--- time_logs: Mitarbeiter nur eigene (read-only), Leitung ihr Studio, Kiosk letzte 8 Tage
+-- time_logs: Mitarbeiter nur eigene (read-only), Leitung ihr Studio.
+-- Kiosk: alle der letzten 36 h (Stempelstatus inkl. Nachtschicht) + eigene 8 Tage
+-- (nötig, weil ON CONFLICT DO NOTHING beim Offline-Sync die Lese-Policy prüft)
 create policy time_logs_select on public.time_logs for select to authenticated
   using (
     user_id = (select private.current_user_id())
     or private.manages_location(location_id)
-    or ((select private.current_kiosk_id()) is not null and recorded_at > now() - interval '8 days')
+    or ((select private.current_kiosk_id()) is not null and (
+          recorded_at > now() - interval '36 hours'
+          or (kiosk_device_id = (select private.current_kiosk_id()) and recorded_at > now() - interval '8 days')))
   );
--- Kiosk-Buchung (live oder Offline-Nachsync bis 7 Tage, max. 5 Min. Uhrenabweichung)
+-- Kiosk: live nur Echtzeit (±5 Min.), Offline-Nachsync max. 7 Tage (Vortage → Admin-OK per Trigger)
 create policy time_logs_insert_kiosk on public.time_logs for insert to authenticated
   with check (
     source in ('kiosk', 'offline_sync')
     and private.kiosk_may_book(kiosk_device_id, location_id, user_id)
+    and recorded_at <= now() + interval '5 minutes'
+    and recorded_at >= now() - case when source = 'kiosk' then interval '5 minutes' else interval '7 days' end
+  );
+-- Nachtrag (note = Pflicht): Admin sofort gültig, Studioleitung nur mit can_backdate → Admin-OK
+create policy time_logs_insert_manual on public.time_logs for insert to authenticated
+  with check (
+    source = 'manual' and kiosk_device_id is null
+    and ((select private.is_admin()) or private.may_backdate(location_id))
     and recorded_at between now() - interval '7 days' and now() + interval '5 minutes'
   );
--- manuelle Nachbuchung durch Leitung/Admin (note = Pflicht, siehe Constraint)
-create policy time_logs_insert_manual on public.time_logs for insert to authenticated
-  with check (source = 'manual' and kiosk_device_id is null and private.manages_location(location_id));
+-- Korrekturen & Freigaben nur Admin (auditiert)
 create policy time_logs_update on public.time_logs for update to authenticated
-  using (private.manages_location(location_id))
-  with check (private.manages_location(location_id));
+  using ((select private.is_admin())) with check ((select private.is_admin()));
 create policy time_logs_delete on public.time_logs for delete to authenticated
   using ((select private.is_admin()));
 
