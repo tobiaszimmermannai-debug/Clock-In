@@ -1,7 +1,15 @@
 // Kiosk: Person erkennen + Lebenderkennung (zufällige Kopfdrehung) gegen Fotos
 import { useEffect, useRef, useState } from "react";
 import { detectFaces, loadModels } from "../lib/face";
-import { type Box, type Direction, isCentered, randomChallenges, sameFace, turnedTo } from "../lib/liveness";
+import {
+  type Box,
+  type Direction,
+  isCentered,
+  randomChallenges,
+  sameFace,
+  TURN_THRESHOLD,
+  turnedTo,
+} from "../lib/liveness";
 import { identify, type Match, MATCH_THRESHOLD, rankCandidates } from "../lib/match";
 import type { RosterEntry } from "../lib/types";
 import { CameraView, sleep, useCamera } from "./Camera";
@@ -10,6 +18,7 @@ const TIMEOUT_MS = 20_000;
 const REQUIRED_STREAK = 3;   // aufeinanderfolgende Treffer für die Identifikation
 const LIVENESS_STEPS = 2;    // Anzahl zufälliger Drehungen
 const TURN_FRAMES = 2;       // Drehung muss in so vielen Bildern hintereinander sichtbar sein
+const MAX_MISSED = 10;       // Bilder ohne Gesicht während der Prüfung tolerieren (beim Drehen normal)
 
 const ARROW: Record<Direction, string> = { left: "←", right: "→" };
 const TURN_HINT: Record<Direction, string> = {
@@ -50,6 +59,7 @@ export function FaceScan(props: {
       let match: Match | null = null;
       let challenges: Direction[] = [];
       let lastBox: Box | null = null;
+      let missed = 0;
 
       const restart = (text: string) => {
         step = { kind: "identify" };
@@ -72,12 +82,18 @@ export function FaceScan(props: {
         if (stop) return;
 
         if (faces.length !== 1) {
-          if (step.kind !== "identify") restart("Bitte vor der Kamera bleiben – Prüfung startet neu");
-          else setHint(faces.length === 0 ? "Bitte geradeaus in die Kamera schauen" : "Bitte nur eine Person vor der Kamera");
-          streak = 0;
-          await sleep(80);
+          if (step.kind === "identify") {
+            setHint(faces.length === 0 ? "Bitte geradeaus in die Kamera schauen" : "Bitte nur eine Person vor der Kamera");
+            streak = 0;
+          } else if (faces.length > 1 || ++missed > MAX_MISSED) {
+            // zweite Person im Bild oder Gesicht länger verschwunden → neu beginnen
+            restart(faces.length > 1 ? "Bitte nur eine Person vor der Kamera" : "Bitte vor der Kamera bleiben – Prüfung startet neu");
+            missed = 0;
+          }
+          await sleep(60);
           continue;
         }
+        missed = 0;
         const face = faces[0];
         if (step.kind !== "identify" && lastBox && !sameFace(lastBox, face.box)) {
           restart("Bitte ruhig vor der Kamera bleiben – Prüfung startet neu");
@@ -116,7 +132,9 @@ export function FaceScan(props: {
             }
           }
         } else if (step.kind === "turn") {
-          turnFrames = turnedTo(face.yaw, challenges[step.index]) ? turnFrames + 1 : 0;
+          const dir = challenges[step.index];
+          setDiag(`Drehung ${Math.abs(face.yaw).toFixed(2)} von ${TURN_THRESHOLD.toFixed(2)} · Richtung ${dir === "left" ? "links" : "rechts"}`);
+          turnFrames = turnedTo(face.yaw, dir) ? turnFrames + 1 : 0;
           if (turnFrames >= TURN_FRAMES) {
             step = { kind: "center", index: step.index };
             setArrow(null);

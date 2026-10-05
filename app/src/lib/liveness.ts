@@ -5,8 +5,8 @@ export type Point = { x: number; y: number };
 export type Box = { x: number; y: number; width: number; height: number };
 export type Direction = "left" | "right";
 
-// Anteil des Augenabstands, um den die Nase seitlich wandern muss (≈ 20–25° Drehung)
-export const TURN_THRESHOLD = 0.2;
+// Anteil des Augenabstands, um den die Nase seitlich wandern muss (≈ 15–20° Drehung)
+export const TURN_THRESHOLD = 0.16;
 // "Geradeaus" für Identifikation und Abschluss (großzügig: Webcams sitzen oft leicht seitlich/oberhalb)
 export const CENTER_THRESHOLD = 0.12;
 
