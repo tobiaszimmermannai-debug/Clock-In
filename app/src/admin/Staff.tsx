@@ -21,7 +21,13 @@ const ROLE_LABEL: Record<Role, string> = {
   trainee: "Azubi",
 };
 
-// Standard für neue Mitarbeiter; Abweichungen (Teilzeit) passt ein Admin danach an
+// Vorschlag beim Anlegen je Rolle: Azubis 40 Std./5 Tage (+ optional Samstag),
+// Vollangestellte 25 Std./4 Tage. Abweichungen passt ein Admin an.
+const DEFAULTS: Record<Exclude<Role, "admin">, { hours: number; days: number }> = {
+  trainee: { hours: 40, days: 5 },
+  employee: { hours: 25, days: 4 },
+  manager: { hours: 25, days: 4 },
+};
 const DEFAULT_WEEKLY_MINUTES = 40 * 60;
 const DEFAULT_WORK_DAYS = 5;
 
@@ -131,13 +137,13 @@ export function Staff({ profile }: { profile: Profile }) {
 }
 
 function NewPerson(props: { locations: Location[]; onCancel: () => void; onSaved: () => void }) {
+  const [role, setRole] = useState<keyof typeof DEFAULTS>("employee");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const role = String(f.get("role")) as Role;
     const homeLocation = String(f.get("location"));
     setBusy(true);
     setError(undefined);
@@ -159,8 +165,8 @@ function NewPerson(props: { locations: Location[]; onCancel: () => void; onSaved
 
     const details = await adminDb.from("employment_details").insert({
       user_id: user.id,
-      weekly_target_minutes: DEFAULT_WEEKLY_MINUTES,
-      work_days_per_week: DEFAULT_WORK_DAYS,
+      weekly_target_minutes: Math.round(Number(f.get("weekly_hours")) * 60),
+      work_days_per_week: Number(f.get("work_days")),
     });
     if (role === "manager") {
       await adminDb.from("location_managers").insert({ user_id: user.id, location_id: homeLocation });
@@ -178,7 +184,7 @@ function NewPerson(props: { locations: Location[]; onCancel: () => void; onSaved
         <label>Nachname<input id="new-last-name" name="last_name" required /></label>
         <label>
           Rolle
-          <select id="new-role" name="role" defaultValue="employee">
+          <select id="new-role" value={role} onChange={(e) => setRole(e.target.value as keyof typeof DEFAULTS)}>
             <option value="employee">Mitarbeiter</option>
             <option value="trainee">Azubi</option>
             <option value="manager">Studioleitung</option>
@@ -190,8 +196,17 @@ function NewPerson(props: { locations: Location[]; onCancel: () => void; onSaved
             {props.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </label>
+        {/* key = Rolle: Vorschlag springt beim Rollenwechsel um */}
+        <label key={`h-${role}`}>
+          Wochenstunden (Soll)
+          <input id="new-weekly-hours" name="weekly_hours" type="number" min="0" max="60" step="0.5" defaultValue={DEFAULTS[role].hours} required />
+        </label>
+        <label key={`d-${role}`}>
+          Arbeitstage pro Woche
+          <input id="new-work-days" name="work_days" type="number" min="1" max="6" step="1" defaultValue={DEFAULTS[role].days} required />
+        </label>
       </div>
-      <p className="muted small">Wird mit 40 Std. an 5 Tagen angelegt. Abweichende Stunden danach über „Bearbeiten“ anpassen.</p>
+      <p className="muted small">Vorschlag: Azubis 40 Std. an 5 Tagen, Vollangestellte 25 Std. an 4 Tagen. Später über „Bearbeiten“ änderbar.</p>
       {error && <p className="form-error">{error}</p>}
       <div className="row">
         <button type="submit" className="btn-primary" disabled={busy}>Speichern</button>
