@@ -99,7 +99,7 @@ export function Enroll(props: { person: Person; isAdmin: boolean; onDone: () => 
           onDecline={() =>
             setPhase({
               kind: "done",
-              text: `${person.first_name} hat nicht eingewilligt. Es werden keine Gesichtsdaten gespeichert; die Arbeitszeit wird auf anderem Weg erfasst.`,
+              text: `${person.first_name} hat nicht eingewilligt. Es werden keine Gesichtsdaten gespeichert. Arbeitszeiten meldet ${person.first_name} telefonisch an die Geschäftsführung, die sie in der Verwaltung nachträgt.`,
             })
           }
         />

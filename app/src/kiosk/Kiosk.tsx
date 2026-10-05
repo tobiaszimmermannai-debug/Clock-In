@@ -42,7 +42,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
       return setPhase({
         kind: "error",
         title: "Noch keine Gesichter erfasst",
-        text: "Die Studioleitung muss Mitarbeiter zuerst in der Verwaltung erfassen.",
+        text: "Die Studioleitung muss Mitarbeiter zuerst in der Verwaltung erfassen. Bis dahin: bitte Tobias oder Dominik anrufen.",
       });
     }
     setPhase({ kind: "scan", action });
@@ -92,7 +92,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
               setPhase({
                 kind: "error",
                 title: "Nicht erkannt",
-                text: "Bitte noch einmal versuchen. Gutes Licht und direkter Blick in die Kamera helfen.",
+                text: "Bitte noch einmal versuchen. Gutes Licht und direkter Blick in die Kamera helfen. Ohne Gesichtserkennung: bitte Tobias oder Dominik anrufen.",
               })
             }
           />

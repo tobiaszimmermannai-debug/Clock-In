@@ -104,7 +104,6 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
    |---|---|
    | `VITE_SUPABASE_URL` | `https://<REF>.supabase.co` |
    | `VITE_SUPABASE_ANON_KEY` | Supabase → Project Settings → API Keys → **anon / publishable** (öffentlicher Schlüssel) |
-   | `VITE_COMPANY_NAME` | Arbeitgeber laut Arbeitsvertrag (erscheint im Einwilligungstext) |
 
 5. **Deploy** → Adresse z. B. `clock-in-xyz.vercel.app`. Jede Änderung im Repository wird automatisch neu veröffentlicht.
 

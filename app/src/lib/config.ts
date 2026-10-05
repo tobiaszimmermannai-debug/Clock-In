@@ -7,5 +7,8 @@ export const kioskLoginEmail = (login: string) => {
   return value.includes("@") ? value : `${value.toLowerCase()}@${KIOSK_EMAIL_DOMAIN}`;
 };
 
-// Arbeitgeber (Verantwortlicher) für den Einwilligungstext
-export const COMPANY_NAME = ((import.meta.env.VITE_COMPANY_NAME as string | undefined) ?? "").trim();
+// Arbeitgeber und Verantwortlicher im Sinne der DSGVO (Einwilligungstext)
+export const COMPANY = {
+  name: "BS New Fitness GmbH",
+  address: "Gautinger Straße 19, 82152 Krailling",
+};
