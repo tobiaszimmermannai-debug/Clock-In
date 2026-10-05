@@ -85,6 +85,38 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 
 ---
 
+## Teil I – Update: Einwilligung & Tablet-Konten (nur wenn Teil B schon lief)
+**SQL Editor → New query** → Inhalt von `supabase/migrations/20261006090000_consent_kiosk_accounts.sql` → **Run**.
+(Bei Neuinstallation ist das bereits in `setup_komplett.sql` enthalten.)
+
+## Teil J – Funktion `kiosk-admin` (Tablet-Konten anlegen)
+1. **Edge Functions → Deploy a new function → Via Editor**
+2. Name: `kiosk-admin` → Code aus `supabase/functions/kiosk-admin/index.ts` → **Deploy**
+3. **Verify JWT bleibt AN** (Standard) – nur angemeldete Admins mit 2FA dürfen sie nutzen.
+
+## Teil K – App online stellen (Vercel, kostenlos)
+1. [vercel.com](https://vercel.com) → **Sign up with GitHub**
+2. **Add New → Project** → Repository `Clock-In` importieren (Zugriff erlauben)
+3. **Root Directory:** `app` (Edit) · Framework: Vite (wird erkannt)
+4. **Environment Variables:**
+
+   | Name | Wert |
+   |---|---|
+   | `VITE_SUPABASE_URL` | `https://<REF>.supabase.co` |
+   | `VITE_SUPABASE_ANON_KEY` | Supabase → Project Settings → API Keys → **anon / publishable** (öffentlicher Schlüssel) |
+   | `VITE_COMPANY_NAME` | Arbeitgeber laut Arbeitsvertrag (erscheint im Einwilligungstext) |
+
+5. **Deploy** → Adresse z. B. `clock-in-xyz.vercel.app`. Jede Änderung im Repository wird automatisch neu veröffentlicht.
+
+## Teil L – Tablets einrichten
+1. Am Handy/PC `https://<deine-vercel-adresse>/#/admin` öffnen → anmelden → 2FA einrichten.
+2. **Tablets → Neues Tablet**: Name, Benutzername (z. B. `nord`), Studio → Passwort notieren.
+3. Am Tablet in Chrome die Vercel-Adresse öffnen → Menü → **Zum Startbildschirm hinzufügen**.
+4. App öffnen → Benutzername + Passwort → Kamera erlauben.
+5. Android: **Bildschirm fixieren** aktivieren (Einstellungen → Sicherheit), damit niemand die App verlässt.
+
+---
+
 ## Gut zu wissen
 - **2FA:** Admin-Rechte in der App gelten nur mit zweitem Faktor (Authenticator-App).
   Die Einrichtung per QR-Code kommt mit dem Admin-Login der App. Der SQL Editor ist davon nicht betroffen.
@@ -92,4 +124,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
   *Einstellungen → Datenschutz → Zweistufige Bestätigung* aktivieren.
 - **Nur Freigaben, keine Einzelmeldungen:**
   `update public.telegram_links set notify_bookings = false where chat_id = <CHAT_ID>;`
-- **Fehlersuche:** Edge Functions → `telegram` → **Logs**.
+- **Fehlersuche:** Edge Functions → `telegram` bzw. `kiosk-admin` → **Logs**.
+- **Gesichtserkennung & Datenschutz:** Gesichtsdaten nur nach digital unterschriebener Einwilligung.
+  Widerruf oder Deaktivierung eines Mitarbeiters löscht die Gesichtsdaten sofort. Am Kiosk schützt eine
+  zufällige Kopfdrehung vor Fotos (nicht vor professionell vorbereiteten Videos oder Masken).

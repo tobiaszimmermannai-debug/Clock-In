@@ -1,6 +1,7 @@
 // Leitung/Admin: mehrere Embeddings einer Person aufnehmen (nur Vektoren, kein Foto)
 import { useEffect, useRef, useState } from "react";
 import { detectFaces, loadModels } from "../lib/face";
+import { isCentered } from "../lib/liveness";
 import { euclidean } from "../lib/match";
 import { CameraView, sleep, useCamera } from "./Camera";
 
@@ -30,7 +31,7 @@ export function FaceCapture(props: { onCaptured: (descriptors: Float32Array[]) =
       }
       let samples: Float32Array[] = [];
       let lastAt = 0;
-      setHint("Gerade in die Kamera schauen, Kopf leicht bewegen");
+      setHint("Bitte geradeaus in die Kamera schauen");
 
       while (!stop) {
         const video = videoRef.current;
@@ -38,7 +39,9 @@ export function FaceCapture(props: { onCaptured: (descriptors: Float32Array[]) =
           const faces = await detectFaces(video);
           if (stop) return;
           if (faces.length > 1) setHint("Bitte nur eine Person vor der Kamera");
-          else if (faces.length === 1 && faces[0].score >= MIN_SCORE) {
+          else if (faces.length === 1 && faces[0].score >= MIN_SCORE && !isCentered(faces[0].yaw)) {
+            setHint("Bitte geradeaus in die Kamera schauen");
+          } else if (faces.length === 1 && faces[0].score >= MIN_SCORE) {
             samples.push(faces[0].descriptor);
             lastAt = Date.now();
             setProgress(samples.length / SAMPLES);

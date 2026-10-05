@@ -3,6 +3,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { adminDb } from "../lib/supabase";
 import type { Role } from "../lib/types";
 import { Staff } from "./Staff";
+import { Tablets } from "./Tablets";
 
 export type Profile = { id: string; first_name: string; last_name: string; role: Role };
 
@@ -106,7 +107,7 @@ export function AdminApp() {
             {!phase.mfa && (
               <p className="notice notice-info">Tipp: 2FA lässt sich auch für die Studioleitung aktivieren.</p>
             )}
-            <Staff profile={phase.profile} />
+            <AdminHome profile={phase.profile} />
           </>
         )}
       </main>
@@ -187,5 +188,20 @@ function CodeForm(props: {
       {props.error && <p className="form-error">{props.error}</p>}
       <button type="submit" className="btn-primary" disabled={busy || code.length !== 6}>Bestätigen</button>
     </form>
+  );
+}
+
+function AdminHome({ profile }: { profile: Profile }) {
+  const [tab, setTab] = useState<"staff" | "tablets">("staff");
+  return (
+    <>
+      {profile.role === "admin" && (
+        <nav className="tabs" aria-label="Bereiche">
+          <button type="button" aria-pressed={tab === "staff"} onClick={() => setTab("staff")}>Mitarbeiter</button>
+          <button type="button" aria-pressed={tab === "tablets"} onClick={() => setTab("tablets")}>Tablets</button>
+        </nav>
+      )}
+      {tab === "staff" ? <Staff profile={profile} /> : <Tablets />}
+    </>
   );
 }

@@ -1,5 +1,6 @@
 // Tablet-Einrichtung: Kiosk-Konto anmelden, Gerät prüfen, Studio wählen
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { kioskLoginEmail } from "../lib/config";
 import { clearAll, getCache, setCache } from "../lib/db";
 import { kioskDb } from "../lib/supabase";
 import type { KioskDevice, Location } from "../lib/types";
@@ -98,11 +99,11 @@ function KioskLogin(props: { error?: string; onDone: () => void }) {
     setBusy(true);
     setError(undefined);
     const { error } = await kioskDb.auth.signInWithPassword({
-      email: String(form.get("email")).trim(),
+      email: kioskLoginEmail(String(form.get("username"))),
       password: String(form.get("password")),
     });
     setBusy(false);
-    if (error) return setError("Anmeldung fehlgeschlagen. E-Mail und Passwort des Tablet-Kontos prüfen.");
+    if (error) return setError("Anmeldung fehlgeschlagen. Benutzername und Passwort prüfen.");
     await clearAll();
     props.onDone();
   }
@@ -111,10 +112,10 @@ function KioskLogin(props: { error?: string; onDone: () => void }) {
     <div className="screen setup">
       <form className="card form" onSubmit={submit}>
         <h1>Tablet einrichten</h1>
-        <p className="muted">Mit dem Kiosk-Konto dieses Tablets anmelden. Das ist nur einmal nötig.</p>
+        <p className="muted">Mit dem Tablet-Konto anmelden (Benutzername und Passwort aus der Verwaltung). Das ist nur einmal nötig.</p>
         <label>
-          E-Mail des Tablet-Kontos
-          <input id="kiosk-email" name="email" type="email" autoComplete="username" required />
+          Benutzername des Tablets
+          <input id="kiosk-username" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
         </label>
         <label>
           Passwort

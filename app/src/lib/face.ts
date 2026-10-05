@@ -1,5 +1,7 @@
 // Gesichtserkennung im Browser (face-api.js). Es werden nur 128-d Vektoren verarbeitet, keine Bilder gespeichert.
 // Die Bibliothek (inkl. TensorFlow, ~1,7 MB) wird erst bei Bedarf geladen.
+import { type Box, yaw } from "./liveness";
+
 type FaceApi = typeof import("@vladmandic/face-api");
 
 let api: FaceApi | null = null;
@@ -24,12 +26,20 @@ export function loadModels(): Promise<void> {
   return loading;
 }
 
-export type DetectedFace = { descriptor: Float32Array; score: number };
+export type DetectedFace = { descriptor: Float32Array; score: number; yaw: number; box: Box };
 
 export async function detectFaces(input: HTMLVideoElement | HTMLCanvasElement): Promise<DetectedFace[]> {
   await loadModels();
   const faceapi = api!;
   const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
   const results = await faceapi.detectAllFaces(input, options).withFaceLandmarks().withFaceDescriptors();
-  return results.map((r) => ({ descriptor: r.descriptor, score: r.detection.score }));
+  return results.map((r) => {
+    const { x, y, width, height } = r.detection.box;
+    return {
+      descriptor: r.descriptor,
+      score: r.detection.score,
+      yaw: yaw(r.landmarks.positions),
+      box: { x, y, width, height },
+    };
+  });
 }

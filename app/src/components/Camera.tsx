@@ -47,6 +47,7 @@ export function CameraView(props: {
   error: string | null;
   hint: string;
   progress?: number; // 0..1, beim Erfassen
+  overlay?: ReactNode; // im Kamerabild, z. B. Richtungspfeil
   children?: ReactNode;
 }) {
   return (
@@ -54,6 +55,7 @@ export function CameraView(props: {
       <div className="camera-frame">
         <video ref={props.videoRef} playsInline muted />
         <div className="camera-guide" aria-hidden="true" />
+        {props.overlay}
         {props.progress !== undefined && (
           <div className="camera-progress" aria-hidden="true">
             <span style={{ width: `${Math.round(props.progress * 100)}%` }} />

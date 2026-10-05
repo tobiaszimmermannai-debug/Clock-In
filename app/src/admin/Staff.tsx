@@ -59,7 +59,6 @@ export function Staff({ profile }: { profile: Profile }) {
       <Enroll
         person={enrolling}
         isAdmin={isAdmin}
-        hasFace={(faces?.[enrolling.id] ?? 0) > 0}
         onDone={() => {
           setEnrolling(null);
           void load();
