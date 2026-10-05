@@ -23,7 +23,7 @@ Die Dateien liegen auf GitHub unter `supabase/` – Datei öffnen → Button **�
 Bei Fehler einfach erneut ausführen – das Skript räumt halbfertige Versuche selbst auf
 (und bricht ab, sobald echte Stempeldaten existieren).
 
-## Teil C – Admin-Konten anlegen (du + Dominic)
+## Teil C – Admin-Konten anlegen (du + Dominik)
 1. **Authentication → Users → Add user → Create new user**
    E-Mail + Passwort, Haken bei **Auto Confirm User**.
 2. SQL Editor (pro Person einmal):
@@ -70,7 +70,7 @@ Antwort muss `"ok":true` enthalten.
    insert into public.telegram_links (user_id, chat_id)
    select id, <CHAT_ID> from public.users where first_name = '<Vorname>' and role = 'admin';
    ```
-3. Erneut `/start` senden → „✅ Verbunden als …“. Dasselbe für Dominic.
+3. Erneut `/start` senden → „✅ Verbunden als …“. Dasselbe für Dominik.
 
 ## Teil H – Test
 SQL Editor – erzeugt eine Test-Freigabe-Anfrage:
