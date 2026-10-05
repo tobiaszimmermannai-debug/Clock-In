@@ -90,9 +90,11 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 1. `supabase/migrations/20261006090000_consent_kiosk_accounts.sql`
 2. `supabase/migrations/20261006120000_rules_engine.sql`
 3. `supabase/migrations/20261006150000_portal_swaps_report.sql`
+4. `supabase/migrations/20261006180000_studio_staffing.sql`
 
-Danach `select jobname, schedule from cron.job;` → Zeile `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage).
-Fehlt sie: **Integrations → Cron** aktivieren und Datei 2 erneut ausführen.
+Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
+Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
+Datei 2 und 4 erneut ausführen.
 Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 (Bei Neuinstallation ist alles bereits in `setup_komplett.sql` enthalten.)
 
@@ -141,6 +143,8 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   Krank/IST/Urlaub (je 6,5 Std.) · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:
   beide Studioleitungen müssen zustimmen; ein Admin (auch per Telegram) gibt für beide frei.
+- **Studio besetzt:** erste Stempelung des Tages je Studio → 🟢-Meldung; 10 Min. nach der ersten geplanten
+  Schicht noch niemand da → 🔴-Warnung. Im Bot: `/kurz` = nur Wichtiges, `/alle` = jede Stempelung.
 - **Wochenbericht:** freitags 19 Uhr per Telegram (Stunden, Verspätungen, Überstunden, offene Freigaben).
 - **Gesichtserkennung & Datenschutz:** Gesichtsdaten nur nach digital unterschriebener Einwilligung.
   Widerruf oder Deaktivierung eines Mitarbeiters löscht die Gesichtsdaten sofort. Am Kiosk schützt eine

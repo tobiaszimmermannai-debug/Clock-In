@@ -101,6 +101,7 @@ async function handleNotify(
 ): Promise<Response> {
   if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
+  if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
   if (body.type === "weekly_report" && typeof body.from === "string" && typeof body.to === "string") {
     return await weeklyReport(body.from, body.to);
   }
@@ -126,8 +127,16 @@ async function handleNotify(
 
   const isApproval = log.approval_status === "pending";
   const isOvertime = !isApproval && log.overtime_status === "pending";
+  // Erstes Einstempeln des Tages im Studio → "Studio besetzt" (auch für Admins mit /kurz)
+  let isFirst = false;
+  if (!isApproval && log.event_type === "clock_in") {
+    const { data: first } = await supabase.rpc("is_first_checkin", { p_log_id: log.id });
+    isFirst = first === true;
+  }
   // Entscheidungen gehen immer raus, einfache Meldungen nur bei notify_bookings
-  const recipients = (await adminChats()).filter((l) => isApproval || isOvertime || l.notify_bookings);
+  const recipients = (await adminChats()).filter((l) =>
+    isApproval || isOvertime || l.notify_bookings || (isFirst && l.notify_studio_status)
+  );
   if (recipients.length === 0) return new Response("no recipients");
 
   let text: string;
@@ -146,6 +155,7 @@ async function handleNotify(
     ]];
   } else {
     text = bookingText(log, await ruleSettings());
+    if (isFirst) text = `🟢 <b>${escapeHtml(log.location?.name ?? "Studio")} ist besetzt</b>\n${text}`;
   }
 
   await Promise.all(recipients.map((r) => sendMessage(r.chat_id, text, keyboard)));
@@ -230,6 +240,17 @@ async function absenceCheck(day: string): Promise<Response> {
     await Promise.all(admins.map((a) => sendMessage(a.chat_id, text, keyboard)));
   }
   return new Response(`asked ${list.length}`);
+}
+
+// Studio 10 Min. nach der ersten geplanten Schicht noch leer
+type Unstaffed = { location?: string; start?: string; names?: string[] };
+async function studioUnstaffed(b: Unstaffed): Promise<Response> {
+  const names = (b.names ?? []).map(escapeHtml).join(", ") || "?";
+  const text = `🔴 <b>${escapeHtml(b.location ?? "Studio")} ist noch nicht besetzt</b>\n` +
+    `Geplant ab ${escapeHtml(b.start ?? "?")}: ${names}`;
+  const admins = (await adminChats()).filter((a) => a.notify_studio_status);
+  await Promise.all(admins.map((a) => sendMessage(a.chat_id, text)));
+  return new Response("sent");
 }
 
 // Neuer Schichttausch-Antrag → Freigabe durch Admin per Button
@@ -349,10 +370,22 @@ async function handleMessage(msg: Message) {
 
   const admin = await findAdminByTelegramId(msg.chat.id);
   if (admin) {
+    const command = msg.text.split(/[\s@]/)[0].toLowerCase();
+    if (command === "/kurz" || command === "/alle") {
+      const all = command === "/alle";
+      await supabase.from("telegram_links").update({ notify_bookings: all }).eq("chat_id", msg.chat.id);
+      await sendMessage(
+        msg.chat.id,
+        all
+          ? "✅ Ab jetzt bekommst du <b>jede Stempelung</b>. Mit /kurz wieder nur das Wichtigste."
+          : "✅ Ab jetzt nur noch: 🟢/🔴 Studio besetzt, Freigaben, 18-Uhr-Frage und Wochenbericht. Mit /alle wieder jede Stempelung.",
+      );
+      return;
+    }
     await sendMessage(
       msg.chat.id,
-      `✅ Verbunden als <b>${escapeHtml(fullName(admin.user))}</b>.\n` +
-        "Du erhältst Stempel-Meldungen und Freigabe-Anfragen.",
+      `✅ Verbunden als <b>${escapeHtml(fullName(admin.user))}</b>.\n\n` +
+        "Befehle:\n/kurz – nur Studio besetzt, Freigaben und Berichte\n/alle – zusätzlich jede Stempelung",
     );
   } else {
     await sendMessage(
@@ -514,10 +547,10 @@ async function alreadyDone(cq: CallbackQuery, text: string) {
 async function adminChats() {
   const { data } = await supabase
     .from("telegram_links")
-    .select("chat_id, notify_bookings, user:users!inner(role, is_active)")
+    .select("chat_id, notify_bookings, notify_studio_status, user:users!inner(role, is_active)")
     .eq("user.role", "admin")
     .eq("user.is_active", true);
-  return (data ?? []) as { chat_id: number; notify_bookings: boolean }[];
+  return (data ?? []) as { chat_id: number; notify_bookings: boolean; notify_studio_status: boolean }[];
 }
 
 async function ruleSettings(): Promise<Settings> {
