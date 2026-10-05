@@ -16,12 +16,12 @@ Die Dateien liegen auf GitHub unter `supabase/` – Datei öffnen → Button **�
 > Free Tier pausiert nur nach 7 Tagen ohne Nutzung – durch die täglichen Stempelungen kein Thema.
 
 ## Teil B – Datenbank-Schema einspielen
-Links **SQL Editor** → **New query** → Inhalt einfügen → **Run**. Nacheinander, jede Datei einzeln:
-1. `supabase/migrations/20261005120000_initial_schema.sql`
-2. `supabase/migrations/20261005130000_admin_mfa.sql`
-3. `supabase/migrations/20261005140000_telegram.sql`
+1. Links **SQL Editor** → **New query**
+2. Inhalt von **`supabase/setup_komplett.sql`** komplett einfügen → **Run**
+3. Ergebnis: „✅ Clock-In Datenbank eingerichtet · 4“
 
-Jeweils muss „Success. No rows returned“ erscheinen.
+Bei Fehler einfach erneut ausführen – das Skript räumt halbfertige Versuche selbst auf
+(und bricht ab, sobald echte Stempeldaten existieren).
 
 ## Teil C – Admin-Konten anlegen (du + Dominic)
 1. **Authentication → Users → Add user → Create new user**
