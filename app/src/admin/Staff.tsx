@@ -1,5 +1,6 @@
 // Mitarbeiterliste: Gesichtsstatus, Soll-Stunden; Admin legt an (immer 40 Std.) und passt Stunden individuell an
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { accountAdmin, generatePassword, suggestUsername } from "../lib/accountAdmin";
 import { adminDb } from "../lib/supabase";
 import type { Location, Role } from "../lib/types";
 import type { Profile } from "./AdminApp";
@@ -11,6 +12,8 @@ export type Person = {
   last_name: string;
   role: Role;
   home_location_id: string | null;
+  username: string | null;
+  auth_user_id: string | null;
   employment_details: { weekly_target_minutes: number; work_days_per_week: number } | null;
 };
 
@@ -41,13 +44,17 @@ export function Staff({ profile }: { profile: Profile }) {
   const [enrolling, setEnrolling] = useState<Person | null>(null);
   const [editing, setEditing] = useState<Person | null>(null);
   const [creating, setCreating] = useState(false);
+  const [login, setLogin] = useState<Person | null>(null);
   const [error, setError] = useState<string>();
+  const [notice, setNotice] = useState<string>();
 
   const load = useCallback(async () => {
     const [users, locs] = await Promise.all([
       adminDb
         .from("users")
-        .select("id, first_name, last_name, role, home_location_id, employment_details(weekly_target_minutes, work_days_per_week)")
+        .select(
+          "id, first_name, last_name, role, home_location_id, username, auth_user_id, employment_details(weekly_target_minutes, work_days_per_week)",
+        )
         .eq("is_active", true)
         .order("last_name"),
       adminDb.from("locations").select("id, code, name").order("name"),
@@ -85,8 +92,19 @@ export function Staff({ profile }: { profile: Profile }) {
   const reload = () => {
     setCreating(false);
     setEditing(null);
+    setLogin(null);
     void load();
   };
+
+  async function resetPassword(p: Person) {
+    const password = generatePassword();
+    try {
+      await accountAdmin({ action: "set_login_password", user_id: p.id, password });
+      setNotice(`Neues Passwort für ${p.first_name}: ${password} – bitte weitergeben, es wird nicht erneut angezeigt.`);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
 
   return (
     <section className="stack">
@@ -97,6 +115,17 @@ export function Staff({ profile }: { profile: Profile }) {
         )}
       </div>
       {error && <p className="form-error">{error}</p>}
+      {notice && <p className="notice notice-info">{notice}</p>}
+      {login && (
+        <NewLogin
+          person={login}
+          onCancel={() => setLogin(null)}
+          onCreated={(text) => {
+            setNotice(text);
+            reload();
+          }}
+        />
+      )}
       {creating && <NewPerson locations={locations} onCancel={() => setCreating(false)} onSaved={reload} />}
       {editing && (
         <EditPerson person={editing} locations={locations} onCancel={() => setEditing(null)} onSaved={reload} />
@@ -109,6 +138,7 @@ export function Staff({ profile }: { profile: Profile }) {
               <th>Rolle</th>
               <th>Studio</th>
               <th>Soll/Woche</th>
+              {isAdmin && <th>Handy-Zugang</th>}
               {faces && <th>Gesicht</th>}
               <th />
             </tr>
@@ -122,6 +152,20 @@ export function Staff({ profile }: { profile: Profile }) {
                 <td className="num">
                   {p.employment_details ? `${fmtHours(p.employment_details.weekly_target_minutes)} · ${p.employment_details.work_days_per_week} Tage` : "–"}
                 </td>
+                {isAdmin && (
+                  <td>
+                    {p.username ? (
+                      <span className="row">
+                        <code>{p.username}</code>
+                        <button type="button" className="btn-small" onClick={() => void resetPassword(p)}>Neues Passwort</button>
+                      </span>
+                    ) : p.auth_user_id ? (
+                      <span className="muted small">E-Mail-Login</span>
+                    ) : (
+                      <button type="button" className="btn-small" onClick={() => setLogin(p)}>Zugang anlegen</button>
+                    )}
+                  </td>
+                )}
                 {faces && <td>{faces[p.id] ? <span className="pill pill-ok">erfasst</span> : <span className="pill">fehlt</span>}</td>}
                 <td className="right row-end">
                   {isAdmin && <button type="button" className="btn-small" onClick={() => setEditing(p)}>Bearbeiten</button>}
@@ -292,6 +336,45 @@ function EditPerson(props: { person: Person; locations: Location[]; onCancel: ()
       {error && <p className="form-error">{error}</p>}
       <div className="row">
         <button type="submit" className="btn-primary" disabled={busy}>Speichern</button>
+        <button type="button" className="btn-ghost" onClick={props.onCancel}>Abbrechen</button>
+      </div>
+    </form>
+  );
+}
+
+function NewLogin(props: { person: Person; onCancel: () => void; onCreated: (text: string) => void }) {
+  const [username, setUsername] = useState(suggestUsername(props.person.first_name, props.person.last_name));
+  const [password] = useState(() => generatePassword());
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await accountAdmin({ action: "create_login", user_id: props.person.id, username, password });
+      props.onCreated(
+        `Zugang für ${props.person.first_name}: Benutzername „${username}“, Passwort ${password} – bitte weitergeben (Adresse: …/#/portal). Das Passwort kann im Portal geändert werden.`,
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="card form form-wide" onSubmit={submit}>
+      <h2>Handy-Zugang für {props.person.first_name} {props.person.last_name}</h2>
+      <label>
+        Benutzername
+        <input id="login-username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())}
+          pattern="[a-z0-9][a-z0-9._\-]{2,30}" title="3–31 Zeichen: a–z, 0–9, Punkt, - und _" autoCapitalize="none" required />
+      </label>
+      <p className="muted small">Startpasswort: <code>{password}</code> (wird nach dem Anlegen angezeigt)</p>
+      {error && <p className="form-error">{error}</p>}
+      <div className="row">
+        <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Legt an …" : "Zugang anlegen"}</button>
         <button type="button" className="btn-ghost" onClick={props.onCancel}>Abbrechen</button>
       </div>
     </form>

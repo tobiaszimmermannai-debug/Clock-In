@@ -1,9 +1,13 @@
 // Verwaltung (Leitung/Admin): Anmeldung inkl. 2FA, danach Mitarbeiter & Gesichtserfassung
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { staffLoginEmail } from "../lib/config";
 import { adminDb } from "../lib/supabase";
 import type { Role } from "../lib/types";
+import { Approvals } from "./Approvals";
+import { Plan } from "./Plan";
 import { Staff } from "./Staff";
 import { Tablets } from "./Tablets";
+import { Times } from "./Times";
 
 export type Profile = { id: string; first_name: string; last_name: string; role: Role };
 
@@ -71,7 +75,7 @@ export function AdminApp() {
       <header className="admin-bar">
         <strong>Clock-In Verwaltung</strong>
         <nav>
-          <a href="#/">Kiosk</a>
+          <a href="#/kiosk">Kiosk</a>
           {phase.kind !== "login" && phase.kind !== "loading" && (
             <button type="button" className="btn-link" onClick={logout}>Abmelden</button>
           )}
@@ -124,7 +128,7 @@ function Login(props: { error?: string; onDone: () => void }) {
     const form = new FormData(e.currentTarget);
     setBusy(true);
     const { error } = await adminDb.auth.signInWithPassword({
-      email: String(form.get("email")).trim(),
+      email: staffLoginEmail(String(form.get("email"))),
       password: String(form.get("password")),
     });
     setBusy(false);
@@ -136,8 +140,8 @@ function Login(props: { error?: string; onDone: () => void }) {
     <form className="card form" onSubmit={submit}>
       <h1>Anmelden</h1>
       <label>
-        E-Mail
-        <input id="admin-email" name="email" type="email" autoComplete="username" required />
+        E-Mail oder Benutzername
+        <input id="admin-email" name="email" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
       </label>
       <label>
         Passwort
@@ -192,16 +196,27 @@ function CodeForm(props: {
 }
 
 function AdminHome({ profile }: { profile: Profile }) {
-  const [tab, setTab] = useState<"staff" | "tablets">("staff");
+  const isAdmin = profile.role === "admin";
+  const tabs = [
+    { id: "staff", label: "Mitarbeiter" },
+    { id: "plan", label: "Dienstplan" },
+    { id: "times", label: "Zeiten" },
+    { id: "approvals", label: "Freigaben" },
+    ...(isAdmin ? [{ id: "tablets", label: "Tablets" }] : []),
+  ] as const;
+  const [tab, setTab] = useState<(typeof tabs)[number]["id"]>("staff");
   return (
     <>
-      {profile.role === "admin" && (
-        <nav className="tabs" aria-label="Bereiche">
-          <button type="button" aria-pressed={tab === "staff"} onClick={() => setTab("staff")}>Mitarbeiter</button>
-          <button type="button" aria-pressed={tab === "tablets"} onClick={() => setTab("tablets")}>Tablets</button>
-        </nav>
-      )}
-      {tab === "staff" ? <Staff profile={profile} /> : <Tablets />}
+      <nav className="tabs" aria-label="Bereiche">
+        {tabs.map((t) => (
+          <button key={t.id} type="button" aria-pressed={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</button>
+        ))}
+      </nav>
+      {tab === "staff" && <Staff profile={profile} />}
+      {tab === "plan" && <Plan profile={profile} />}
+      {tab === "times" && <Times profile={profile} />}
+      {tab === "approvals" && <Approvals profile={profile} />}
+      {tab === "tablets" && isAdmin && <Tablets />}
     </>
   );
 }

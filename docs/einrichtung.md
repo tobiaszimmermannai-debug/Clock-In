@@ -85,19 +85,20 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 
 ---
 
-## Teil I – Update: Einwilligung, Tablet-Konten & Regeln (nur wenn Teil B schon lief)
+## Teil I – Update: Einwilligung, Tablet-Konten, Regeln, Portal (nur wenn Teil B schon lief)
 **SQL Editor → New query** → nacheinander ausführen:
 1. `supabase/migrations/20261006090000_consent_kiosk_accounts.sql`
 2. `supabase/migrations/20261006120000_rules_engine.sql`
+3. `supabase/migrations/20261006150000_portal_swaps_report.sql`
 
 Danach `select jobname, schedule from cron.job;` → Zeile `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage).
 Fehlt sie: **Integrations → Cron** aktivieren und Datei 2 erneut ausführen.
 Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 (Bei Neuinstallation ist alles bereits in `setup_komplett.sql` enthalten.)
 
-## Teil J – Funktion `kiosk-admin` (Tablet-Konten anlegen)
+## Teil J – Funktion `account-admin` (Tablet-Konten und Mitarbeiter-Zugänge)
 1. **Edge Functions → Deploy a new function → Via Editor**
-2. Name: `kiosk-admin` → Code aus `supabase/functions/kiosk-admin/index.ts` → **Deploy**
+2. Name: `account-admin` → Code aus `supabase/functions/account-admin/index.ts` → **Deploy**
 3. **Verify JWT bleibt AN** (Standard) – nur angemeldete Admins mit 2FA dürfen sie nutzen.
 
 ## Teil K – App online stellen (Vercel, kostenlos)
@@ -120,6 +121,11 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 4. App öffnen → Benutzername + Passwort → Kamera erlauben.
 5. Android: **Bildschirm fixieren** aktivieren (Einstellungen → Sicherheit), damit niemand die App verlässt.
 
+## Teil M – Mitarbeiter aufs Handy
+1. Verwaltung → **Mitarbeiter** → bei der Person **Zugang anlegen** → Benutzername (Vorschlag `vorname.nachname`) + Startpasswort weitergeben.
+2. Mitarbeiter öffnet `https://<deine-vercel-adresse>/#/portal` → anmelden → Menü → **Zum Startbildschirm hinzufügen**.
+3. Im Portal: Stunden (Soll/Ist), Dienstplan aller Studios, Schichttausch, Passwort ändern, Einwilligung widerrufen.
+
 ---
 
 ## Gut zu wissen
@@ -133,6 +139,9 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 - **Regeln (änderbar in `rule_settings`):** bis 5 Min. zu spät = pünktlich · Überstunden nur nach Freigabe ·
   jede Pause mind. 15 Min., gesetzlich 30/45 Min. ab 6/9 Std. · Auto-Checkout 23 Uhr · 18 Uhr Abfrage
   Krank/IST/Urlaub (je 6,5 Std.) · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
+- **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:
+  beide Studioleitungen müssen zustimmen; ein Admin (auch per Telegram) gibt für beide frei.
+- **Wochenbericht:** freitags 19 Uhr per Telegram (Stunden, Verspätungen, Überstunden, offene Freigaben).
 - **Gesichtserkennung & Datenschutz:** Gesichtsdaten nur nach digital unterschriebener Einwilligung.
   Widerruf oder Deaktivierung eines Mitarbeiters löscht die Gesichtsdaten sofort. Am Kiosk schützt eine
   zufällige Kopfdrehung vor Fotos (nicht vor professionell vorbereiteten Videos oder Masken).

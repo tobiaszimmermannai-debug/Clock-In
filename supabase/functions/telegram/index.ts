@@ -1,5 +1,6 @@
 // Telegram-Integration – eine Datei, damit sie direkt im Supabase-Dashboard deploybar ist.
-// Meldungen: Stempelungen, Nachtrag-/Überstunden-Freigaben, 18-Uhr-Abwesenheitsfrage (Krank/IST/Urlaub/Frei).
+// Meldungen: Stempelungen, Freigaben (Nachtrag, Überstunden, Schichttausch), 18-Uhr-Abwesenheitsfrage,
+// Wochenbericht am Freitag.
 //   POST mit Header x-notify-secret                 → neue Buchung melden (Aufruf per pg_net aus der DB)
 //   POST mit Header x-telegram-bot-api-secret-token → Update von Telegram (/start, Buttons ✅/❌)
 // JWT-Prüfung der Function muss AUS sein; abgesichert wird über die beiden Secrets.
@@ -95,8 +96,14 @@ const ABSENCE: Record<string, { type: string; label: string }> = {
   u: { type: "vacation", label: "🏖 Urlaub" },
 };
 
-async function handleNotify(body: { type?: string; id?: unknown; date?: unknown }): Promise<Response> {
+async function handleNotify(
+  body: { type?: string; id?: unknown; date?: unknown; from?: unknown; to?: unknown },
+): Promise<Response> {
   if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
+  if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
+  if (body.type === "weekly_report" && typeof body.from === "string" && typeof body.to === "string") {
+    return await weeklyReport(body.from, body.to);
+  }
   if (body.type !== "time_log" || typeof body.id !== "string") {
     return new Response("bad request", { status: 400 });
   }
@@ -225,6 +232,115 @@ async function absenceCheck(day: string): Promise<Response> {
   return new Response(`asked ${list.length}`);
 }
 
+// Neuer Schichttausch-Antrag → Freigabe durch Admin per Button
+async function swapRequest(id: string): Promise<Response> {
+  const { data: swap, error } = await supabase
+    .from("swap_requests")
+    .select(`
+      id, reason, is_cross_studio,
+      requester:users!swap_requests_requester_id_fkey(first_name, last_name),
+      target:users!swap_requests_target_user_id_fkey(first_name, last_name),
+      requester_shift:shifts!swap_requests_requester_shift_id_fkey(starts_at, ends_at, location:locations(name)),
+      target_shift:shifts!swap_requests_target_shift_id_fkey(starts_at, ends_at, location:locations(name))
+    `)
+    .eq("id", id)
+    .single<{
+      id: string;
+      reason: string | null;
+      is_cross_studio: boolean;
+      requester: Person | null;
+      target: Person | null;
+      requester_shift: ShiftInfo | null;
+      target_shift: ShiftInfo | null;
+    }>();
+  if (error || !swap) return new Response("not found", { status: 404 });
+
+  const lines = [
+    "🔄 <b>Schichttausch-Antrag</b>",
+    `${escapeHtml(fullName(swap.requester))} gibt ab: ${shiftLabel(swap.requester_shift)}`,
+    swap.target_shift
+      ? `${escapeHtml(fullName(swap.target))} gibt dafür ab: ${shiftLabel(swap.target_shift)}`
+      : `Übernehmen soll: ${escapeHtml(fullName(swap.target))}`,
+    ...(swap.reason ? [`💬 ${escapeHtml(swap.reason)}`] : []),
+    ...(swap.is_cross_studio
+      ? ["🏢 Studioübergreifend: braucht beide Studioleitungen – dein Admin-OK gibt für beide frei."]
+      : []),
+  ];
+  const keyboard = [[
+    { text: "✅ Tausch OK", callback_data: `sw:ok:${swap.id}` },
+    { text: "❌ Ablehnen", callback_data: `sw:no:${swap.id}` },
+  ]];
+  const admins = await adminChats();
+  await Promise.all(admins.map((a) => sendMessage(a.chat_id, lines.join("\n"), keyboard)));
+  return new Response("sent");
+}
+
+type ShiftInfo = { starts_at: string; ends_at: string; location: { name: string } | null };
+const shiftLabel = (s: ShiftInfo | null) =>
+  s ? `${formatDateTime(s.starts_at)}–${formatClock(s.ends_at)} · ${escapeHtml(s.location?.name ?? "?")}` : "?";
+
+// Freitag: Wochenbericht über Stunden, Verspätungen, Überstunden und offene Freigaben
+async function weeklyReport(from: string, to: string): Promise<Response> {
+  const { data, error } = await supabase.rpc("weekly_report", { p_from: from, p_to: to });
+  if (error) {
+    console.error("weekly_report fehlgeschlagen:", error.message);
+    return new Response("error", { status: 500 });
+  }
+  const rows = (data ?? []) as {
+    first_name: string;
+    last_name: string;
+    target_minutes: number;
+    worked_minutes: number;
+    credit_minutes: number;
+    late_count: number;
+    late_minutes: number;
+    overtime_pending_minutes: number;
+    overtime_approved_minutes: number;
+    open_days: number;
+  }[];
+
+  const [bookings, overtime, swaps] = await Promise.all([
+    supabase.from("time_logs").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
+    supabase.from("time_logs").select("id", { count: "exact", head: true }).eq("overtime_status", "pending"),
+    supabase.from("swap_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+  ]);
+
+  const lines = [`📊 <b>Wochenbericht ${formatDay(from)} – ${formatDay(to)}</b>`, ""];
+  for (const r of rows) {
+    const ist = r.worked_minutes + r.credit_minutes;
+    const parts = [`${formatHours(ist)} / ${formatHours(r.target_minutes)}`];
+    if (r.credit_minutes) parts.push(`davon ${formatHours(r.credit_minutes)} Gutschrift`);
+    if (r.late_count) parts.push(`⏰ ${r.late_count}× zu spät (${r.late_minutes} Min.)`);
+    if (r.overtime_approved_minutes) parts.push(`➕ ${r.overtime_approved_minutes} Min. Überstunden`);
+    if (r.overtime_pending_minutes) parts.push(`⏳ ${r.overtime_pending_minutes} Min. Überstunden offen`);
+    if (r.open_days) parts.push(`⚠️ ${r.open_days}× Ausstempeln fehlt`);
+    lines.push(`<b>${escapeHtml(fullName(r))}</b>: ${parts.join(" · ")}`);
+  }
+  if (rows.length === 0) lines.push("Keine Mitarbeiter mit Daten.");
+  const open = [
+    bookings.count ? `${bookings.count} Nachträge` : "",
+    overtime.count ? `${overtime.count}× Überstunden` : "",
+    swaps.count ? `${swaps.count} Schichttausch` : "",
+  ].filter(Boolean);
+  lines.push("", open.length ? `🔔 Offene Freigaben: ${open.join(", ")}` : "✅ Keine offenen Freigaben");
+
+  // Telegram erlaubt max. 4096 Zeichen pro Nachricht → bei Bedarf aufteilen
+  const chunks: string[] = [];
+  let current = "";
+  for (const line of lines) {
+    if ((current + line).length > 3800) {
+      chunks.push(current);
+      current = "";
+    }
+    current += line + "\n";
+  }
+  chunks.push(current);
+
+  const admins = await adminChats();
+  for (const chunk of chunks) await Promise.all(admins.map((a) => sendMessage(a.chat_id, chunk)));
+  return new Response(`report ${rows.length}`);
+}
+
 // -----------------------------------------------------------------------------
 // Telegram-Updates: /start und Buttons
 // -----------------------------------------------------------------------------
@@ -262,6 +378,8 @@ async function handleCallback(cq: CallbackQuery) {
       return await decideOvertime(cq, admin, parts[1] === "ok", parts[2]);
     case "ab":
       return await decideAbsence(cq, admin, parts[1], parts[2], parts[3]);
+    case "sw":
+      return await decideSwap(cq, admin, parts[1] === "ok", parts[2]);
     default:
       await tg("answerCallbackQuery", { callback_query_id: cq.id });
   }
@@ -347,6 +465,39 @@ async function decideAbsence(cq: CallbackQuery, admin: Admin, code: string, user
   if (recorded === false) return await alreadyDone(cq, "Für diesen Tag ist bereits etwas eingetragen.");
   const hours = formatHours((await ruleSettings()).absence_credit_minutes);
   await done(cq, `${absence.label} eingetragen`, `${absence.label} (${hours}) – eingetragen von ${by}`);
+}
+
+// Schichttausch entscheiden; die Datenbank prüft Schichten und tauscht atomar
+async function decideSwap(cq: CallbackQuery, admin: Admin, approve: boolean, id: string) {
+  const { data: updated, error } = await supabase
+    .from("swap_requests")
+    .update({
+      status: approve ? "approved" : "rejected",
+      decided_by: admin.user_id,
+      decision_note: "per Telegram",
+    })
+    .eq("id", id)
+    .eq("status", "pending")
+    .select("id");
+  if (error) return await alreadyDone(cq, error.message.replace(/^Schichttausch: /, ""));
+  if (!updated?.length) {
+    const { data: swap } = await supabase
+      .from("swap_requests")
+      .select("status, decider:users!swap_requests_decided_by_fkey(first_name, last_name)")
+      .eq("id", id)
+      .maybeSingle<{ status: string; decider: Person | null }>();
+    const label: Record<string, string> = { approved: "freigegeben", rejected: "abgelehnt", cancelled: "storniert" };
+    const text = !swap
+      ? "Antrag nicht gefunden."
+      : `Bereits ${label[swap.status] ?? swap.status}` + (swap.decider ? ` von ${fullName(swap.decider)}` : "");
+    return await alreadyDone(cq, text);
+  }
+  const by = escapeHtml(fullName(admin.user));
+  await done(
+    cq,
+    approve ? "Tausch freigegeben ✅" : "Tausch abgelehnt ❌",
+    approve ? `✅ Tausch freigegeben von ${by} – Dienstplan ist aktualisiert` : `❌ Tausch abgelehnt von ${by}`,
+  );
 }
 
 async function done(cq: CallbackQuery, toast: string, resultHtml: string) {

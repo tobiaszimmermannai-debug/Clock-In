@@ -190,3 +190,44 @@ input, select { font: inherit; padding: 11px 12px; border-radius: 10px; border: 
 .proof summary { cursor: pointer; color: var(--muted); }
 .row-end { display: flex; gap: 8px; justify-content: flex-end; }
 .num { font-variant-numeric: tabular-nums; }
+
+/* Wochen-Navigation, Filter, Dienstplan */
+.weeknav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { border: 1px solid var(--line); background: transparent; color: inherit; border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: .9rem; }
+.chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+.plan { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.plan-day { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.plan-day.is-today { border-color: var(--accent); }
+.plan-day-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.plan-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.plan-item { width: 100%; text-align: left; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: inherit; font: inherit; }
+.plan-item .plan-studio { grid-column: 2; font-size: .85rem; }
+.plan-item.is-mine { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.plan-item.type-vocational_school, .plan-item.type-vacation, .plan-item.type-sick { background: var(--info-bg); color: var(--info-fg); }
+.plan-time { font-weight: 700; white-space: nowrap; }
+.pill-warn { background: var(--warn-bg); color: var(--warn-fg); border-color: transparent; }
+.pill-bad { background: var(--danger); color: #fff; border-color: transparent; }
+.summary { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.summary .card { display: grid; gap: 4px; }
+.summary .big { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.diff-plus { color: var(--accent); }
+.diff-minus { color: var(--danger); }
+.stamps { font-size: .85rem; color: var(--muted); white-space: normal; }
+.badges { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Handy-Portal */
+.portal { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+.bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr);
+  background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.bottom-nav button { background: none; border: 0; padding: 14px 4px; color: var(--muted); font-weight: 600; }
+.bottom-nav button[aria-pressed="true"] { color: var(--accent); box-shadow: inset 0 3px 0 var(--accent); }
+.swap-row { border-top: 1px solid var(--line); padding-top: 10px; }
+.btn-cross { border-style: dashed; }
+.btn-block { display: block; text-align: center; text-decoration: none; }
+.admin-main > .tabs { overflow-x: auto; }
+.daytable td { white-space: normal; vertical-align: top; }
+.daytable td:first-child { min-width: 120px; }
+.weeknav { flex-wrap: nowrap; }

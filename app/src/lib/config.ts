@@ -7,6 +7,14 @@ export const kioskLoginEmail = (login: string) => {
   return value.includes("@") ? value : `${value.toLowerCase()}@${KIOSK_EMAIL_DOMAIN}`;
 };
 
+// Mitarbeiter-Zugänge (Handy-Portal): Benutzername → <name>@team.clockin.invalid
+export const STAFF_EMAIL_DOMAIN = "team.clockin.invalid";
+
+export const staffLoginEmail = (login: string) => {
+  const value = login.trim();
+  return value.includes("@") ? value : `${value.toLowerCase()}@${STAFF_EMAIL_DOMAIN}`;
+};
+
 // Arbeitgeber und Verantwortlicher im Sinne der DSGVO (Einwilligungstext)
 export const COMPANY = {
   name: "BS New Fitness GmbH",

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { AdminApp } from "./admin/AdminApp";
 import { KioskApp } from "./kiosk/KioskApp";
-import { isConfigured } from "./lib/supabase";
+import { isConfigured, SESSION_KEYS } from "./lib/supabase";
+import { PortalApp } from "./portal/PortalApp";
 
 function useHash() {
   const [hash, setHash] = useState(location.hash);
@@ -13,7 +14,16 @@ function useHash() {
   return hash;
 }
 
-// Routen: #/ = Kiosk (Tablet), #/admin = Verwaltung. Später: #/portal = Mitarbeiter-Handy
+const hasSession = (key: string) => {
+  try {
+    return localStorage.getItem(key) !== null;
+  } catch {
+    return false;
+  }
+};
+
+// Routen: #/kiosk = Tablet, #/portal = Mitarbeiter-Handy, #/admin = Verwaltung.
+// Ohne Route (z. B. App vom Startbildschirm): eingerichtetes Tablet → Kiosk, angemeldetes Handy → Portal.
 export default function App() {
   const hash = useHash();
   if (!isConfigured) {
@@ -23,5 +33,24 @@ export default function App() {
       </div>
     );
   }
-  return hash.startsWith("#/admin") ? <AdminApp /> : <KioskApp />;
+  if (hash.startsWith("#/admin")) return <AdminApp />;
+  if (hash.startsWith("#/portal")) return <PortalApp />;
+  if (hash.startsWith("#/kiosk")) return <KioskApp />;
+  if (hasSession(SESSION_KEYS.kiosk)) return <KioskApp />;
+  if (hasSession(SESSION_KEYS.portal)) return <PortalApp />;
+  return <Start />;
+}
+
+function Start() {
+  return (
+    <div className="screen setup">
+      <div className="card form">
+        <h1>Clock-In</h1>
+        <p className="muted">Wie möchtest du die App nutzen?</p>
+        <a className="btn-primary btn-block" href="#/portal">Mitarbeiter-Login (Handy)</a>
+        <a className="btn-ghost btn-block" href="#/kiosk">Tablet im Studio einrichten</a>
+        <a className="btn-ghost btn-block" href="#/admin">Verwaltung</a>
+      </div>
+    </div>
+  );
 }

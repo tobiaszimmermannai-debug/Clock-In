@@ -1,32 +1,10 @@
 // Tablet-Konten (nur Admin): anlegen mit Benutzername, sperren, Passwort neu setzen
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { accountAdmin, generatePassword } from "../lib/accountAdmin";
 import { adminDb } from "../lib/supabase";
 import type { Location } from "../lib/types";
 
 type Tablet = { id: string; name: string; username: string | null; location_id: string | null; is_active: boolean };
-
-// Edge Function kiosk-admin aufrufen; Fehlermeldung der Function durchreichen
-async function kioskAdmin(body: Record<string, unknown>) {
-  const { data, error } = await adminDb.functions.invoke("kiosk-admin", { body });
-  if (error) {
-    let message = error.message;
-    try {
-      const json = await (error as { context?: Response }).context?.json();
-      if (json?.error) message = json.error;
-    } catch {
-      // Antwort ohne JSON – Standardmeldung behalten
-    }
-    throw new Error(message);
-  }
-  return data;
-}
-
-// Gut abtippbar: ohne 0/O, 1/l/I
-export function generatePassword(length = 12): string {
-  const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = crypto.getRandomValues(new Uint32Array(length));
-  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-}
 
 export function Tablets() {
   const [tablets, setTablets] = useState<Tablet[]>([]);
@@ -57,7 +35,7 @@ export function Tablets() {
   async function resetPassword(t: Tablet) {
     const password = generatePassword();
     try {
-      await kioskAdmin({ action: "set_password", device_id: t.id, password });
+      await accountAdmin({ action: "set_tablet_password", device_id: t.id, password });
       setMessage({ tone: "info", text: `Neues Passwort für „${t.name}“: ${password} – bitte notieren, es wird nicht erneut angezeigt.` });
     } catch (e) {
       setMessage({ tone: "error", text: (e as Error).message });
@@ -124,8 +102,8 @@ function NewTablet(props: { locations: Location[]; onCancel: () => void; onCreat
     setBusy(true);
     setError(undefined);
     try {
-      await kioskAdmin({
-        action: "create",
+      await accountAdmin({
+        action: "create_tablet",
         username,
         password,
         name: String(f.get("name")).trim(),
