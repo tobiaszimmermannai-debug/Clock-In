@@ -85,9 +85,15 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 
 ---
 
-## Teil I – Update: Einwilligung & Tablet-Konten (nur wenn Teil B schon lief)
-**SQL Editor → New query** → Inhalt von `supabase/migrations/20261006090000_consent_kiosk_accounts.sql` → **Run**.
-(Bei Neuinstallation ist das bereits in `setup_komplett.sql` enthalten.)
+## Teil I – Update: Einwilligung, Tablet-Konten & Regeln (nur wenn Teil B schon lief)
+**SQL Editor → New query** → nacheinander ausführen:
+1. `supabase/migrations/20261006090000_consent_kiosk_accounts.sql`
+2. `supabase/migrations/20261006120000_rules_engine.sql`
+
+Danach `select jobname, schedule from cron.job;` → Zeile `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage).
+Fehlt sie: **Integrations → Cron** aktivieren und Datei 2 erneut ausführen.
+Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
+(Bei Neuinstallation ist alles bereits in `setup_komplett.sql` enthalten.)
 
 ## Teil J – Funktion `kiosk-admin` (Tablet-Konten anlegen)
 1. **Edge Functions → Deploy a new function → Via Editor**
@@ -124,6 +130,9 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 - **Nur Freigaben, keine Einzelmeldungen:**
   `update public.telegram_links set notify_bookings = false where chat_id = <CHAT_ID>;`
 - **Fehlersuche:** Edge Functions → `telegram` bzw. `kiosk-admin` → **Logs**.
+- **Regeln (änderbar in `rule_settings`):** bis 5 Min. zu spät = pünktlich · Überstunden nur nach Freigabe ·
+  jede Pause mind. 15 Min., gesetzlich 30/45 Min. ab 6/9 Std. · Auto-Checkout 23 Uhr · 18 Uhr Abfrage
+  Krank/IST/Urlaub (je 6,5 Std.) · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
 - **Gesichtserkennung & Datenschutz:** Gesichtsdaten nur nach digital unterschriebener Einwilligung.
   Widerruf oder Deaktivierung eines Mitarbeiters löscht die Gesichtsdaten sofort. Am Kiosk schützt eine
   zufällige Kopfdrehung vor Fotos (nicht vor professionell vorbereiteten Videos oder Masken).

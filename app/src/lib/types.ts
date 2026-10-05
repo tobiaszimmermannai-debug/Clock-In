@@ -8,6 +8,30 @@ export const EVENT_LABEL: Record<EventType, string> = {
   clock_out: "Gehen",
 };
 
+export type ShiftType = "work" | "vocational_school" | "vacation" | "sick";
+
+export const SHIFT_TYPE_LABEL: Record<ShiftType, string> = {
+  work: "Schicht",
+  vocational_school: "IST",
+  vacation: "Urlaub",
+  sick: "Krank",
+};
+
+// Regel-Werte aus rule_settings (durch Admins änderbar)
+export type RuleSettings = {
+  late_tolerance_minutes: number;
+  overtime_threshold_minutes: number;
+  min_break_minutes: number;
+  help_shift_minutes: number;
+};
+
+export const DEFAULT_RULES: RuleSettings = {
+  late_tolerance_minutes: 5,
+  overtime_threshold_minutes: 5,
+  min_break_minutes: 15,
+  help_shift_minutes: 390,
+};
+
 export type Location = { id: string; code: string; name: string };
 
 export type KioskDevice = { id: string; name: string; location_id: string | null };
@@ -24,7 +48,7 @@ export type Shift = {
   id: string;
   user_id: string;
   location_id: string | null;
-  shift_type: "work" | "vocational_school" | "vacation" | "sick";
+  shift_type: ShiftType;
   starts_at: string;
   ends_at: string;
 };

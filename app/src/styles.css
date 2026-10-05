@@ -189,3 +189,4 @@ input, select { font: inherit; padding: 11px 12px; border-radius: 10px; border: 
 .proof { display: grid; gap: 10px; }
 .proof summary { cursor: pointer; color: var(--muted); }
 .row-end { display: flex; gap: 8px; justify-content: flex-end; }
+.num { font-variant-numeric: tabular-nums; }

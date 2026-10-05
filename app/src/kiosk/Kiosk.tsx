@@ -54,7 +54,10 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
     const problem = validateAction(state, since, action);
     if (problem) return setPhase({ kind: "error", title: `${match.entry.first_name}, Moment:`, text: problem });
 
-    const notice = shiftNotice(action, relevantShift(kiosk.shifts, match.entry.user_id, at), at);
+    const notice = shiftNotice(action, relevantShift(kiosk.shifts, match.entry.user_id, at), at, {
+      since,
+      rules: kiosk.rules,
+    });
     await kiosk.book(match.entry.user_id, action, match.distance, at);
     setPhase({ kind: "done", action, name: match.entry.first_name, at, notice, queued: !kiosk.online });
   }

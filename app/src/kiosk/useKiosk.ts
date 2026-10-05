@@ -5,7 +5,17 @@ import { currentState } from "../lib/status";
 import { kioskDb } from "../lib/supabase";
 import { refreshCaches, syncQueue } from "../lib/sync";
 import { MINUTE } from "../lib/time";
-import type { EventType, KioskDevice, Location, LogEntry, QueuedEvent, RosterEntry, Shift } from "../lib/types";
+import {
+  DEFAULT_RULES,
+  type EventType,
+  type KioskDevice,
+  type Location,
+  type LogEntry,
+  type QueuedEvent,
+  type RosterEntry,
+  type RuleSettings,
+  type Shift,
+} from "../lib/types";
 
 export type KioskSession = { device: KioskDevice; location: Location };
 
@@ -15,6 +25,7 @@ const REFRESH_EVERY = 5 * MINUTE;
 export function useKiosk(session: KioskSession) {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [rules, setRules] = useState<RuleSettings>(DEFAULT_RULES);
   const [pending, setPending] = useState(0);
   const [failed, setFailed] = useState(0);
   const [online, setOnline] = useState(navigator.onLine);
@@ -23,6 +34,7 @@ export function useKiosk(session: KioskSession) {
   const loadCache = useCallback(async () => {
     setRoster((await getCache<RosterEntry[]>("roster")) ?? []);
     setShifts((await getCache<Shift[]>("shifts")) ?? []);
+    setRules((await getCache<RuleSettings>("rules")) ?? DEFAULT_RULES);
     setLastRefresh(await getCache<string>("lastRefresh"));
     setPending((await listQueue()).length);
     setFailed(await countFailed());
@@ -86,5 +98,5 @@ export function useKiosk(session: KioskSession) {
     [session, sync],
   );
 
-  return { roster, shifts, pending, failed, online, lastRefresh, stateOf, book, refresh };
+  return { roster, shifts, rules, pending, failed, online, lastRefresh, stateOf, book, refresh };
 }

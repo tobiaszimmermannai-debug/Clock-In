@@ -1,4 +1,5 @@
 // Telegram-Integration – eine Datei, damit sie direkt im Supabase-Dashboard deploybar ist.
+// Meldungen: Stempelungen, Nachtrag-/Überstunden-Freigaben, 18-Uhr-Abwesenheitsfrage (Krank/IST/Urlaub/Frei).
 //   POST mit Header x-notify-secret                 → neue Buchung melden (Aufruf per pg_net aus der DB)
 //   POST mit Header x-telegram-bot-api-secret-token → Update von Telegram (/start, Buttons ✅/❌)
 // JWT-Prüfung der Function muss AUS sein; abgesichert wird über die beiden Secrets.
@@ -52,10 +53,12 @@ type TimeLog = {
   recorded_at: string;
   source: "kiosk" | "offline_sync" | "auto_checkout" | "manual";
   approval_status: "approved" | "pending" | "rejected";
+  overtime_status: "pending" | "approved" | "rejected" | null;
   note: string | null;
   user: Person | null;
   creator: Person | null;
   location: { name: string } | null;
+  shift: { starts_at: string; ends_at: string; note: string | null } | null;
 };
 type Message = {
   message_id: number;
@@ -68,6 +71,8 @@ type CallbackQuery = {
   from: { id: number };
   message?: Message;
 };
+type Admin = { user_id: string; user: Person };
+type Settings = { late_tolerance_minutes: number; absence_credit_minutes: number };
 
 // -----------------------------------------------------------------------------
 // Neue Buchung melden
@@ -84,8 +89,14 @@ const EVENT_LABEL: Record<string, string> = {
   break_end: "Pause Ende",
   clock_out: "Gehen",
 };
+const ABSENCE: Record<string, { type: string; label: string }> = {
+  s: { type: "sick", label: "🤒 Krank" },
+  i: { type: "vocational_school", label: "📚 IST" },
+  u: { type: "vacation", label: "🏖 Urlaub" },
+};
 
-async function handleNotify(body: { type?: string; id?: unknown }): Promise<Response> {
+async function handleNotify(body: { type?: string; id?: unknown; date?: unknown }): Promise<Response> {
+  if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
   if (body.type !== "time_log" || typeof body.id !== "string") {
     return new Response("bad request", { status: 400 });
   }
@@ -93,10 +104,11 @@ async function handleNotify(body: { type?: string; id?: unknown }): Promise<Resp
   const { data: log, error } = await supabase
     .from("time_logs")
     .select(`
-      id, event_type, recorded_at, source, approval_status, note,
+      id, event_type, recorded_at, source, approval_status, overtime_status, note,
       user:users!time_logs_user_id_fkey(first_name, last_name),
       creator:users!time_logs_created_by_fkey(first_name, last_name),
-      location:locations(name)
+      location:locations(name),
+      shift:shifts!time_logs_shift_id_fkey(starts_at, ends_at, note)
     `)
     .eq("id", body.id)
     .single<TimeLog>();
@@ -105,44 +117,63 @@ async function handleNotify(body: { type?: string; id?: unknown }): Promise<Resp
     return new Response("not found", { status: 404 });
   }
 
-  const { data: links } = await supabase
-    .from("telegram_links")
-    .select("chat_id, notify_bookings, user:users!inner(role, is_active)")
-    .eq("user.role", "admin")
-    .eq("user.is_active", true);
-
   const isApproval = log.approval_status === "pending";
-  const recipients = (links ?? []).filter((l) => isApproval || l.notify_bookings);
+  const isOvertime = !isApproval && log.overtime_status === "pending";
+  // Entscheidungen gehen immer raus, einfache Meldungen nur bei notify_bookings
+  const recipients = (await adminChats()).filter((l) => isApproval || isOvertime || l.notify_bookings);
   if (recipients.length === 0) return new Response("no recipients");
 
-  const text = isApproval ? approvalText(log) : bookingText(log);
-  const buttons = isApproval
-    ? [
-      { text: "✅ OK", callback_data: `ok:${log.id}` },
-      { text: "❌ Ablehnen", callback_data: `no:${log.id}` },
-    ]
-    : undefined;
+  let text: string;
+  let keyboard: InlineButton[][] | undefined;
+  if (isApproval) {
+    text = approvalText(log);
+    keyboard = [[{ text: "✅ OK", callback_data: `ok:${log.id}` }, {
+      text: "❌ Ablehnen",
+      callback_data: `no:${log.id}`,
+    }]];
+  } else if (isOvertime) {
+    text = overtimeText(log);
+    keyboard = [[
+      { text: "✅ Überstunden OK", callback_data: `ot:ok:${log.id}` },
+      { text: "❌ Ablehnen", callback_data: `ot:no:${log.id}` },
+    ]];
+  } else {
+    text = bookingText(log, await ruleSettings());
+  }
 
-  await Promise.all(recipients.map((r) => sendMessage(r.chat_id, text, buttons)));
+  await Promise.all(recipients.map((r) => sendMessage(r.chat_id, text, keyboard)));
   return new Response("sent");
 }
 
 // "🔔 Max Muster ist im Studio Nord eingestempelt (08:57)"
-function bookingText(log: TimeLog): string {
+function bookingText(log: TimeLog, settings: Settings): string {
   const name = escapeHtml(fullName(log.user));
   const studio = escapeHtml(log.location?.name ?? "?");
 
   switch (log.source) {
     case "auto_checkout":
-      return `🤖 <b>${name}</b> wurde im ${studio} automatisch ausgestempelt (${formatClock(log.recorded_at)})`;
+      return `🤖 <b>${name}</b> wurde im ${studio} automatisch zur geplanten Endzeit ausgestempelt (${
+        formatClock(log.recorded_at)
+      })`;
     case "manual":
       return `✍️ Nachtrag von ${escapeHtml(fullName(log.creator))}: <b>${name}</b> · ` +
         `${EVENT_LABEL[log.event_type]} ${formatDateTime(log.recorded_at)} · ${studio}` +
         (log.note ? `\n💬 ${escapeHtml(log.note)}` : "");
-    default:
-      return `🔔 <b>${name}</b> ist im ${studio} ${EVENT_VERB[log.event_type]} (${formatClock(log.recorded_at)})` +
-        (log.source === "offline_sync" ? " · 📶 offline nachgesendet" : "");
   }
+
+  let text = `🔔 <b>${name}</b> ist im ${studio} ${EVENT_VERB[log.event_type]} (${formatClock(log.recorded_at)})` +
+    (log.source === "offline_sync" ? " · 📶 offline nachgesendet" : "");
+  if (log.event_type === "clock_in" && log.shift) {
+    if (log.shift.note?.startsWith("Aushilfsschicht")) {
+      text += `\n🔁 Keine Schicht geplant – Aushilfsschicht bis ${formatClock(log.shift.ends_at)} eingetragen`;
+    } else {
+      const late = Math.floor((Date.parse(log.recorded_at) - Date.parse(log.shift.starts_at)) / 60_000);
+      if (late > settings.late_tolerance_minutes) {
+        text += `\n⏰ ${late} Min. nach Schichtbeginn (${formatClock(log.shift.starts_at)})`;
+      }
+    }
+  }
+  return text;
 }
 
 function approvalText(log: TimeLog): string {
@@ -156,8 +187,46 @@ function approvalText(log: TimeLog): string {
   ].join("\n");
 }
 
+function overtimeText(log: TimeLog): string {
+  const end = log.shift?.ends_at ?? log.recorded_at;
+  const minutes = Math.max(0, Math.floor((Date.parse(log.recorded_at) - Date.parse(end)) / 60_000));
+  return [
+    "⏱ <b>Überstunden – Freigabe nötig</b>",
+    `👤 ${escapeHtml(fullName(log.user))} · ${escapeHtml(log.location?.name ?? "?")}`,
+    `Schichtende ${formatClock(end)} · ausgestempelt ${formatClock(log.recorded_at)} → <b>${minutes} Min.</b> mehr`,
+    "Ohne Freigabe zählt die Zeit nur bis Schichtende.",
+  ].join("\n");
+}
+
+// 18 Uhr: Wer hatte heute weder Schicht noch Stempelung? → Krank / IST / Urlaub / Frei
+async function absenceCheck(day: string): Promise<Response> {
+  const { data: people, error } = await supabase.rpc("absence_candidates", { p_day: day });
+  if (error) {
+    console.error("absence_candidates fehlgeschlagen:", error.message);
+    return new Response("error", { status: 500 });
+  }
+  const list = (people ?? []) as { user_id: string; first_name: string; last_name: string }[];
+  if (list.length === 0) return new Response("nobody");
+
+  const admins = await adminChats();
+  const hours = formatHours((await ruleSettings()).absence_credit_minutes);
+  const compact = day.replaceAll("-", "");
+  for (const p of list) {
+    const text =
+      `❓ <b>${escapeHtml(fullName(p))}</b> hatte am ${formatDay(day)} keine Schicht und hat nicht gestempelt.\n` +
+      `Was war los? (Krank, IST und Urlaub werden mit ${hours} gutgeschrieben)`;
+    const cb = (code: string) => `ab:${code}:${p.user_id}:${compact}`;
+    const keyboard = [
+      [{ text: ABSENCE.s.label, callback_data: cb("s") }, { text: ABSENCE.i.label, callback_data: cb("i") }],
+      [{ text: ABSENCE.u.label, callback_data: cb("u") }, { text: "✓ Frei", callback_data: cb("f") }],
+    ];
+    await Promise.all(admins.map((a) => sendMessage(a.chat_id, text, keyboard)));
+  }
+  return new Response(`asked ${list.length}`);
+}
+
 // -----------------------------------------------------------------------------
-// Telegram-Updates: /start und Freigabe-Buttons
+// Telegram-Updates: /start und Buttons
 // -----------------------------------------------------------------------------
 async function handleMessage(msg: Message) {
   if (msg.chat.type !== "private" || !msg.text?.startsWith("/")) return;
@@ -179,20 +248,27 @@ async function handleMessage(msg: Message) {
 }
 
 async function handleCallback(cq: CallbackQuery) {
-  const [action, id] = (cq.data ?? "").split(":");
-  if (!["ok", "no"].includes(action) || !id) {
-    await tg("answerCallbackQuery", { callback_query_id: cq.id });
-    return;
-  }
-
+  const parts = (cq.data ?? "").split(":");
   const admin = await findAdminByTelegramId(cq.from.id);
   if (!admin) {
     await tg("answerCallbackQuery", { callback_query_id: cq.id, text: "Keine Berechtigung.", show_alert: true });
     return;
   }
+  switch (parts[0]) {
+    case "ok":
+    case "no":
+      return await decideBooking(cq, admin, parts[0] === "ok", parts[1]);
+    case "ot":
+      return await decideOvertime(cq, admin, parts[1] === "ok", parts[2]);
+    case "ab":
+      return await decideAbsence(cq, admin, parts[1], parts[2], parts[3]);
+    default:
+      await tg("answerCallbackQuery", { callback_query_id: cq.id });
+  }
+}
 
-  const approve = action === "ok";
-  // nur offene Nachträge entscheiden (verhindert Doppel-Entscheidung durch zweiten Admin)
+// Nachtrag freigeben/ablehnen – nur offene (verhindert Doppel-Entscheidung durch zweiten Admin)
+async function decideBooking(cq: CallbackQuery, admin: Admin, approve: boolean, id: string) {
   const { data: updated, error } = await supabase
     .from("time_logs")
     .update({
@@ -214,18 +290,89 @@ async function handleCallback(cq: CallbackQuery) {
       ? "Buchung nicht gefunden."
       : `Bereits entschieden: ${log.approval_status === "approved" ? "freigegeben" : "abgelehnt"}` +
         (log.reviewer ? ` von ${fullName(log.reviewer)}` : "");
-    await tg("answerCallbackQuery", { callback_query_id: cq.id, text, show_alert: true });
-    if (cq.message) await closeMessage(cq.message, `ℹ️ ${escapeHtml(text)}`);
+    return await alreadyDone(cq, text);
+  }
+  await done(
+    cq,
+    approve ? "Freigegeben ✅" : "Abgelehnt ❌",
+    `${approve ? "✅ Freigegeben" : "❌ Abgelehnt"} von ${escapeHtml(fullName(admin.user))}`,
+  );
+}
+
+async function decideOvertime(cq: CallbackQuery, admin: Admin, approve: boolean, id: string) {
+  const { data: updated, error } = await supabase
+    .from("time_logs")
+    .update({ overtime_status: approve ? "approved" : "rejected", overtime_reviewed_by: admin.user_id })
+    .eq("id", id)
+    .eq("overtime_status", "pending")
+    .select("id");
+
+  if (error || !updated?.length) {
+    const { data: log } = await supabase
+      .from("time_logs")
+      .select("overtime_status, reviewer:users!time_logs_overtime_reviewed_by_fkey(first_name, last_name)")
+      .eq("id", id)
+      .maybeSingle<{ overtime_status: string | null; reviewer: Person | null }>();
+    const text = !log
+      ? "Buchung nicht gefunden."
+      : `Bereits entschieden: ${log.overtime_status === "approved" ? "freigegeben" : "abgelehnt"}` +
+        (log.reviewer ? ` von ${fullName(log.reviewer)}` : "");
+    return await alreadyDone(cq, text);
+  }
+  const by = escapeHtml(fullName(admin.user));
+  await done(
+    cq,
+    approve ? "Überstunden freigegeben ✅" : "Überstunden abgelehnt ❌",
+    approve ? `✅ Überstunden freigegeben von ${by}` : `❌ Abgelehnt von ${by} – gezählt bis Schichtende`,
+  );
+}
+
+async function decideAbsence(cq: CallbackQuery, admin: Admin, code: string, userId: string, compact: string) {
+  const day = `${compact.slice(0, 4)}-${compact.slice(4, 6)}-${compact.slice(6, 8)}`;
+  const by = escapeHtml(fullName(admin.user));
+  if (code === "f") return await done(cq, "Als frei vermerkt", `✓ Frei – vermerkt von ${by}`);
+
+  const absence = ABSENCE[code];
+  if (!absence || !userId) return await tg("answerCallbackQuery", { callback_query_id: cq.id });
+  const { data: recorded, error } = await supabase.rpc("record_absence", {
+    p_user: userId,
+    p_day: day,
+    p_type: absence.type,
+    p_decided_by: admin.user_id,
+  });
+  if (error) {
+    await tg("answerCallbackQuery", { callback_query_id: cq.id, text: `Fehler: ${error.message}`, show_alert: true });
     return;
   }
+  if (recorded === false) return await alreadyDone(cq, "Für diesen Tag ist bereits etwas eingetragen.");
+  const hours = formatHours((await ruleSettings()).absence_credit_minutes);
+  await done(cq, `${absence.label} eingetragen`, `${absence.label} (${hours}) – eingetragen von ${by}`);
+}
 
-  await tg("answerCallbackQuery", { callback_query_id: cq.id, text: approve ? "Freigegeben ✅" : "Abgelehnt ❌" });
-  if (cq.message) {
-    await closeMessage(
-      cq.message,
-      `${approve ? "✅ Freigegeben" : "❌ Abgelehnt"} von ${escapeHtml(fullName(admin.user))}`,
-    );
-  }
+async function done(cq: CallbackQuery, toast: string, resultHtml: string) {
+  await tg("answerCallbackQuery", { callback_query_id: cq.id, text: toast });
+  if (cq.message) await closeMessage(cq.message, resultHtml);
+}
+
+async function alreadyDone(cq: CallbackQuery, text: string) {
+  await tg("answerCallbackQuery", { callback_query_id: cq.id, text, show_alert: true });
+  if (cq.message) await closeMessage(cq.message, `ℹ️ ${escapeHtml(text)}`);
+}
+
+// Telegram-Chats aller aktiven Admins
+async function adminChats() {
+  const { data } = await supabase
+    .from("telegram_links")
+    .select("chat_id, notify_bookings, user:users!inner(role, is_active)")
+    .eq("user.role", "admin")
+    .eq("user.is_active", true);
+  return (data ?? []) as { chat_id: number; notify_bookings: boolean }[];
+}
+
+async function ruleSettings(): Promise<Settings> {
+  const { data } = await supabase.from("rule_settings").select("late_tolerance_minutes, absence_credit_minutes")
+    .single();
+  return (data as Settings | null) ?? { late_tolerance_minutes: 5, absence_credit_minutes: 390 };
 }
 
 // Aktiver Admin zu einem Telegram-Account (privater Chat: chat_id = User-ID)
@@ -266,12 +413,12 @@ async function tg(method: string, payload: Record<string, unknown>) {
   return data;
 }
 
-function sendMessage(chatId: number, html: string, buttons?: InlineButton[]) {
+function sendMessage(chatId: number, html: string, keyboard?: InlineButton[][]) {
   return tg("sendMessage", {
     chat_id: chatId,
     text: html,
     parse_mode: "HTML",
-    ...(buttons ? { reply_markup: { inline_keyboard: [buttons] } } : {}),
+    ...(keyboard ? { reply_markup: { inline_keyboard: keyboard } } : {}),
   });
 }
 
@@ -292,6 +439,14 @@ const dateTimeFmt = new Intl.DateTimeFormat("de-DE", {
 const clockFmt = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" });
 const formatDateTime = (iso: string) => dateTimeFmt.format(new Date(iso));
 const formatClock = (iso: string) => clockFmt.format(new Date(iso));
+const dayFmt = new Intl.DateTimeFormat("de-DE", {
+  timeZone: "UTC",
+  weekday: "short",
+  day: "2-digit",
+  month: "2-digit",
+});
+const formatDay = (day: string) => dayFmt.format(new Date(`${day}T12:00:00Z`));
+const formatHours = (minutes: number) => `${(minutes / 60).toLocaleString("de-DE", { maximumFractionDigits: 2 })} Std.`;
 
 // Secret-Vergleich in konstanter Zeit; leeres Secret = nicht konfiguriert = immer falsch
 function safeEqual(a: string, b: string): boolean {

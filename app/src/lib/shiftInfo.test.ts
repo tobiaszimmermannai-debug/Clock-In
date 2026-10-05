@@ -13,31 +13,51 @@ const shift: Shift = {
 };
 const at = (iso: string) => new Date(iso);
 
-describe("shiftNotice", () => {
+describe("shiftNotice – Kommen", () => {
   it("zu früh: Arbeitszeit zählt ab Schichtbeginn", () => {
-    expect(shiftNotice("clock_in", shift, at("2026-10-05T06:40:00Z"))).toEqual({
-      tone: "info",
-      text: "Früh da! Deine Arbeitszeit zählt ab 09:00 (Schichtbeginn).",
-    });
+    expect(shiftNotice("clock_in", shift, at("2026-10-05T06:40:00Z"))?.text).toBe(
+      "Früh da! Deine Arbeitszeit zählt ab 09:00 (Schichtbeginn).",
+    );
   });
-  it("pünktlich: kein Hinweis", () => {
-    expect(shiftNotice("clock_in", shift, at("2026-10-05T07:00:30Z"))).toBeNull();
+  it("bis 5 Min. zu spät gilt als pünktlich", () => {
+    expect(shiftNotice("clock_in", shift, at("2026-10-05T07:05:00Z"))).toBeNull();
   });
-  it("verspätet: Minuten werden genannt", () => {
+  it("mehr als 5 Min. zu spät: Minuten werden genannt", () => {
     expect(shiftNotice("clock_in", shift, at("2026-10-05T07:12:00Z"))?.text).toBe(
       "Schichtbeginn war 09:00 – 12 Min. später eingestempelt.",
     );
   });
-  it("ohne Schicht: Warnung, Buchung trotzdem", () => {
-    expect(shiftNotice("clock_in", undefined, at("2026-10-05T07:00:00Z"))?.tone).toBe("warn");
-  });
-  it("Gehen nach Schichtende: Kappung erklärt", () => {
-    expect(shiftNotice("clock_out", shift, at("2026-10-05T15:30:00Z"))?.text).toBe(
-      "Schichtende war 17:00. Gezählt wird bis Schichtende.",
+  it("ohne Schicht: Aushilfsschicht wird eingetragen", () => {
+    expect(shiftNotice("clock_in", undefined, at("2026-10-05T07:00:00Z"))?.text).toBe(
+      "Keine Schicht geplant – wird als Aushilfsschicht (6,5 Std.) im Dienstplan eingetragen.",
     );
   });
-  it("Pausen: kein Hinweis", () => {
-    expect(shiftNotice("break_start", shift, at("2026-10-05T10:00:00Z"))).toBeNull();
+});
+
+describe("shiftNotice – Gehen", () => {
+  it("Überstunden brauchen Freigabe", () => {
+    expect(shiftNotice("clock_out", shift, at("2026-10-05T15:45:00Z"))?.text).toBe(
+      "Schichtende war 17:00. Die 45 Min. Überstunden zählen erst nach Freigabe durch Tobias oder Dominik.",
+    );
+  });
+  it("bis 5 Min. nach Schichtende: kein Hinweis", () => {
+    expect(shiftNotice("clock_out", shift, at("2026-10-05T15:04:00Z"))).toBeNull();
+  });
+});
+
+describe("shiftNotice – Pausen", () => {
+  it("Pause Start nennt immer die gesetzliche Regel", () => {
+    expect(shiftNotice("break_start", shift, at("2026-10-05T10:00:00Z"))?.text).toBe(
+      "Gesetzliche Pause: ab 6 Std. Arbeit 30 Min., ab 9 Std. 45 Min. Jede Pause zählt mindestens 15 Min.",
+    );
+  });
+  it("kurze Pause wird auf 15 Min. aufgerundet", () => {
+    expect(
+      shiftNotice("break_end", shift, at("2026-10-05T10:10:00Z"), { since: "2026-10-05T10:00:00Z" })?.text,
+    ).toBe("Deine Pause war 10 Min. – sie wird mit 15 Min. berechnet.");
+  });
+  it("ausreichende Pause: kein Hinweis", () => {
+    expect(shiftNotice("break_end", shift, at("2026-10-05T10:30:00Z"), { since: "2026-10-05T10:00:00Z" })).toBeNull();
   });
 });
 

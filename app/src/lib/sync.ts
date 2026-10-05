@@ -74,7 +74,7 @@ async function rememberLog(ev: QueuedEvent) {
 // Stammdaten für den Offline-Betrieb laden; bei Fehlern bleibt der alte Stand
 export async function refreshCaches(client: SupabaseClient): Promise<boolean> {
   const now = Date.now();
-  const [roster, shifts, logs, locations] = await Promise.all([
+  const [roster, shifts, logs, locations, rules] = await Promise.all([
     client.rpc("kiosk_roster"),
     client
       .from("shifts")
@@ -86,12 +86,17 @@ export async function refreshCaches(client: SupabaseClient): Promise<boolean> {
       .select("client_event_id, user_id, event_type, recorded_at, approval_status")
       .gte("recorded_at", new Date(now - 36 * HOUR).toISOString()),
     client.from("locations").select("id, code, name").eq("is_active", true).order("name"),
+    client
+      .from("rule_settings")
+      .select("late_tolerance_minutes, overtime_threshold_minutes, min_break_minutes, help_shift_minutes")
+      .maybeSingle(),
   ]);
 
   if (!roster.error) await setCache("roster", roster.data as RosterEntry[]);
   if (!shifts.error) await setCache("shifts", shifts.data as Shift[]);
   if (!logs.error) await setCache("logs", logs.data as LogEntry[]);
   if (!locations.error) await setCache("locations", locations.data);
+  if (!rules.error && rules.data) await setCache("rules", rules.data);
   if (!roster.error) await setCache("lastRefresh", new Date().toISOString());
   return !(roster.error || shifts.error || logs.error || locations.error);
 }
