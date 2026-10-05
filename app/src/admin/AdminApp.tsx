@@ -1,5 +1,7 @@
 // Verwaltung (Leitung/Admin): Anmeldung inkl. 2FA, danach Mitarbeiter & Gesichtserfassung
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from "react";
+import { Shell, type ShellTab } from "../components/Shell";
+import { BrandMark, Field, Notice } from "../components/ui";
 import { staffLoginEmail } from "../lib/config";
 import { adminDb } from "../lib/supabase";
 import type { Role } from "../lib/types";
@@ -70,51 +72,60 @@ export function AdminApp() {
     setPhase({ kind: "login" });
   }
 
+  if (phase.kind === "ready") {
+    return <AdminHome profile={phase.profile} onLogout={logout} />;
+  }
+
   return (
-    <div className="screen admin">
-      <header className="admin-bar">
-        <strong>Clock-In Verwaltung</strong>
-        <nav>
-          <a href="#/kiosk">Kiosk</a>
-          {phase.kind !== "login" && phase.kind !== "loading" && (
-            <button type="button" className="btn-link" onClick={logout}>Abmelden</button>
-          )}
-        </nav>
-      </header>
-      <main className="admin-main">
-        {phase.kind === "loading" && <p className="muted">Lädt …</p>}
-        {phase.kind === "login" && <Login error={phase.error} onDone={resolve} />}
-        {phase.kind === "denied" && <p className="card">{phase.text}</p>}
-        {phase.kind === "mfa-verify" && (
-          <CodeForm
-            title="Bestätigungscode"
-            text="Code aus deiner Authenticator-App eingeben."
-            error={phase.error}
-            onSubmit={(code) => verify(phase.factorId, code)}
-          />
-        )}
-        {phase.kind === "mfa-enroll" && (
-          <CodeForm
-            title="2FA einrichten"
-            text="Admin-Rechte gibt es nur mit zweitem Faktor. QR-Code mit einer Authenticator-App scannen (z. B. Google Authenticator, Microsoft Authenticator) und den 6-stelligen Code eingeben."
-            error={phase.error}
-            onSubmit={(code) => verify(phase.factorId, code)}
-          >
-            <img className="qr" src={phase.qr} alt="QR-Code für die Authenticator-App" width={200} height={200} />
-            <p className="muted small">
-              Ohne Kamera: Schlüssel manuell eingeben <code className="secret">{phase.secret}</code>
-            </p>
-          </CodeForm>
-        )}
-        {phase.kind === "ready" && (
-          <>
-            {!phase.mfa && (
-              <p className="notice notice-info">Tipp: 2FA lässt sich auch für die Studioleitung aktivieren.</p>
-            )}
-            <AdminHome profile={phase.profile} />
-          </>
-        )}
-      </main>
+    <AuthLayout title="Verwaltung" text="Für Studioleitung und Geschäftsführung">
+      {phase.kind === "loading" && <p className="muted" style={{ textAlign: "center" }}>Lädt …</p>}
+      {phase.kind === "login" && <Login error={phase.error} onDone={resolve} />}
+      {phase.kind === "denied" && (
+        <div className="panel stack">
+          <Notice tone="warn">{phase.text}</Notice>
+          <button type="button" className="btn btn-outline" onClick={logout}>Abmelden</button>
+        </div>
+      )}
+      {phase.kind === "mfa-verify" && (
+        <CodeForm
+          title="Bestätigungscode"
+          text="Code aus deiner Authenticator-App eingeben."
+          error={phase.error}
+          onSubmit={(code) => verify(phase.factorId, code)}
+        />
+      )}
+      {phase.kind === "mfa-enroll" && (
+        <CodeForm
+          title="2FA einrichten"
+          text="Admin-Rechte gibt es nur mit zweitem Faktor. QR-Code mit einer Authenticator-App scannen (z. B. Google Authenticator, Microsoft Authenticator) und den 6-stelligen Code eingeben."
+          error={phase.error}
+          onSubmit={(code) => verify(phase.factorId, code)}
+        >
+          <img className="qr" src={phase.qr} alt="QR-Code für die Authenticator-App" width={200} height={200} />
+          <p className="muted small">
+            Ohne Kamera: Schlüssel manuell eingeben <code className="secret">{phase.secret}</code>
+          </p>
+        </CodeForm>
+      )}
+      {phase.kind !== "loading" && (
+        <p className="auth-foot"><a href="#/">Zur Startseite</a></p>
+      )}
+    </AuthLayout>
+  );
+}
+
+// Zentrierte Anmelde-Seite mit Logo (Verwaltung, Portal, Tablet)
+export function AuthLayout(props: { title: string; text: string; children: ReactNode }) {
+  return (
+    <div className="auth">
+      <div className="auth-card">
+        <div className="auth-head">
+          <BrandMark size={30} />
+          <h1>{props.title}</h1>
+          <p>{props.text}</p>
+        </div>
+        {props.children}
+      </div>
     </div>
   );
 }
@@ -137,18 +148,15 @@ function Login(props: { error?: string; onDone: () => void }) {
   }
 
   return (
-    <form className="card form" onSubmit={submit}>
-      <h1>Anmelden</h1>
-      <label>
-        E-Mail oder Benutzername
+    <form className="panel form" onSubmit={submit}>
+      <Field label="E-Mail oder Benutzername">
         <input id="admin-email" name="email" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
-      </label>
-      <label>
-        Passwort
+      </Field>
+      <Field label="Passwort">
         <input id="admin-password" name="password" type="password" autoComplete="current-password" required />
-      </label>
-      {error && <p className="form-error">{error}</p>}
-      <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Anmelden …" : "Anmelden"}</button>
+      </Field>
+      {error && <Notice tone="error">{error}</Notice>}
+      <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "Anmelden …" : "Anmelden"}</button>
     </form>
   );
 }
@@ -164,7 +172,7 @@ function CodeForm(props: {
   const [busy, setBusy] = useState(false);
   return (
     <form
-      className="card form"
+      className="panel form"
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
@@ -173,11 +181,10 @@ function CodeForm(props: {
         setCode("");
       }}
     >
-      <h1>{props.title}</h1>
+      <h2>{props.title}</h2>
       <p className="muted">{props.text}</p>
       {props.children}
-      <label>
-        6-stelliger Code
+      <Field label="6-stelliger Code">
         <input
           id="mfa-code"
           inputMode="numeric"
@@ -188,35 +195,52 @@ function CodeForm(props: {
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           required
         />
-      </label>
-      {props.error && <p className="form-error">{props.error}</p>}
-      <button type="submit" className="btn-primary" disabled={busy || code.length !== 6}>Bestätigen</button>
+      </Field>
+      {props.error && <Notice tone="error">{props.error}</Notice>}
+      <button type="submit" className="btn btn-primary" disabled={busy || code.length !== 6}>Bestätigen</button>
     </form>
   );
 }
 
-function AdminHome({ profile }: { profile: Profile }) {
+type TabId = "plan" | "staff" | "times" | "approvals" | "tablets";
+
+function AdminHome(props: { profile: Profile; onLogout: () => void }) {
+  const { profile } = props;
   const isAdmin = profile.role === "admin";
-  const tabs = [
-    { id: "staff", label: "Mitarbeiter" },
-    { id: "plan", label: "Dienstplan" },
-    { id: "times", label: "Zeiten" },
-    { id: "approvals", label: "Freigaben" },
-    ...(isAdmin ? [{ id: "tablets", label: "Tablets" }] : []),
-  ] as const;
-  const [tab, setTab] = useState<(typeof tabs)[number]["id"]>("staff");
+  const [tab, setTab] = useState<TabId>("plan");
+  const [open, setOpen] = useState(0);
+
+  // Zähler für offene Freigaben in der Navigation
+  useEffect(() => {
+    void Promise.all([
+      adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
+      adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("overtime_status", "pending"),
+      adminDb.from("swap_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    ]).then((r) => setOpen(r.reduce((n, x) => n + (x.count ?? 0), 0)));
+  }, [tab]);
+
+  const tabs: ShellTab<TabId>[] = [
+    { id: "plan", label: "Dienstplan", icon: "calendar" },
+    { id: "staff", label: "Team", icon: "users" },
+    { id: "times", label: "Zeiten", icon: "clock" },
+    { id: "approvals", label: "Freigaben", icon: "inbox", badge: open },
+    ...(isAdmin ? [{ id: "tablets", label: "Tablets", icon: "tablet" } as const] : []),
+  ];
+
   return (
-    <>
-      <nav className="tabs" aria-label="Bereiche">
-        {tabs.map((t) => (
-          <button key={t.id} type="button" aria-pressed={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</button>
-        ))}
-      </nav>
-      {tab === "staff" && <Staff profile={profile} />}
+    <Shell
+      title="Clock-In"
+      subtitle={`${profile.first_name} · ${isAdmin ? "Admin" : "Studioleitung"}`}
+      tabs={tabs}
+      current={tab}
+      onTab={setTab}
+      onLogout={props.onLogout}
+    >
       {tab === "plan" && <Plan profile={profile} />}
+      {tab === "staff" && <Staff profile={profile} />}
       {tab === "times" && <Times profile={profile} />}
       {tab === "approvals" && <Approvals profile={profile} />}
       {tab === "tablets" && isAdmin && <Tablets />}
-    </>
+    </Shell>
   );
 }

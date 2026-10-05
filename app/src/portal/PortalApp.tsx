@@ -1,7 +1,9 @@
 // Handy-Portal für Mitarbeiter (nur lesen): Stunden, Dienstplan aller Studios, Schichttausch, Konto
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { AuthLayout } from "../admin/AdminApp";
+import { Shell, type ShellTab } from "../components/Shell";
 import { WeekPlan, useWeekShifts } from "../components/WeekPlan";
-import { StudioFilter, WeekNav } from "../components/ui";
+import { Field, Notice, PageHeader, StudioFilter, WeekNav } from "../components/ui";
 import { staffLoginEmail } from "../lib/config";
 import { berlinDate, weekStart } from "../lib/dates";
 import { portalDb } from "../lib/supabase";
@@ -21,11 +23,11 @@ export type Me = {
 export type Colleague = { id: string; first_name: string; last_name: string; home_location_id: string | null };
 
 type Tab = "hours" | "plan" | "swap" | "account";
-const TABS: { id: Tab; label: string }[] = [
-  { id: "hours", label: "Stunden" },
-  { id: "plan", label: "Dienstplan" },
-  { id: "swap", label: "Tausch" },
-  { id: "account", label: "Konto" },
+const TABS: ShellTab<Tab>[] = [
+  { id: "hours", label: "Stunden", icon: "clock" },
+  { id: "plan", label: "Dienstplan", icon: "calendar" },
+  { id: "swap", label: "Tausch", icon: "swap" },
+  { id: "account", label: "Konto", icon: "user" },
 ];
 
 export function PortalApp() {
@@ -64,32 +66,18 @@ export function PortalApp() {
   if (me === undefined) return <div className="screen center muted">Lädt …</div>;
   if (me === null) return <PortalLogin error={error} onDone={load} />;
 
+  const logout = async () => {
+    await portalDb.auth.signOut();
+    setMe(null);
+  };
+
   return (
-    <div className="screen portal">
-      <header className="admin-bar">
-        <strong>Hallo {me.first_name}</strong>
-        <span className="muted small">Clock-In</span>
-      </header>
-      <main className="admin-main">
-        {tab === "hours" && <Hours me={me} />}
-        {tab === "plan" && <Plan me={me} locations={locations} />}
-        {tab === "swap" && <Swap me={me} colleagues={colleagues} locations={locations} />}
-        {tab === "account" && (
-          <Account
-            me={me}
-            onLogout={async () => {
-              await portalDb.auth.signOut();
-              setMe(null);
-            }}
-          />
-        )}
-      </main>
-      <nav className="bottom-nav" aria-label="Bereiche">
-        {TABS.map((t) => (
-          <button key={t.id} type="button" aria-pressed={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</button>
-        ))}
-      </nav>
-    </div>
+    <Shell title="Clock-In" subtitle={`${me.first_name} ${me.last_name}`} tabs={TABS} current={tab} onTab={setTab}>
+      {tab === "hours" && <Hours me={me} />}
+      {tab === "plan" && <Plan me={me} locations={locations} />}
+      {tab === "swap" && <Swap me={me} colleagues={colleagues} locations={locations} />}
+      {tab === "account" && <Account me={me} onLogout={logout} />}
+    </Shell>
   );
 }
 
@@ -98,13 +86,13 @@ function Plan(props: { me: Me; locations: Location[] }) {
   const [studio, setStudio] = useState("");
   const { shifts, error } = useWeekShifts(portalDb, start);
   return (
-    <section className="stack">
-      <h1>Dienstplan</h1>
-      <WeekNav start={start} onChange={setStart} />
+    <>
+      <PageHeader title="Dienstplan" />
       <StudioFilter locations={props.locations} value={studio} onChange={setStudio} />
-      {error && <p className="form-error">{error}</p>}
+      <WeekNav start={start} onChange={setStart} />
+      {error && <Notice tone="error">{error}</Notice>}
       <WeekPlan start={start} shifts={shifts} studio={studio} highlightUserId={props.me.id} />
-    </section>
+    </>
   );
 }
 
@@ -126,21 +114,18 @@ function PortalLogin(props: { error?: string; onDone: () => void }) {
   }
 
   return (
-    <div className="screen setup">
-      <form className="card form" onSubmit={submit}>
-        <h1>Mitarbeiter-Login</h1>
-        <p className="muted">Benutzername und Passwort bekommst du von Tobias oder Dominik.</p>
-        <label>
-          Benutzername
+    <AuthLayout title="Clock-In" text="Deine Stunden, der Dienstplan und Schichttausch">
+      <form className="panel form" onSubmit={submit}>
+        <Field label="Benutzername">
           <input id="portal-username" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
-        </label>
-        <label>
-          Passwort
+        </Field>
+        <Field label="Passwort">
           <input id="portal-password" name="password" type="password" autoComplete="current-password" required />
-        </label>
-        {error && <p className="form-error">{error}</p>}
-        <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Anmelden …" : "Anmelden"}</button>
+        </Field>
+        {error && <Notice tone="error">{error}</Notice>}
+        <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "Anmelden …" : "Anmelden"}</button>
       </form>
-    </div>
+      <p className="auth-foot muted">Zugangsdaten bekommst du von Tobias oder Dominik.</p>
+    </AuthLayout>
   );
 }

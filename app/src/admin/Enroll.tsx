@@ -1,6 +1,7 @@
 // Gesicht erfassen: Einwilligung (digital unterschrieben) → 5 Aufnahmen → Doppelungsprüfung → speichern
 import { useCallback, useEffect, useState } from "react";
 import { FaceCapture } from "../components/FaceCapture";
+import { Icon, Notice, PageHeader } from "../components/ui";
 import { rankCandidates } from "../lib/match";
 import { adminDb } from "../lib/supabase";
 import type { RosterEntry } from "../lib/types";
@@ -84,11 +85,8 @@ export function Enroll(props: { person: Person; isAdmin: boolean; onDone: () => 
   }
 
   return (
-    <section className="stack">
-      <div className="row-between">
-        <h1>Gesicht erfassen: {name}</h1>
-        <button type="button" className="btn-ghost" onClick={props.onDone}>Zurück</button>
-      </div>
+    <>
+      <PageHeader back={props.onDone} title="Gesicht erfassen" subtitle={name} />
 
       {phase.kind === "loading" && <p className="muted">Lädt …</p>}
 
@@ -106,52 +104,55 @@ export function Enroll(props: { person: Person; isAdmin: boolean; onDone: () => 
       )}
 
       {phase.kind === "ready" && (
-        <div className="card form form-wide">
-          <p className="notice notice-info">
+        <>
+          <Notice tone="ok">
             Einwilligung liegt vor: unterschrieben von {phase.consent.signed_name} am{" "}
             {new Date(phase.consent.given_at).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}.
-          </p>
-          <ConsentProof consent={phase.consent} />
-          <div className="row">
-            <button type="button" className="btn-primary" onClick={() => setPhase({ kind: "capture" })}>
-              Erfassung starten
+          </Notice>
+          <div className="panel stack">
+            <p>Die Person schaut gerade in die Kamera. Es werden 5 Aufnahmen gemacht – nur Merkmale, kein Foto.</p>
+            <button type="button" className="btn btn-primary" onClick={() => setPhase({ kind: "capture" })}>
+              <Icon name="face" size={20} /> Erfassung starten
             </button>
+          </div>
+          <div className="panel stack">
+            <ConsentProof consent={phase.consent} />
             {!phase.confirmRevoke ? (
-              <button type="button" className="btn-danger" onClick={() => setPhase({ ...phase, confirmRevoke: true })}>
+              <button type="button" className="btn btn-danger" onClick={() => setPhase({ ...phase, confirmRevoke: true })}>
                 Einwilligung widerrufen
               </button>
             ) : (
-              <button type="button" className="btn-danger" onClick={() => void revoke(phase.consent.id)}>
+              <button type="button" className="btn btn-danger-solid" onClick={() => void revoke(phase.consent.id)}>
                 Wirklich widerrufen und Gesichtsdaten löschen
               </button>
             )}
           </div>
-        </div>
+        </>
       )}
 
       {phase.kind === "capture" && <FaceCapture onCaptured={(d) => void captured(d)} />}
 
       {phase.kind === "confirm-duplicate" && (
-        <div className="card form">
-          <p className="notice notice-warn">
+        <div className="panel stack">
+          <Notice tone="warn">
             Diese Aufnahme ähnelt stark <b>{phase.otherName}</b>. Steht wirklich {name} vor der Kamera?
-          </p>
-          <div className="row">
-            <button type="button" className="btn-primary" onClick={() => void save(phase.descriptors)}>
+          </Notice>
+          <div className="form-actions">
+            <button type="button" className="btn btn-outline" onClick={() => setPhase({ kind: "capture" })}>Neu aufnehmen</button>
+            <button type="button" className="btn btn-primary" onClick={() => void save(phase.descriptors)}>
               Ja, für {person.first_name} speichern
             </button>
-            <button type="button" className="btn-ghost" onClick={() => setPhase({ kind: "capture" })}>Neu aufnehmen</button>
           </div>
         </div>
       )}
 
       {phase.kind === "saving" && <p className="muted">Speichert …</p>}
       {(phase.kind === "done" || phase.kind === "error") && (
-        <div className="card form">
-          <p className={phase.kind === "error" ? "form-error" : ""}>{phase.text}</p>
-          <button type="button" className="btn-primary" onClick={props.onDone}>Fertig</button>
+        <div className="panel stack">
+          <Notice tone={phase.kind === "error" ? "error" : "ok"}>{phase.text}</Notice>
+          <button type="button" className="btn btn-primary" onClick={props.onDone}>Fertig</button>
         </div>
       )}
-    </section>
+    </>
   );
 }

@@ -1,158 +1,281 @@
-// Dienstplan bearbeiten (Admin: alle Studios, Studioleitung: eigene Studios)
-import { type FormEvent, useEffect, useState } from "react";
-import { type PlanShift, WeekPlan, useWeekShifts } from "../components/WeekPlan";
-import { StudioFilter, WeekNav } from "../components/ui";
-import { berlinDate, berlinTime, berlinToISO, fmtLongDay, weekStart } from "../lib/dates";
+// Dienstplan schreiben: Studio → Woche → Tag antippen → „Schicht hinzufügen“ (wer + von–bis).
+// Studioleitung plant nur ihr eigenes Studio; wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
+import { useEffect, useState } from "react";
+import { type PlanShift, ShiftRow, isHelpShift, useWeekShifts } from "../components/WeekPlan";
+import { Avatar, DayStrip, Empty, Field, Icon, Notice, PageHeader, Section, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
+import { addDays, berlinDate, berlinTime, berlinToISO, fmtHM, fmtLongDay, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
-import { type Location, SHIFT_TYPE_LABEL, type ShiftType } from "../lib/types";
+import { type Location, ROLE_LABEL, type Role, SHIFT_TYPE_LABEL, type ShiftType, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
 
-type Staffer = { id: string; first_name: string; last_name: string; home_location_id: string | null };
+type Staffer = { id: string; first_name: string; last_name: string; role: Role; home_location_id: string | null };
+
+// IST/Urlaub/Krank werden als Ganztag mit 6,5 Std. Gutschrift gespeichert
+const ABSENCE_TIMES = { from: "08:00", to: "14:30" };
+// Zuletzt eingetragene Zeiten als Vorschlag für die nächste Schicht
+let lastTimes = { from: "09:00", to: "15:30" };
+
+const minutesBetween = (from: string, to: string) => {
+  const [fh, fm] = from.split(":").map(Number);
+  const [th, tm] = to.split(":").map(Number);
+  return th * 60 + tm - (fh * 60 + fm);
+};
+const fullName = (p: { first_name: string; last_name: string }) => `${p.first_name} ${p.last_name}`;
 
 export function Plan({ profile }: { profile: Profile }) {
-  const [start, setStart] = useState(weekStart(berlinDate()));
+  const today = berlinDate();
+  const [start, setStart] = useState(weekStart(today));
+  const [day, setDay] = useState(today);
+  const [locations, setLocations] = useState<Location[] | null>(null);
   const [studio, setStudio] = useState("");
   const [people, setPeople] = useState<Staffer[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [editing, setEditing] = useState<{ day: string; shift?: PlanShift } | null>(null);
+  const [sheet, setSheet] = useState<{ shift?: PlanShift } | null>(null);
+  const [flash, setFlash] = useState<string>();
   const { shifts, error, reload } = useWeekShifts(adminDb, start);
 
   useEffect(() => {
     void (async () => {
       const [users, locs, managed] = await Promise.all([
-        adminDb.from("users").select("id, first_name, last_name, home_location_id").eq("is_active", true).neq("role", "admin").order("first_name"),
+        adminDb.from("users").select("id, first_name, last_name, role, home_location_id").eq("is_active", true).neq("role", "admin").order("first_name"),
         adminDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
         adminDb.from("location_managers").select("location_id").eq("user_id", profile.id),
       ]);
+      const mine = new Set((managed.data ?? []).map((m) => m.location_id as string));
+      // Admin plant alle Studios, Studioleitung nur die eigenen
+      const allowed = ((locs.data ?? []) as Location[]).filter((l) => profile.role === "admin" || mine.has(l.id));
       setPeople((users.data ?? []) as Staffer[]);
-      setLocations((locs.data ?? []) as Location[]);
-      // Studioleitung startet im eigenen Studio
-      const own = managed.data?.[0]?.location_id;
-      if (profile.role === "manager" && own) setStudio(own);
+      setLocations(allowed);
+      setStudio(allowed[0]?.id ?? "");
     })();
   }, [profile.id, profile.role]);
 
+  function goWeek(next: string) {
+    setStart(next);
+    setDay(next <= today && today < addDays(next, 7) ? today : next);
+  }
+
+  if (locations === null) return <p className="muted">Lädt …</p>;
+  if (locations.length === 0) {
+    return (
+      <>
+        <PageHeader title="Dienstplan" />
+        <Notice tone="warn">Dir ist noch kein Studio zugeordnet. Bitte Tobias oder Dominik fragen.</Notice>
+      </>
+    );
+  }
+
+  const studioName = studioShort(locations.find((l) => l.id === studio)?.name ?? "");
+  const inStudio = (s: PlanShift) =>
+    s.location_id === studio || (s.location_id === null && s.user?.home_location_id === studio);
+  const counts: Record<string, number> = {};
+  for (const s of shifts) if (inStudio(s)) counts[berlinDate(s.starts_at)] = (counts[berlinDate(s.starts_at)] ?? 0) + 1;
+  const dayEntries = shifts.filter((s) => berlinDate(s.starts_at) === day && inStudio(s));
+  // Wer an diesem Tag schon irgendwo eingetragen ist, kann nicht erneut gewählt werden
+  const taken = new Set(shifts.filter((s) => berlinDate(s.starts_at) === day).map((s) => s.user_id));
+
+  const done = (text: string) => {
+    setSheet(null);
+    setFlash(text);
+    void reload();
+  };
+
   return (
-    <section className="stack">
-      <div className="row-between">
-        <h1>Dienstplan</h1>
-      </div>
-      <WeekNav start={start} onChange={setStart} />
-      <StudioFilter locations={locations} value={studio} onChange={setStudio} />
-      {error && <p className="form-error">{error}</p>}
-      {editing && (
-        <ShiftForm
-          key={editing.shift?.id ?? editing.day}
-          day={editing.day}
-          shift={editing.shift}
+    <>
+      <PageHeader title="Dienstplan" subtitle={locations.length === 1 ? `Studio ${studioName}` : undefined} />
+      {locations.length > 1 && <StudioFilter all={false} locations={locations} value={studio} onChange={setStudio} />}
+      <WeekNav start={start} onChange={goWeek} />
+      <DayStrip start={start} value={day} onChange={(d) => { setDay(d); setFlash(undefined); }} counts={counts} />
+      {error && <Notice tone="error">{error}</Notice>}
+      {flash && <Notice tone="ok">{flash}</Notice>}
+
+      <Section title={fmtLongDay(day)} aside={<span>{dayEntries.length} {dayEntries.length === 1 ? "Eintrag" : "Einträge"}</span>}>
+        {dayEntries.length === 0 && <p className="list-empty">Noch niemand eingetragen.</p>}
+        {dayEntries.map((s) => <ShiftRow key={s.id} shift={s} onClick={() => setSheet({ shift: s })} />)}
+      </Section>
+      <button type="button" className="btn btn-primary btn-block" onClick={() => setSheet({})}>
+        <Icon name="plus" size={20} /> Schicht hinzufügen
+      </button>
+
+      {sheet && !sheet.shift && (
+        <AddShift
+          day={day}
+          studio={studio}
+          studioName={studioName}
           people={people}
-          locations={locations}
-          defaultStudio={studio || locations[0]?.id || ""}
-          onClose={(changed) => {
-            setEditing(null);
-            if (changed) void reload();
-          }}
+          taken={taken}
+          onClose={() => setSheet(null)}
+          onSaved={done}
         />
       )}
-      <WeekPlan
-        start={start}
-        shifts={shifts}
-        studio={studio}
-        onAdd={(day) => setEditing({ day })}
-        onSelect={(shift) => setEditing({ day: berlinDate(shift.starts_at), shift })}
-      />
-    </section>
+      {sheet?.shift && (
+        <EditShift shift={sheet.shift} studioName={studioName} onClose={() => setSheet(null)} onSaved={done} />
+      )}
+    </>
   );
 }
 
-const ABSENCE_DEFAULT = { from: "08:00", to: "14:30" }; // 6,5 Std. Gutschrift
+function TimeFields(props: { from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void }) {
+  const minutes = minutesBetween(props.from, props.to);
+  return (
+    <div className="grid-2">
+      <Field label="Von"><input id="shift-from" type="time" value={props.from} onChange={(e) => props.onFrom(e.target.value)} required /></Field>
+      <Field label="Bis" hint={minutes > 0 ? `Dauer ${fmtHM(minutes)} Std.` : "Ende muss nach Beginn liegen"}>
+        <input id="shift-to" type="time" value={props.to} onChange={(e) => props.onTo(e.target.value)} required />
+      </Field>
+    </div>
+  );
+}
 
-function ShiftForm(props: {
+function AddShift(props: {
   day: string;
-  shift?: PlanShift;
+  studio: string;
+  studioName: string;
   people: Staffer[];
-  locations: Location[];
-  defaultStudio: string;
-  onClose: (changed: boolean) => void;
+  taken: Set<string>;
+  onClose: () => void;
+  onSaved: (text: string) => void;
 }) {
-  const s = props.shift;
-  const [type, setType] = useState<ShiftType>(s?.shift_type ?? "work");
+  const [type, setType] = useState<ShiftType>("work");
+  const [userId, setUserId] = useState("");
+  const [from, setFrom] = useState(lastTimes.from);
+  const [to, setTo] = useState(lastTimes.to);
   const [error, setError] = useState<string>();
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
   const isWork = type === "work";
 
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const date = String(f.get("date"));
-    const row = {
-      user_id: String(f.get("user")),
+  const free = props.people.filter((p) => !props.taken.has(p.id));
+  const own = free.filter((p) => p.home_location_id === props.studio);
+  // Aushilfen aus anderen Studios nur für Schichten (Abwesenheiten trägt das Heimatstudio ein)
+  const others = isWork ? free.filter((p) => p.home_location_id !== props.studio) : [];
+  const person = free.find((p) => p.id === userId);
+
+  async function save() {
+    if (!person) return;
+    const times = isWork ? { from, to } : ABSENCE_TIMES;
+    if (minutesBetween(times.from, times.to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
+    setBusy(true);
+    const { error } = await adminDb.from("shifts").insert({
+      user_id: person.id,
       shift_type: type,
-      location_id: isWork ? String(f.get("location")) : null,
-      starts_at: berlinToISO(date, isWork ? String(f.get("from")) : ABSENCE_DEFAULT.from),
-      ends_at: berlinToISO(date, isWork ? String(f.get("to")) : ABSENCE_DEFAULT.to),
-      note: String(f.get("note")).trim() || null,
-    };
-    if (row.ends_at <= row.starts_at) return setError("Das Ende muss nach dem Beginn liegen.");
-    const { error } = s ? await adminDb.from("shifts").update(row).eq("id", s.id) : await adminDb.from("shifts").insert(row);
+      location_id: isWork ? props.studio : null,
+      starts_at: berlinToISO(props.day, times.from),
+      ends_at: berlinToISO(props.day, times.to),
+    });
+    setBusy(false);
     if (error) return setError(dbMessage(error));
-    props.onClose(true);
+    if (isWork) lastTimes = { from, to };
+    props.onSaved(`${fullName(person)}: ${isWork ? `${from}–${to} Uhr` : SHIFT_TYPE_LABEL[type]} eingetragen.`);
+  }
+
+  const option = (p: Staffer) => (
+    <label key={p.id} className="list-row has-leading">
+      <input type="radio" name="shift-user" value={p.id} checked={userId === p.id} onChange={() => setUserId(p.id)} />
+      <Avatar first={p.first_name} last={p.last_name} />
+      <span className="list-row-main">
+        <span className="list-row-title">{fullName(p)}</span>
+        <span className="list-row-sub">{ROLE_LABEL[p.role]}</span>
+      </span>
+    </label>
+  );
+
+  return (
+    <Sheet
+      title={isWork ? "Schicht hinzufügen" : `${SHIFT_TYPE_LABEL[type]} eintragen`}
+      subtitle={`${fmtLongDay(props.day)} · ${props.studioName}`}
+      onClose={props.onClose}
+      footer={
+        <button type="button" className="btn btn-primary" disabled={!person || busy} onClick={() => void save()}>
+          {busy ? "Speichert …" : "Speichern"}
+        </button>
+      }
+    >
+      <Segmented
+        label="Art"
+        value={type}
+        onChange={(t) => { setType(t); setUserId(""); setError(undefined); }}
+        options={(Object.keys(SHIFT_TYPE_LABEL) as ShiftType[]).map((t) => ({ id: t, label: SHIFT_TYPE_LABEL[t] }))}
+      />
+      {own.length + others.length === 0 ? (
+        <Empty icon="users" title="Alle sind schon eingetragen">
+          Bestehende Einträge lassen sich über den Tag bearbeiten oder löschen.
+        </Empty>
+      ) : (
+        <>
+          <Section title={`Wer? · ${props.studioName}`}>
+            {own.length === 0 && <p className="list-empty">Alle aus diesem Studio sind schon eingetragen.</p>}
+            {own.map(option)}
+          </Section>
+          {others.length > 0 && <Section title="Aushilfe aus anderen Studios">{others.map(option)}</Section>}
+        </>
+      )}
+      {isWork ? (
+        <Section title="Wann?" plain>
+          <TimeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
+        </Section>
+      ) : (
+        <p className="muted small">{SHIFT_TYPE_LABEL[type]} zählt als ganzer Tag mit 6,5 Std.</p>
+      )}
+      {error && <Notice tone="error">{error}</Notice>}
+    </Sheet>
+  );
+}
+
+function EditShift(props: { shift: PlanShift; studioName: string; onClose: () => void; onSaved: (text: string) => void }) {
+  const s = props.shift;
+  const isWork = s.shift_type === "work";
+  const day = berlinDate(s.starts_at);
+  const name = s.user ? fullName(s.user) : "?";
+  const [from, setFrom] = useState(berlinTime(s.starts_at));
+  const [to, setTo] = useState(berlinTime(s.ends_at));
+  const [confirm, setConfirm] = useState(false);
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    if (minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
+    setBusy(true);
+    const { error } = await adminDb
+      .from("shifts")
+      .update({ starts_at: berlinToISO(day, from), ends_at: berlinToISO(day, to) })
+      .eq("id", s.id);
+    setBusy(false);
+    if (error) return setError(dbMessage(error));
+    props.onSaved(`${name}: jetzt ${from}–${to} Uhr.`);
   }
 
   async function remove() {
-    if (!s) return;
+    setBusy(true);
     const { error } = await adminDb.from("shifts").delete().eq("id", s.id);
+    setBusy(false);
     if (error) return setError(dbMessage(error));
-    props.onClose(true);
+    props.onSaved(`Eintrag von ${name} gelöscht.`);
   }
 
   return (
-    <form className="card form form-wide" onSubmit={submit}>
-      <h2>{s ? "Eintrag bearbeiten" : `Neuer Eintrag · ${fmtLongDay(props.day)}`}</h2>
-      <div className="grid-2">
-        <label>
-          Person
-          <select id="shift-user" name="user" defaultValue={s?.user_id ?? ""} required>
-            <option value="" disabled>Bitte wählen</option>
-            {props.people.map((p) => <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>)}
-          </select>
-        </label>
-        <label>
-          Art
-          <select id="shift-type" value={type} onChange={(e) => setType(e.target.value as ShiftType)}>
-            {(Object.keys(SHIFT_TYPE_LABEL) as ShiftType[]).map((t) => <option key={t} value={t}>{SHIFT_TYPE_LABEL[t]}</option>)}
-          </select>
-        </label>
-        <label>
-          Datum
-          <input id="shift-date" name="date" type="date" defaultValue={props.day} required />
-        </label>
-        {isWork && (
-          <label>
-            Studio
-            <select id="shift-location" name="location" defaultValue={s?.location_id ?? props.defaultStudio} required>
-              {props.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
-          </label>
-        )}
-        {isWork && (
-          <>
-            <label>Von<input id="shift-from" name="from" type="time" defaultValue={s ? berlinTime(s.starts_at) : "09:00"} required /></label>
-            <label>Bis<input id="shift-to" name="to" type="time" defaultValue={s ? berlinTime(s.ends_at) : "15:30"} required /></label>
-          </>
-        )}
-      </div>
-      {!isWork && <p className="muted small">{SHIFT_TYPE_LABEL[type]} wird mit 6,5 Std. gutgeschrieben.</p>}
-      <label>Notiz (optional)<input id="shift-note" name="note" defaultValue={s?.note ?? ""} maxLength={200} /></label>
-      {error && <p className="form-error">{error}</p>}
-      <div className="row">
-        <button type="submit" className="btn-primary">Speichern</button>
-        <button type="button" className="btn-ghost" onClick={() => props.onClose(false)}>Abbrechen</button>
-        {s && (!confirmDelete
-          ? <button type="button" className="btn-danger" onClick={() => setConfirmDelete(true)}>Löschen</button>
-          : <button type="button" className="btn-danger" onClick={() => void remove()}>Wirklich löschen</button>)}
-      </div>
-    </form>
+    <Sheet
+      title={name}
+      subtitle={`${fmtLongDay(day)} · ${isWork ? props.studioName : SHIFT_TYPE_LABEL[s.shift_type]}`}
+      onClose={props.onClose}
+      footer={
+        <>
+          <button type="button" className={confirm ? "btn btn-danger-solid" : "btn btn-danger"} disabled={busy}
+            onClick={() => (confirm ? void remove() : setConfirm(true))}>
+            {confirm ? "Wirklich löschen" : "Löschen"}
+          </button>
+          {isWork && (
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void save()}>Speichern</button>
+          )}
+        </>
+      }
+    >
+      {isHelpShift(s) && <Notice>Automatisch eingetragen: eingestempelt ohne geplante Schicht (Aushilfe).</Notice>}
+      {isWork ? (
+        <TimeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
+      ) : (
+        <p>{SHIFT_TYPE_LABEL[s.shift_type]} · zählt mit 6,5 Std.</p>
+      )}
+      {error && <Notice tone="error">{error}</Notice>}
+    </Sheet>
   );
 }

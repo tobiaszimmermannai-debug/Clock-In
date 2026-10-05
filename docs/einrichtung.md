@@ -78,7 +78,7 @@ SQL Editor – erzeugt eine Test-Freigabe-Anfrage:
 insert into public.time_logs (user_id, location_id, event_type, recorded_at, source, note, approval_status)
 select u.id, l.id, 'clock_in', now(), 'manual', 'Test', 'pending'
 from public.users u, public.locations l
-where u.first_name = '<Vorname>' and l.code = 'NORD';
+where u.first_name = '<Vorname>' and l.code = 'KRAILLING';
 ```
 → In Telegram kommt „📝 Nachtrag wartet auf Freigabe“ mit ✅/❌. Button drücken → Nachricht zeigt „Freigegeben von …“.
 Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
@@ -91,6 +91,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 2. `supabase/migrations/20261006120000_rules_engine.sql`
 3. `supabase/migrations/20261006150000_portal_swaps_report.sql`
 4. `supabase/migrations/20261006180000_studio_staffing.sql`
+5. `supabase/migrations/20261007090000_studio_names.sql` (Studionamen Krailling, Germering, Starnberg, Moosach)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -118,13 +119,13 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 
 ## Teil L – Tablets einrichten
 1. Am Handy/PC `https://<deine-vercel-adresse>/#/admin` öffnen → anmelden → 2FA einrichten.
-2. **Tablets → Neues Tablet**: Name, Benutzername (z. B. `nord`), Studio → Passwort notieren.
+2. **Tablets → Neues Tablet**: Name, Benutzername (z. B. `krailling`), Studio → Passwort notieren.
 3. Am Tablet in Chrome die Vercel-Adresse öffnen → Menü → **Zum Startbildschirm hinzufügen**.
 4. App öffnen → Benutzername + Passwort → Kamera erlauben.
 5. Android: **Bildschirm fixieren** aktivieren (Einstellungen → Sicherheit), damit niemand die App verlässt.
 
 ## Teil M – Mitarbeiter aufs Handy
-1. Verwaltung → **Mitarbeiter** → bei der Person **Zugang anlegen** → Benutzername (Vorschlag `vorname.nachname`) + Startpasswort weitergeben.
+1. Verwaltung → **Team** → Person antippen → **Zugang anlegen** → Benutzername (Vorschlag `vorname.nachname`) + Startpasswort weitergeben.
 2. Mitarbeiter öffnet `https://<deine-vercel-adresse>/#/portal` → anmelden → Menü → **Zum Startbildschirm hinzufügen**.
 3. Im Portal: Stunden (Soll/Ist), Dienstplan aller Studios, Schichttausch, Passwort ändern, Einwilligung widerrufen.
 

@@ -1,10 +1,10 @@
 // Offene Freigaben: Nachträge und Überstunden (Admin), Schichttausch (beteiligte Studioleitung oder Admin)
 import { useCallback, useEffect, useState } from "react";
-import { Pill } from "../components/ui";
+import { Avatar, Empty, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
 import { berlinDate, berlinTime, fmtDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
-import { EVENT_LABEL, type EventType } from "../lib/types";
+import { EVENT_LABEL, type EventType, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
 
 type Person = { first_name: string; last_name: string } | null;
@@ -34,7 +34,7 @@ type SwapRow = {
 
 const name = (p: Person) => (p ? `${p.first_name} ${p.last_name}` : "?");
 const when = (iso: string) => `${fmtDay(berlinDate(iso))} ${berlinTime(iso)}`;
-const shiftText = (s: ShiftRef) => (s ? `${when(s.starts_at)}–${berlinTime(s.ends_at)} · ${s.location?.name ?? "?"}` : "–");
+const shiftText = (s: ShiftRef) => (s ? `${when(s.starts_at)}–${berlinTime(s.ends_at)} · ${studioShort(s.location?.name ?? "?")}` : "–");
 
 const BOOKING_SELECT = `id, event_type, recorded_at, source, note,
   user:users!time_logs_user_id_fkey(first_name, last_name),
@@ -46,7 +46,7 @@ export function Approvals({ profile }: { profile: Profile }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [overtime, setOvertime] = useState<Booking[]>([]);
   const [swaps, setSwaps] = useState<SwapRow[]>([]);
-  const [message, setMessage] = useState<{ tone: "info" | "error"; text: string }>();
+  const [message, setMessage] = useState<{ tone: "ok" | "info" | "error"; text: string }>();
 
   const load = useCallback(async () => {
     const [b, o, s] = await Promise.all([
@@ -85,74 +85,95 @@ export function Approvals({ profile }: { profile: Profile }) {
     } else if (kind === "swap" && approve && (result.data as { status: string } | null)?.status === "pending") {
       setMessage({ tone: "info", text: "Deine Freigabe ist vermerkt – jetzt fehlt noch die Leitung des anderen Studios." });
     } else {
-      setMessage({ tone: "info", text: approve ? "Freigegeben." : "Abgelehnt." });
+      setMessage({ tone: "ok", text: approve ? "Freigegeben." : "Abgelehnt." });
     }
     void load();
   }
 
   const empty = bookings.length + overtime.length + swaps.length === 0;
 
+  const avatar = (p: Person) => <Avatar first={p?.first_name ?? "?"} last={p?.last_name} />;
+
   return (
-    <section className="stack">
-      <h1>Freigaben</h1>
-      {message && <p className={message.tone === "error" ? "form-error" : "notice notice-info"}>{message.text}</p>}
-      {empty && <p className="muted">Keine offenen Freigaben. 🎉</p>}
-
-      {bookings.length > 0 && <h2>Nachträge</h2>}
-      {bookings.map((b) => (
-        <div key={b.id} className="card stack">
-          <div className="row-between">
-            <strong>{name(b.user)} · {EVENT_LABEL[b.event_type]} {when(b.recorded_at)}</strong>
-            <Pill tone="warn">{b.source === "manual" ? `Nachtrag von ${name(b.creator)}` : "Offline vom Vortag"}</Pill>
-          </div>
-          <span className="muted">{b.location?.name}{b.note ? ` · „${b.note}“` : ""}</span>
-          <Decision enabled={isAdmin} onDecide={(ok) => void decide("booking", b.id, ok)} />
+    <>
+      <PageHeader title="Freigaben" />
+      {message && <Notice tone={message.tone}>{message.text}</Notice>}
+      {empty && (
+        <div className="panel">
+          <Empty icon="checkCircle" title="Alles erledigt">Keine offenen Freigaben.</Empty>
         </div>
-      ))}
-
-      {overtime.length > 0 && <h2>Überstunden</h2>}
-      {overtime.map((o) => {
-        const minutes = o.shift ? Math.floor((Date.parse(o.recorded_at) - Date.parse(o.shift.ends_at)) / 60_000) : 0;
-        return (
-          <div key={o.id} className="card stack">
-            <strong>{name(o.user)} · {minutes} Min. Überstunden</strong>
-            <span className="muted">
-              {o.location?.name} · Schichtende {o.shift ? berlinTime(o.shift.ends_at) : "?"} · gegangen {when(o.recorded_at)}
-            </span>
-            <Decision enabled={isAdmin} onDecide={(ok) => void decide("overtime", o.id, ok)} />
-          </div>
-        );
-      })}
-
-      {swaps.length > 0 && <h2>Schichttausch</h2>}
-      {swaps.map((s) => {
-        const approvals = (s.approved_own_by ? 1 : 0) + (s.approved_other_by ? 1 : 0);
-        return (
-          <div key={s.id} className="card stack">
-            <div className="row-between">
-              <strong>{name(s.requester)} → {name(s.target)}</strong>
-              {s.is_cross_studio && <Pill tone="warn">Studioübergreifend · {approvals}/2</Pill>}
-            </div>
-            <span>Abgabe: {shiftText(s.requester_shift)}</span>
-            {s.target_shift && <span>Dafür: {shiftText(s.target_shift)}</span>}
-            {s.reason && <span className="muted">„{s.reason}“</span>}
-            <Decision enabled onDecide={(ok) => void decide("swap", s.id, ok)} />
-          </div>
-        );
-      })}
-      {!isAdmin && (bookings.length > 0 || overtime.length > 0) && (
-        <p className="muted small">Nachträge und Überstunden geben nur Tobias oder Dominik frei.</p>
       )}
-    </section>
+
+      {bookings.length > 0 && (
+        <Section title="Nachträge" aside={<span>{bookings.length}</span>}
+          footer={!isAdmin ? "Nachträge geben nur Tobias oder Dominik frei." : undefined}>
+          {bookings.map((b) => (
+            <div key={b.id} className="list-item">
+              <Row
+                leading={avatar(b.user)}
+                title={`${name(b.user)} · ${EVENT_LABEL[b.event_type]}`}
+                subtitle={`${when(b.recorded_at)} · ${studioShort(b.location?.name ?? "")}${b.note ? ` · „${b.note}“` : ""}`}
+                trailing={<Pill tone="warn">{b.source === "manual" ? `von ${b.creator?.first_name ?? "?"}` : "offline"}</Pill>}
+              />
+              <Decision enabled={isAdmin} onDecide={(ok) => void decide("booking", b.id, ok)} />
+            </div>
+          ))}
+        </Section>
+      )}
+
+      {overtime.length > 0 && (
+        <Section title="Überstunden" aside={<span>{overtime.length}</span>}
+          footer={!isAdmin ? "Überstunden geben nur Tobias oder Dominik frei." : undefined}>
+          {overtime.map((o) => {
+            const minutes = o.shift ? Math.floor((Date.parse(o.recorded_at) - Date.parse(o.shift.ends_at)) / 60_000) : 0;
+            return (
+              <div key={o.id} className="list-item">
+                <Row
+                  leading={avatar(o.user)}
+                  title={`${name(o.user)} · ${minutes} Min.`}
+                  subtitle={`${studioShort(o.location?.name ?? "")} · Schichtende ${o.shift ? berlinTime(o.shift.ends_at) : "?"} · gegangen ${when(o.recorded_at)}`}
+                />
+                <Decision enabled={isAdmin} onDecide={(ok) => void decide("overtime", o.id, ok)} />
+              </div>
+            );
+          })}
+        </Section>
+      )}
+
+      {swaps.length > 0 && (
+        <Section title="Schichttausch" aside={<span>{swaps.length}</span>}>
+          {swaps.map((s) => {
+            const approvals = (s.approved_own_by ? 1 : 0) + (s.approved_other_by ? 1 : 0);
+            return (
+              <div key={s.id} className="list-item">
+                <Row
+                  leading={avatar(s.requester)}
+                  title={`${name(s.requester)} → ${name(s.target)}`}
+                  subtitle={
+                    <>
+                      Abgabe: {shiftText(s.requester_shift)}
+                      {s.target_shift && <><br />Dafür: {shiftText(s.target_shift)}</>}
+                      {s.reason && <><br />„{s.reason}“</>}
+                    </>
+                  }
+                  trailing={s.is_cross_studio && <Pill tone="warn">2 Studios · {approvals}/2</Pill>}
+                />
+                <Decision enabled onDecide={(ok) => void decide("swap", s.id, ok)} />
+              </div>
+            );
+          })}
+        </Section>
+      )}
+    </>
   );
 }
 
 function Decision(props: { enabled: boolean; onDecide: (approve: boolean) => void }) {
   if (!props.enabled) return null;
   return (
-    <div className="row">
-      <button type="button" className="btn-primary" onClick={() => props.onDecide(true)}>Freigeben</button>
-      <button type="button" className="btn-ghost" onClick={() => props.onDecide(false)}>Ablehnen</button>
+    <div className="list-actions indent">
+      <button type="button" className="btn btn-outline btn-sm" onClick={() => props.onDecide(false)}>Ablehnen</button>
+      <button type="button" className="btn btn-primary btn-sm" onClick={() => props.onDecide(true)}>Freigeben</button>
     </div>
   );
 }

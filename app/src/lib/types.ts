@@ -73,3 +73,13 @@ export type QueuedEvent = {
   match_distance: number | null;
   last_error?: string;
 };
+
+/** "Studio Krailling" → "Krailling" */
+export const studioShort = (name: string) => name.replace(/^Studio\s+/, "");
+
+export const ROLE_LABEL: Record<Role, string> = {
+  admin: "Admin",
+  manager: "Studioleitung",
+  employee: "Mitarbeiter",
+  trainee: "Azubi",
+};

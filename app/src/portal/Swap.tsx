@@ -1,10 +1,10 @@
 // Schichttausch: primär im eigenen Studio; studioübergreifend über eigenen Knopf (beide Leitungen geben frei)
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { Pill } from "../components/ui";
+import { Avatar, Field, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet } from "../components/ui";
 import { berlinDate, berlinTime, fmtDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { portalDb } from "../lib/supabase";
-import type { Location } from "../lib/types";
+import { type Location, studioShort } from "../lib/types";
 import type { Colleague, Me } from "./PortalApp";
 
 type MyShift = { id: string; starts_at: string; ends_at: string; location_id: string | null; location: { name: string } | null };
@@ -22,8 +22,8 @@ type Request = {
   target_shift: MyShift | null;
 };
 
-const shiftText = (s: MyShift | null) =>
-  s ? `${fmtDay(berlinDate(s.starts_at))} ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} · ${s.location?.name ?? "?"}` : "–";
+const shiftWhen = (s: MyShift) => `${fmtDay(berlinDate(s.starts_at))} · ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)}`;
+const shiftText = (s: MyShift | null) => (s ? `${shiftWhen(s)} · ${studioShort(s.location?.name ?? "?")}` : "–");
 const name = (p: { first_name: string; last_name: string } | null) => (p ? `${p.first_name} ${p.last_name}` : "?");
 
 async function upcomingShifts(userId: string): Promise<MyShift[]> {
@@ -73,11 +73,63 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
     requests.some((r) => r.status === "pending" && r.requester_shift?.id === shiftId);
 
   return (
-    <section className="stack">
-      <h1>Schicht tauschen</h1>
-      {message && <p className="notice notice-info">{message}</p>}
+    <>
+      <PageHeader title="Schicht tauschen" />
+      {message && <Notice tone="ok">{message}</Notice>}
 
-      {draft ? (
+      <Section title="Meine nächsten Schichten" footer="Tausch im eigenen Studio – „Anderes Studio“ braucht die Zustimmung beider Studioleitungen.">
+        {shifts.length === 0 && <p className="list-empty">Keine Schichten in den nächsten 5 Wochen.</p>}
+        {shifts.map((s) => (
+          <div key={s.id} className="list-item">
+            <Row
+              leading={<LeadingIcon name="calendar" />}
+              title={shiftWhen(s)}
+              subtitle={studioShort(s.location?.name ?? "")}
+              trailing={pendingFor(s.id) && <Pill tone="warn">Antrag läuft</Pill>}
+            />
+            {!pendingFor(s.id) && (
+              <div className="list-actions indent">
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDraft({ shift: s, cross: false })}>Tauschen</button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setDraft({ shift: s, cross: true })}>
+                  Mit anderem Studio
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </Section>
+
+      <Section title="Anträge">
+        {requests.length === 0 && <p className="list-empty">Noch keine Anträge.</p>}
+        {requests.map((r) => {
+          const mine = r.requester_id === props.me.id;
+          const other = mine ? r.target : r.requester;
+          const approvals = (r.approved_own_by ? 1 : 0) + (r.approved_other_by ? 1 : 0);
+          return (
+            <div key={r.id} className="list-item">
+              <Row
+                leading={<Avatar first={other?.first_name ?? "?"} last={other?.last_name} />}
+                title={mine ? `An ${name(r.target)}` : `Von ${name(r.requester)}`}
+                subtitle={
+                  <>
+                    Abgabe: {shiftText(r.requester_shift)}
+                    {r.target_shift && <><br />Dafür: {shiftText(r.target_shift)}</>}
+                    {r.reason && <><br />„{r.reason}“</>}
+                  </>
+                }
+                trailing={<StatusPill status={r.status} cross={r.is_cross_studio} approvals={approvals} />}
+              />
+              {mine && r.status === "pending" && (
+                <div className="list-actions indent">
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => void cancel(r.id)}>Antrag zurückziehen</button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </Section>
+
+      {draft && (
         <SwapForm
           me={props.me}
           shift={draft.shift}
@@ -90,49 +142,8 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
             void load();
           }}
         />
-      ) : (
-        <div className="card stack">
-          <h2>Meine nächsten Schichten</h2>
-          {shifts.length === 0 && <p className="muted">Keine Schichten in den nächsten 5 Wochen.</p>}
-          {shifts.map((s) => (
-            <div key={s.id} className="row-between swap-row">
-              <span>{shiftText(s)}</span>
-              {pendingFor(s.id) ? (
-                <Pill tone="warn">Antrag läuft</Pill>
-              ) : (
-                <div className="row">
-                  <button type="button" className="btn-small" onClick={() => setDraft({ shift: s, cross: false })}>Tauschen</button>
-                  <button type="button" className="btn-small btn-cross" onClick={() => setDraft({ shift: s, cross: true })}>
-                    Mit anderem Studio
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
       )}
-
-      <h2>Anträge</h2>
-      {requests.length === 0 && <p className="muted">Noch keine Anträge.</p>}
-      {requests.map((r) => {
-        const mine = r.requester_id === props.me.id;
-        const approvals = (r.approved_own_by ? 1 : 0) + (r.approved_other_by ? 1 : 0);
-        return (
-          <div key={r.id} className="card stack">
-            <div className="row-between">
-              <strong>{mine ? `An ${name(r.target)}` : `Von ${name(r.requester)}`}</strong>
-              <StatusPill status={r.status} cross={r.is_cross_studio} approvals={approvals} />
-            </div>
-            <span>Abgabe: {shiftText(r.requester_shift)}</span>
-            {r.target_shift && <span>Dafür: {shiftText(r.target_shift)}</span>}
-            {r.reason && <span className="muted">„{r.reason}“</span>}
-            {mine && r.status === "pending" && (
-              <button type="button" className="btn-ghost" onClick={() => void cancel(r.id)}>Antrag zurückziehen</button>
-            )}
-          </div>
-        );
-      })}
-    </section>
+    </>
   );
 }
 
@@ -140,7 +151,7 @@ function StatusPill(props: { status: Request["status"]; cross: boolean; approval
   if (props.status === "approved") return <Pill tone="ok">Freigegeben</Pill>;
   if (props.status === "rejected") return <Pill tone="bad">Abgelehnt</Pill>;
   if (props.status === "cancelled") return <Pill>Zurückgezogen</Pill>;
-  return <Pill tone="warn">{props.cross ? `Wartet · ${props.approvals}/2 Freigaben` : "Wartet auf Studioleitung"}</Pill>;
+  return <Pill tone="warn">{props.cross ? `${props.approvals}/2 Freigaben` : "Wartet"}</Pill>;
 }
 
 function SwapForm(props: {
@@ -189,38 +200,34 @@ function SwapForm(props: {
   }
 
   return (
-    <form className="card form form-wide" onSubmit={submit}>
-      <h2>{props.cross ? "Mit anderem Studio tauschen" : "Schicht tauschen"}</h2>
-      <p>Abgabe: <strong>{shiftText(props.shift)}</strong></p>
-      {props.cross && (
-        <p className="notice notice-warn">
-          Studioübergreifend: Die Leitungen <b>beider</b> Studios müssen zustimmen.
-        </p>
-      )}
-      <label>
-        {props.cross ? "Kollege aus anderem Studio" : "Kollege aus deinem Studio"}
-        <select id="swap-target" value={targetId} onChange={(e) => setTargetId(e.target.value)} required>
-          <option value="">Bitte wählen</option>
-          {options.map((c) => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
-        </select>
-      </label>
-      {options.length === 0 && <p className="muted small">Keine passenden Kollegen gefunden.</p>}
-      <label>
-        Gegenschicht (optional)
-        <select id="swap-target-shift" name="target_shift" defaultValue="" disabled={!targetId}>
-          <option value="">Keine – Kollege übernimmt nur</option>
-          {targetShifts.map((s) => <option key={s.id} value={s.id}>{shiftText(s)}</option>)}
-        </select>
-      </label>
-      <label>
-        Grund (optional)
-        <input id="swap-reason" name="reason" maxLength={200} placeholder="z. B. Arzttermin" />
-      </label>
-      {error && <p className="form-error">{error}</p>}
-      <div className="row">
-        <button type="submit" className="btn-primary" disabled={busy || !targetId}>Antrag stellen</button>
-        <button type="button" className="btn-ghost" onClick={props.onCancel}>Abbrechen</button>
-      </div>
-    </form>
+    <Sheet
+      title={props.cross ? "Mit anderem Studio tauschen" : "Schicht tauschen"}
+      subtitle={shiftText(props.shift)}
+      onClose={props.onCancel}
+      footer={<button type="submit" form="swap-form" className="btn btn-primary" disabled={busy || !targetId}>Antrag stellen</button>}
+    >
+      <form id="swap-form" className="form" onSubmit={submit}>
+        {props.cross && (
+          <Notice tone="warn">Studioübergreifend: Die Leitungen <b>beider</b> Studios müssen zustimmen.</Notice>
+        )}
+        <Field label={props.cross ? "Kollege aus anderem Studio" : "Kollege aus deinem Studio"}
+          hint={options.length === 0 ? "Keine passenden Kollegen gefunden." : undefined}>
+          <select id="swap-target" value={targetId} onChange={(e) => setTargetId(e.target.value)} required>
+            <option value="">Bitte wählen</option>
+            {options.map((c) => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
+          </select>
+        </Field>
+        <Field label="Gegenschicht (optional)">
+          <select id="swap-target-shift" name="target_shift" defaultValue="" disabled={!targetId}>
+            <option value="">Keine – Kollege übernimmt nur</option>
+            {targetShifts.map((s) => <option key={s.id} value={s.id}>{shiftText(s)}</option>)}
+          </select>
+        </Field>
+        <Field label="Grund (optional)">
+          <input id="swap-reason" name="reason" maxLength={200} placeholder="z. B. Arzttermin" />
+        </Field>
+        {error && <Notice tone="error">{error}</Notice>}
+      </form>
+    </Sheet>
   );
 }

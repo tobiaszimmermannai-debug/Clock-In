@@ -1,6 +1,7 @@
 // Digitale Einwilligung: Mitarbeiter liest selbst, bestätigt und unterschreibt am Gerät
 import { useMemo, useState } from "react";
 import { SignaturePad } from "../components/SignaturePad";
+import { Field, Notice } from "../components/ui";
 import { CONSENT_VERSION, consentText } from "../lib/consentText";
 import { adminDb } from "../lib/supabase";
 import type { Person } from "./Staff";
@@ -39,31 +40,28 @@ export function ConsentForm(props: { person: Person; onSigned: () => void; onDec
   }
 
   return (
-    <div className="card form form-wide">
-      <p className="notice notice-info">
-        Bitte das Gerät an {props.person.first_name} übergeben: selbst lesen, bestätigen und unterschreiben.
-      </p>
+    <div className="panel form">
+      <Notice>Bitte das Gerät an {props.person.first_name} übergeben: selbst lesen, bestätigen und unterschreiben.</Notice>
       <div className="consent-text" tabIndex={0}>{text}</div>
       <label className="check">
         <input id="consent-agree" type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-        Ich habe die Erklärung gelesen und willige freiwillig ein.
+        <span>Ich habe die Erklärung gelesen und willige freiwillig ein.</span>
       </label>
-      <label>
-        Name
+      <Field label="Name">
         <input id="consent-name" value={signedName} onChange={(e) => setSignedName(e.target.value)} autoComplete="off" />
-      </label>
+      </Field>
       <SignaturePad onChange={setSignature} />
-      {error && <p className="form-error">{error}</p>}
-      <div className="row">
+      {error && <Notice tone="error">{error}</Notice>}
+      <div className="form-actions">
+        <button type="button" className="btn btn-outline" onClick={props.onDecline}>Nicht einwilligen</button>
         <button
           type="button"
-          className="btn-primary"
+          className="btn btn-primary"
           disabled={!agreed || !signature || signedName.trim().length < 3 || busy}
           onClick={submit}
         >
           Einwilligen und unterschreiben
         </button>
-        <button type="button" className="btn-ghost" onClick={props.onDecline}>Nicht einwilligen</button>
       </div>
     </div>
   );

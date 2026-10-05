@@ -2,8 +2,10 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { kioskLoginEmail } from "../lib/config";
 import { clearAll, getCache, setCache } from "../lib/db";
+import { AuthLayout } from "../admin/AdminApp";
+import { Field, Notice } from "../components/ui";
 import { kioskDb } from "../lib/supabase";
-import type { KioskDevice, Location } from "../lib/types";
+import { type KioskDevice, type Location, studioShort } from "../lib/types";
 import { Kiosk } from "./Kiosk";
 import type { KioskSession } from "./useKiosk";
 
@@ -57,9 +59,11 @@ export function KioskApp() {
   if (phase.kind === "login") return <KioskLogin error={phase.error} onDone={resolve} />;
   if (phase.kind === "pick-location") {
     return (
-      <div className="screen setup">
-        <h1>Welches Studio?</h1>
-        <p className="muted">Tablet „{phase.device.name}“ – Auswahl bleibt gespeichert.</p>
+      <div className="auth">
+        <div className="auth-head">
+          <h1>Welches Studio?</h1>
+          <p>Tablet „{phase.device.name}“ – die Auswahl bleibt gespeichert.</p>
+        </div>
         <div className="studio-grid">
           {phase.locations.map((l) => (
             <button
@@ -71,7 +75,7 @@ export function KioskApp() {
                 void resolve();
               }}
             >
-              {l.name}
+              {studioShort(l.name)}
             </button>
           ))}
         </div>
@@ -109,24 +113,20 @@ function KioskLogin(props: { error?: string; onDone: () => void }) {
   }
 
   return (
-    <div className="screen setup">
-      <form className="card form" onSubmit={submit}>
-        <h1>Tablet einrichten</h1>
-        <p className="muted">Mit dem Tablet-Konto anmelden (Benutzername und Passwort aus der Verwaltung). Das ist nur einmal nötig.</p>
-        <label>
-          Benutzername des Tablets
+    <AuthLayout title="Tablet einrichten" text="Einmalig mit dem Tablet-Konto aus der Verwaltung anmelden.">
+      <form className="panel form" onSubmit={submit}>
+        <Field label="Benutzername des Tablets">
           <input id="kiosk-username" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
-        </label>
-        <label>
-          Passwort
+        </Field>
+        <Field label="Passwort">
           <input id="kiosk-password" name="password" type="password" autoComplete="current-password" required />
-        </label>
-        {error && <p className="form-error">{error}</p>}
-        <button type="submit" className="btn-primary" disabled={busy}>
+        </Field>
+        {error && <Notice tone="error">{error}</Notice>}
+        <button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? "Anmelden …" : "Anmelden"}
         </button>
-        <a className="link" href="#/admin">Zur Verwaltung (Leitung/Admin)</a>
       </form>
-    </div>
+      <p className="auth-foot"><a href="#/">Zur Startseite</a></p>
+    </AuthLayout>
   );
 }

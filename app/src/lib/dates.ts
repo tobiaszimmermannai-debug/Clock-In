@@ -79,3 +79,23 @@ export function isoWeek(date: string): number {
   const firstThursday = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
   return 1 + Math.round(((t.getTime() - firstThursday.getTime()) / 86_400_000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
 }
+
+const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const MONTHS = ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."];
+
+/** "Mo" … "So" */
+export function weekdayShort(date: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return WEEKDAYS[(new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7];
+}
+
+export const dayOfMonth = (date: string) => Number(date.slice(8, 10));
+
+/** "5.–11. Okt." bzw. "29. Sept. – 5. Okt." */
+export function weekRangeLabel(start: string): string {
+  const end = addDays(start, 6);
+  const month = (date: string) => MONTHS[Number(date.slice(5, 7)) - 1];
+  return start.slice(5, 7) === end.slice(5, 7)
+    ? `${dayOfMonth(start)}.–${dayOfMonth(end)}. ${month(end)}`
+    : `${dayOfMonth(start)}. ${month(start)} – ${dayOfMonth(end)}. ${month(end)}`;
+}

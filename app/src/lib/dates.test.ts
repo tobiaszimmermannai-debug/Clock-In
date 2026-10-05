@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekStart } from "./dates";
+import { addDays, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "./dates";
 
 describe("Berliner Zeit", () => {
   it("Sommerzeit: 09:00 Berlin = 07:00 UTC", () => {
@@ -38,5 +38,14 @@ describe("Kalender", () => {
     expect(fmtDay("2026-10-05")).toBe("Mo., 05.10.");
     expect(fmtHM(390)).toBe("6:30");
     expect(fmtHM(-45)).toBe("−0:45");
+  });
+});
+
+describe("Wochen-Beschriftung", () => {
+  it("Wochentag und Zeitraum", () => {
+    expect(weekdayShort("2026-10-05")).toBe("Mo");
+    expect(weekdayShort("2026-10-11")).toBe("So");
+    expect(weekRangeLabel("2026-10-05")).toBe("5.–11. Okt.");
+    expect(weekRangeLabel("2026-09-28")).toBe("28. Sept. – 4. Okt.");
   });
 });

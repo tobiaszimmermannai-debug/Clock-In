@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { AdminApp } from "./admin/AdminApp";
+import { AdminApp, AuthLayout } from "./admin/AdminApp";
+import { LeadingIcon, Row } from "./components/ui";
 import { KioskApp } from "./kiosk/KioskApp";
 import { isConfigured, SESSION_KEYS } from "./lib/supabase";
 import { PortalApp } from "./portal/PortalApp";
@@ -29,7 +30,7 @@ export default function App() {
   if (!isConfigured) {
     return (
       <div className="screen center">
-        <p className="card">Supabase ist nicht konfiguriert (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY fehlen).</p>
+        <p className="panel">Supabase ist nicht konfiguriert (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY fehlen).</p>
       </div>
     );
   }
@@ -42,15 +43,14 @@ export default function App() {
 }
 
 function Start() {
+  const go = (hash: string) => () => (location.hash = hash);
   return (
-    <div className="screen setup">
-      <div className="card form">
-        <h1>Clock-In</h1>
-        <p className="muted">Wie möchtest du die App nutzen?</p>
-        <a className="btn-primary btn-block" href="#/portal">Mitarbeiter-Login (Handy)</a>
-        <a className="btn-ghost btn-block" href="#/kiosk">Tablet im Studio einrichten</a>
-        <a className="btn-ghost btn-block" href="#/admin">Verwaltung</a>
+    <AuthLayout title="Clock-In" text="Wie möchtest du die App nutzen?">
+      <div className="list">
+        <Row leading={<LeadingIcon name="phone" />} title="Mitarbeiter-Login" subtitle="Stunden, Dienstplan, Schichttausch" chevron onClick={go("#/portal")} />
+        <Row leading={<LeadingIcon name="tablet" />} title="Tablet im Studio einrichten" subtitle="Ein- und Ausstempeln per Gesicht" chevron onClick={go("#/kiosk")} />
+        <Row leading={<LeadingIcon name="shield" />} title="Verwaltung" subtitle="Studioleitung und Geschäftsführung" chevron onClick={go("#/admin")} />
       </div>
-    </div>
+    </AuthLayout>
   );
 }

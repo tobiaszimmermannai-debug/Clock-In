@@ -1,12 +1,13 @@
 // Konto: Passwort ändern, Einwilligung zur Gesichtserkennung widerrufen, abmelden
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { Field, LeadingIcon, Notice, PageHeader, Row, Section } from "../components/ui";
 import { portalDb } from "../lib/supabase";
 import type { Me } from "./PortalApp";
 
 export function Account(props: { me: Me; onLogout: () => void }) {
   const [consent, setConsent] = useState<{ id: string; given_at: string } | null>();
   const [confirm, setConfirm] = useState(false);
-  const [message, setMessage] = useState<{ tone: "info" | "error"; text: string }>();
+  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string }>();
 
   const loadConsent = useCallback(async () => {
     const { data } = await portalDb
@@ -32,7 +33,7 @@ export function Account(props: { me: Me; onLogout: () => void }) {
     setMessage(
       error
         ? { tone: "error", text: error.message }
-        : { tone: "info", text: "Einwilligung widerrufen. Deine Gesichtsdaten wurden gelöscht. Stempeln bitte telefonisch bei Tobias oder Dominik melden." },
+        : { tone: "ok", text: "Einwilligung widerrufen. Deine Gesichtsdaten wurden gelöscht. Stempeln bitte telefonisch bei Tobias oder Dominik melden." },
     );
     void loadConsent();
   }
@@ -46,43 +47,54 @@ export function Account(props: { me: Me; onLogout: () => void }) {
     const { error } = await portalDb.auth.updateUser({ password: pw });
     if (error) return setMessage({ tone: "error", text: `Passwort konnte nicht geändert werden: ${error.message}` });
     form.reset();
-    setMessage({ tone: "info", text: "Passwort geändert." });
+    setMessage({ tone: "ok", text: "Passwort geändert." });
   }
 
   return (
-    <section className="stack">
-      <h1>Konto</h1>
-      {message && <p className={message.tone === "error" ? "form-error" : "notice notice-info"}>{message.text}</p>}
+    <>
+      <PageHeader title="Konto" subtitle={`${props.me.first_name} ${props.me.last_name}`} />
+      {message && <Notice tone={message.tone}>{message.text}</Notice>}
 
-      <div className="card stack">
-        <h2>Gesichtserkennung</h2>
-        {consent === undefined && <p className="muted">Lädt …</p>}
-        {consent === null && <p className="muted">Es sind keine Gesichtsdaten von dir gespeichert.</p>}
+      <Section title="Gesichtserkennung">
+        {consent === undefined && <p className="list-empty">Lädt …</p>}
+        {consent === null && <Row leading={<LeadingIcon name="face" />} title="Keine Gesichtsdaten gespeichert" />}
         {consent && (
-          <>
-            <p>
-              Du hast am {new Date(consent.given_at).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} eingewilligt.
-              Du kannst jederzeit ohne Nachteile widerrufen – deine Gesichtsdaten werden dann sofort gelöscht.
-            </p>
-            {!confirm ? (
-              <button type="button" className="btn-danger" onClick={() => setConfirm(true)}>Einwilligung widerrufen</button>
-            ) : (
-              <button type="button" className="btn-danger" onClick={() => void revoke()}>
-                Wirklich widerrufen und Gesichtsdaten löschen
-              </button>
-            )}
-          </>
+          <div className="list-item">
+            <Row
+              leading={<LeadingIcon name="face" />}
+              title="Einwilligung erteilt"
+              subtitle={`am ${new Date(consent.given_at).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} · jederzeit ohne Nachteile widerrufbar`}
+            />
+            <div className="list-actions indent">
+              {!confirm ? (
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirm(true)}>Einwilligung widerrufen</button>
+              ) : (
+                <button type="button" className="btn btn-danger-solid btn-sm" onClick={() => void revoke()}>
+                  Wirklich widerrufen und Gesichtsdaten löschen
+                </button>
+              )}
+            </div>
+          </div>
         )}
-      </div>
+      </Section>
 
-      <form className="card form" onSubmit={changePassword}>
-        <h2>Passwort ändern</h2>
-        <label>Neues Passwort<input id="new-password" name="password" type="password" minLength={10} autoComplete="new-password" required /></label>
-        <label>Wiederholen<input id="new-password2" name="password2" type="password" minLength={10} autoComplete="new-password" required /></label>
-        <button type="submit" className="btn-primary">Speichern</button>
-      </form>
+      <Section title="Passwort ändern" plain>
+        <form className="panel form" onSubmit={changePassword}>
+          <Field label="Neues Passwort" hint="Mindestens 10 Zeichen">
+            <input id="new-password" name="password" type="password" minLength={10} autoComplete="new-password" required />
+          </Field>
+          <Field label="Wiederholen">
+            <input id="new-password2" name="password2" type="password" minLength={10} autoComplete="new-password" required />
+          </Field>
+          <div className="form-actions">
+            <button type="submit" className="btn btn-secondary">Passwort speichern</button>
+          </div>
+        </form>
+      </Section>
 
-      <button type="button" className="btn-ghost" onClick={props.onLogout}>Abmelden</button>
-    </section>
+      <Section>
+        <Row className="is-danger" leading={<LeadingIcon name="logout" />} title="Abmelden" onClick={props.onLogout} />
+      </Section>
+    </>
   );
 }

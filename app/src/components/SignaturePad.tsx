@@ -82,9 +82,10 @@ export function SignaturePad(props: { onChange: (svg: string | null) => void }) 
         onPointerUp={up}
         onPointerCancel={up}
       />
-      <div className="row-between">
+      <div className="row">
         <span className="muted small">Mit Finger oder Stift unterschreiben</span>
-        <button type="button" className="btn-small" onClick={clear}>Löschen</button>
+        <span className="spacer" />
+        <button type="button" className="btn btn-plain btn-sm" onClick={clear}>Löschen</button>
       </div>
     </div>
   );

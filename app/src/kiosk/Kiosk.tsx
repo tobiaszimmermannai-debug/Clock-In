@@ -1,14 +1,16 @@
 // Kiosk-Hauptansicht: Uhr, vier Aktionen, Gesichtserkennung, Ergebnis
 import { useEffect, useRef, useState } from "react";
 import { FaceScan } from "../components/FaceScan";
+import { Icon, type IconName } from "../components/ui";
 import type { Match } from "../lib/match";
 import { relevantShift, shiftNotice, type Notice } from "../lib/shiftInfo";
 import { validateAction } from "../lib/status";
 import { fmtClock, fmtClockSec, fmtDate } from "../lib/time";
-import { EVENT_LABEL, type EventType } from "../lib/types";
+import { EVENT_LABEL, type EventType, studioShort } from "../lib/types";
 import { type KioskSession, useKiosk } from "./useKiosk";
 
 const ACTIONS: EventType[] = ["clock_in", "break_start", "break_end", "clock_out"];
+const ACTION_ICON: Record<EventType, IconName> = { clock_in: "login", break_start: "coffee", break_end: "play", clock_out: "logout" };
 
 const GREETING: Record<EventType, (name: string) => string> = {
   clock_in: (n) => `Hallo ${n}!`,
@@ -65,7 +67,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
   return (
     <div className="screen kiosk">
       <header className="kiosk-bar">
-        <StudioTitle name={props.session.location.name} />
+        <StudioTitle name={studioShort(props.session.location.name)} />
         <SyncBadge online={kiosk.online} pending={kiosk.pending} failed={kiosk.failed} />
       </header>
 
@@ -78,6 +80,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
           <div className="actions">
             {ACTIONS.map((a) => (
               <button key={a} type="button" className={`action action-${a}`} onClick={() => start(a)}>
+                <Icon name={ACTION_ICON[a]} stroke={2.2} />
                 {EVENT_LABEL[a]}
               </button>
             ))}
@@ -99,7 +102,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
               })
             }
           />
-          <button type="button" className="btn-ghost" onClick={() => setPhase({ kind: "idle" })}>
+          <button type="button" className="btn btn-outline" onClick={() => setPhase({ kind: "idle" })}>
             Abbrechen
           </button>
         </main>
@@ -107,7 +110,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
 
       {phase.kind === "done" && (
         <main className="kiosk-result" onClick={() => setPhase({ kind: "idle" })}>
-          <div className={`result-icon action-${phase.action}`} aria-hidden="true">✓</div>
+          <div className={`result-icon action-${phase.action}`} aria-hidden="true"><Icon name="check" stroke={3} /></div>
           <h2>{GREETING[phase.action](phase.name)}</h2>
           <p className="result-line">
             {EVENT_LABEL[phase.action]} · {fmtClock(phase.at)} Uhr
@@ -119,7 +122,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
 
       {phase.kind === "error" && (
         <main className="kiosk-result" onClick={() => setPhase({ kind: "idle" })}>
-          <div className="result-icon is-error" aria-hidden="true">!</div>
+          <div className="result-icon is-error" aria-hidden="true"><Icon name="x" stroke={3} /></div>
           <h2>{phase.title}</h2>
           <p className="result-line">{phase.text}</p>
           <p className="muted">Zum Schließen tippen</p>

@@ -1,8 +1,9 @@
 // Tablet-Konten (nur Admin): anlegen mit Benutzername, sperren, Passwort neu setzen
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { Field, Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet } from "../components/ui";
 import { accountAdmin, generatePassword } from "../lib/accountAdmin";
 import { adminDb } from "../lib/supabase";
-import type { Location } from "../lib/types";
+import { type Location, studioShort } from "../lib/types";
 
 type Tablet = { id: string; name: string; username: string | null; location_id: string | null; is_active: boolean };
 
@@ -10,7 +11,7 @@ export function Tablets() {
   const [tablets, setTablets] = useState<Tablet[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [creating, setCreating] = useState(false);
-  const [message, setMessage] = useState<{ tone: "info" | "error"; text: string }>();
+  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string }>();
 
   const load = useCallback(async () => {
     const [devices, locs] = await Promise.all([
@@ -36,57 +37,56 @@ export function Tablets() {
     const password = generatePassword();
     try {
       await accountAdmin({ action: "set_tablet_password", device_id: t.id, password });
-      setMessage({ tone: "info", text: `Neues Passwort für „${t.name}“: ${password} – bitte notieren, es wird nicht erneut angezeigt.` });
+      setMessage({ tone: "ok", text: `Neues Passwort für „${t.name}“: ${password} – bitte notieren, es wird nicht erneut angezeigt.` });
     } catch (e) {
       setMessage({ tone: "error", text: (e as Error).message });
     }
   }
 
-  const studio = (id: string | null) => (id ? locations.find((l) => l.id === id)?.name ?? "–" : "am Tablet wählbar");
+  const studio = (id: string | null) => (id ? studioShort(locations.find((l) => l.id === id)?.name ?? "–") : "Studio am Tablet wählbar");
 
   return (
-    <section className="stack">
-      <div className="row-between">
-        <h1>Tablets</h1>
-        {!creating && <button type="button" className="btn-primary" onClick={() => setCreating(true)}>Neues Tablet</button>}
-      </div>
-      {message && <p className={message.tone === "error" ? "form-error" : "notice notice-info"}>{message.text}</p>}
+    <>
+      <PageHeader
+        title="Tablets"
+        actions={
+          <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
+            <Icon name="plus" size={20} /> Neues Tablet
+          </button>
+        }
+      />
+      {message && <Notice tone={message.tone}>{message.text}</Notice>}
+      <Section footer="Am Tablet die App-Adresse öffnen und mit Benutzername + Passwort anmelden.">
+        {tablets.length === 0 && <p className="list-empty">Noch keine Tablets angelegt.</p>}
+        {tablets.map((t) => (
+          <div key={t.id} className="list-item">
+            <Row
+              leading={<LeadingIcon name="tablet" />}
+              title={t.name}
+              subtitle={<>{studio(t.location_id)} · Benutzer <code>{t.username ?? "–"}</code></>}
+              trailing={t.is_active ? <Pill tone="ok">aktiv</Pill> : <Pill tone="bad">gesperrt</Pill>}
+            />
+            <div className="list-actions indent">
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => void resetPassword(t)}>Neues Passwort</button>
+              <button type="button" className={t.is_active ? "btn btn-danger btn-sm" : "btn btn-secondary btn-sm"} onClick={() => void toggle(t)}>
+                {t.is_active ? "Sperren" : "Freigeben"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </Section>
       {creating && (
         <NewTablet
           locations={locations}
           onCancel={() => setCreating(false)}
           onCreated={(text) => {
             setCreating(false);
-            setMessage({ tone: "info", text });
+            setMessage({ tone: "ok", text });
             void load();
           }}
         />
       )}
-      <div className="table-wrap">
-        <table className="table">
-          <thead>
-            <tr><th>Name</th><th>Benutzername</th><th>Studio</th><th>Status</th><th /></tr>
-          </thead>
-          <tbody>
-            {tablets.map((t) => (
-              <tr key={t.id}>
-                <td>{t.name}</td>
-                <td><code>{t.username ?? "–"}</code></td>
-                <td>{studio(t.location_id)}</td>
-                <td>{t.is_active ? <span className="pill pill-ok">aktiv</span> : <span className="pill">gesperrt</span>}</td>
-                <td className="right row-end">
-                  <button type="button" className="btn-small" onClick={() => void resetPassword(t)}>Neues Passwort</button>
-                  <button type="button" className="btn-small" onClick={() => void toggle(t)}>{t.is_active ? "Sperren" : "Freigeben"}</button>
-                </td>
-              </tr>
-            ))}
-            {tablets.length === 0 && (
-              <tr><td colSpan={5} className="muted">Noch keine Tablets angelegt.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    </>
   );
 }
 
@@ -118,34 +118,30 @@ function NewTablet(props: { locations: Location[]; onCancel: () => void; onCreat
   }
 
   return (
-    <form className="card form form-wide" onSubmit={submit}>
-      <h2>Neues Tablet</h2>
-      <div className="grid-2">
-        <label>Name<input id="tablet-name" name="name" placeholder="z. B. Tablet Nord" required /></label>
-        <label>
-          Benutzername
-          <input id="tablet-username" name="username" placeholder="z. B. nord" pattern="[a-z0-9][a-z0-9_\-]{2,30}" title="3–31 Zeichen: a–z, 0–9, - und _" autoCapitalize="none" required />
-        </label>
-        <label>
-          Studio
+    <Sheet
+      title="Neues Tablet"
+      onClose={props.onCancel}
+      footer={<button type="submit" form="new-tablet" className="btn btn-primary" disabled={busy}>{busy ? "Legt an …" : "Anlegen"}</button>}
+    >
+      <form id="new-tablet" className="form" onSubmit={submit}>
+        <Field label="Name"><input id="tablet-name" name="name" placeholder="z. B. Tablet Krailling" required /></Field>
+        <Field label="Benutzername" hint="3–31 Zeichen: a–z, 0–9, - und _">
+          <input id="tablet-username" name="username" placeholder="z. B. krailling" pattern="[a-z0-9][a-z0-9_\-]{2,30}" autoCapitalize="none" spellCheck={false} required />
+        </Field>
+        <Field label="Studio">
           <select id="tablet-location" name="location" defaultValue="">
             <option value="">Am Tablet wählbar</option>
-            {props.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            {props.locations.map((l) => <option key={l.id} value={l.id}>{studioShort(l.name)}</option>)}
           </select>
-        </label>
-        <label>
-          Passwort
-          <div className="row">
+        </Field>
+        <Field label="Passwort">
+          <div className="input-row">
             <input id="tablet-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={10} required />
-            <button type="button" className="btn-small" onClick={() => setPassword(generatePassword())}>Neu</button>
+            <button type="button" className="btn btn-outline" onClick={() => setPassword(generatePassword())}>Neu</button>
           </div>
-        </label>
-      </div>
-      {error && <p className="form-error">{error}</p>}
-      <div className="row">
-        <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Legt an …" : "Anlegen"}</button>
-        <button type="button" className="btn-ghost" onClick={props.onCancel}>Abbrechen</button>
-      </div>
-    </form>
+        </Field>
+        {error && <Notice tone="error">{error}</Notice>}
+      </form>
+    </Sheet>
   );
 }

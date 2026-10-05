@@ -1,11 +1,11 @@
 // Zeiten je Mitarbeiter (Soll/Ist, Stempelungen) und Nachtrag (Admin sofort, Studioleitung mit Freigabe)
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { DayTable, type DaySummary, istMinutes, type Stamp, SummaryCard } from "../components/DayTable";
-import { WeekNav } from "../components/ui";
+import { Field, Icon, Notice, PageHeader, Sheet, WeekNav } from "../components/ui";
 import { addDays, berlinDate, berlinTime, berlinToISO, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
-import { EVENT_LABEL, type EventType, type Location } from "../lib/types";
+import { EVENT_LABEL, type EventType, type Location, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
 
 type Staffer = {
@@ -26,6 +26,7 @@ export function Times({ profile }: { profile: Profile }) {
   const [stamps, setStamps] = useState<Stamp[]>([]);
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
+  const [entry, setEntry] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -89,56 +90,71 @@ export function Times({ profile }: { profile: Profile }) {
       );
     }
     form.reset();
+    setEntry(false);
     setError(undefined);
     setMessage(isAdmin ? "Nachtrag gespeichert." : "Nachtrag gespeichert – wartet auf Freigabe durch Tobias oder Dominik.");
     void load();
   }
 
   return (
-    <section className="stack">
-      <h1>Zeiten</h1>
-      <div className="row">
-        <select id="times-person" value={personId} onChange={(e) => setPersonId(e.target.value)} aria-label="Mitarbeiter">
+    <>
+      <PageHeader
+        title="Zeiten"
+        actions={
+          <button type="button" className="btn btn-primary" disabled={!personId} onClick={() => { setError(undefined); setEntry(true); }}>
+            <Icon name="plus" size={20} /> Nachtragen
+          </button>
+        }
+      />
+      <Field label="Mitarbeiter">
+        <select id="times-person" value={personId} onChange={(e) => setPersonId(e.target.value)}>
           {people.map((p) => <option key={p.id} value={p.id}>{p.first_name} {p.last_name}</option>)}
         </select>
-      </div>
+      </Field>
       <WeekNav start={start} onChange={setStart} />
       {person && (
-        <div className="summary">
-          <SummaryCard title={`${person.first_name} · diese Woche`} ist={istMinutes(days)} soll={person.employment_details?.weekly_target_minutes ?? 0} />
+        <div className="stats">
+          <SummaryCard title={`${person.first_name} · Woche`} ist={istMinutes(days)} soll={person.employment_details?.weekly_target_minutes ?? 0} />
         </div>
       )}
-      {error && <p className="form-error">{error}</p>}
-      {message && <p className="notice notice-info">{message}</p>}
+      {error && !entry && <Notice tone="error">{error}</Notice>}
+      {message && <Notice tone="ok">{message}</Notice>}
       <DayTable days={days} stamps={stamps} />
-      <p className="muted small">✍️ Nachtrag · 🤖 automatisch ausgestempelt · 📶 offline nachgesendet</p>
 
-      <form className="card form form-wide" onSubmit={addEntry}>
-        <h2>Zeit nachtragen{person ? ` für ${person.first_name}` : ""}</h2>
-        <p className="muted small">
-          {isAdmin
-            ? "Bis 7 Tage rückwirkend, sofort gültig. Z. B. nach einem Anruf ohne Gesichtserkennung."
-            : "Nur mit Freischaltung durch einen Admin; der Nachtrag wartet auf Freigabe durch Tobias oder Dominik."}
-        </p>
-        <div className="grid-2">
-          <label>
-            Buchung
-            <select id="entry-event" name="event" defaultValue="clock_in">
-              {(Object.keys(EVENT_LABEL) as EventType[]).map((t) => <option key={t} value={t}>{EVENT_LABEL[t]}</option>)}
-            </select>
-          </label>
-          <label>
-            Studio
-            <select id="entry-location" name="location" defaultValue={person?.home_location_id ?? undefined}>
-              {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
-          </label>
-          <label>Datum<input id="entry-date" name="date" type="date" defaultValue={berlinDate()} max={berlinDate()} required /></label>
-          <label>Uhrzeit<input id="entry-time" name="time" type="time" defaultValue={berlinTime(new Date())} required /></label>
-        </div>
-        <label>Grund (Pflicht)<input id="entry-note" name="note" required minLength={3} maxLength={200} placeholder="z. B. Anruf, Tablet defekt" /></label>
-        <button type="submit" className="btn-primary" disabled={!personId}>Nachtragen</button>
-      </form>
-    </section>
+      {entry && (
+        <Sheet
+          title="Zeit nachtragen"
+          subtitle={person ? `${person.first_name} ${person.last_name}` : undefined}
+          onClose={() => setEntry(false)}
+          footer={<button type="submit" form="entry-form" className="btn btn-primary">Nachtragen</button>}
+        >
+          <form id="entry-form" className="form" onSubmit={addEntry}>
+            <p className="muted small">
+              {isAdmin
+                ? "Bis 7 Tage rückwirkend, sofort gültig – z. B. nach einem Anruf ohne Gesichtserkennung."
+                : "Nur mit Freischaltung durch einen Admin; der Nachtrag wartet auf Freigabe durch Tobias oder Dominik."}
+            </p>
+            <div className="grid-2">
+              <Field label="Buchung">
+                <select id="entry-event" name="event" defaultValue="clock_in">
+                  {(Object.keys(EVENT_LABEL) as EventType[]).map((t) => <option key={t} value={t}>{EVENT_LABEL[t]}</option>)}
+                </select>
+              </Field>
+              <Field label="Studio">
+                <select id="entry-location" name="location" defaultValue={person?.home_location_id ?? undefined}>
+                  {locations.map((l) => <option key={l.id} value={l.id}>{studioShort(l.name)}</option>)}
+                </select>
+              </Field>
+              <Field label="Datum"><input id="entry-date" name="date" type="date" defaultValue={berlinDate()} max={berlinDate()} required /></Field>
+              <Field label="Uhrzeit"><input id="entry-time" name="time" type="time" defaultValue={berlinTime(new Date())} required /></Field>
+            </div>
+            <Field label="Grund (Pflicht)">
+              <input id="entry-note" name="note" required minLength={3} maxLength={200} placeholder="z. B. Anruf, Tablet defekt" />
+            </Field>
+            {error && <Notice tone="error">{error}</Notice>}
+          </form>
+        </Sheet>
+      )}
+    </>
   );
 }

@@ -1,7 +1,7 @@
 // Soll/Ist pro Woche und Monat, Tagesübersicht mit Stempelzeiten und Hinweisen
 import { useCallback, useEffect, useState } from "react";
 import { DayTable, type DaySummary, istMinutes, type Stamp, SummaryCard } from "../components/DayTable";
-import { WeekNav } from "../components/ui";
+import { Notice, PageHeader, WeekNav } from "../components/ui";
 import { addDays, berlinDate, berlinToISO, daysBetween, monthStart, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { portalDb } from "../lib/supabase";
@@ -45,20 +45,23 @@ export function Hours({ me }: { me: Me }) {
   }, [load]);
 
   return (
-    <section className="stack">
-      <h1>Meine Stunden</h1>
-      <div className="summary">
+    <>
+      <PageHeader title="Meine Stunden" subtitle={`Hallo ${me.first_name}!`} />
+      <div className="stats">
         <SummaryCard title="Diese Woche" ist={istMinutes(days)} soll={target} />
         {month && <SummaryCard title="Monat bis heute" ist={month.ist} soll={month.soll} hint="Soll anteilig" />}
       </div>
       <WeekNav start={start} onChange={setStart} />
-      {error && <p className="form-error">{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
       <DayTable days={days} stamps={stamps} />
-      <p className="muted small">
-        Gezählt wird ab Schichtbeginn (bis 5 Min. Verspätung gilt als pünktlich) bis Schichtende; Überstunden nach
-        Freigabe. Jede Pause zählt mindestens 15 Min., gesetzlich 30 Min. ab 6 Std. und 45 Min. ab 9 Std. Arbeit.
-        IST, Krank und Urlaub zählen je 6,5 Std.
-      </p>
-    </section>
+      <details className="panel explain">
+        <summary>So wird gezählt</summary>
+        <p className="muted small">
+          Ab Schichtbeginn (bis 5 Min. Verspätung gilt als pünktlich) bis Schichtende; Überstunden nach Freigabe.
+          Jede Pause zählt mindestens 15 Min., gesetzlich 30 Min. ab 6 Std. und 45 Min. ab 9 Std. Arbeit.
+          IST, Krank und Urlaub zählen je 6,5 Std.
+        </p>
+      </details>
+    </>
   );
 }
