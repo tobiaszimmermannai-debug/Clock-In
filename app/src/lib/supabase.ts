@@ -6,7 +6,7 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 export const isConfigured = Boolean(url && key);
 
 // Getrennte Sitzungen: Das Tablet bleibt als Kiosk angemeldet, während sich
-// eine Leitung/Admin auf demselben Gerät anmeldet (z. B. zum Gesicht erfassen).
+// eine Leitung/Admin auf demselben Gerät anmeldet (z. B. zum Verwalten).
 // Das Handy-Portal der Mitarbeiter hat eine eigene Sitzung.
 function client(storageKey: string): SupabaseClient {
   return createClient(url ?? "http://localhost", key ?? "missing", {

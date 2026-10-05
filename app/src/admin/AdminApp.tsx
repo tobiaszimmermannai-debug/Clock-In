@@ -1,4 +1,4 @@
-// Verwaltung (Leitung/Admin): Anmeldung inkl. 2FA, danach Mitarbeiter & Gesichtserfassung
+// Verwaltung (Leitung/Admin): Anmeldung inkl. 2FA, danach Dienstplan, Team, Zeiten, Freigaben, Tablets
 import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from "react";
 import { Shell, type ShellTab } from "../components/Shell";
 import { BrandMark, Field, Notice } from "../components/ui";

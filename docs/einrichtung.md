@@ -85,13 +85,14 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 
 ---
 
-## Teil I – Update: Einwilligung, Tablet-Konten, Regeln, Portal (nur wenn Teil B schon lief)
+## Teil I – Updates einspielen (nur wenn Teil B schon lief)
 **SQL Editor → New query** → nacheinander ausführen:
 1. `supabase/migrations/20261006090000_consent_kiosk_accounts.sql`
 2. `supabase/migrations/20261006120000_rules_engine.sql`
 3. `supabase/migrations/20261006150000_portal_swaps_report.sql`
 4. `supabase/migrations/20261006180000_studio_staffing.sql`
 5. `supabase/migrations/20261007090000_studio_names.sql` (Studionamen Krailling, Germering, Starnberg, Moosach)
+6. `supabase/migrations/20261007120000_phone_stamping.sql` (Stempeln mit Handy + Tablet statt Gesichtserkennung)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -121,13 +122,16 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 1. Am Handy/PC `https://<deine-vercel-adresse>/#/admin` öffnen → anmelden → 2FA einrichten.
 2. **Tablets → Neues Tablet**: Name, Benutzername (z. B. `krailling`), Studio → Passwort notieren.
 3. Am Tablet in Chrome die Vercel-Adresse öffnen → Menü → **Zum Startbildschirm hinzufügen**.
-4. App öffnen → Benutzername + Passwort → Kamera erlauben.
+4. App öffnen → Benutzername + Passwort → das Tablet zeigt Uhr und QR-Code.
+   Das Tablet muss im **Studio-WLAN** sein (nicht über mobile Daten).
 5. Android: **Bildschirm fixieren** aktivieren (Einstellungen → Sicherheit), damit niemand die App verlässt.
 
 ## Teil M – Mitarbeiter aufs Handy
 1. Verwaltung → **Team** → Person antippen → **Zugang anlegen** → Benutzername (Vorschlag `vorname.nachname`) + Startpasswort weitergeben.
 2. Mitarbeiter öffnet `https://<deine-vercel-adresse>/#/portal` → anmelden → Menü → **Zum Startbildschirm hinzufügen**.
-3. Im Portal: Stunden (Soll/Ist), Dienstplan aller Studios, Schichttausch, Passwort ändern, Einwilligung widerrufen.
+3. Erstes Stempeln: im Studio-WLAN **Stempeln → Scannen** → QR-Code am Tablet. Dieses Handy wird dabei
+   automatisch als Stempel-Handy registriert (ihr bekommt eine Telegram-Meldung).
+4. Im Portal außerdem: Stunden (Soll/Ist), Dienstplan aller Studios, Schichttausch, Passwort ändern.
 
 ---
 
@@ -138,7 +142,7 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   *Einstellungen → Datenschutz → Zweistufige Bestätigung* aktivieren.
 - **Nur Freigaben, keine Einzelmeldungen:**
   `update public.telegram_links set notify_bookings = false where chat_id = <CHAT_ID>;`
-- **Fehlersuche:** Edge Functions → `telegram` bzw. `kiosk-admin` → **Logs**.
+- **Fehlersuche:** Edge Functions → `telegram` bzw. `account-admin` → **Logs**.
 - **Regeln (änderbar in `rule_settings`):** bis 5 Min. zu spät = pünktlich · Überstunden nur nach Freigabe ·
   jede Pause mind. 15 Min., gesetzlich 30/45 Min. ab 6/9 Std. · Auto-Checkout 23 Uhr · 18 Uhr Abfrage
   Krank/IST/Urlaub (je 6,5 Std.) · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
@@ -147,6 +151,9 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 - **Studio besetzt:** erste Stempelung des Tages je Studio → 🟢-Meldung; 10 Min. nach der ersten geplanten
   Schicht noch niemand da → 🔴-Warnung. Im Bot: `/kurz` = nur Wichtiges, `/alle` = jede Stempelung.
 - **Wochenbericht:** freitags 19 Uhr per Telegram (Stunden, Verspätungen, Überstunden, offene Freigaben).
-- **Gesichtserkennung & Datenschutz:** Gesichtsdaten nur nach digital unterschriebener Einwilligung.
-  Widerruf oder Deaktivierung eines Mitarbeiters löscht die Gesichtsdaten sofort. Am Kiosk schützt eine
-  zufällige Kopfdrehung vor Fotos (nicht vor professionell vorbereiteten Videos oder Masken).
+- **Stempeln (Handy + Tablet):** Das Tablet zeigt einen QR-Code, der alle 30 Sek. wechselt. Gebucht wird nur, wenn
+  (1) das Konto mit seinem **eigenen registrierten Handy** stempelt, (2) der QR-Code frisch ist (also vor Ort gescannt) und
+  (3) Handy und Tablet im **selben Netz** sind (gleiche Internet-Adresse des Studio-WLANs).
+  Ein Handy gehört genau einer Person – Kollegen können niemanden mit dem eigenen Handy einstempeln.
+  Neues Handy: Verwaltung → Team → Person → **Stempel-Handy zurücksetzen**. Schutz gegen normales Mogeln, nicht gegen Hacker.
+  Ohne Handy oder bei Problemen: Anruf bei Tobias oder Dominik → Nachtrag in der Verwaltung.

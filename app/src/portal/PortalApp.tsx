@@ -10,6 +10,7 @@ import { portalDb } from "../lib/supabase";
 import type { Location, Role } from "../lib/types";
 import { Account } from "./Account";
 import { Hours } from "./Hours";
+import { Stamp } from "./Stamp";
 import { Swap } from "./Swap";
 
 export type Me = {
@@ -22,19 +23,28 @@ export type Me = {
 };
 export type Colleague = { id: string; first_name: string; last_name: string; home_location_id: string | null };
 
-type Tab = "hours" | "plan" | "swap" | "account";
+type Tab = "stamp" | "hours" | "plan" | "swap" | "account";
 const TABS: ShellTab<Tab>[] = [
+  { id: "stamp", label: "Stempeln", icon: "qr" },
   { id: "hours", label: "Stunden", icon: "clock" },
   { id: "plan", label: "Dienstplan", icon: "calendar" },
   { id: "swap", label: "Tausch", icon: "swap" },
   { id: "account", label: "Konto", icon: "user" },
 ];
 
-export function PortalApp() {
+// stampToken: QR-Code vom Tablet, wenn die App über die Kamera-App geöffnet wurde (#/s/<code>)
+export function PortalApp(props: { stampToken?: string }) {
   const [me, setMe] = useState<Me | null | undefined>(undefined); // undefined = lädt, null = abgemeldet
   const [colleagues, setColleagues] = useState<Colleague[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [tab, setTab] = useState<Tab>("hours");
+  const [tab, setTab] = useState<Tab>("stamp");
+  const [token, setToken] = useState(props.stampToken);
+
+  useEffect(() => {
+    if (!props.stampToken) return;
+    setToken(props.stampToken);
+    setTab("stamp");
+  }, [props.stampToken]);
   const [error, setError] = useState<string>();
 
   const load = useCallback(async () => {
@@ -73,6 +83,16 @@ export function PortalApp() {
 
   return (
     <Shell title="Clock-In" subtitle={`${me.first_name} ${me.last_name}`} tabs={TABS} current={tab} onTab={setTab}>
+      {tab === "stamp" && (
+        <Stamp
+          me={me}
+          token={token}
+          onTokenUsed={() => {
+            setToken(undefined);
+            location.replace("#/portal"); // Code nicht erneut verwenden (Neuladen, Zurück-Taste)
+          }}
+        />
+      )}
       {tab === "hours" && <Hours me={me} />}
       {tab === "plan" && <Plan me={me} locations={locations} />}
       {tab === "swap" && <Swap me={me} colleagues={colleagues} locations={locations} />}

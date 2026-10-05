@@ -6,8 +6,7 @@ import { AuthLayout } from "../admin/AdminApp";
 import { Field, Notice } from "../components/ui";
 import { kioskDb } from "../lib/supabase";
 import { type KioskDevice, type Location, studioShort } from "../lib/types";
-import { Kiosk } from "./Kiosk";
-import type { KioskSession } from "./useKiosk";
+import { Kiosk, type KioskSession } from "./Kiosk";
 
 type Phase =
   | { kind: "loading" }

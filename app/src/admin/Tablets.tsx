@@ -6,18 +6,36 @@ import { adminDb } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
 
 type Tablet = { id: string; name: string; username: string | null; location_id: string | null; is_active: boolean };
+type Seen = { last_seen_at: string; network: string | null };
+
+// "vor 3 Min." – zuletzt online
+function ago(iso: string): string {
+  const min = Math.round((Date.now() - Date.parse(iso)) / 60_000);
+  if (min < 2) return "gerade online";
+  if (min < 60) return `vor ${min} Min. online`;
+  if (min < 48 * 60) return `vor ${Math.round(min / 60)} Std. online`;
+  return `vor ${Math.round(min / 1440)} Tagen online`;
+}
 
 export function Tablets() {
   const [tablets, setTablets] = useState<Tablet[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [seen, setSeen] = useState<Record<string, Seen>>({});
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string }>();
 
   const load = useCallback(async () => {
-    const [devices, locs] = await Promise.all([
+    const [devices, locs, qr, nets] = await Promise.all([
       adminDb.from("kiosk_devices").select("id, name, username, location_id, is_active").order("name"),
       adminDb.from("locations").select("id, code, name").order("name"),
+      adminDb.from("kiosk_qr").select("device_id, last_seen_at"),
+      adminDb.from("kiosk_networks").select("device_id, network, last_seen_at").order("last_seen_at", { ascending: false }),
     ]);
+    // Zuletzt gesehenes Netz je Tablet (öffentliche Adresse des Studio-WLANs)
+    const map: Record<string, Seen> = {};
+    for (const q of qr.data ?? []) map[q.device_id] = { last_seen_at: q.last_seen_at, network: null };
+    for (const n of nets.data ?? []) if (map[n.device_id] && !map[n.device_id].network) map[n.device_id].network = n.network;
+    setSeen(map);
     if (devices.error) setMessage({ tone: "error", text: devices.error.message });
     setTablets((devices.data ?? []) as Tablet[]);
     setLocations((locs.data ?? []) as Location[]);
@@ -56,14 +74,20 @@ export function Tablets() {
         }
       />
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
-      <Section footer="Am Tablet die App-Adresse öffnen und mit Benutzername + Passwort anmelden.">
+      <Section footer="Am Tablet die App-Adresse öffnen und mit Benutzername + Passwort anmelden. „Netz“ ist die Internet-Adresse des Studio-WLANs – damit müssen auch die Handys verbunden sein.">
         {tablets.length === 0 && <p className="list-empty">Noch keine Tablets angelegt.</p>}
         {tablets.map((t) => (
           <div key={t.id} className="list-item">
             <Row
               leading={<LeadingIcon name="tablet" />}
               title={t.name}
-              subtitle={<>{studio(t.location_id)} · Benutzer <code>{t.username ?? "–"}</code></>}
+              subtitle={
+                <>
+                  {studio(t.location_id)} · Benutzer <code>{t.username ?? "–"}</code>
+                  <br />
+                  {seen[t.id] ? <>{ago(seen[t.id].last_seen_at)}{seen[t.id].network && <> · Netz <code>{seen[t.id].network}</code></>}</> : "noch nie online"}
+                </>
+              }
               trailing={t.is_active ? <Pill tone="ok">aktiv</Pill> : <Pill tone="bad">gesperrt</Pill>}
             />
             <div className="list-actions indent">

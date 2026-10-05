@@ -1,4 +1,4 @@
-// Team: Liste nach Studio → Detailseite (Vertrag, Handy-Zugang, Gesichtserkennung, Ausscheiden)
+// Team: Liste nach Studio → Detailseite (Vertrag, Login, Stempel-Handy, Ausscheiden)
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Avatar, Field, Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet, StudioFilter } from "../components/ui";
 import { accountAdmin, generatePassword, suggestUsername } from "../lib/accountAdmin";
@@ -6,7 +6,6 @@ import { fmtHours } from "../lib/dates";
 import { adminDb } from "../lib/supabase";
 import { type Location, ROLE_LABEL, type Role, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
-import { Enroll } from "./Enroll";
 
 export type Person = {
   id: string;
@@ -36,7 +35,7 @@ export function Staff({ profile }: { profile: Profile }) {
   const isAdmin = profile.role === "admin";
   const [people, setPeople] = useState<Person[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [faces, setFaces] = useState<Record<string, number> | null>(null);
+  const [phones, setPhones] = useState<Record<string, string>>({});
   const [studio, setStudio] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -56,14 +55,10 @@ export function Staff({ profile }: { profile: Profile }) {
     if (users.error) return setError(users.error.message);
     setPeople(users.data as unknown as Person[]);
     setLocations((locs.data ?? []) as Location[]);
-    // Gesichtsstatus sehen nur Admins (Biometrie-Daten)
-    if (isAdmin) {
-      const { data } = await adminDb.from("face_embeddings").select("user_id");
-      const counts: Record<string, number> = {};
-      for (const row of data ?? []) counts[row.user_id] = (counts[row.user_id] ?? 0) + 1;
-      setFaces(counts);
-    }
-  }, [isAdmin]);
+    // Registrierte Stempel-Handys (Admin: alle, Studioleitung: eigenes Studio)
+    const { data } = await adminDb.from("stamp_phones").select("user_id, registered_at");
+    setPhones(Object.fromEntries((data ?? []).map((r) => [r.user_id as string, r.registered_at as string])));
+  }, []);
 
   useEffect(() => {
     void load();
@@ -75,7 +70,7 @@ export function Staff({ profile }: { profile: Profile }) {
       <PersonDetail
         person={person}
         isAdmin={isAdmin}
-        hasFace={faces ? !!faces[person.id] : undefined}
+        phoneSince={phones[person.id]}
         locations={locations}
         onBack={() => setSelected(null)}
         onChanged={load}
@@ -116,7 +111,7 @@ export function Staff({ profile }: { profile: Profile }) {
               leading={<Avatar first={p.first_name} last={p.last_name} />}
               title={`${p.first_name} ${p.last_name}`}
               subtitle={`${ROLE_LABEL[p.role]} · ${contract(p)}`}
-              trailing={faces && p.role !== "admin" && (faces[p.id] ? <Pill tone="ok">Gesicht</Pill> : <Pill>kein Gesicht</Pill>)}
+              trailing={p.role !== "admin" && <ReadyPill person={p} hasPhone={!!phones[p.id]} />}
               chevron
               onClick={() => setSelected(p.id)}
             />
@@ -138,31 +133,34 @@ export function Staff({ profile }: { profile: Profile }) {
   );
 }
 
+// Bereit zum Stempeln = Login vorhanden + Handy registriert
+function ReadyPill(props: { person: Person; hasPhone: boolean }) {
+  if (!props.person.username && !props.person.auth_user_id) return <Pill tone="warn">kein Login</Pill>;
+  if (!props.hasPhone) return <Pill>Handy fehlt</Pill>;
+  return <Pill tone="ok">bereit</Pill>;
+}
+
 function PersonDetail(props: {
   person: Person;
   isAdmin: boolean;
-  hasFace?: boolean;
+  phoneSince?: string;
   locations: Location[];
   onBack: () => void;
   onChanged: () => Promise<void>;
   onRemoved: () => void;
 }) {
   const { person, isAdmin } = props;
-  const [view, setView] = useState<"detail" | "enroll" | "login" | "leave">("detail");
+  const [view, setView] = useState<"detail" | "login" | "leave">("detail");
+  const [confirmReset, setConfirmReset] = useState(false);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string }>();
   const studio = props.locations.find((l) => l.id === person.home_location_id);
 
-  if (view === "enroll") {
-    return (
-      <Enroll
-        person={person}
-        isAdmin={isAdmin}
-        onDone={() => {
-          setView("detail");
-          void props.onChanged();
-        }}
-      />
-    );
+  async function resetPhone() {
+    const { error } = await adminDb.from("stamp_phones").delete().eq("user_id", person.id);
+    setConfirmReset(false);
+    if (error) return setMessage({ tone: "error", text: error.message });
+    setMessage({ tone: "ok", text: `Stempel-Handy zurückgesetzt. Das nächste Handy, mit dem ${person.first_name} stempelt, wird registriert.` });
+    await props.onChanged();
   }
 
   async function resetPassword() {
@@ -196,7 +194,7 @@ function PersonDetail(props: {
       )}
 
       {isAdmin && person.role !== "admin" && (
-        <Section title="Handy-Zugang" footer="Damit sieht die Person im Handy-Portal ihre Stunden und den Dienstplan.">
+        <Section title="Login fürs Handy" footer="Damit stempelt die Person und sieht Stunden und Dienstplan.">
           {person.username ? (
             <Row
               leading={<LeadingIcon name="phone" />}
@@ -213,15 +211,25 @@ function PersonDetail(props: {
       )}
 
       {person.role !== "admin" && (
-        <Section title="Gesichtserkennung" footer="Nur mit unterschriebener Einwilligung. Gespeichert werden Merkmale, kein Foto.">
-          <Row
-            leading={<LeadingIcon name="face" />}
-            title="Gesicht erfassen"
-            subtitle={props.hasFace === undefined ? "Einwilligung und Aufnahme" : props.hasFace ? "Erfasst – erneut aufnehmen" : "Noch nicht erfasst"}
-            trailing={props.hasFace !== undefined && (props.hasFace ? <Pill tone="ok">erfasst</Pill> : <Pill tone="warn">fehlt</Pill>)}
-            chevron
-            onClick={() => setView("enroll")}
-          />
+        <Section
+          title="Stempel-Handy"
+          footer="Gestempelt wird nur mit diesem Handy – Kollegen können niemanden mit ihrem Handy einstempeln. Neues Handy? Zurücksetzen; beim nächsten Stempeln wird das neue registriert."
+        >
+          {props.phoneSince ? (
+            <Row
+              leading={<LeadingIcon name="phone" />}
+              title="Registriert"
+              subtitle={`seit ${new Date(props.phoneSince).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}`}
+              trailing={
+                <button type="button" className={confirmReset ? "btn btn-danger-solid btn-sm" : "btn btn-danger btn-sm"}
+                  onClick={() => (confirmReset ? void resetPhone() : setConfirmReset(true))}>
+                  {confirmReset ? "Wirklich zurücksetzen" : "Zurücksetzen"}
+                </button>
+              }
+            />
+          ) : (
+            <Row leading={<LeadingIcon name="phone" />} title="Noch nicht registriert" subtitle="Wird beim ersten Stempeln automatisch registriert" />
+          )}
         </Section>
       )}
 
@@ -431,7 +439,7 @@ function Leave(props: { person: Person; onClose: () => void; onDone: () => void 
 
   async function confirm() {
     setBusy(true);
-    // Ausgeschieden → Datenbank widerruft Einwilligung und löscht Gesichtsdaten
+    // Ausgeschieden → kein Stempeln und kein Login mehr möglich
     const { error } = await adminDb.from("users").update({ is_active: false }).eq("id", props.person.id);
     setBusy(false);
     if (error) return setError(error.message);
@@ -446,8 +454,7 @@ function Leave(props: { person: Person; onClose: () => void; onDone: () => void 
       footer={<button type="button" className="btn btn-danger-solid" disabled={busy} onClick={() => void confirm()}>Deaktivieren</button>}
     >
       <Notice tone="warn">
-        {props.person.first_name} kann danach nicht mehr stempeln. Einwilligung und Gesichtsdaten werden sofort gelöscht,
-        Arbeitszeitnachweise bleiben erhalten.
+        {props.person.first_name} kann danach nicht mehr stempeln. Arbeitszeitnachweise bleiben erhalten.
       </Notice>
       {error && <Notice tone="error">{error}</Notice>}
     </Sheet>

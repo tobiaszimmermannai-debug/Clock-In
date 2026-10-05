@@ -1,42 +1,29 @@
-// Konto: Passwort ändern, Einwilligung zur Gesichtserkennung widerrufen, abmelden
+// Konto: Stempel-Handy, Passwort ändern, abmelden
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { Field, LeadingIcon, Notice, PageHeader, Row, Section } from "../components/ui";
+import { Field, LeadingIcon, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
+import { existingPhoneKey, sha256Hex } from "../lib/stamp";
 import { portalDb } from "../lib/supabase";
 import type { Me } from "./PortalApp";
 
 export function Account(props: { me: Me; onLogout: () => void }) {
-  const [consent, setConsent] = useState<{ id: string; given_at: string } | null>();
-  const [confirm, setConfirm] = useState(false);
+  // null = kein Handy registriert; sonst Datum und ob es dieses Handy ist
+  const [phone, setPhone] = useState<{ since: string; thisPhone: boolean } | null>();
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string }>();
 
-  const loadConsent = useCallback(async () => {
+  const loadPhone = useCallback(async () => {
     const { data } = await portalDb
-      .from("biometric_consents")
-      .select("id, given_at")
+      .from("stamp_phones")
+      .select("key_hash, registered_at")
       .eq("user_id", props.me.id)
-      .is("revoked_at", null)
       .maybeSingle();
-    setConsent(data ?? null);
+    if (!data) return setPhone(null);
+    const key = existingPhoneKey();
+    setPhone({ since: data.registered_at, thisPhone: !!key && (await sha256Hex(key)) === data.key_hash });
   }, [props.me.id]);
 
   useEffect(() => {
-    void loadConsent();
-  }, [loadConsent]);
-
-  async function revoke() {
-    if (!consent) return;
-    const { error } = await portalDb
-      .from("biometric_consents")
-      .update({ revoked_at: new Date().toISOString() })
-      .eq("id", consent.id);
-    setConfirm(false);
-    setMessage(
-      error
-        ? { tone: "error", text: error.message }
-        : { tone: "ok", text: "Einwilligung widerrufen. Deine Gesichtsdaten wurden gelöscht. Stempeln bitte telefonisch bei Tobias oder Dominik melden." },
-    );
-    void loadConsent();
-  }
+    void loadPhone();
+  }, [loadPhone]);
 
   async function changePassword(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -55,26 +42,18 @@ export function Account(props: { me: Me; onLogout: () => void }) {
       <PageHeader title="Konto" subtitle={`${props.me.first_name} ${props.me.last_name}`} />
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
 
-      <Section title="Gesichtserkennung">
-        {consent === undefined && <p className="list-empty">Lädt …</p>}
-        {consent === null && <Row leading={<LeadingIcon name="face" />} title="Keine Gesichtsdaten gespeichert" />}
-        {consent && (
-          <div className="list-item">
-            <Row
-              leading={<LeadingIcon name="face" />}
-              title="Einwilligung erteilt"
-              subtitle={`am ${new Date(consent.given_at).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} · jederzeit ohne Nachteile widerrufbar`}
-            />
-            <div className="list-actions indent">
-              {!confirm ? (
-                <button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirm(true)}>Einwilligung widerrufen</button>
-              ) : (
-                <button type="button" className="btn btn-danger-solid btn-sm" onClick={() => void revoke()}>
-                  Wirklich widerrufen und Gesichtsdaten löschen
-                </button>
-              )}
-            </div>
-          </div>
+      <Section title="Stempel-Handy" footer="Stempeln geht nur mit deinem registrierten Handy. Neues Handy? Bitte Tobias oder Dominik, es zurückzusetzen.">
+        {phone === undefined && <p className="list-empty">Lädt …</p>}
+        {phone === null && (
+          <Row leading={<LeadingIcon name="phone" />} title="Noch nicht registriert" subtitle="Wird beim ersten Stempeln automatisch registriert" />
+        )}
+        {phone && (
+          <Row
+            leading={<LeadingIcon name="phone" />}
+            title={phone.thisPhone ? "Dieses Handy" : "Ein anderes Handy"}
+            subtitle={`registriert seit ${new Date(phone.since).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}`}
+            trailing={phone.thisPhone ? <Pill tone="ok">aktiv</Pill> : <Pill tone="warn">nicht dieses</Pill>}
+          />
         )}
       </Section>
 

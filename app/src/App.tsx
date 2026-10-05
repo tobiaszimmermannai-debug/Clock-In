@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AdminApp, AuthLayout } from "./admin/AdminApp";
 import { LeadingIcon, Row } from "./components/ui";
 import { KioskApp } from "./kiosk/KioskApp";
+import { parseToken } from "./lib/stamp";
 import { isConfigured, SESSION_KEYS } from "./lib/supabase";
 import { PortalApp } from "./portal/PortalApp";
 
@@ -23,7 +24,7 @@ const hasSession = (key: string) => {
   }
 };
 
-// Routen: #/kiosk = Tablet, #/portal = Mitarbeiter-Handy, #/admin = Verwaltung.
+// Routen: #/kiosk = Tablet, #/portal = Mitarbeiter-Handy, #/s/<code> = QR vom Tablet gescannt, #/admin = Verwaltung.
 // Ohne Route (z. B. App vom Startbildschirm): eingerichtetes Tablet → Kiosk, angemeldetes Handy → Portal.
 export default function App() {
   const hash = useHash();
@@ -35,6 +36,7 @@ export default function App() {
     );
   }
   if (hash.startsWith("#/admin")) return <AdminApp />;
+  if (hash.startsWith("#/s/")) return <PortalApp stampToken={parseToken(hash) ?? undefined} />;
   if (hash.startsWith("#/portal")) return <PortalApp />;
   if (hash.startsWith("#/kiosk")) return <KioskApp />;
   if (hasSession(SESSION_KEYS.kiosk)) return <KioskApp />;
@@ -47,8 +49,8 @@ function Start() {
   return (
     <AuthLayout title="Clock-In" text="Wie möchtest du die App nutzen?">
       <div className="list">
-        <Row leading={<LeadingIcon name="phone" />} title="Mitarbeiter-Login" subtitle="Stunden, Dienstplan, Schichttausch" chevron onClick={go("#/portal")} />
-        <Row leading={<LeadingIcon name="tablet" />} title="Tablet im Studio einrichten" subtitle="Ein- und Ausstempeln per Gesicht" chevron onClick={go("#/kiosk")} />
+        <Row leading={<LeadingIcon name="phone" />} title="Mitarbeiter-Login" subtitle="Stempeln, Stunden, Dienstplan, Tausch" chevron onClick={go("#/portal")} />
+        <Row leading={<LeadingIcon name="tablet" />} title="Tablet im Studio einrichten" subtitle="Zeigt den QR-Code zum Stempeln" chevron onClick={go("#/kiosk")} />
         <Row leading={<LeadingIcon name="shield" />} title="Verwaltung" subtitle="Studioleitung und Geschäftsführung" chevron onClick={go("#/admin")} />
       </div>
     </AuthLayout>

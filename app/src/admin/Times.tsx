@@ -131,7 +131,7 @@ export function Times({ profile }: { profile: Profile }) {
           <form id="entry-form" className="form" onSubmit={addEntry}>
             <p className="muted small">
               {isAdmin
-                ? "Bis 7 Tage rückwirkend, sofort gültig – z. B. nach einem Anruf ohne Gesichtserkennung."
+                ? "Bis 7 Tage rückwirkend, sofort gültig – z. B. nach einem Anruf (kein Handy dabei)."
                 : "Nur mit Freischaltung durch einen Admin; der Nachtrag wartet auf Freigabe durch Tobias oder Dominik."}
             </p>
             <div className="grid-2">

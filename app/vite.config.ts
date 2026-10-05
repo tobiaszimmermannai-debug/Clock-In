@@ -12,7 +12,7 @@ export default defineConfig({
         short_name: "Clock-In",
         description: "Zeiterfassung und Dienstplan für die Studios",
         lang: "de",
-        display: "fullscreen",
+        display: "standalone",
         background_color: "#0f1513",
         theme_color: "#0f1513",
         icons: [
@@ -22,9 +22,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App + Gesichtserkennungs-Modelle vorab cachen → Kiosk startet auch ohne Internet
-        globPatterns: ["**/*.{js,css,html,svg,png,json,bin}"],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        // App vorab cachen → startet schnell, auch bei schwachem Netz
+        globPatterns: ["**/*.{js,css,html,svg,png}"],
       },
     }),
   ],

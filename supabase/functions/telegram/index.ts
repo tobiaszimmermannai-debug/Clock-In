@@ -102,6 +102,7 @@ async function handleNotify(
   if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
   if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
+  if (body.type === "phone_registered") return await phoneRegistered(body as PhoneRegistered);
   if (body.type === "weekly_report" && typeof body.from === "string" && typeof body.to === "string") {
     return await weeklyReport(body.from, body.to);
   }
@@ -250,6 +251,16 @@ async function studioUnstaffed(b: Unstaffed): Promise<Response> {
     `Geplant ab ${escapeHtml(b.start ?? "?")}: ${names}`;
   const admins = (await adminChats()).filter((a) => a.notify_studio_status);
   await Promise.all(admins.map((a) => sendMessage(a.chat_id, text)));
+  return new Response("sent");
+}
+
+// Stempel-Handy neu registriert → Admins können Missbrauch sofort erkennen
+type PhoneRegistered = { name?: string; location?: string };
+async function phoneRegistered(b: PhoneRegistered): Promise<Response> {
+  const text = `📱 <b>${escapeHtml(b.name ?? "?")}</b> hat ein Stempel-Handy registriert` +
+    (b.location ? ` (${escapeHtml(b.location)})` : "") +
+    `.\nNicht plausibel? In der Verwaltung unter Team → Person → Stempel-Handy zurücksetzen.`;
+  await Promise.all((await adminChats()).map((a) => sendMessage(a.chat_id, text)));
   return new Response("sent");
 }
 

@@ -1,6 +1,6 @@
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 
-// Frontkamera starten; Stream wird beim Verlassen sofort beendet (keine Aufzeichnung)
+// Rückkamera starten (QR-Code scannen); Stream wird beim Verlassen sofort beendet
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export function useCamera() {
     let stream: MediaStream | null = null;
     let cancelled = false;
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false })
+      .getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
       .then(async (s) => {
         if (cancelled) return s.getTracks().forEach((t) => t.stop());
         stream = s;
@@ -42,30 +42,16 @@ function cameraError(e: unknown): string {
   return "Die Kamera konnte nicht gestartet werden.";
 }
 
-export function CameraView(props: {
-  videoRef: RefObject<HTMLVideoElement | null>;
-  error: string | null;
-  hint: string;
-  progress?: number; // 0..1, beim Erfassen
-  overlay?: ReactNode; // im Kamerabild, z. B. Richtungspfeil
-  children?: ReactNode;
-}) {
+export function CameraView(props: { videoRef: RefObject<HTMLVideoElement | null>; error: string | null; hint: string }) {
   return (
     <div className="camera">
       <div className="camera-frame">
         <video ref={props.videoRef} playsInline muted />
         <div className="camera-guide" aria-hidden="true" />
-        {props.overlay}
-        {props.progress !== undefined && (
-          <div className="camera-progress" aria-hidden="true">
-            <span style={{ width: `${Math.round(props.progress * 100)}%` }} />
-          </div>
-        )}
       </div>
       <p className={props.error ? "camera-hint is-error" : "camera-hint"} role="status" aria-live="polite">
         {props.error ?? props.hint}
       </p>
-      {props.children}
     </div>
   );
 }

@@ -1,138 +1,105 @@
-// Kiosk-Hauptansicht: Uhr, vier Aktionen, Gesichtserkennung, Ergebnis
+// Tablet im Studio: Uhr + QR-Code (wechselt alle 30 Sek.). Mitarbeiter scannen ihn mit dem
+// eigenen Handy und stempeln dort; das Tablet zeigt danach die Begrüßung.
 import { useEffect, useRef, useState } from "react";
-import { FaceScan } from "../components/FaceScan";
-import { Icon, type IconName } from "../components/ui";
-import type { Match } from "../lib/match";
-import { relevantShift, shiftNotice, type Notice } from "../lib/shiftInfo";
-import { validateAction } from "../lib/status";
+import { ACTION_ICON, GREETING } from "../components/actions";
+import { QrCode } from "../components/QrCode";
+import { Icon } from "../components/ui";
+import { stampUrl } from "../lib/stamp";
+import { kioskDb } from "../lib/supabase";
 import { fmtClock, fmtClockSec, fmtDate } from "../lib/time";
-import { EVENT_LABEL, type EventType, studioShort } from "../lib/types";
-import { type KioskSession, useKiosk } from "./useKiosk";
+import { EVENT_LABEL, type EventType, type KioskDevice, type Location, studioShort } from "../lib/types";
 
-const ACTIONS: EventType[] = ["clock_in", "break_start", "break_end", "clock_out"];
-const ACTION_ICON: Record<EventType, IconName> = { clock_in: "login", break_start: "coffee", break_end: "play", clock_out: "logout" };
+export type KioskSession = { device: KioskDevice; location: Location };
 
-const GREETING: Record<EventType, (name: string) => string> = {
-  clock_in: (n) => `Hallo ${n}!`,
-  break_start: (n) => `Gute Pause, ${n}!`,
-  break_end: (n) => `Willkommen zurück, ${n}!`,
-  clock_out: (n) => `Schönen Feierabend, ${n}!`,
-};
+type Ping = { token: string; now: string; recent: { first_name: string; event_type: EventType; recorded_at: string }[] };
+type Greeting = Ping["recent"][number];
 
-type Phase =
-  | { kind: "idle" }
-  | { kind: "scan"; action: EventType }
-  | { kind: "done"; action: EventType; name: string; at: Date; notice: Notice | null; queued: boolean }
-  | { kind: "error"; title: string; text: string };
+const PING_MS = 4000;
 
 export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
-  const kiosk = useKiosk(props.session);
-  const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const now = useNow();
+  const [token, setToken] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [greeting, setGreeting] = useState<Greeting | null>(null);
+  const since = useRef<string | null>(null);
+  const locationId = props.session.location.id;
   useWakeLock();
 
-  // Ergebnis-Anzeigen schließen sich selbst
+  // Alle paar Sekunden beim Server melden: QR-Code holen, Netz bestätigen, neue Buchungen anzeigen
   useEffect(() => {
-    if (phase.kind !== "done" && phase.kind !== "error") return;
-    const ms = phase.kind === "done" && !phase.notice ? 4000 : 7000;
-    const t = setTimeout(() => setPhase({ kind: "idle" }), ms);
+    let stop = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      const { data, error } = await kioskDb.rpc("kiosk_ping", { p_location_id: locationId, p_since: since.current });
+      if (stop) return;
+      if (error || !data) {
+        setProblem(error?.message && !/fetch|network/i.test(error.message) ? error.message : "Keine Internetverbindung.");
+      } else {
+        const ping = data as Ping;
+        setProblem(null);
+        setToken(ping.token);
+        if (since.current && ping.recent.length) setGreeting(ping.recent[ping.recent.length - 1]);
+        since.current = ping.now;
+      }
+      timer = setTimeout(tick, PING_MS);
+    };
+    void tick();
+    return () => {
+      stop = true;
+      clearTimeout(timer);
+    };
+  }, [locationId]);
+
+  useEffect(() => {
+    if (!greeting) return;
+    const t = setTimeout(() => setGreeting(null), 6000);
     return () => clearTimeout(t);
-  }, [phase]);
-
-  function start(action: EventType) {
-    if (kiosk.roster.length === 0) {
-      return setPhase({
-        kind: "error",
-        title: "Noch keine Gesichter erfasst",
-        text: "Die Studioleitung muss Mitarbeiter zuerst in der Verwaltung erfassen. Bis dahin: bitte Tobias oder Dominik anrufen.",
-      });
-    }
-    setPhase({ kind: "scan", action });
-  }
-
-  async function onMatch(action: EventType, match: Match) {
-    const at = new Date();
-    const { state, since } = await kiosk.stateOf(match.entry.user_id, at);
-    const problem = validateAction(state, since, action);
-    if (problem) return setPhase({ kind: "error", title: `${match.entry.first_name}, Moment:`, text: problem });
-
-    const notice = shiftNotice(action, relevantShift(kiosk.shifts, match.entry.user_id, at), at, {
-      since,
-      rules: kiosk.rules,
-    });
-    await kiosk.book(match.entry.user_id, action, match.distance, at);
-    setPhase({ kind: "done", action, name: match.entry.first_name, at, notice, queued: !kiosk.online });
-  }
+  }, [greeting]);
 
   return (
     <div className="screen kiosk">
       <header className="kiosk-bar">
         <StudioTitle name={studioShort(props.session.location.name)} />
-        <SyncBadge online={kiosk.online} pending={kiosk.pending} failed={kiosk.failed} />
+        {problem ? <span className="badge badge-off">Offline</span> : <span className="badge badge-on">Online</span>}
       </header>
 
-      {phase.kind === "idle" && (
-        <main className="kiosk-idle">
-          <div className="clock">
-            <time className="clock-time">{fmtClockSec(now)}</time>
-            <span className="clock-date">{fmtDate(now)}</span>
+      <main className="kiosk-main">
+        <div className="clock">
+          <time className="clock-time">{fmtClockSec(now)}</time>
+          <span className="clock-date">{fmtDate(now)}</span>
+        </div>
+
+        <section className="kiosk-qr" aria-live="polite">
+          {problem ? (
+            <div className="kiosk-qr-off">
+              <Icon name="wifi" size={48} />
+              <strong>Stempeln gerade nicht möglich</strong>
+              <span>{problem} Bitte Tobias oder Dominik anrufen.</span>
+            </div>
+          ) : token ? (
+            <QrCode text={stampUrl(token)} label="QR-Code zum Stempeln" />
+          ) : (
+            <div className="kiosk-qr-off"><span>Lädt …</span></div>
+          )}
+          <div className="kiosk-steps">
+            <strong>Mit dem Handy stempeln</strong>
+            <ol>
+              <li>Mit dem Studio-WLAN verbinden</li>
+              <li>Clock-In öffnen → <b>Stempeln</b> → Code scannen</li>
+              <li>Kommen, Pause oder Gehen wählen</li>
+            </ol>
           </div>
-          <div className="actions">
-            {ACTIONS.map((a) => (
-              <button key={a} type="button" className={`action action-${a}`} onClick={() => start(a)}>
-                <Icon name={ACTION_ICON[a]} stroke={2.2} />
-                {EVENT_LABEL[a]}
-              </button>
-            ))}
-          </div>
-        </main>
-      )}
+        </section>
+      </main>
 
-      {phase.kind === "scan" && (
-        <main className="kiosk-scan">
-          <h2 className={`scan-title action-${phase.action}`}>{EVENT_LABEL[phase.action]}</h2>
-          <FaceScan
-            roster={kiosk.roster}
-            onMatch={(m) => void onMatch(phase.action, m)}
-            onTimeout={() =>
-              setPhase({
-                kind: "error",
-                title: "Nicht erkannt",
-                text: "Bitte noch einmal versuchen. Gutes Licht und direkter Blick in die Kamera helfen. Ohne Gesichtserkennung: bitte Tobias oder Dominik anrufen.",
-              })
-            }
-          />
-          <button type="button" className="btn btn-outline" onClick={() => setPhase({ kind: "idle" })}>
-            Abbrechen
-          </button>
-        </main>
-      )}
-
-      {phase.kind === "done" && (
-        <main className="kiosk-result" onClick={() => setPhase({ kind: "idle" })}>
-          <div className={`result-icon action-${phase.action}`} aria-hidden="true"><Icon name="check" stroke={3} /></div>
-          <h2>{GREETING[phase.action](phase.name)}</h2>
-          <p className="result-line">
-            {EVENT_LABEL[phase.action]} · {fmtClock(phase.at)} Uhr
-          </p>
-          {phase.notice && <p className={`notice notice-${phase.notice.tone}`}>{phase.notice.text}</p>}
-          {phase.queued && <p className="muted">Offline gespeichert – wird automatisch nachgesendet.</p>}
-        </main>
-      )}
-
-      {phase.kind === "error" && (
-        <main className="kiosk-result" onClick={() => setPhase({ kind: "idle" })}>
-          <div className="result-icon is-error" aria-hidden="true"><Icon name="x" stroke={3} /></div>
-          <h2>{phase.title}</h2>
-          <p className="result-line">{phase.text}</p>
-          <p className="muted">Zum Schließen tippen</p>
-        </main>
-      )}
-
-      {phase.kind === "idle" && kiosk.failed > 0 && (
-        <footer className="kiosk-foot">
-          {kiosk.failed} Buchung(en) wurden vom Server abgelehnt – bitte Leitung informieren.
-        </footer>
+      {greeting && (
+        <div className="kiosk-greeting" onClick={() => setGreeting(null)}>
+          <span className={`result-icon action-${greeting.event_type}`} aria-hidden="true">
+            <Icon name={ACTION_ICON[greeting.event_type]} stroke={2.4} />
+          </span>
+          <h2>{GREETING[greeting.event_type](greeting.first_name)}</h2>
+          <p className="result-line">{EVENT_LABEL[greeting.event_type]} · {fmtClock(greeting.recorded_at)} Uhr</p>
+        </div>
       )}
       <ResetHint onReset={props.onReset} fixed={props.session.device.location_id !== null} />
     </div>
@@ -157,14 +124,6 @@ function StudioTitle({ name }: { name: string }) {
       {name}
     </h1>
   );
-}
-
-function SyncBadge(props: { online: boolean; pending: number; failed: number }) {
-  if (!props.online) {
-    return <span className="badge badge-off">Offline{props.pending ? ` · ${props.pending} wartend` : ""}</span>;
-  }
-  if (props.pending) return <span className="badge badge-busy">Sendet {props.pending} …</span>;
-  return <span className="badge badge-on">Online</span>;
 }
 
 // Studio-Wechsel nur bei Tablets ohne festen Standort (verstecktes Feld unten rechts, 2 s halten)

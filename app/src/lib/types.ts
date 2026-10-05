@@ -36,14 +36,6 @@ export type Location = { id: string; code: string; name: string };
 
 export type KioskDevice = { id: string; name: string; location_id: string | null };
 
-// Aktive Mitarbeiter inkl. Gesichts-Embeddings (RPC kiosk_roster)
-export type RosterEntry = {
-  user_id: string;
-  first_name: string;
-  last_name: string;
-  descriptors: number[][];
-};
-
 export type Shift = {
   id: string;
   user_id: string;
@@ -53,7 +45,7 @@ export type Shift = {
   ends_at: string;
 };
 
-// Buchung für die Statusberechnung (vom Server oder noch in der Warteschlange)
+// Buchung für die Statusberechnung
 export type LogEntry = {
   client_event_id: string;
   user_id: string;
@@ -62,17 +54,6 @@ export type LogEntry = {
   approval_status?: "approved" | "pending" | "rejected";
 };
 
-// Buchung in der Offline-Warteschlange (IndexedDB)
-export type QueuedEvent = {
-  client_event_id: string;
-  user_id: string;
-  location_id: string;
-  event_type: EventType;
-  recorded_at: string;
-  kiosk_device_id: string;
-  match_distance: number | null;
-  last_error?: string;
-};
 
 /** "Studio Krailling" → "Krailling" */
 export const studioShort = (name: string) => name.replace(/^Studio\s+/, "");
