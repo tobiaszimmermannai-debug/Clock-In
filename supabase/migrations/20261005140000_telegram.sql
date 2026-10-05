@@ -2,10 +2,10 @@
 -- Clock-In · Schritt 1b: Telegram-Benachrichtigungen
 -- =============================================================================
 -- Ablauf
---   time_logs INSERT → Trigger → pg_net → Edge Function telegram-notify → Telegram
---   Button ✅/❌ in Telegram → Edge Function telegram-webhook → Freigabe in time_logs
+--   time_logs INSERT → Trigger → pg_net → Edge Function "telegram" → Telegram
+--   Button ✅/❌ in Telegram → Edge Function "telegram" → Freigabe in time_logs
 --
--- Einmalige Einrichtung: docs/setup-telegram.md (Vault-Secrets
+-- Einmalige Einrichtung: docs/einrichtung.md (Vault-Secrets
 -- edge_functions_url + notify_secret). Ohne diese Secrets bleibt der Trigger stumm.
 -- =============================================================================
 
@@ -54,7 +54,7 @@ begin
   end if;
 
   perform net.http_post(
-    url     := v_url || '/telegram-notify',
+    url     := v_url || '/telegram',
     body    := jsonb_build_object('type', 'time_log', 'id', new.id),
     headers := jsonb_build_object('Content-Type', 'application/json', 'x-notify-secret', v_secret)
   );
