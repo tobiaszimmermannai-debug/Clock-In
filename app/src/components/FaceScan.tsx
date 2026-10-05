@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { detectFaces, loadModels } from "../lib/face";
 import { type Box, type Direction, isCentered, randomChallenges, sameFace, turnedTo } from "../lib/liveness";
-import { identify, type Match } from "../lib/match";
+import { identify, type Match, MATCH_THRESHOLD, rankCandidates } from "../lib/match";
 import type { RosterEntry } from "../lib/types";
 import { CameraView, sleep, useCamera } from "./Camera";
 
@@ -27,6 +27,7 @@ export function FaceScan(props: {
   const { videoRef, error, ready } = useCamera();
   const [hint, setHint] = useState("Kamera startet …");
   const [arrow, setArrow] = useState<Direction | null>(null);
+  const [diag, setDiag] = useState("");
   const latest = useRef(props);
   latest.current = props;
 
@@ -85,6 +86,13 @@ export function FaceScan(props: {
         lastBox = face.box;
 
         if (step.kind === "identify") {
+          // Diagnose für die Einrichtung: Kopfhaltung und Ähnlichkeit zur nächsten gespeicherten Person
+          const [best] = rankCandidates(face.descriptor, latest.current.roster);
+          setDiag(
+            `${latest.current.roster.length} Person(en) gespeichert · Kopf ${isCentered(face.yaw) ? "gerade" : "seitlich"} (${
+              face.yaw.toFixed(2)
+            }) · Abstand ${best ? best.distance.toFixed(2) : "–"} (nötig unter ${MATCH_THRESHOLD.toFixed(2)})`,
+          );
           if (!isCentered(face.yaw)) {
             streak = 0;
             setHint("Bitte geradeaus in die Kamera schauen");
@@ -144,6 +152,8 @@ export function FaceScan(props: {
       error={error}
       hint={hint}
       overlay={arrow && <div className={`turn-arrow turn-${arrow}`} aria-hidden="true">{ARROW[arrow]}</div>}
-    />
+    >
+      {diag && <p className="camera-diag">{diag}</p>}
+    </CameraView>
   );
 }

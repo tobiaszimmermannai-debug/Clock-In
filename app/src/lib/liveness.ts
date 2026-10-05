@@ -7,8 +7,8 @@ export type Direction = "left" | "right";
 
 // Anteil des Augenabstands, um den die Nase seitlich wandern muss (≈ 20–25° Drehung)
 export const TURN_THRESHOLD = 0.2;
-// "Geradeaus" für Identifikation und Abschluss
-export const CENTER_THRESHOLD = 0.08;
+// "Geradeaus" für Identifikation und Abschluss (großzügig: Webcams sitzen oft leicht seitlich/oberhalb)
+export const CENTER_THRESHOLD = 0.12;
 
 const mean = (pts: Point[]): Point => ({
   x: pts.reduce((s, p) => s + p.x, 0) / pts.length,

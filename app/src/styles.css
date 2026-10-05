@@ -231,3 +231,4 @@ input, select { font: inherit; padding: 11px 12px; border-radius: 10px; border: 
 .daytable td { white-space: normal; vertical-align: top; }
 .daytable td:first-child { min-width: 120px; }
 .weeknav { flex-wrap: nowrap; }
+.camera-diag { margin: 0; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: center; }

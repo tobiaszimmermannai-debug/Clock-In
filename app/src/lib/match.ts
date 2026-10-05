@@ -1,8 +1,8 @@
 // Gesichtsabgleich: kleinste euklidische Distanz zu den gespeicherten Embeddings
 import type { RosterEntry } from "./types";
 
-// face-api: < 0.6 gilt als gleiche Person; wir sind strenger
-export const MATCH_THRESHOLD = 0.5;
+// face-api: < 0.6 gilt als gleiche Person; wir sind etwas strenger
+export const MATCH_THRESHOLD = 0.55;
 // Abstand zum zweitbesten Kandidaten, sonst gilt der Treffer als unsicher
 export const AMBIGUITY_MARGIN = 0.06;
 
