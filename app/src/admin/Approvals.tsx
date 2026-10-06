@@ -32,6 +32,7 @@ type SwapRow = {
   target_shift: ShiftRef;
 };
 
+const SOURCE_PILL: Record<string, string> = { auto_checkout: "vergessen", offline_sync: "offline" };
 const name = (p: Person) => (p ? `${p.first_name} ${p.last_name}` : "?");
 const when = (iso: string) => `${fmtDay(berlinDate(iso))} ${berlinTime(iso)}`;
 const shiftText = (s: ShiftRef) => (s ? `${when(s.starts_at)}–${berlinTime(s.ends_at)} · ${studioShort(s.location?.name ?? "?")}` : "–");
@@ -106,14 +107,18 @@ export function Approvals({ profile }: { profile: Profile }) {
 
       {bookings.length > 0 && (
         <Section title="Nachträge" aside={<span>{bookings.length}</span>}
-          footer={!isAdmin ? "Nachträge geben nur Tobias oder Dominik frei." : undefined}>
+          footer={isAdmin ? "Bei „Ausstempeln vergessen“ ablehnen und die echte Gehzeit unter Zeiten nachtragen." : "Nachträge geben nur Tobias oder Dominik frei."}>
           {bookings.map((b) => (
             <div key={b.id} className="list-item">
               <Row
                 leading={avatar(b.user)}
-                title={`${name(b.user)} · ${EVENT_LABEL[b.event_type]}`}
-                subtitle={`${when(b.recorded_at)} · ${studioShort(b.location?.name ?? "")}${b.note ? ` · „${b.note}“` : ""}`}
-                trailing={<Pill tone="warn">{b.source === "manual" ? `von ${b.creator?.first_name ?? "?"}` : "offline"}</Pill>}
+                title={`${name(b.user)} · ${b.source === "auto_checkout" ? "Ausstempeln vergessen" : EVENT_LABEL[b.event_type]}`}
+                subtitle={
+                  b.source === "auto_checkout"
+                    ? `Automatisch zum Schichtende ${when(b.recorded_at)} · ${studioShort(b.location?.name ?? "")} – anrechnen?`
+                    : `${when(b.recorded_at)} · ${studioShort(b.location?.name ?? "")}${b.note ? ` · „${b.note}“` : ""}`
+                }
+                trailing={<Pill tone="warn">{SOURCE_PILL[b.source] ?? `von ${b.creator?.first_name ?? "?"}`}</Pill>}
               />
               <Decision enabled={isAdmin} onDecide={(ok) => void decide("booking", b.id, ok)} />
             </div>

@@ -142,7 +142,13 @@ async function handleNotify(
 
   let text: string;
   let keyboard: InlineButton[][] | undefined;
-  if (isApproval) {
+  if (isApproval && log.source === "auto_checkout") {
+    text = forgottenText(log);
+    keyboard = [[
+      { text: `✅ Bis ${formatClock(log.recorded_at)} anrechnen`, callback_data: `ok:${log.id}` },
+      { text: "❌ Ablehnen", callback_data: `no:${log.id}` },
+    ]];
+  } else if (isApproval) {
     text = approvalText(log);
     keyboard = [[{ text: "✅ OK", callback_data: `ok:${log.id}` }, {
       text: "❌ Ablehnen",
@@ -202,6 +208,16 @@ function approvalText(log: TimeLog): string {
     `⏱ ${EVENT_LABEL[log.event_type]} · ${formatDateTime(log.recorded_at)}`,
     `✍️ eingetragen von: ${by}`,
     ...(log.note ? [`💬 ${escapeHtml(log.note)}`] : []),
+  ].join("\n");
+}
+
+// Ausstempeln vergessen → automatisch zur geplanten Endzeit, zählt erst nach Freigabe
+function forgottenText(log: TimeLog): string {
+  return [
+    "🤖 <b>Ausstempeln vergessen</b>",
+    `👤 ${escapeHtml(fullName(log.user))} · ${escapeHtml(log.location?.name ?? "?")}`,
+    `Automatisch zum Schichtende ${formatDateTime(log.recorded_at)} eingetragen.`,
+    "Bis Schichtende anrechnen? Bei ❌ die echte Gehzeit in der Verwaltung unter Zeiten nachtragen.",
   ].join("\n");
 }
 
@@ -329,6 +345,7 @@ async function weeklyReport(from: string, to: string): Promise<Response> {
     overtime_pending_minutes: number;
     overtime_approved_minutes: number;
     open_days: number;
+    forgotten_count: number;
   }[];
 
   const [bookings, overtime, swaps] = await Promise.all([
@@ -345,7 +362,8 @@ async function weeklyReport(from: string, to: string): Promise<Response> {
     if (r.late_count) parts.push(`⏰ ${r.late_count}× zu spät (${r.late_minutes} Min.)`);
     if (r.overtime_approved_minutes) parts.push(`➕ ${r.overtime_approved_minutes} Min. Überstunden`);
     if (r.overtime_pending_minutes) parts.push(`⏳ ${r.overtime_pending_minutes} Min. Überstunden offen`);
-    if (r.open_days) parts.push(`⚠️ ${r.open_days}× Ausstempeln fehlt`);
+    if (r.forgotten_count) parts.push(`🤖 ${r.forgotten_count}× nicht ausgestempelt`);
+    if (r.open_days) parts.push(`⚠️ ${r.open_days}× Gehzeit noch offen`);
     lines.push(`<b>${escapeHtml(fullName(r))}</b>: ${parts.join(" · ")}`);
   }
   if (rows.length === 0) lines.push("Keine Mitarbeiter mit Daten.");
@@ -440,7 +458,7 @@ async function decideBooking(cq: CallbackQuery, admin: Admin, approve: boolean, 
     })
     .eq("id", id)
     .eq("approval_status", "pending")
-    .select("id");
+    .select("id, source");
 
   if (error || !updated?.length) {
     const { data: log } = await supabase
@@ -454,10 +472,12 @@ async function decideBooking(cq: CallbackQuery, admin: Admin, approve: boolean, 
         (log.reviewer ? ` von ${fullName(log.reviewer)}` : "");
     return await alreadyDone(cq, text);
   }
+  const forgotten = updated[0].source === "auto_checkout";
   await done(
     cq,
     approve ? "Freigegeben ✅" : "Abgelehnt ❌",
-    `${approve ? "✅ Freigegeben" : "❌ Abgelehnt"} von ${escapeHtml(fullName(admin.user))}`,
+    `${approve ? "✅ Freigegeben" : "❌ Abgelehnt"} von ${escapeHtml(fullName(admin.user))}` +
+      (forgotten && !approve ? "\n👉 Echte Gehzeit in der Verwaltung unter Zeiten nachtragen." : ""),
   );
 }
 

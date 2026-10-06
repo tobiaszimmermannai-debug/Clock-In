@@ -92,6 +92,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 3. `supabase/migrations/20261006150000_portal_swaps_report.sql`
 4. `supabase/migrations/20261006180000_studio_staffing.sql`
 5. `supabase/migrations/20261007120000_phone_stamping.sql` (Stempeln mit Handy + Tablet statt Gesichtserkennung)
+6. `supabase/migrations/20261007150000_forgotten_checkout.sql` (Ausstempeln vergessen = nur mit Freigabe)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -143,13 +144,15 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   `update public.telegram_links set notify_bookings = false where chat_id = <CHAT_ID>;`
 - **Fehlersuche:** Edge Functions → `telegram` bzw. `account-admin` → **Logs**.
 - **Regeln (änderbar in `rule_settings`):** bis 5 Min. zu spät = pünktlich · Überstunden nur nach Freigabe ·
-  jede Pause mind. 15 Min., gesetzlich 30/45 Min. ab 6/9 Std. · Auto-Checkout 23 Uhr · 18 Uhr Abfrage
+  jede Pause mind. 15 Min., gesetzlich 30/45 Min. ab 6/9 Std. · Ausstempeln vergessen → um 23 Uhr
+  automatisch zur geplanten Endzeit eingetragen, zählt aber erst nach Freigabe per Telegram · 18 Uhr Abfrage
   Krank/IST/Urlaub (je 6,5 Std.) · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:
   beide Studioleitungen müssen zustimmen; ein Admin (auch per Telegram) gibt für beide frei.
 - **Studio besetzt:** erste Stempelung des Tages je Studio → 🟢-Meldung; 10 Min. nach der ersten geplanten
   Schicht noch niemand da → 🔴-Warnung. Im Bot: `/kurz` = nur Wichtiges, `/alle` = jede Stempelung.
-- **Wochenbericht:** freitags 19 Uhr per Telegram (Stunden, Verspätungen, Überstunden, offene Freigaben).
+- **Wochenbericht:** freitags 19 Uhr per Telegram (Stunden, Verspätungen, Überstunden, wie oft nicht ausgestempelt,
+  offene Freigaben).
 - **Stempeln (Handy + Tablet):** Das Tablet zeigt einen QR-Code, der alle 30 Sek. wechselt. Gebucht wird nur, wenn
   (1) das Konto mit seinem **eigenen registrierten Handy** stempelt, (2) der QR-Code frisch ist (also vor Ort gescannt) und
   (3) Handy und Tablet im **selben Netz** sind (gleiche Internet-Adresse des Studio-WLANs).

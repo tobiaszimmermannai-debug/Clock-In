@@ -59,7 +59,7 @@ export function Hours({ me }: { me: Me }) {
         <p className="muted small">
           Ab Schichtbeginn (bis 5 Min. Verspätung gilt als pünktlich) bis Schichtende; Überstunden nach Freigabe.
           Jede Pause zählt mindestens 15 Min., gesetzlich 30 Min. ab 6 Std. und 45 Min. ab 9 Std. Arbeit.
-          IST, Krank und Urlaub zählen je 6,5 Std.
+          IST, Krank und Urlaub zählen je 6,5 Std. Ausstempeln vergessen? Dann zählt die Zeit erst nach Freigabe durch Tobias oder Dominik.
         </p>
       </details>
     </>
