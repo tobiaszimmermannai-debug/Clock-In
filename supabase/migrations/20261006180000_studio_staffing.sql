@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Clock-In · Studio besetzt? Morgendliche Telegram-Meldungen
 -- =============================================================================
--- * Erstes Einstempeln des Tages je Studio → "🟢 Studio Nord ist besetzt"
+-- * Erstes Einstempeln des Tages je Studio → "🟢 Studio Krailling ist besetzt"
 -- * 10 Min. nach der ersten geplanten Schicht noch niemand da → "🔴 noch nicht besetzt"
 -- * Je Admin abschaltbar (Bot-Befehl /kurz bzw. /alle steuert Einzelmeldungen)
 -- =============================================================================

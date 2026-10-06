@@ -748,10 +748,10 @@ end $$;
 -- 9. Stammdaten
 -- -----------------------------------------------------------------------------
 insert into public.locations (code, name) values
-  ('NORD', 'Studio Nord'),
-  ('SUED', 'Studio Süd'),
-  ('WEST', 'Studio West'),
-  ('OST',  'Studio Ost')
+  ('KRAILLING', 'Studio Krailling'),
+  ('GERMERING', 'Studio Germering'),
+  ('STARNBERG', 'Studio Starnberg'),
+  ('MOOSACH',   'Studio Moosach')
 on conflict (code) do nothing;
 
 -- Ersten Admin anlegen (nach Registrierung in Supabase Auth, im SQL-Editor):
@@ -760,7 +760,7 @@ on conflict (code) do nothing;
 --
 -- Kiosk-Tablet registrieren (eigener Auth-User je Tablet):
 --   insert into public.kiosk_devices (auth_user_id, name, location_id)
---   values ('<auth.users.id>', 'Tablet Nord', (select id from public.locations where code = 'NORD'));
+--   values ('<auth.users.id>', 'Tablet Krailling', (select id from public.locations where code = 'KRAILLING'));
 
 
 -- >>> 20261005130000_admin_mfa.sql
@@ -1673,7 +1673,7 @@ grant execute on all functions in schema private to authenticated, service_role;
 -- =============================================================================
 -- Clock-In · Studio besetzt? Morgendliche Telegram-Meldungen
 -- =============================================================================
--- * Erstes Einstempeln des Tages je Studio → "🟢 Studio Nord ist besetzt"
+-- * Erstes Einstempeln des Tages je Studio → "🟢 Studio Krailling ist besetzt"
 -- * 10 Min. nach der ersten geplanten Schicht noch niemand da → "🔴 noch nicht besetzt"
 -- * Je Admin abschaltbar (Bot-Befehl /kurz bzw. /alle steuert Einzelmeldungen)
 -- =============================================================================
@@ -1768,23 +1768,6 @@ begin
     execute $job$select cron.schedule('clockin-staffing', '*/5 * * * *', 'select private.staffing_check()')$job$;
   end if;
 end $$;
-
-
--- >>> 20261007090000_studio_names.sql
-
--- =============================================================================
--- Clock-In · Echte Studionamen: Krailling, Germering, Starnberg, Moosach
--- =============================================================================
-update public.locations set code = 'KRAILLING', name = 'Studio Krailling' where code = 'NORD';
-update public.locations set code = 'GERMERING', name = 'Studio Germering' where code = 'SUED';
-update public.locations set code = 'STARNBERG', name = 'Studio Starnberg' where code = 'WEST';
-update public.locations set code = 'MOOSACH',   name = 'Studio Moosach'   where code = 'OST';
-
--- Bereits angelegte Tablets mit altem Namen umbenennen (Benutzername bleibt gleich)
-update public.kiosk_devices set name = 'Tablet Krailling' where name = 'Tablet Nord';
-update public.kiosk_devices set name = 'Tablet Germering' where name = 'Tablet Süd';
-update public.kiosk_devices set name = 'Tablet Starnberg' where name = 'Tablet West';
-update public.kiosk_devices set name = 'Tablet Moosach'   where name = 'Tablet Ost';
 
 
 -- >>> 20261007120000_phone_stamping.sql

@@ -704,10 +704,10 @@ end $$;
 -- 9. Stammdaten
 -- -----------------------------------------------------------------------------
 insert into public.locations (code, name) values
-  ('NORD', 'Studio Nord'),
-  ('SUED', 'Studio Süd'),
-  ('WEST', 'Studio West'),
-  ('OST',  'Studio Ost')
+  ('KRAILLING', 'Studio Krailling'),
+  ('GERMERING', 'Studio Germering'),
+  ('STARNBERG', 'Studio Starnberg'),
+  ('MOOSACH',   'Studio Moosach')
 on conflict (code) do nothing;
 
 -- Ersten Admin anlegen (nach Registrierung in Supabase Auth, im SQL-Editor):
@@ -716,4 +716,4 @@ on conflict (code) do nothing;
 --
 -- Kiosk-Tablet registrieren (eigener Auth-User je Tablet):
 --   insert into public.kiosk_devices (auth_user_id, name, location_id)
---   values ('<auth.users.id>', 'Tablet Nord', (select id from public.locations where code = 'NORD'));
+--   values ('<auth.users.id>', 'Tablet Krailling', (select id from public.locations where code = 'KRAILLING'));

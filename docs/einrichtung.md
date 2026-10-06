@@ -91,8 +91,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 2. `supabase/migrations/20261006120000_rules_engine.sql`
 3. `supabase/migrations/20261006150000_portal_swaps_report.sql`
 4. `supabase/migrations/20261006180000_studio_staffing.sql`
-5. `supabase/migrations/20261007090000_studio_names.sql` (Studionamen Krailling, Germering, Starnberg, Moosach)
-6. `supabase/migrations/20261007120000_phone_stamping.sql` (Stempeln mit Handy + Tablet statt Gesichtserkennung)
+5. `supabase/migrations/20261007120000_phone_stamping.sql` (Stempeln mit Handy + Tablet statt Gesichtserkennung)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und

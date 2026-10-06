@@ -163,7 +163,7 @@ async function handleNotify(
   return new Response("sent");
 }
 
-// "🔔 Max Muster ist im Studio Nord eingestempelt (08:57)"
+// "🔔 Max Muster ist im Studio Krailling eingestempelt (08:57)"
 function bookingText(log: TimeLog, settings: Settings): string {
   const name = escapeHtml(fullName(log.user));
   const studio = escapeHtml(log.location?.name ?? "?");
