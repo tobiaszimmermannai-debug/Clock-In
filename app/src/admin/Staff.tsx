@@ -271,12 +271,21 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
       weekly_target_minutes: Math.round(Number(f.get("weekly_hours")) * 60),
       work_days_per_week: Number(f.get("work_days")),
     });
-    const userSave = await adminDb
-      .from("users")
-      .update({ role: String(f.get("role")), home_location_id: String(f.get("location")) })
-      .eq("id", person.id);
+    const role = String(f.get("role"));
+    const location = String(f.get("location"));
+    const userSave = await adminDb.from("users").update({ role, home_location_id: location }).eq("id", person.id);
+    // Studioleitung leitet ihr Heimatstudio (Nachtragsrecht bleibt erhalten)
+    let managerSave: { error: { message: string } | null } = { error: null };
+    if (role === "manager" && !userSave.error) {
+      managerSave = await adminDb
+        .from("location_managers")
+        .upsert({ user_id: person.id, location_id: location }, { onConflict: "user_id,location_id", ignoreDuplicates: true });
+      if (!managerSave.error) {
+        managerSave = await adminDb.from("location_managers").delete().eq("user_id", person.id).neq("location_id", location);
+      }
+    }
     setBusy(false);
-    const failed = detailsSave.error ?? userSave.error;
+    const failed = detailsSave.error ?? userSave.error ?? managerSave.error;
     if (failed) return setError(`Speichern fehlgeschlagen: ${failed.message}`);
     await props.onSaved();
   }
