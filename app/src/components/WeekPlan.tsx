@@ -1,8 +1,9 @@
 // Dienstplan einer Woche: Laden (Portal und Verwaltung) und Lese-Ansicht je Tag
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { useCallback, useEffect, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { addDays, berlinDate, berlinTime, berlinToISO, fmtLongDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
+import { studioColor } from "../lib/studios";
 import { SHIFT_TYPE_LABEL, type ShiftType, studioShort } from "../lib/types";
 import { Avatar, Pill, Row, Section } from "./ui";
 
@@ -57,8 +58,9 @@ export function ShiftRow(props: { shift: PlanShift; mine?: boolean; showStudio?:
   ].filter(Boolean).join(" · ");
   return (
     <Row
-      className={props.mine ? "is-mine" : undefined}
-      leading={<Avatar first={s.user?.first_name ?? "?"} last={s.user?.last_name} />}
+      className="has-studio"
+      style={{ "--studio": studioColor(s.location_id ?? s.user?.home_location_id) } as CSSProperties}
+      leading={<Avatar first={s.user?.first_name ?? "?"} last={s.user?.last_name} color={studioColor(s.user?.home_location_id)} />}
       title={<>{name}{props.mine && <> <Pill tone="accent">Du</Pill></>}</>}
       subtitle={sub || undefined}
       trailing={

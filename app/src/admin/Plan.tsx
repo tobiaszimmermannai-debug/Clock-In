@@ -1,10 +1,12 @@
 // Dienstplan schreiben: Studio → Woche → Tag antippen → „Schicht hinzufügen“ (wer + von–bis).
 // Studioleitung plant nur ihr eigenes Studio; wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
 import { useEffect, useState } from "react";
+import { StudioCalendar } from "../components/StudioCalendar";
 import { type PlanShift, ShiftRow, isHelpShift, useWeekShifts } from "../components/WeekPlan";
 import { Avatar, DayStrip, Empty, Field, Icon, Notice, PageHeader, Section, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
 import { addDays, berlinDate, berlinTime, berlinToISO, fmtHM, fmtLongDay, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
+import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
 import { type Location, ROLE_LABEL, type Role, SHIFT_TYPE_LABEL, type ShiftType, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
@@ -28,6 +30,9 @@ export function Plan({ profile }: { profile: Profile }) {
   const [start, setStart] = useState(weekStart(today));
   const [day, setDay] = useState(today);
   const [locations, setLocations] = useState<Location[] | null>(null);
+  const [allLocations, setAllLocations] = useState<Location[]>([]);
+  const [managed, setManaged] = useState<Set<string>>(new Set());
+  const [view, setView] = useState<"plan" | "all">("plan");
   const [studio, setStudio] = useState("");
   const [people, setPeople] = useState<Staffer[]>([]);
   const [sheet, setSheet] = useState<{ shift?: PlanShift } | null>(null);
@@ -42,9 +47,13 @@ export function Plan({ profile }: { profile: Profile }) {
         adminDb.from("location_managers").select("location_id").eq("user_id", profile.id),
       ]);
       const mine = new Set((managed.data ?? []).map((m) => m.location_id as string));
+      const all = (locs.data ?? []) as Location[];
+      registerStudios(all);
       // Admin plant alle Studios, Studioleitung nur die eigenen
-      const allowed = ((locs.data ?? []) as Location[]).filter((l) => profile.role === "admin" || mine.has(l.id));
+      const allowed = all.filter((l) => profile.role === "admin" || mine.has(l.id));
       setPeople((users.data ?? []) as Staffer[]);
+      setAllLocations(all);
+      setManaged(mine);
       setLocations(allowed);
       setStudio(allowed[0]?.id ?? "");
     })();
@@ -80,9 +89,39 @@ export function Plan({ profile }: { profile: Profile }) {
     void reload();
   };
 
+  const canEdit = (s: PlanShift) =>
+    profile.role === "admin" || managed.has(s.location_id ?? s.user?.home_location_id ?? "");
+  const viewSwitch = (
+    <Segmented
+      label="Ansicht"
+      value={view}
+      onChange={setView}
+      options={[{ id: "plan", label: "Planen" }, { id: "all", label: "Alle Studios" }]}
+    />
+  );
+
+  if (view === "all") {
+    return (
+      <>
+        <PageHeader title="Dienstplan" subtitle="Alle Studios" actions={viewSwitch} />
+        <WeekNav start={start} onChange={goWeek} />
+        {error && <Notice tone="error">{error}</Notice>}
+        {flash && <Notice tone="ok">{flash}</Notice>}
+        <StudioCalendar
+          start={start}
+          shifts={shifts}
+          locations={allLocations}
+          canEdit={canEdit}
+          onSelect={(s) => setSheet({ shift: s })}
+        />
+        {sheet?.shift && <EditShift shift={sheet.shift} onClose={() => setSheet(null)} onSaved={done} />}
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader title="Dienstplan" subtitle={locations.length === 1 ? `Studio ${studioName}` : undefined} />
+      <PageHeader title="Dienstplan" subtitle={locations.length === 1 ? `Studio ${studioName}` : undefined} actions={viewSwitch} />
       {locations.length > 1 && <StudioFilter all={false} locations={locations} value={studio} onChange={setStudio} />}
       <WeekNav start={start} onChange={goWeek} />
       <DayStrip start={start} value={day} onChange={(d) => { setDay(d); setFlash(undefined); }} counts={counts} />
@@ -109,7 +148,7 @@ export function Plan({ profile }: { profile: Profile }) {
         />
       )}
       {sheet?.shift && (
-        <EditShift shift={sheet.shift} studioName={studioName} onClose={() => setSheet(null)} onSaved={done} />
+        <EditShift shift={sheet.shift} onClose={() => setSheet(null)} onSaved={done} />
       )}
     </>
   );
@@ -171,7 +210,7 @@ function AddShift(props: {
   const option = (p: Staffer) => (
     <label key={p.id} className="list-row has-leading">
       <input type="radio" name="shift-user" value={p.id} checked={userId === p.id} onChange={() => setUserId(p.id)} />
-      <Avatar first={p.first_name} last={p.last_name} />
+      <Avatar first={p.first_name} last={p.last_name} color={studioColor(p.home_location_id)} />
       <span className="list-row-main">
         <span className="list-row-title">{fullName(p)}</span>
         <span className="list-row-sub">{ROLE_LABEL[p.role]}</span>
@@ -221,7 +260,7 @@ function AddShift(props: {
   );
 }
 
-function EditShift(props: { shift: PlanShift; studioName: string; onClose: () => void; onSaved: (text: string) => void }) {
+function EditShift(props: { shift: PlanShift; onClose: () => void; onSaved: (text: string) => void }) {
   const s = props.shift;
   const isWork = s.shift_type === "work";
   const day = berlinDate(s.starts_at);
@@ -255,7 +294,7 @@ function EditShift(props: { shift: PlanShift; studioName: string; onClose: () =>
   return (
     <Sheet
       title={name}
-      subtitle={`${fmtLongDay(day)} · ${isWork ? props.studioName : SHIFT_TYPE_LABEL[s.shift_type]}`}
+      subtitle={`${fmtLongDay(day)} · ${isWork ? studioShort(s.location?.name ?? "") : SHIFT_TYPE_LABEL[s.shift_type]}`}
       onClose={props.onClose}
       footer={
         <>

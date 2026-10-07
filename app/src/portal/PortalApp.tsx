@@ -2,10 +2,12 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { AuthLayout } from "../admin/AdminApp";
 import { Shell, type ShellTab } from "../components/Shell";
+import { StudioCalendar } from "../components/StudioCalendar";
 import { WeekPlan, useWeekShifts } from "../components/WeekPlan";
-import { Field, Notice, PageHeader, StudioFilter, WeekNav } from "../components/ui";
+import { Field, Notice, PageHeader, Segmented, StudioFilter, WeekNav } from "../components/ui";
 import { staffLoginEmail } from "../lib/config";
 import { berlinDate, weekStart } from "../lib/dates";
+import { registerStudios } from "../lib/studios";
 import { portalDb } from "../lib/supabase";
 import type { Location, Role } from "../lib/types";
 import { Account } from "./Account";
@@ -67,6 +69,7 @@ export function PortalApp(props: { stampToken?: string }) {
     setMe(profile.data as unknown as Me);
     setColleagues((people.data ?? []) as Colleague[]);
     setLocations((locs.data ?? []) as Location[]);
+    registerStudios((locs.data ?? []) as Location[]);
   }, []);
 
   useEffect(() => {
@@ -104,14 +107,23 @@ export function PortalApp(props: { stampToken?: string }) {
 function Plan(props: { me: Me; locations: Location[] }) {
   const [start, setStart] = useState(weekStart(berlinDate()));
   const [studio, setStudio] = useState("");
+  const [view, setView] = useState<"list" | "calendar">("list");
   const { shifts, error } = useWeekShifts(portalDb, start);
   return (
     <>
-      <PageHeader title="Dienstplan" />
-      <StudioFilter locations={props.locations} value={studio} onChange={setStudio} />
+      <PageHeader
+        title="Dienstplan"
+        actions={
+          <Segmented label="Ansicht" value={view} onChange={setView}
+            options={[{ id: "list", label: "Liste" }, { id: "calendar", label: "Kalender" }]} />
+        }
+      />
+      {view === "list" && <StudioFilter locations={props.locations} value={studio} onChange={setStudio} />}
       <WeekNav start={start} onChange={setStart} />
       {error && <Notice tone="error">{error}</Notice>}
-      <WeekPlan start={start} shifts={shifts} studio={studio} highlightUserId={props.me.id} />
+      {view === "list"
+        ? <WeekPlan start={start} shifts={shifts} studio={studio} highlightUserId={props.me.id} />
+        : <StudioCalendar start={start} shifts={shifts} locations={props.locations} highlightUserId={props.me.id} />}
     </>
   );
 }

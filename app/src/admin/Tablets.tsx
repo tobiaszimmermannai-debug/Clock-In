@@ -1,9 +1,10 @@
-// Tablet-Konten (nur Admin): anlegen mit Benutzername, sperren, Passwort neu setzen
+// Tablets (nur Admin): anlegen, sperren, löschen, Passwort neu setzen – darunter die Studios
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Field, Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet } from "../components/ui";
 import { accountAdmin, generatePassword } from "../lib/accountAdmin";
 import { adminDb } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
+import { StudiosSection } from "./Studios";
 
 type Tablet = { id: string; name: string; username: string | null; location_id: string | null; is_active: boolean };
 type Seen = { last_seen_at: string; network: string | null };
@@ -22,12 +23,13 @@ export function Tablets() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [seen, setSeen] = useState<Record<string, Seen>>({});
   const [creating, setCreating] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string }>();
 
   const load = useCallback(async () => {
     const [devices, locs, qr, nets] = await Promise.all([
-      adminDb.from("kiosk_devices").select("id, name, username, location_id, is_active").order("name"),
-      adminDb.from("locations").select("id, code, name").order("name"),
+      adminDb.from("kiosk_devices").select("id, name, username, location_id, is_active").is("archived_at", null).order("name"),
+      adminDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
       adminDb.from("kiosk_qr").select("device_id, last_seen_at"),
       adminDb.from("kiosk_networks").select("device_id, network, last_seen_at").order("last_seen_at", { ascending: false }),
     ]);
@@ -48,6 +50,20 @@ export function Tablets() {
   async function toggle(t: Tablet) {
     const { error } = await adminDb.from("kiosk_devices").update({ is_active: !t.is_active }).eq("id", t.id);
     if (error) return setMessage({ tone: "error", text: error.message });
+    void load();
+  }
+
+  // Ohne Stempelungen komplett löschen, sonst nur aus der Übersicht nehmen (Buchungen bleiben)
+  async function remove(t: Tablet) {
+    setConfirmDelete(null);
+    const { data, error } = await adminDb.rpc("delete_tablet", { p_device_id: t.id });
+    if (error) return setMessage({ tone: "error", text: error.message });
+    setMessage({
+      tone: "ok",
+      text: data === "archived"
+        ? `„${t.name}“ ist gesperrt und aus der Übersicht entfernt. Die Stempelungen daran bleiben als Nachweis gespeichert.`
+        : `„${t.name}“ wurde gelöscht.`,
+    });
     void load();
   }
 
@@ -92,13 +108,22 @@ export function Tablets() {
             />
             <div className="list-actions indent">
               <button type="button" className="btn btn-outline btn-sm" onClick={() => void resetPassword(t)}>Neues Passwort</button>
-              <button type="button" className={t.is_active ? "btn btn-danger btn-sm" : "btn btn-secondary btn-sm"} onClick={() => void toggle(t)}>
+              <button type="button" className={t.is_active ? "btn btn-outline btn-sm" : "btn btn-secondary btn-sm"} onClick={() => void toggle(t)}>
                 {t.is_active ? "Sperren" : "Freigeben"}
               </button>
+              {confirmDelete === t.id ? (
+                <>
+                  <button type="button" className="btn btn-danger-solid btn-sm" onClick={() => void remove(t)}>Wirklich löschen</button>
+                  <button type="button" className="btn btn-plain btn-sm" onClick={() => setConfirmDelete(null)}>Abbrechen</button>
+                </>
+              ) : (
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirmDelete(t.id)}>Löschen</button>
+              )}
             </div>
           </div>
         ))}
       </Section>
+      <StudiosSection onChanged={() => void load()} />
       {creating && (
         <NewTablet
           locations={locations}

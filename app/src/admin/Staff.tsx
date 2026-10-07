@@ -3,6 +3,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Avatar, Field, Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet, StudioFilter } from "../components/ui";
 import { accountAdmin, generatePassword, suggestUsername } from "../lib/accountAdmin";
 import { fmtHours } from "../lib/dates";
+import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
 import { type Location, ROLE_LABEL, type Role, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
@@ -50,11 +51,12 @@ export function Staff({ profile }: { profile: Profile }) {
         )
         .eq("is_active", true)
         .order("first_name"),
-      adminDb.from("locations").select("id, code, name").order("name"),
+      adminDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
     ]);
     if (users.error) return setError(users.error.message);
     setPeople(users.data as unknown as Person[]);
     setLocations((locs.data ?? []) as Location[]);
+    registerStudios((locs.data ?? []) as Location[]);
     // Registrierte Stempel-Handys (Admin: alle, Studioleitung: eigenes Studio)
     const { data } = await adminDb.from("stamp_phones").select("user_id, registered_at");
     setPhones(Object.fromEntries((data ?? []).map((r) => [r.user_id as string, r.registered_at as string])));
@@ -86,7 +88,12 @@ export function Staff({ profile }: { profile: Profile }) {
   const groups = [
     ...[...locations, { id: "", code: "", name: "Ohne Studio" }]
       .filter((l) => !studio || l.id === studio)
-      .map((l) => ({ key: l.id, title: studioShort(l.name), members: staff.filter((p) => (p.home_location_id ?? "") === l.id) })),
+      .map((l) => ({
+        key: l.id,
+        title: studioShort(l.name),
+        members: staff.filter((p) =>
+          l.id ? p.home_location_id === l.id : !locations.some((x) => x.id === p.home_location_id)),
+      })),
     ...(studio ? [] : [{ key: "admins", title: "Geschäftsführung", members: people.filter((p) => p.role === "admin") }]),
   ].filter((g) => g.members.length > 0);
 
@@ -108,7 +115,7 @@ export function Staff({ profile }: { profile: Profile }) {
           {g.members.map((p) => (
             <Row
               key={p.id}
-              leading={<Avatar first={p.first_name} last={p.last_name} />}
+              leading={<Avatar first={p.first_name} last={p.last_name} color={p.role === "admin" ? undefined : studioColor(p.home_location_id)} />}
               title={`${p.first_name} ${p.last_name}`}
               subtitle={`${ROLE_LABEL[p.role]} · ${contract(p)}`}
               trailing={p.role !== "admin" && <ReadyPill person={p} hasPhone={!!phones[p.id]} />}

@@ -1,6 +1,7 @@
 // Bausteine im klassischen App-Stil: Icons, Seitenkopf, gruppierte Listen, Segmente, Bottom-Sheet
-import { type ReactNode, useEffect } from "react";
+import { type CSSProperties, type ReactNode, useEffect } from "react";
 import { addDays, berlinDate, dayOfMonth, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "../lib/dates";
+import { studioColor } from "../lib/studios";
 import { type Location, studioShort } from "../lib/types";
 
 const PATHS = {
@@ -99,6 +100,7 @@ export function Row(props: {
   chevron?: boolean;
   onClick?: () => void;
   className?: string;
+  style?: CSSProperties;
 }) {
   const cls = ["list-row", props.leading ? "has-leading" : "", props.className ?? ""].join(" ").trim();
   const inner = (
@@ -117,20 +119,21 @@ export function Row(props: {
     </>
   );
   return props.onClick ? (
-    <button type="button" className={cls} onClick={props.onClick}>{inner}</button>
+    <button type="button" className={cls} style={props.style} onClick={props.onClick}>{inner}</button>
   ) : (
-    <div className={cls}>{inner}</div>
+    <div className={cls} style={props.style}>{inner}</div>
   );
 }
 
 const AVATAR_COLORS = ["#1f5fd6", "#0e9384", "#c4320a", "#7a5af8", "#dd2590", "#3e8a1e", "#b54708", "#155eef"];
 
-export function Avatar(props: { first: string; last?: string }) {
+// color: Farbe des Heimatstudios; ohne Studio eine feste Farbe aus dem Namen
+export function Avatar(props: { first: string; last?: string; color?: string }) {
   const initials = `${props.first[0] ?? ""}${props.last?.[0] ?? ""}`.toUpperCase();
   let hash = 0;
   for (const ch of props.first + (props.last ?? "")) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   return (
-    <span className="avatar" style={{ background: AVATAR_COLORS[hash % AVATAR_COLORS.length] }} aria-hidden="true">
+    <span className="avatar" style={{ background: props.color ?? AVATAR_COLORS[hash % AVATAR_COLORS.length] }} aria-hidden="true">
       {initials}
     </span>
   );
@@ -141,7 +144,7 @@ export function LeadingIcon(props: { name: IconName }) {
 }
 
 export function Segmented<T extends string>(props: {
-  options: { id: T; label: string }[];
+  options: { id: T; label: string; color?: string }[];
   value: T;
   onChange: (id: T) => void;
   label: string;
@@ -150,6 +153,7 @@ export function Segmented<T extends string>(props: {
     <div className="segmented" role="group" aria-label={props.label}>
       {props.options.map((o) => (
         <button key={o.id} type="button" aria-pressed={props.value === o.id} onClick={() => props.onChange(o.id)}>
+          {o.color && <span className="dot" style={{ background: o.color }} aria-hidden="true" />}
           {o.label}
         </button>
       ))}
@@ -160,7 +164,7 @@ export function Segmented<T extends string>(props: {
 export function StudioFilter(props: { locations: Location[]; value: string; onChange: (id: string) => void; all?: boolean }) {
   const options = [
     ...(props.all === false ? [] : [{ id: "", label: "Alle" }]),
-    ...props.locations.map((l) => ({ id: l.id, label: studioShort(l.name) })),
+    ...props.locations.map((l) => ({ id: l.id, label: studioShort(l.name), color: studioColor(l.id) })),
   ];
   return <Segmented label="Studio" options={options} value={props.value} onChange={props.onChange} />;
 }

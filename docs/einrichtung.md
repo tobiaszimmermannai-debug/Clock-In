@@ -93,6 +93,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 4. `supabase/migrations/20261006180000_studio_staffing.sql`
 5. `supabase/migrations/20261007120000_phone_stamping.sql` (Stempeln mit Handy + Tablet statt Gesichtserkennung)
 6. `supabase/migrations/20261007150000_forgotten_checkout.sql` (Ausstempeln vergessen = nur mit Freigabe)
+7. `supabase/migrations/20261008090000_tablet_delete.sql` (Tablets löschen in der Verwaltung)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
