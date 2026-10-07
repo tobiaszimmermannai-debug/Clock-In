@@ -7,9 +7,11 @@ import { adminDb } from "../lib/supabase";
 import type { Role } from "../lib/types";
 import { Approvals } from "./Approvals";
 import { Plan } from "./Plan";
+import { Sickness } from "./Sickness";
 import { Staff } from "./Staff";
 import { Tablets } from "./Tablets";
 import { Times } from "./Times";
+import { Vacations } from "./Vacations";
 
 export type Profile = { id: string; first_name: string; last_name: string; role: Role };
 
@@ -202,7 +204,7 @@ function CodeForm(props: {
   );
 }
 
-type TabId = "plan" | "staff" | "times" | "approvals" | "tablets";
+type TabId = "plan" | "staff" | "times" | "approvals" | "sick" | "vacation" | "tablets";
 
 function AdminHome(props: { profile: Profile; onLogout: () => void }) {
   const { profile } = props;
@@ -224,7 +226,13 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
     { id: "staff", label: "Team", icon: "users" },
     { id: "times", label: "Zeiten", icon: "clock" },
     { id: "approvals", label: "Freigaben", icon: "inbox", badge: open },
-    ...(isAdmin ? [{ id: "tablets", label: "Tablets", icon: "tablet" } as const] : []),
+    ...(isAdmin
+      ? ([
+          { id: "sick", label: "Krankheit", icon: "sick" },
+          { id: "vacation", label: "Urlaub", icon: "sun" },
+          { id: "tablets", label: "Tablets", icon: "tablet" },
+        ] as const)
+      : []),
   ];
 
   return (
@@ -240,6 +248,8 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
       {tab === "staff" && <Staff profile={profile} />}
       {tab === "times" && <Times profile={profile} />}
       {tab === "approvals" && <Approvals profile={profile} />}
+      {tab === "sick" && isAdmin && <Sickness />}
+      {tab === "vacation" && isAdmin && <Vacations />}
       {tab === "tablets" && isAdmin && <Tablets />}
     </Shell>
   );

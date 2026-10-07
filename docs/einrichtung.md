@@ -99,6 +99,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 10. `supabase/migrations/20261009090000_sick_days_good_boy.sql` (Krank-Tage, „Good Boy“ am Tablet, „Noch nicht da“-Meldung)
 11. `supabase/migrations/20261009120000_help_requests.sql` (Aushilfe anfragen und stellen)
 12. `supabase/migrations/20261009150000_help_without_request.sql` (Aushilfe stellen auch ohne Anfrage)
+13. `supabase/migrations/20261009180000_sick_documents.sql` (Krankheit: Attest / Karenztag-Zettel abhaken)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -158,6 +159,8 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   Krank setzt nur die Studioleitung (eigenes Studio und eigene Leute) oder ein Admin – gegen eine geplante
   Schicht oder als ganzer Tag (pauschal, Uhrzeiten zählen nicht). Urlaubsanspruch pro Jahr steht im
   Arbeitsvertrag (Team → Person); Mitarbeiter sehen ihre Urlaubstage im Portal unter Konto und Stunden.
+- **Admin-Übersichten:** „Krankheit“ – Krankheitsfälle (zusammenhängende Krank-Tage) mit Haken „Attest da“ /
+  „Karenztag-Zettel da“, Filter Offen/Alle. „Urlaub“ – je Jahr und Studio Anspruch, genommen, geplant, offen.
 - **Noch nicht da:** 5 Min. (Verspätungs-Toleranz) nach Schichtbeginn nicht eingestempelt → ⏰-Meldung per
   Telegram (je Schicht einmal, an alle mit Studio-Meldungen). Prüfung jede Minute (Job `clockin-staffing`).
 - **Tablet „Good Boy“:** Gehen spätestens zum Schichtende → 3 Sekunden Bild `app/public/good-boy.webp`.

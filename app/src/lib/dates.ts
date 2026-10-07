@@ -111,17 +111,29 @@ export function weekRangeLabel(start: string): string {
     : `${dayOfMonth(start)}. ${month(start)} – ${dayOfMonth(end)}. ${month(end)}`;
 }
 
-/** Aufeinanderfolgende Urlaubstage zusammenfassen (Wochenenden dazwischen zählen als durchgehend) */
-export function vacationRanges(list: string[]): { from: string; to: string; count: number }[] {
-  const out: { from: string; to: string; count: number }[] = [];
-  for (const d of [...new Set(list)].sort()) {
+const isWeekend = (date: string) => [0, 6].includes(new Date(`${date}T12:00:00Z`).getUTCDay());
+
+/** Einträge zu Blöcken aufeinanderfolgender Tage zusammenfassen (Wochenenden dazwischen zählen als durchgehend) */
+export function groupDays<T>(items: T[], dayOf: (item: T) => string): { from: string; to: string; items: T[] }[] {
+  const out: { from: string; to: string; items: T[] }[] = [];
+  for (const item of [...items].sort((a, b) => dayOf(a).localeCompare(dayOf(b)))) {
+    const d = dayOf(item);
     const last = out[out.length - 1];
-    let next = last ? addDays(last.to, 1) : "";
-    while (last && next < d && [0, 6].includes(new Date(`${next}T12:00:00Z`).getUTCDay())) next = addDays(next, 1);
-    if (last && next === d) {
-      last.to = d;
-      last.count++;
-    } else out.push({ from: d, to: d, count: 1 });
+    if (last) {
+      let next = addDays(last.to, 1);
+      while (next < d && isWeekend(next)) next = addDays(next, 1);
+      if (d <= last.to || next === d) {
+        if (d > last.to) last.to = d;
+        last.items.push(item);
+        continue;
+      }
+    }
+    out.push({ from: d, to: d, items: [item] });
   }
   return out;
+}
+
+/** Aufeinanderfolgende Urlaubstage zusammenfassen (Wochenenden dazwischen zählen als durchgehend) */
+export function vacationRanges(list: string[]): { from: string; to: string; count: number }[] {
+  return groupDays([...new Set(list)], (d) => d).map((g) => ({ from: g.from, to: g.to, count: g.items.length }));
 }

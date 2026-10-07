@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { absenceDays, addDays, vacationRanges, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "./dates";
+import { absenceDays, addDays, groupDays, vacationRanges, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "./dates";
 
 describe("Berliner Zeit", () => {
   it("Sommerzeit: 09:00 Berlin = 07:00 UTC", () => {
@@ -69,6 +69,16 @@ describe("Urlaub zusammenfassen", () => {
     expect(vacationRanges(["2026-10-19", "2026-10-16", "2026-10-20", "2026-10-30"])).toEqual([
       { from: "2026-10-16", to: "2026-10-20", count: 3 },
       { from: "2026-10-30", to: "2026-10-30", count: 1 },
+    ]);
+  });
+});
+
+describe("Tage gruppieren", () => {
+  it("Krankheitsfall: gleicher Tag und Wochenende gehören dazu, Lücke unter der Woche trennt", () => {
+    const days = ["2026-10-09", "2026-10-12", "2026-10-12", "2026-10-14"]; // Fr, Mo, Mo (2×), Mi
+    expect(groupDays(days, (d) => d).map((g) => [g.from, g.to, g.items.length])).toEqual([
+      ["2026-10-09", "2026-10-12", 3],
+      ["2026-10-14", "2026-10-14", 1],
     ]);
   });
 });

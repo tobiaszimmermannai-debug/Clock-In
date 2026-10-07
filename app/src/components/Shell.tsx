@@ -24,7 +24,8 @@ export function Shell<T extends string>(props: {
   );
   return (
     <div className="shell">
-      <nav className="tabbar" aria-label="Bereiche">
+      {/* Viele Bereiche: am Handy kleinere Beschriftung, damit alle in die Leiste passen */}
+      <nav className={props.tabs.length > 5 ? "tabbar is-crowded" : "tabbar"} aria-label="Bereiche">
         <div className="tabbar-brand">{brand}</div>
         {props.tabs.map((t) => (
           <button
