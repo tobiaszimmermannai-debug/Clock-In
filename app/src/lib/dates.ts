@@ -57,6 +57,17 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 }
 
+/** Urlaub/Schule über mehrere Tage: Mo–Fr (optional Samstag); ein einzelner Tag zählt immer */
+export function absenceDays(from: string, to: string, saturdays = false): string[] {
+  if (to <= from) return [from];
+  const out: string[] = [];
+  for (let d = from; d <= to; d = addDays(d, 1)) {
+    const wd = new Date(`${d}T12:00:00Z`).getUTCDay();
+    if (wd !== 0 && (wd !== 6 || saturdays)) out.push(d);
+  }
+  return out;
+}
+
 export const fmtDay = (date: string) => dayFmt.format(new Date(`${date}T12:00:00Z`));
 export const fmtLongDay = (date: string) => longDayFmt.format(new Date(`${date}T12:00:00Z`));
 

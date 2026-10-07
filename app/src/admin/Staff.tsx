@@ -1,8 +1,8 @@
-// Team: Liste nach Studio → Detailseite (Vertrag, Login, Stempel-Handy, Ausscheiden)
+// Team: Liste nach Studio → Detailseite (Vertrag, Urlaub, Login, Stempel-Handy, Ausscheiden)
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Avatar, Field, Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet, StudioFilter } from "../components/ui";
 import { accountAdmin, generatePassword, suggestUsername } from "../lib/accountAdmin";
-import { fmtHours } from "../lib/dates";
+import { berlinDate, fmtHours } from "../lib/dates";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
 import { type Location, ROLE_LABEL, type Role, studioShort } from "../lib/types";
@@ -16,8 +16,13 @@ export type Person = {
   home_location_id: string | null;
   username: string | null;
   auth_user_id: string | null;
-  employment_details: { weekly_target_minutes: number; work_days_per_week: number } | null;
+  employment_details: { weekly_target_minutes: number; work_days_per_week: number; vacation_days_per_year: number | null } | null;
 };
+
+// Urlaubstage im laufenden Jahr (vacation_overview)
+export type VacationInfo = { user_id: string; allowance: number | null; taken: number; planned: number };
+const vacationLeft = (v: VacationInfo) => (v.allowance === null ? null : Number(v.allowance) - v.taken - v.planned);
+const fmtDays = (n: number) => `${String(n).replace(".", ",")} ${n === 1 ? "Tag" : "Tage"}`;
 
 // Vorschlag beim Anlegen je Rolle: Azubis 40 Std./5 Tage (+ optional Samstag),
 // Vollangestellte 25 Std./4 Tage. Abweichungen passt ein Admin an.
@@ -37,6 +42,8 @@ export function Staff({ profile }: { profile: Profile }) {
   const [people, setPeople] = useState<Person[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [phones, setPhones] = useState<Record<string, string>>({});
+  const [vacation, setVacation] = useState<Record<string, VacationInfo>>({});
+  const year = Number(berlinDate().slice(0, 4));
   const [studio, setStudio] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -47,7 +54,7 @@ export function Staff({ profile }: { profile: Profile }) {
       adminDb
         .from("users")
         .select(
-          "id, first_name, last_name, role, home_location_id, username, auth_user_id, employment_details(weekly_target_minutes, work_days_per_week)",
+          "id, first_name, last_name, role, home_location_id, username, auth_user_id, employment_details(weekly_target_minutes, work_days_per_week, vacation_days_per_year)",
         )
         .eq("is_active", true)
         .order("first_name"),
@@ -58,9 +65,13 @@ export function Staff({ profile }: { profile: Profile }) {
     setLocations((locs.data ?? []) as Location[]);
     registerStudios((locs.data ?? []) as Location[]);
     // Registrierte Stempel-Handys (Admin: alle, Studioleitung: eigenes Studio)
-    const { data } = await adminDb.from("stamp_phones").select("user_id, registered_at");
+    const [{ data }, overview] = await Promise.all([
+      adminDb.from("stamp_phones").select("user_id, registered_at"),
+      adminDb.rpc("vacation_overview", { p_year: year }),
+    ]);
     setPhones(Object.fromEntries((data ?? []).map((r) => [r.user_id as string, r.registered_at as string])));
-  }, []);
+    setVacation(Object.fromEntries(((overview.data ?? []) as VacationInfo[]).map((v) => [v.user_id, v])));
+  }, [year]);
 
   useEffect(() => {
     void load();
@@ -73,6 +84,8 @@ export function Staff({ profile }: { profile: Profile }) {
         person={person}
         isAdmin={isAdmin}
         phoneSince={phones[person.id]}
+        vacation={vacation[person.id]}
+        year={year}
         locations={locations}
         onBack={() => setSelected(null)}
         onChanged={load}
@@ -117,7 +130,7 @@ export function Staff({ profile }: { profile: Profile }) {
               key={p.id}
               leading={<Avatar first={p.first_name} last={p.last_name} color={p.role === "admin" ? undefined : studioColor(p.home_location_id)} />}
               title={`${p.first_name} ${p.last_name}`}
-              subtitle={`${ROLE_LABEL[p.role]} · ${contract(p)}`}
+              subtitle={[ROLE_LABEL[p.role], contract(p), vacationShort(vacation[p.id])].filter(Boolean).join(" · ")}
               trailing={p.role !== "admin" && <ReadyPill person={p} hasPhone={!!phones[p.id]} />}
               chevron
               onClick={() => setSelected(p.id)}
@@ -140,6 +153,11 @@ export function Staff({ profile }: { profile: Profile }) {
   );
 }
 
+function vacationShort(v: VacationInfo | undefined) {
+  const left = v ? vacationLeft(v) : null;
+  return v && left !== null ? `Urlaub ${String(left).replace(".", ",")}/${String(Number(v.allowance)).replace(".", ",")} übrig` : "";
+}
+
 // Bereit zum Stempeln = Login vorhanden + Handy registriert
 function ReadyPill(props: { person: Person; hasPhone: boolean }) {
   if (!props.person.username && !props.person.auth_user_id) return <Pill tone="warn">kein Login</Pill>;
@@ -151,6 +169,8 @@ function PersonDetail(props: {
   person: Person;
   isAdmin: boolean;
   phoneSince?: string;
+  vacation?: VacationInfo;
+  year: number;
   locations: Location[];
   onBack: () => void;
   onChanged: () => Promise<void>;
@@ -198,6 +218,10 @@ function PersonDetail(props: {
         <Section title="Arbeitsvertrag">
           <Row title="Soll pro Woche" trailing={<span className="num">{contract(person)}</span>} />
         </Section>
+      )}
+
+      {person.role !== "admin" && (
+        <VacationSection vacation={props.vacation} year={props.year} isAdmin={isAdmin} />
       )}
 
       {isAdmin && person.role !== "admin" && (
@@ -262,6 +286,29 @@ function PersonDetail(props: {
   );
 }
 
+// Urlaubstagezähler: Anspruch (im Vertrag), genommen bis heute, geplant, übrig
+function VacationSection(props: { vacation?: VacationInfo; year: number; isAdmin: boolean }) {
+  const v = props.vacation;
+  const left = v ? vacationLeft(v) : null;
+  if (!v || v.allowance === null) {
+    return (
+      <Section title={`Urlaub ${props.year}`}>
+        <Row title="Noch kein Urlaubsanspruch hinterlegt"
+          subtitle={props.isAdmin ? "Oben im Arbeitsvertrag bei „Urlaubstage pro Jahr“ eintragen." : "Tobias oder Dominik tragen den Anspruch ein."} />
+      </Section>
+    );
+  }
+  return (
+    <Section title={`Urlaub ${props.year}`} footer="Jeder eingetragene Urlaubstag im Dienstplan zählt als ein Tag.">
+      <Row title="Anspruch" trailing={<span className="num">{fmtDays(Number(v.allowance))}</span>} />
+      <Row title="Genommen" trailing={<span className="num">{fmtDays(v.taken)}</span>} />
+      <Row title="Geplant" trailing={<span className="num">{fmtDays(v.planned)}</span>} />
+      <Row title={<strong>Übrig</strong>}
+        trailing={<strong className={`num${left !== null && left < 0 ? " text-danger" : ""}`}>{fmtDays(left ?? 0)}</strong>} />
+    </Section>
+  );
+}
+
 function ContractForm(props: { person: Person; locations: Location[]; onSaved: () => Promise<void> }) {
   const { person } = props;
   const details = person.employment_details;
@@ -277,6 +324,7 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
       user_id: person.id,
       weekly_target_minutes: Math.round(Number(f.get("weekly_hours")) * 60),
       work_days_per_week: Number(f.get("work_days")),
+      vacation_days_per_year: vacationValue(f),
     });
     const role = String(f.get("role"));
     const location = String(f.get("location"));
@@ -309,6 +357,10 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
             <input id="edit-work-days" name="work_days" type="number" min="1" max="6" step="1"
               defaultValue={details?.work_days_per_week ?? DEFAULT_WORK_DAYS} required />
           </Field>
+          <Field label="Urlaubstage pro Jahr" hint="Leer = noch nicht festgelegt">
+            <input id="edit-vacation-days" name="vacation_days" type="number" min="0" max="365" step="0.5"
+              defaultValue={details?.vacation_days_per_year ?? ""} />
+          </Field>
           <Field label="Rolle">
             <select id="edit-role" name="role" defaultValue={person.role}>
               <option value="employee">Mitarbeiter</option>
@@ -330,6 +382,11 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
       </form>
     </Section>
   );
+}
+
+function vacationValue(f: FormData): number | null {
+  const raw = String(f.get("vacation_days") ?? "").trim();
+  return raw === "" ? null : Number(raw.replace(",", "."));
 }
 
 function NewPerson(props: { locations: Location[]; defaultStudio: string; onClose: () => void; onSaved: (id: string) => void }) {
@@ -363,6 +420,7 @@ function NewPerson(props: { locations: Location[]; defaultStudio: string; onClos
       user_id: user.id,
       weekly_target_minutes: Math.round(Number(f.get("weekly_hours")) * 60),
       work_days_per_week: Number(f.get("work_days")),
+      vacation_days_per_year: vacationValue(f),
     });
     if (role === "manager") {
       await adminDb.from("location_managers").insert({ user_id: user.id, location_id: homeLocation });
@@ -400,6 +458,9 @@ function NewPerson(props: { locations: Location[]; defaultStudio: string; onClos
           </Field>
           <Field key={`d-${role}`} label="Arbeitstage pro Woche">
             <input id="new-work-days" name="work_days" type="number" min="1" max="6" step="1" defaultValue={DEFAULTS[role].days} required />
+          </Field>
+          <Field label="Urlaubstage pro Jahr" hint="Optional">
+            <input id="new-vacation-days" name="vacation_days" type="number" min="0" max="365" step="0.5" />
           </Field>
         </div>
         <p className="muted small">Vorschlag: Azubis 40 Std. an 5 Tagen, Vollangestellte 25 Std. an 4 Tagen.</p>

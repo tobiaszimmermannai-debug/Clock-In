@@ -12,7 +12,7 @@ export type ShiftType = "work" | "vocational_school" | "vacation" | "sick";
 
 export const SHIFT_TYPE_LABEL: Record<ShiftType, string> = {
   work: "Schicht",
-  vocational_school: "IST",
+  vocational_school: "Schule",
   vacation: "Urlaub",
   sick: "Krank",
 };
@@ -31,6 +31,9 @@ export const DEFAULT_RULES: RuleSettings = {
   min_break_minutes: 15,
   help_shift_minutes: 390,
 };
+
+// Urlaub/Krank/Schule: je Tag Wochenstunden ÷ 5,25 (wie rule_settings.absence_week_days)
+export const ABSENCE_WEEK_DAYS = 5.25;
 
 export type Location = { id: string; code: string; name: string };
 

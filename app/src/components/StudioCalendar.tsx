@@ -1,5 +1,5 @@
 // Dienstplan aller Studios im Kalender-Stil: Woche (Einträge je Tag) oder Tag (Zeitachse, Spalte je Studio).
-// Jede Schicht erscheint in der Farbe ihres Studios, mit Name und Uhrzeit.
+// Jede Schicht erscheint in der Farbe ihres Studios, mit Name und Uhrzeit; Akquise gestreift.
 import { type CSSProperties, useEffect, useState } from "react";
 import { addDays, berlinDate, berlinTime, weekdayShort, dayOfMonth } from "../lib/dates";
 import { studioColor } from "../lib/studios";
@@ -17,6 +17,7 @@ const minutesOf = (iso: string) => {
 // Ende am Folgetag (Nachtschicht) → bis Mitternacht zeichnen
 const endMinutes = (s: PlanShift) => (berlinDate(s.ends_at) !== berlinDate(s.starts_at) ? 24 * 60 : minutesOf(s.ends_at));
 const shortName = (s: PlanShift) => (s.user ? `${s.user.first_name} ${s.user.last_name[0] ?? ""}.` : "?");
+const label = (s: PlanShift) => (s.is_acquisition ? "Akquise" : isHelpShift(s) ? "Aushilfe" : "");
 
 // Überlappende Schichten nebeneinander (wie im Google Kalender)
 function layout(items: PlanShift[]) {
@@ -94,7 +95,9 @@ export function StudioCalendar(props: {
   };
   const editable = (s: PlanShift) => !!props.onSelect && (props.canEdit?.(s) ?? true);
   const homeOf = (s: PlanShift) => s.user?.home_location_id ?? null;
-  const isVisible = (s: PlanShift) => !hidden.has((s.location_id ?? homeOf(s)) || "");
+  // Abwesenheit beim Heimatstudio – Krank statt Schicht beim Studio der Schicht
+  const placeOf = (s: PlanShift) => s.location_id ?? homeOf(s);
+  const isVisible = (s: PlanShift) => !hidden.has(placeOf(s) || "");
   const onDay = (d: string) => props.shifts.filter((s) => berlinDate(s.starts_at) === d && isVisible(s));
 
   const columns: Column[] = visibleStudios.map((l) => ({
@@ -103,7 +106,7 @@ export function StudioCalendar(props: {
     color: studioColor(l.id),
     today: day === today,
     items: onDay(day).filter((s) => s.shift_type === "work" && s.location_id === l.id),
-    allDay: onDay(day).filter((s) => s.shift_type !== "work" && homeOf(s) === l.id),
+    allDay: onDay(day).filter((s) => s.shift_type !== "work" && placeOf(s) === l.id),
   }));
 
   // Sichtbarer Zeitraum: mindestens 7–21 Uhr, sonst passend zu den Schichten
@@ -143,6 +146,9 @@ export function StudioCalendar(props: {
               {studioShort(l.name)}
             </button>
           ))}
+          {props.shifts.some((s) => s.is_acquisition) && (
+            <span className="cal-legend-acq"><span className="box" aria-hidden="true" />Akquise</span>
+          )}
         </div>
       </div>
       {mode === "day" && (
@@ -169,21 +175,21 @@ export function StudioCalendar(props: {
                 <div key={d} className={d === today ? "cal-daycell is-today" : "cal-daycell"}>
                   {absent.map((s) => (
                     <button key={s.id} type="button" className="cal-chip"
-                      style={{ "--studio": studioColor(homeOf(s)) } as CSSProperties}
+                      style={{ "--studio": studioColor(placeOf(s)) } as CSSProperties}
                       disabled={!editable(s)} onClick={() => props.onSelect?.(s)}>
                       {shortName(s)} · {SHIFT_TYPE_LABEL[s.shift_type]}
                     </button>
                   ))}
                   {work.map((s) => (
                     <button key={s.id} type="button"
-                      className={s.user_id === props.highlightUserId ? "cal-pill is-mine" : "cal-pill"}
+                      className={`cal-pill${s.user_id === props.highlightUserId ? " is-mine" : ""}${s.is_acquisition ? " is-acq" : ""}`}
                       style={{ "--studio": studioColor(s.location_id) } as CSSProperties}
                       disabled={!editable(s)}
-                      title={`${s.user?.first_name} ${s.user?.last_name} · ${studioShort(s.location?.name ?? "")}`}
+                      title={`${s.user?.first_name} ${s.user?.last_name} · ${s.is_acquisition ? "Akquise in " : ""}${studioShort(s.location?.name ?? "")}`}
                       onClick={() => props.onSelect?.(s)}>
                       <span className="num">{berlinTime(s.starts_at)}–{berlinTime(s.ends_at)}</span>
                       <strong>{shortName(s)}</strong>
-                      {isHelpShift(s) && <span>Aushilfe</span>}
+                      {label(s) && <span>{label(s)}</span>}
                     </button>
                   ))}
                   {list.length === 0 && <span className="cal-empty">–</span>}
@@ -211,7 +217,7 @@ export function StudioCalendar(props: {
                   <div key={c.key} className="cal-allday">
                     {c.allDay.map((s) => (
                       <button key={s.id} type="button" className="cal-chip"
-                        style={{ "--studio": studioColor(homeOf(s)) } as CSSProperties}
+                        style={{ "--studio": studioColor(placeOf(s)) } as CSSProperties}
                         disabled={!editable(s)}
                         onClick={() => props.onSelect?.(s)}>
                         {shortName(s)} · {SHIFT_TYPE_LABEL[s.shift_type]}
@@ -237,7 +243,7 @@ export function StudioCalendar(props: {
                     <button
                       key={s.id}
                       type="button"
-                      className={`cal-event${mine ? " is-mine" : ""}${h < 40 ? " is-short" : ""}`}
+                      className={`cal-event${mine ? " is-mine" : ""}${h < 40 ? " is-short" : ""}${s.is_acquisition ? " is-acq" : ""}`}
                       style={{
                         top, height: h,
                         left: `calc(${(lane / lanes) * 100}% + 2px)`,
@@ -245,12 +251,12 @@ export function StudioCalendar(props: {
                         "--studio": studioColor(s.location_id),
                       } as CSSProperties}
                       disabled={!editable(s)}
-                      title={`${s.user?.first_name} ${s.user?.last_name} · ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} · ${studioShort(s.location?.name ?? "")}`}
+                      title={`${s.user?.first_name} ${s.user?.last_name} · ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} · ${s.is_acquisition ? "Akquise in " : ""}${studioShort(s.location?.name ?? "")}`}
                       onClick={() => props.onSelect?.(s)}
                     >
                       <strong>{shortName(s)}</strong>
                       <span className="num">{berlinTime(s.starts_at)}–{berlinTime(s.ends_at)}</span>
-                      {isHelpShift(s) && <span>Aushilfe</span>}
+                      {label(s) && <span>{label(s)}</span>}
                     </button>
                   );
                 })}

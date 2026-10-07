@@ -148,9 +148,11 @@ export function Segmented<T extends string>(props: {
   value: T;
   onChange: (id: T) => void;
   label: string;
+  /** alle Optionen gleich breit und immer ganz sichtbar (kein Scrollen) */
+  fill?: boolean;
 }) {
   return (
-    <div className="segmented" role="group" aria-label={props.label}>
+    <div className={props.fill ? "segmented is-fill" : "segmented"} role="group" aria-label={props.label}>
       {props.options.map((o) => (
         <button key={o.id} type="button" aria-pressed={props.value === o.id} onClick={() => props.onChange(o.id)}>
           {o.color && <span className="dot" style={{ background: o.color }} aria-hidden="true" />}

@@ -94,6 +94,8 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 5. `supabase/migrations/20261007120000_phone_stamping.sql` (Stempeln mit Handy + Tablet statt Gesichtserkennung)
 6. `supabase/migrations/20261007150000_forgotten_checkout.sql` (Ausstempeln vergessen = nur mit Freigabe)
 7. `supabase/migrations/20261008090000_tablet_delete.sql` (Tablets löschen in der Verwaltung)
+8. `supabase/migrations/20261008120000_acquisition_shifts.sql` (Akquise-Schichten, auch in anderen Studios)
+9. `supabase/migrations/20261008150000_vacation_sick.sql` (Urlaub mit Zähler, Krank statt Schicht, Schule)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -147,7 +149,13 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 - **Regeln (änderbar in `rule_settings`):** bis 5 Min. zu spät = pünktlich · Überstunden nur nach Freigabe ·
   jede Pause mind. 15 Min., gesetzlich 30/45 Min. ab 6/9 Std. · Ausstempeln vergessen → um 23 Uhr
   automatisch zur geplanten Endzeit eingetragen, zählt aber erst nach Freigabe per Telegram · 18 Uhr Abfrage
-  Krank/IST/Urlaub (je 6,5 Std.) · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
+  Krank/Schule/Urlaub · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
+- **Urlaub, Krank, Schule:** Urlaub/Schule je Tag 6,5 Std., Krank statt Schicht mit den Stunden der Schicht
+  (ab Uhrzeit nur der Rest). Azubis: je Tag Wochenstunden ÷ 5,25 (`absence_week_days`), Krank ab Uhrzeit anteilig.
+  Krank setzt nur die Studioleitung (eigenes Studio und eigene Leute) oder ein Admin – immer gegen eine
+  geplante Schicht. Urlaubsanspruch pro Jahr steht im Arbeitsvertrag (Team → Person).
+- **Akquise:** zählt wie eine Schicht, aber nicht als „Studio besetzt“. Studioleitung darf eigene Leute auch
+  in anderen Studios zur Akquise einplanen – normale Schichten nur im eigenen Studio.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:
   beide Studioleitungen müssen zustimmen; ein Admin (auch per Telegram) gibt für beide frei.
 - **Studio besetzt:** erste Stempelung des Tages je Studio → 🟢-Meldung; 10 Min. nach der ersten geplanten

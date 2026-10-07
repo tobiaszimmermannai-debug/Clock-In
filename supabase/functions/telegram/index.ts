@@ -92,7 +92,7 @@ const EVENT_LABEL: Record<string, string> = {
 };
 const ABSENCE: Record<string, { type: string; label: string }> = {
   s: { type: "sick", label: "🤒 Krank" },
-  i: { type: "vocational_school", label: "📚 IST" },
+  i: { type: "vocational_school", label: "📚 Schule" },
   u: { type: "vacation", label: "🏖 Urlaub" },
 };
 
@@ -232,7 +232,7 @@ function overtimeText(log: TimeLog): string {
   ].join("\n");
 }
 
-// 18 Uhr: Wer hatte heute weder Schicht noch Stempelung? → Krank / IST / Urlaub / Frei
+// 18 Uhr: Wer hatte heute weder Schicht noch Stempelung? → Krank / Schule / Urlaub / Frei
 async function absenceCheck(day: string): Promise<Response> {
   const { data: people, error } = await supabase.rpc("absence_candidates", { p_day: day });
   if (error) {
@@ -248,7 +248,7 @@ async function absenceCheck(day: string): Promise<Response> {
   for (const p of list) {
     const text =
       `❓ <b>${escapeHtml(fullName(p))}</b> hatte am ${formatDay(day)} keine Schicht und hat nicht gestempelt.\n` +
-      `Was war los? (Krank, IST und Urlaub werden mit ${hours} gutgeschrieben)`;
+      `Was war los? (Krank, Schule und Urlaub werden mit ${hours} gutgeschrieben, bei Azubis Wochenstunden ÷ 5,25)`;
     const cb = (code: string) => `ab:${code}:${p.user_id}:${compact}`;
     const keyboard = [
       [{ text: ABSENCE.s.label, callback_data: cb("s") }, { text: ABSENCE.i.label, callback_data: cb("i") }],
@@ -527,8 +527,7 @@ async function decideAbsence(cq: CallbackQuery, admin: Admin, code: string, user
     return;
   }
   if (recorded === false) return await alreadyDone(cq, "Für diesen Tag ist bereits etwas eingetragen.");
-  const hours = formatHours((await ruleSettings()).absence_credit_minutes);
-  await done(cq, `${absence.label} eingetragen`, `${absence.label} (${hours}) – eingetragen von ${by}`);
+  await done(cq, `${absence.label} eingetragen`, `${absence.label} – eingetragen von ${by}`);
 }
 
 // Schichttausch entscheiden; die Datenbank prüft Schichten und tauscht atomar

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "./dates";
+import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "./dates";
 
 describe("Berliner Zeit", () => {
   it("Sommerzeit: 09:00 Berlin = 07:00 UTC", () => {
@@ -47,5 +47,18 @@ describe("Wochen-Beschriftung", () => {
     expect(weekdayShort("2026-10-11")).toBe("So");
     expect(weekRangeLabel("2026-10-05")).toBe("5.–11. Okt.");
     expect(weekRangeLabel("2026-09-28")).toBe("28. Sept. – 4. Okt.");
+  });
+});
+
+describe("Abwesenheit über mehrere Tage", () => {
+  it("zählt Mo–Fr, Samstag nur auf Wunsch, Sonntag nie", () => {
+    // 12.10.2026 = Montag
+    expect(absenceDays("2026-10-12", "2026-10-18")).toEqual(["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"]);
+    expect(absenceDays("2026-10-12", "2026-10-18", true)).toHaveLength(6);
+    expect(absenceDays("2026-10-12", "2026-10-25")).toHaveLength(10);
+  });
+  it("ein einzelner Tag zählt immer – auch Samstag/Sonntag", () => {
+    expect(absenceDays("2026-10-18", "2026-10-18")).toEqual(["2026-10-18"]);
+    expect(absenceDays("2026-10-17", "2026-10-10")).toEqual(["2026-10-17"]);
   });
 });
