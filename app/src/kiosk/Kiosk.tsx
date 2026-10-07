@@ -1,5 +1,6 @@
 // Tablet im Studio: Uhr + QR-Code (wechselt alle 30 Sek.). Mitarbeiter scannen ihn mit dem
-// eigenen Handy und stempeln dort; das Tablet zeigt danach die Begrüßung.
+// eigenen Handy und stempeln dort; das Tablet zeigt danach die Begrüßung –
+// beim pünktlichen Gehen (spätestens zum Schichtende) 3 Sekunden das „Good Boy“-Bild.
 import { useEffect, useRef, useState } from "react";
 import { ACTION_ICON, GREETING } from "../components/actions";
 import { QrCode } from "../components/QrCode";
@@ -11,10 +12,16 @@ import { EVENT_LABEL, type EventType, type KioskDevice, type Location, studioSho
 
 export type KioskSession = { device: KioskDevice; location: Location };
 
-type Ping = { token: string; now: string; recent: { first_name: string; event_type: EventType; recorded_at: string }[] };
+type Ping = {
+  token: string;
+  now: string;
+  recent: { first_name: string; event_type: EventType; recorded_at: string; on_time?: boolean }[];
+};
 type Greeting = Ping["recent"][number];
 
 const PING_MS = 4000;
+const GOOD_BOY_MS = 3000;
+const GOOD_BOY_SRC = `${import.meta.env.BASE_URL}good-boy.webp`;
 
 export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
   const now = useNow();
@@ -52,7 +59,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
 
   useEffect(() => {
     if (!greeting) return;
-    const t = setTimeout(() => setGreeting(null), 6000);
+    const t = setTimeout(() => setGreeting(null), greeting.on_time ? GOOD_BOY_MS : 6000);
     return () => clearTimeout(t);
   }, [greeting]);
 
@@ -92,7 +99,12 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
         </section>
       </main>
 
-      {greeting && (
+      {greeting?.on_time ? (
+        <div className="kiosk-goodboy" onClick={() => setGreeting(null)}>
+          <img src={GOOD_BOY_SRC} alt="Good Boy" />
+          <p>{GREETING.clock_out(greeting.first_name)} · {fmtClock(greeting.recorded_at)} Uhr</p>
+        </div>
+      ) : greeting && (
         <div className="kiosk-greeting" onClick={() => setGreeting(null)}>
           <span className={`result-icon action-${greeting.event_type}`} aria-hidden="true">
             <Icon name={ACTION_ICON[greeting.event_type]} stroke={2.4} />

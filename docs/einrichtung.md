@@ -96,6 +96,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 7. `supabase/migrations/20261008090000_tablet_delete.sql` (Tablets löschen in der Verwaltung)
 8. `supabase/migrations/20261008120000_acquisition_shifts.sql` (Akquise-Schichten, auch in anderen Studios)
 9. `supabase/migrations/20261008150000_vacation_sick.sql` (Urlaub mit Zähler, Krank statt Schicht, Schule)
+10. `supabase/migrations/20261009090000_sick_days_good_boy.sql` (Krank-Tage, „Good Boy“ am Tablet, „Noch nicht da“-Meldung)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -152,8 +153,12 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   Krank/Schule/Urlaub · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
 - **Urlaub, Krank, Schule:** Urlaub/Schule je Tag 6,5 Std., Krank statt Schicht mit den Stunden der Schicht
   (ab Uhrzeit nur der Rest). Azubis: je Tag Wochenstunden ÷ 5,25 (`absence_week_days`), Krank ab Uhrzeit anteilig.
-  Krank setzt nur die Studioleitung (eigenes Studio und eigene Leute) oder ein Admin – immer gegen eine
-  geplante Schicht. Urlaubsanspruch pro Jahr steht im Arbeitsvertrag (Team → Person).
+  Krank setzt nur die Studioleitung (eigenes Studio und eigene Leute) oder ein Admin – gegen eine geplante
+  Schicht oder als ganzer Tag (pauschal, Uhrzeiten zählen nicht). Urlaubsanspruch pro Jahr steht im
+  Arbeitsvertrag (Team → Person); Mitarbeiter sehen ihre Urlaubstage im Portal unter Konto und Stunden.
+- **Noch nicht da:** 5 Min. (Verspätungs-Toleranz) nach Schichtbeginn nicht eingestempelt → ⏰-Meldung per
+  Telegram (je Schicht einmal, an alle mit Studio-Meldungen). Prüfung jede Minute (Job `clockin-staffing`).
+- **Tablet „Good Boy“:** Gehen spätestens zum Schichtende → 3 Sekunden Bild `app/public/good-boy.webp`.
 - **Akquise:** zählt wie eine Schicht, aber nicht als „Studio besetzt“. Studioleitung darf eigene Leute auch
   in anderen Studios zur Akquise einplanen – normale Schichten nur im eigenen Studio.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:

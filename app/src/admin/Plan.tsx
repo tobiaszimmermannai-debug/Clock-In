@@ -2,7 +2,7 @@
 // Schicht · Akquise · Urlaub · Krank · Schule.
 // Studioleitung plant nur ihr eigenes Studio; wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
 // Ausnahme Akquise: eigene Leute dürfen dafür auch in andere Studios eingeplant werden.
-// Krank: eine geplante Schicht wird getauscht (ganz oder ab Uhrzeit) – Studioleitung und Admin.
+// Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
 import { useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
 import { type PlanShift, ShiftRow, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
@@ -39,7 +39,7 @@ const SHEET_TITLE: Record<Category, string> = {
   work: "Schicht hinzufügen",
   acq: "Akquise eintragen",
   vacation: "Urlaub eintragen",
-  sick: "Schicht auf Krank setzen",
+  sick: "Krank eintragen",
   vocational_school: "Schule eintragen",
 };
 type Vacation = { user_id: string; allowance: number | null; taken: number; planned: number };
@@ -310,14 +310,16 @@ function AddShift(props: {
   const [saturdays, setSaturdays] = useState(false);
   const [sickShiftId, setSickShiftId] = useState("");
   const [sickFrom, setSickFrom] = useState<string | null>(null);
+  // Krank: geplante Schicht tauschen oder ganzer Tag (ohne Schicht)
+  const [sickMode, setSickMode] = useState<"swap" | "day">(props.sickCandidates.length ? "swap" : "day");
   const [vacation, setVacation] = useState<Record<string, Vacation>>({});
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
   const isAcq = cat === "acq";
   const isWork = cat === "work" || isAcq;
-  const isSick = cat === "sick";
-  const isAbsence = cat === "vacation" || cat === "vocational_school";
+  const isSwap = cat === "sick" && sickMode === "swap";
+  const isAbsence = cat === "vacation" || cat === "vocational_school" || (cat === "sick" && sickMode === "day");
   const location = isAcq ? acqStudio : props.studio;
   const locationName = studioShort(props.locations.find((l) => l.id === location)?.name ?? props.studioName);
   // Akquise in einem fremden Studio: nur eigene Leute (normale Schichten dort plant die dortige Leitung)
@@ -354,13 +356,14 @@ function AddShift(props: {
     setUserId("");
     setSickShiftId("");
     setSickFrom(null);
+    setSickMode(props.sickCandidates.length ? "swap" : "day");
     setAcqStudio(props.studio);
     setError(undefined);
   }
 
   async function save() {
     setError(undefined);
-    if (isSick) {
+    if (isSwap) {
       if (!sickShift || !sickValid(sickShift, sickFrom)) return;
       setBusy(true);
       const { error, text } = await reportSick(sickShift, sickFrom);
@@ -419,7 +422,7 @@ function AddShift(props: {
     </label>
   );
 
-  const canSave = isSick ? !!sickShift && sickValid(sickShift, sickFrom) : !!person;
+  const canSave = isSwap ? !!sickShift && sickValid(sickShift, sickFrom) : !!person;
   const left = person && cat === "vacation" ? vacationLeft(person.id) : null;
   const dayCredit = person ? props.creditOf(person.id, minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to), 1) : undefined;
 
@@ -430,7 +433,7 @@ function AddShift(props: {
       onClose={props.onClose}
       footer={
         <button type="button" className="btn btn-primary" disabled={!canSave || busy} onClick={() => void save()}>
-          {busy ? "Speichert …" : isSick ? "Auf Krank setzen" : "Speichern"}
+          {busy ? "Speichert …" : isSwap ? "Auf Krank setzen" : "Speichern"}
         </button>
       }
     >
@@ -444,10 +447,16 @@ function AddShift(props: {
         </Section>
       )}
 
-      {isSick ? (
+      {cat === "sick" && (
+        <Segmented label="Krank" value={sickMode} fill
+          onChange={(m) => { setSickMode(m); setUserId(""); setSickShiftId(""); setSickFrom(null); setError(undefined); }}
+          options={[{ id: "swap", label: "Schicht tauschen" }, { id: "day", label: "Ganzer Tag" }]} />
+      )}
+
+      {isSwap ? (
         props.sickCandidates.length === 0 ? (
           <Empty icon="calendar" title="Keine Schicht an diesem Tag">
-            Krank wird gegen eine geplante Schicht getauscht – erst die Schicht eintragen, dann auf Krank setzen.
+            Ohne geplante Schicht „Ganzer Tag“ wählen.
           </Empty>
         ) : (
           <>
@@ -569,7 +578,9 @@ function EditShift(props: {
     props.onSaved(`Eintrag von ${name} gelöscht.`);
   }
 
-  const credit = props.creditOf(s.user_id, durationMinutes(s), Number(s.credit_share ?? 1));
+  // ganzer Tag pauschal, Krank statt Schicht mit der Schichtdauer
+  const credit = props.creditOf(s.user_id, isSickSwap(s) ? durationMinutes(s) : minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to),
+    Number(s.credit_share ?? 1));
   const where = isWork ? `${s.is_acquisition ? "Akquise in " : ""}${studioShort(s.location?.name ?? "")}` : SHIFT_TYPE_LABEL[s.shift_type];
 
   if (sick) {

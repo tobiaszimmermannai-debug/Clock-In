@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "./dates";
+import { absenceDays, addDays, vacationRanges, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "./dates";
 
 describe("Berliner Zeit", () => {
   it("Sommerzeit: 09:00 Berlin = 07:00 UTC", () => {
@@ -60,5 +60,15 @@ describe("Abwesenheit über mehrere Tage", () => {
   it("ein einzelner Tag zählt immer – auch Samstag/Sonntag", () => {
     expect(absenceDays("2026-10-18", "2026-10-18")).toEqual(["2026-10-18"]);
     expect(absenceDays("2026-10-17", "2026-10-10")).toEqual(["2026-10-17"]);
+  });
+});
+
+describe("Urlaub zusammenfassen", () => {
+  it("fasst Tage über das Wochenende zusammen", () => {
+    // Fr 16.10., Mo 19.10., Di 20.10. → ein Block; Fr 30.10. einzeln
+    expect(vacationRanges(["2026-10-19", "2026-10-16", "2026-10-20", "2026-10-30"])).toEqual([
+      { from: "2026-10-16", to: "2026-10-20", count: 3 },
+      { from: "2026-10-30", to: "2026-10-30", count: 1 },
+    ]);
   });
 });

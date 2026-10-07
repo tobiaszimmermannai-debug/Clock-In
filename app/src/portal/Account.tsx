@@ -1,9 +1,10 @@
-// Konto: Stempel-Handy, Passwort ändern, abmelden
+// Konto: Urlaub, Stempel-Handy, Passwort ändern, abmelden
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Field, LeadingIcon, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
 import { existingPhoneKey, sha256Hex } from "../lib/stamp";
 import { portalDb } from "../lib/supabase";
 import type { Me } from "./PortalApp";
+import { VacationSection } from "./Vacation";
 
 export function Account(props: { me: Me; onLogout: () => void }) {
   // null = kein Handy registriert; sonst Datum und ob es dieses Handy ist
@@ -41,6 +42,8 @@ export function Account(props: { me: Me; onLogout: () => void }) {
     <>
       <PageHeader title="Konto" subtitle={`${props.me.first_name} ${props.me.last_name}`} />
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
+
+      <VacationSection meId={props.me.id} />
 
       <Section title="Stempel-Handy" footer="Stempeln geht nur mit deinem registrierten Handy. Neues Handy? Bitte Tobias oder Dominik, es zurückzusetzen.">
         {phone === undefined && <p className="list-empty">Lädt …</p>}

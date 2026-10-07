@@ -23,7 +23,7 @@ export default defineConfig({
       },
       workbox: {
         // App vorab cachen → startet schnell, auch bei schwachem Netz
-        globPatterns: ["**/*.{js,css,html,svg,png}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,webp}"],
       },
     }),
   ],

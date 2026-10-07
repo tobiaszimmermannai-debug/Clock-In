@@ -102,6 +102,7 @@ async function handleNotify(
   if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
   if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
+  if (body.type === "not_checked_in") return await notCheckedIn(body as NotCheckedIn);
   if (body.type === "phone_registered") return await phoneRegistered(body as PhoneRegistered);
   if (body.type === "weekly_report" && typeof body.from === "string" && typeof body.to === "string") {
     return await weeklyReport(body.from, body.to);
@@ -265,6 +266,17 @@ async function studioUnstaffed(b: Unstaffed): Promise<Response> {
   const names = (b.names ?? []).map(escapeHtml).join(", ") || "?";
   const text = `🔴 <b>${escapeHtml(b.location ?? "Studio")} ist noch nicht besetzt</b>\n` +
     `Geplant ab ${escapeHtml(b.start ?? "?")}: ${names}`;
+  const admins = (await adminChats()).filter((a) => a.notify_studio_status);
+  await Promise.all(admins.map((a) => sendMessage(a.chat_id, text)));
+  return new Response("sent");
+}
+
+// 5 Min. nach Schichtbeginn noch nicht eingestempelt (je Schicht einmal)
+type NotCheckedIn = { name?: string; location?: string; start?: string; acquisition?: boolean };
+async function notCheckedIn(b: NotCheckedIn): Promise<Response> {
+  const text = `⏰ <b>${escapeHtml(b.name ?? "?")}</b> ist noch nicht da\n` +
+    `${b.acquisition ? "Akquise" : "Schicht"} in ${escapeHtml((b.location ?? "?").replace(/^Studio\s+/, ""))} ab ` +
+    `${escapeHtml(b.start ?? "?")} Uhr – noch nicht eingestempelt.`;
   const admins = (await adminChats()).filter((a) => a.notify_studio_status);
   await Promise.all(admins.map((a) => sendMessage(a.chat_id, text)));
   return new Response("sent");

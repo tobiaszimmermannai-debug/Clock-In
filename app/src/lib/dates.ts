@@ -110,3 +110,18 @@ export function weekRangeLabel(start: string): string {
     ? `${dayOfMonth(start)}.–${dayOfMonth(end)}. ${month(end)}`
     : `${dayOfMonth(start)}. ${month(start)} – ${dayOfMonth(end)}. ${month(end)}`;
 }
+
+/** Aufeinanderfolgende Urlaubstage zusammenfassen (Wochenenden dazwischen zählen als durchgehend) */
+export function vacationRanges(list: string[]): { from: string; to: string; count: number }[] {
+  const out: { from: string; to: string; count: number }[] = [];
+  for (const d of [...new Set(list)].sort()) {
+    const last = out[out.length - 1];
+    let next = last ? addDays(last.to, 1) : "";
+    while (last && next < d && [0, 6].includes(new Date(`${next}T12:00:00Z`).getUTCDay())) next = addDays(next, 1);
+    if (last && next === d) {
+      last.to = d;
+      last.count++;
+    } else out.push({ from: d, to: d, count: 1 });
+  }
+  return out;
+}
