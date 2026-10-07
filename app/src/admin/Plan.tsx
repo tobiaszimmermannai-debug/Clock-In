@@ -1,7 +1,7 @@
 // Dienstplan schreiben: Studio → Woche → Tag antippen → „Eintragen“ → Art (Dropdown, Standard Studio-Schicht):
 // Studio-Schicht · Aushilfe anfragen · Aushilfe stellen · Akquise · Urlaub · Krank · Schule.
-// Studioleitung plant nur ihr eigenes Studio; wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
-// Ausnahmen: Akquise und angefragte Aushilfe – dafür dürfen eigene Leute auch in andere Studios.
+// Studioleitung plant ihr Studio (auch mit Aushilfen von woanders) und ihre eigenen Leute in jedem Studio
+// (Aushilfe stellen – mit oder ohne Anfrage, Akquise). Wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
 // Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
 import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
@@ -31,7 +31,7 @@ type Category = "work" | "help_request" | "help_fill" | "acq" | "vacation" | "si
 const CATEGORIES: { id: Category; label: string }[] = [
   { id: "work", label: "Studio-Schicht" },
   { id: "help_request", label: "Aushilfe anfragen" },
-  { id: "help_fill", label: "Aushilfe stellen (für anderes Studio)" },
+  { id: "help_fill", label: "Aushilfe stellen (in anderem Studio)" },
   { id: "acq", label: "Akquise" },
   { id: "vacation", label: "Urlaub" },
   { id: "sick", label: "Krank" },
@@ -135,9 +135,8 @@ export function Plan({ profile }: { profile: Profile }) {
 
   const isAdmin = profile.role === "admin";
   const studioName = studioShort(locations.find((l) => l.id === studio)?.name ?? "");
-  // Eigene Leute bleiben sichtbar – auch mit Abwesenheit oder Akquise in einem anderen Studio
-  const inStudio = (s: PlanShift) =>
-    s.location_id === studio || ((s.location_id === null || !!s.is_acquisition) && s.user?.home_location_id === studio);
+  // Schichten im Studio + eigene Leute überall (Aushilfe, Akquise, Abwesenheit)
+  const inStudio = (s: PlanShift) => s.location_id === studio || s.user?.home_location_id === studio;
   const counts: Record<string, number> = {};
   for (const s of shifts) if (inStudio(s)) counts[berlinDate(s.starts_at)] = (counts[berlinDate(s.starts_at)] ?? 0) + 1;
   const dayEntries = shifts.filter((s) => berlinDate(s.starts_at) === day && inStudio(s));
@@ -170,12 +169,11 @@ export function Plan({ profile }: { profile: Profile }) {
   );
   const dayRequests = help.requests.filter((r) => r.location_id === studio && berlinDate(r.starts_at) === day);
 
+  // Ändern: Schichten im eigenen Studio und alle Einträge der eigenen Leute; Admin alles
   const canEdit = (s: PlanShift) =>
-    isAdmin ||
-    managed.has(s.location_id ?? s.user?.home_location_id ?? "") ||
-    (!!s.is_acquisition && managed.has(s.user?.home_location_id ?? ""));
-  // Krank setzen: Schichten im eigenen Studio und alle Schichten der eigenen Leute (auch die eigene); Admin alles
-  const canSick = (s: PlanShift) => s.shift_type === "work" && (canEdit(s) || managed.has(s.user?.home_location_id ?? ""));
+    isAdmin || managed.has(s.location_id ?? "") || managed.has(s.user?.home_location_id ?? "");
+  // Krank setzen: dieselben Schichten (auch die eigene)
+  const canSick = (s: PlanShift) => s.shift_type === "work" && canEdit(s);
   const sickCandidates = shifts.filter((s) =>
     berlinDate(s.starts_at) === day && (inStudio(s) || s.user?.home_location_id === studio) && canSick(s));
   // Gutschrift (Anzeige): Azubis Wochenstunden ÷ 5,25 je Tag, sonst Dauer des Eintrags
@@ -186,7 +184,8 @@ export function Plan({ profile }: { profile: Profile }) {
     return { minutes: weekly == null ? undefined : Math.round((weekly / ABSENCE_WEEK_DAYS) * share), trainee: true };
   };
   const editSheet = (shift: PlanShift) => (
-    <EditShift shift={shift} canPlanNormal={isAdmin || managed.has(shift.location_id ?? "")} canSick={canSick(shift)}
+    <EditShift shift={shift} canPlanNormal={isAdmin || managed.has(shift.location_id ?? "") || managed.has(shift.user?.home_location_id ?? "")}
+      canSick={canSick(shift)}
       creditOf={creditOf} onClose={() => setSheet(null)} onSaved={done} />
   );
   const viewSwitch = (
@@ -230,7 +229,10 @@ export function Plan({ profile }: { profile: Profile }) {
 
       <Section title={fmtLongDay(day)} aside={<span>{dayEntries.length} {dayEntries.length === 1 ? "Eintrag" : "Einträge"}</span>}>
         {dayEntries.length === 0 && dayRequests.length === 0 && <p className="list-empty">Noch niemand eingetragen.</p>}
-        {dayEntries.map((s) => <ShiftRow key={s.id} shift={s} onClick={() => setSheet({ shift: s })} />)}
+        {dayEntries.map((s) => (
+          <ShiftRow key={s.id} shift={s} showStudio={!!s.location_id && s.location_id !== studio}
+            onClick={() => setSheet({ shift: s })} />
+        ))}
         {dayRequests.map((r) => (
           <Row key={r.id} className="is-request" leading={<span className="avatar avatar-request" aria-hidden="true">?</span>}
             title="Aushilfe gesucht" subtitle={r.note ?? "Anfrage an alle Studios"}
@@ -274,7 +276,7 @@ function HelpBoard(props: {
   if (props.requests.length === 0) return null;
   return (
     <Section title="Aushilfe gesucht" aside={<span>{props.requests.length}</span>}
-      footer="Mit „Stellen“ trägst du einen eigenen Mitarbeiter direkt im anfragenden Studio ein.">
+      footer="Mit „Stellen“ trägst du einen eigenen Mitarbeiter direkt im anfragenden Studio ein. Ohne Anfrage: Eintragen → Aushilfe stellen.">
       {props.requests.map((r) => {
         const own = props.isOwn(r.location_id);
         return (
@@ -392,6 +394,9 @@ function AddShift(props: {
 }) {
   const [cat, setCat] = useState<Category>(props.initialCategory ?? "work");
   const [requestId, setRequestId] = useState(props.initialRequestId ?? "");
+  // Aushilfe stellen ohne Anfrage: Studio, in dem geholfen wird
+  const otherStudios = props.locations.filter((l) => l.id !== props.studio);
+  const [target, setTarget] = useState(otherStudios[0]?.id ?? "");
   const [note, setNote] = useState("");
   const [userId, setUserId] = useState("");
   const [from, setFrom] = useState(lastTimes.from);
@@ -435,6 +440,8 @@ function AddShift(props: {
   const days = absenceDays(props.day, until, saturdays);
   const sickShift = props.sickCandidates.find((s) => s.id === sickShiftId);
   const request = props.helpRequests.find((r) => r.id === requestId);
+  const targetName = studioShort(props.locations.find((l) => l.id === (request?.location_id ?? target))?.name ?? "");
+  const homeName = (p: Staffer) => studioShort(props.locations.find((l) => l.id === p.home_location_id)?.name ?? "");
 
   const vacationLeft = (id: string) => {
     const v = vacation[id];
@@ -480,14 +487,25 @@ function AddShift(props: {
     }
     if (!person) return;
     if (isHelpFill) {
-      if (!request) return;
+      if (!request && minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
       setBusy(true);
-      const { error } = await adminDb.rpc("fill_help_request", { p_request_id: request.id, p_user_id: person.id });
+      // mit Anfrage: übernimmt deren Zeit; ohne: direkt eintragen (telefonisch/WhatsApp abgesprochen)
+      const { error } = request
+        ? await adminDb.rpc("fill_help_request", { p_request_id: request.id, p_user_id: person.id })
+        : await adminDb.from("shifts").insert({
+            user_id: person.id,
+            shift_type: "work",
+            location_id: target,
+            starts_at: berlinToISO(props.day, from),
+            ends_at: berlinToISO(props.day, to),
+            note: `Aushilfe aus ${homeName(person) || props.studioName}`,
+          });
       setBusy(false);
       if (error) return setError(dbMessage(error));
+      if (!request) lastTimes = { from, to };
       return props.onSaved(
-        `${fullName(person)} hilft in ${studioShort(request.location?.name ?? "")} aus: ${fmtDay(props.day)}, ` +
-          `${berlinTime(request.starts_at)}–${berlinTime(request.ends_at)} Uhr.`,
+        `${fullName(person)} hilft in ${targetName} aus: ${fmtDay(props.day)}, ` +
+          `${request ? `${berlinTime(request.starts_at)}–${berlinTime(request.ends_at)}` : `${from}–${to}`} Uhr.`,
       );
     }
     if (isWork) {
@@ -500,6 +518,7 @@ function AddShift(props: {
         is_acquisition: isAcq,
         starts_at: berlinToISO(props.day, from),
         ends_at: berlinToISO(props.day, to),
+        note: !isAcq && person.home_location_id !== location && homeName(person) ? `Aushilfe aus ${homeName(person)}` : null,
       });
       setBusy(false);
       if (error) return setError(dbMessage(error));
@@ -543,7 +562,7 @@ function AddShift(props: {
 
   const canSave = isSwap ? !!sickShift && sickValid(sickShift, sickFrom)
     : isHelpReq ? minutesBetween(from, to) > 0
-    : isHelpFill ? !!request && !!person
+    : isHelpFill ? !!person && (!!request || (!!target && minutesBetween(from, to) > 0))
     : !!person;
   const left = person && cat === "vacation" ? vacationLeft(person.id) : null;
   const dayCredit = person ? props.creditOf(person.id, minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to), 1) : undefined;
@@ -551,7 +570,7 @@ function AddShift(props: {
   return (
     <Sheet
       title={SHEET_TITLE[cat]}
-      subtitle={`${fmtLongDay(props.day)} · ${isAcq ? `Akquise in ${locationName}` : isHelpFill ? `Aushilfe aus ${props.studioName}` : props.studioName}`}
+      subtitle={`${fmtLongDay(props.day)} · ${isAcq ? `Akquise in ${locationName}` : isHelpFill ? `Aushilfe aus ${props.studioName} → ${targetName}` : props.studioName}`}
       onClose={props.onClose}
       footer={
         <button type="button" className="btn btn-primary" disabled={!canSave || busy} onClick={() => void save()}>
@@ -568,13 +587,15 @@ function AddShift(props: {
       {isHelpReq && (
         <Notice>Alle Studios sehen die Anfrage unter „Aushilfe gesucht“ und können jemanden schicken.</Notice>
       )}
-      {isHelpFill && (
-        props.helpRequests.length === 0 ? (
-          <Empty icon="users" title="Keine offene Anfrage an diesem Tag">
-            Offene Anfragen stehen oben im Dienstplan unter „Aushilfe gesucht“.
-          </Empty>
-        ) : (
-          <Section title="Welche Anfrage?">
+      {isHelpFill && props.helpRequests.length > 0 && (
+        <Section title="Offene Anfrage übernehmen? (optional)">
+          <label className="list-row">
+            <input type="radio" name="help-request" value="" checked={requestId === ""} onChange={() => setRequestId("")} />
+            <span className="list-row-main">
+              <span className="list-row-title">Ohne Anfrage</span>
+              <span className="list-row-sub">Studio und Zeit selbst wählen</span>
+            </span>
+          </label>
             {props.helpRequests.map((r) => (
               <label key={r.id} className="list-row has-leading">
                 <input type="radio" name="help-request" value={r.id} checked={requestId === r.id} onChange={() => setRequestId(r.id)} />
@@ -585,13 +606,16 @@ function AddShift(props: {
                 </span>
               </label>
             ))}
-          </Section>
-        )
+        </Section>
+      )}
+      {isHelpFill && !request && (
+        <Section title="In welchem Studio?" plain>
+          <StudioFilter all={false} locations={otherStudios} value={target} onChange={(id) => { setTarget(id); setError(undefined); }} />
+        </Section>
       )}
 
       {isAcq && (
-        <Section title="Wo findet die Akquise statt?" plain
-          footer={foreign ? `In ${locationName} planst du nur Akquise – normale Schichten dort plant die Studioleitung ${locationName}.` : undefined}>
+        <Section title="Wo findet die Akquise statt?" plain>
           <StudioFilter all={false} locations={props.locations} value={acqStudio}
             onChange={(id) => { setAcqStudio(id); setError(undefined); }} />
         </Section>
@@ -603,7 +627,7 @@ function AddShift(props: {
           options={[{ id: "swap", label: "Schicht tauschen" }, { id: "day", label: "Ganzer Tag" }]} />
       )}
 
-      {isHelpReq || (isHelpFill && props.helpRequests.length === 0) ? null : isSwap ? (
+      {isHelpReq ? null : isSwap ? (
         props.sickCandidates.length === 0 ? (
           <Empty icon="calendar" title="Keine Schicht an diesem Tag">
             Ohne geplante Schicht „Ganzer Tag“ wählen.
@@ -646,7 +670,7 @@ function AddShift(props: {
         </>
       )}
 
-      {(isWork || isHelpReq) && (
+      {(isWork || isHelpReq || (isHelpFill && !request)) && (
         <Section title="Wann?" plain>
           <TimeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
         </Section>

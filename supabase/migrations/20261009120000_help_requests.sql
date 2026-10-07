@@ -7,9 +7,10 @@
 --   direkt im anfragenden Studio eingetragen (fill_help_request). Ohne Anfrage bleiben normale
 --   Schichten in fremden Studios gesperrt.
 -- * Wird die gestellte Schicht gelöscht, ist die Anfrage automatisch wieder offen.
+-- (Mehrfach ausführbar.)
 -- =============================================================================
 
-create table public.help_requests (
+create table if not exists public.help_requests (
   id              uuid primary key default gen_random_uuid(),
   location_id     uuid not null references public.locations (id) on delete cascade,
   starts_at       timestamptz not null,
@@ -23,10 +24,13 @@ create table public.help_requests (
   filled_at       timestamptz,
   constraint help_requests_time check (ends_at > starts_at and ends_at - starts_at <= interval '24 hours')
 );
-create index help_requests_start_idx on public.help_requests (starts_at);
+create index if not exists help_requests_start_idx on public.help_requests (starts_at);
 
 alter table public.help_requests enable row level security;
 -- sehen: alle Angemeldeten aus dem Team; anfragen/zurückziehen: Leitung des Studios
+drop policy if exists help_requests_select on public.help_requests;
+drop policy if exists help_requests_insert on public.help_requests;
+drop policy if exists help_requests_delete on public.help_requests;
 create policy help_requests_select on public.help_requests for select to authenticated
   using ((select private.is_staff()));
 create policy help_requests_insert on public.help_requests for insert to authenticated
@@ -37,7 +41,7 @@ create policy help_requests_delete on public.help_requests for delete to authent
 grant select, insert, delete on public.help_requests to authenticated;
 
 -- Gestellte Schicht gelöscht → Anfrage wieder offen
-create function private.help_request_reopen() returns trigger
+create or replace function private.help_request_reopen() returns trigger
 language plpgsql set search_path = '' as $$
 begin
   if old.filled_shift_id is not null and new.filled_shift_id is null and new.status = 'filled' then
@@ -47,11 +51,12 @@ begin
   end if;
   return new;
 end $$;
+drop trigger if exists help_request_reopen on public.help_requests;
 create trigger help_request_reopen before update on public.help_requests
   for each row execute function private.help_request_reopen();
 
 -- Aushilfe stellen: eigener Mitarbeiter (bzw. Admin: jeder) übernimmt die angefragte Zeit
-create function public.fill_help_request(p_request_id uuid, p_user_id uuid) returns uuid
+create or replace function public.fill_help_request(p_request_id uuid, p_user_id uuid) returns uuid
 language plpgsql security definer set search_path = '' as $$
 declare
   v_req   public.help_requests;
