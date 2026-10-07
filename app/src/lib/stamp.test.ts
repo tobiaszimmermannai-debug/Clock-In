@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { publicAppUrl } from "./config";
 import { StampError, parseToken, stampUrl } from "./stamp";
 
 describe("QR-Code vom Tablet", () => {
@@ -23,5 +24,13 @@ describe("Fehlermeldungen beim Stempeln", () => {
     expect(e.message).toBe("Dein Handy ist nicht im WLAN des Studios.");
     expect(e.detail).toBe("Handy 1.2.3.4, Tablet 5.6.7.8");
     expect(new StampError("QR-Code abgelaufen").detail).toBeUndefined();
+  });
+});
+
+describe("QR-Adresse", () => {
+  it("Vercel-Vorschau → Hauptadresse, lokal bleibt lokal", () => {
+    expect(publicAppUrl("https://clock-in-app-git-claude-x-tobias.vercel.app")).toBe("https://clock-in-app-rho.vercel.app");
+    expect(publicAppUrl("https://clock-in-app-rho.vercel.app")).toBe("https://clock-in-app-rho.vercel.app");
+    expect(publicAppUrl("http://localhost:4173")).toBe("http://localhost:4173");
   });
 });

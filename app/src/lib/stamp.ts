@@ -1,5 +1,6 @@
 // Stempeln per Handy: QR-Code vom Tablet + registriertes Handy (gleiches WLAN prüft der Server)
 import type { WorkState } from "./status";
+import { publicAppUrl } from "./config";
 import { portalDb } from "./supabase";
 import type { EventType } from "./types";
 
@@ -35,10 +36,11 @@ export function parseToken(text: string): string | null {
   return m ? m[1].toLowerCase() : null;
 }
 
-export const stampUrl = (token: string, origin = location.origin) => `${origin}/#/s/${token}`;
+export const stampUrl = (token: string, origin = publicAppUrl()) => `${origin}/#/s/${token}`;
 
-export type StampCheck = { location: string; state: WorkState; since: string | null; registered: boolean };
-export type StampResult = { id: string; event_type: EventType; recorded_at: string; location: string };
+// unverified: anderes Handy/Browser als registriert → Buchung wartet auf Freigabe (pending)
+export type StampCheck = { location: string; state: WorkState; since: string | null; registered: boolean; unverified?: boolean };
+export type StampResult = { id: string; event_type: EventType; recorded_at: string; location: string; pending?: boolean };
 
 /** Serverfehler: Haupttext + technischer Zusatz in eckigen Klammern (Netz-Adressen) */
 export class StampError extends Error {

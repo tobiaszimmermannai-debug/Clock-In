@@ -20,3 +20,14 @@ export const COMPANY = {
   name: "BS New Fitness GmbH",
   address: "Gautinger Straße 19, 82152 Krailling",
 };
+
+// Hauptadresse der App. Der QR-Code am Tablet führt immer hierhin – so landen alle Handys auf derselben
+// Adresse (der Handy-Schlüssel liegt im Browser-Speicher dieser Adresse). Eigene Domain: VITE_PUBLIC_URL setzen.
+export const PRODUCTION_URL = "https://clock-in-app-rho.vercel.app";
+
+export function publicAppUrl(origin = location.origin): string {
+  const configured = (import.meta.env.VITE_PUBLIC_URL as string | undefined)?.replace(/\/+$/, "");
+  if (configured) return configured;
+  // Vorschau-/Deployment-Adressen von Vercel → Hauptadresse; lokal (Entwicklung/Tests) die eigene Adresse
+  return /\.vercel\.app$/i.test(new URL(origin).hostname) ? PRODUCTION_URL : origin;
+}

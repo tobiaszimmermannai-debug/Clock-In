@@ -19,7 +19,7 @@ type Phase =
   | { kind: "scan" }
   | { kind: "checking" }
   | { kind: "choose"; token: string; check: StampCheck; ctx: Context; busy?: boolean }
-  | { kind: "done"; event: EventType; at: string; location: string; note: ShiftNote | null; registered: boolean }
+  | { kind: "done"; event: EventType; at: string; location: string; note: ShiftNote | null; registered: boolean; pending: boolean }
   | { kind: "error"; text: string; detail?: string };
 
 function StatusPill(props: { state: WorkState; since?: string | null }) {
@@ -102,7 +102,10 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void }
         since: p.check.since ?? undefined,
         rules: p.ctx.rules,
       });
-      setPhase({ kind: "done", event, at: result.recorded_at, location: result.location, note, registered: p.check.registered });
+      setPhase({
+        kind: "done", event, at: result.recorded_at, location: result.location, note,
+        registered: p.check.registered, pending: !!result.pending,
+      });
       void loadStatus();
     } catch (e) {
       setPhase(errorPhase(e));
@@ -137,6 +140,13 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void }
         {c.registered && (
           <Notice tone="ok">Dieses Handy ist jetzt dein Stempel-Handy. Stempeln geht ab sofort nur noch damit.</Notice>
         )}
+        {c.unverified && (
+          <Notice tone="warn">
+            Dieses Handy bzw. dieser Browser ist für dich noch nicht freigegeben. Du kannst trotzdem stempeln –
+            die Buchung zählt, sobald Tobias oder Dominik sie freigeben. Tipp: immer in der Clock-In-App über
+            „Stempeln → Scannen“ stempeln.
+          </Notice>
+        )}
         <div className="stamp-actions">
           {ACTIONS.map((a) => {
             const blocked = validateAction(c.state, c.since ?? undefined, a);
@@ -170,6 +180,9 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void }
         </p>
         {phase.note && <Notice tone={phase.note.tone}>{phase.note.text}</Notice>}
         {phase.registered && <Notice tone="ok">Dieses Handy ist jetzt dein Stempel-Handy.</Notice>}
+        {phase.pending && (
+          <Notice tone="warn">Gespeichert – wartet auf Freigabe durch Tobias oder Dominik (anderes Handy/Browser).</Notice>
+        )}
         <button type="button" className="btn btn-primary btn-block" onClick={() => setPhase({ kind: "idle" })}>Fertig</button>
       </div>
     );
@@ -194,7 +207,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void }
       </div>
       <Section title="So geht's" footer="Kein Handy dabei oder Probleme? Bitte Tobias oder Dominik anrufen.">
         <Row leading={<LeadingIcon name="wifi" />} title="Mit dem Studio-WLAN verbinden" subtitle="Mobile Daten am besten ausschalten" />
-        <Row leading={<LeadingIcon name="qr" />} title="QR-Code am Tablet scannen" subtitle="Hier mit „Scannen“ oder mit der Kamera-App" />
+        <Row leading={<LeadingIcon name="qr" />} title="QR-Code am Tablet scannen" subtitle="Am besten hier mit „Scannen“ – dann erkennt das System dein Handy sicher" />
         <Row leading={<LeadingIcon name="checkCircle" />} title="Kommen, Pause oder Gehen wählen" />
       </Section>
     </>

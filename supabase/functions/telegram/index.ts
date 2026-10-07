@@ -56,6 +56,7 @@ type TimeLog = {
   approval_status: "approved" | "pending" | "rejected";
   overtime_status: "pending" | "approved" | "rejected" | null;
   note: string | null;
+  device_unverified?: boolean;  // gestempelt mit nicht registriertem Handy/Browser
   user: Person | null;
   creator: Person | null;
   location: { name: string } | null;
@@ -114,7 +115,7 @@ async function handleNotify(
   const { data: log, error } = await supabase
     .from("time_logs")
     .select(`
-      id, event_type, recorded_at, source, approval_status, overtime_status, note,
+      *,
       user:users!time_logs_user_id_fkey(first_name, last_name),
       creator:users!time_logs_created_by_fkey(first_name, last_name),
       location:locations(name),
@@ -147,6 +148,12 @@ async function handleNotify(
     text = forgottenText(log);
     keyboard = [[
       { text: `✅ Bis ${formatClock(log.recorded_at)} anrechnen`, callback_data: `ok:${log.id}` },
+      { text: "❌ Ablehnen", callback_data: `no:${log.id}` },
+    ]];
+  } else if (isApproval && log.device_unverified) {
+    text = unknownPhoneText(log);
+    keyboard = [[
+      { text: "✅ OK + Handy merken", callback_data: `ok:${log.id}` },
       { text: "❌ Ablehnen", callback_data: `no:${log.id}` },
     ]];
   } else if (isApproval) {
@@ -209,6 +216,16 @@ function approvalText(log: TimeLog): string {
     `⏱ ${EVENT_LABEL[log.event_type]} · ${formatDateTime(log.recorded_at)}`,
     `✍️ eingetragen von: ${by}`,
     ...(log.note ? [`💬 ${escapeHtml(log.note)}`] : []),
+  ].join("\n");
+}
+
+// Gestempelt mit nicht registriertem Handy/Browser (z. B. iPhone: Kamera-Scan öffnet Safari statt der App)
+function unknownPhoneText(log: TimeLog): string {
+  return [
+    "📱 <b>Anderes Handy – wartet auf Freigabe</b>",
+    `👤 ${escapeHtml(fullName(log.user))} · ${escapeHtml(log.location?.name ?? "?")}`,
+    `⏱ ${EVENT_LABEL[log.event_type]} · ${formatDateTime(log.recorded_at)}`,
+    "Nicht das registrierte Handy bzw. ein anderer Browser. ✅ = Buchung zählt und das Handy wird künftig erkannt.",
   ].join("\n");
 }
 

@@ -11,15 +11,17 @@ export function Account(props: { me: Me; onLogout: () => void }) {
   const [phone, setPhone] = useState<{ since: string; thisPhone: boolean } | null>();
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string }>();
 
+  // Mehrere möglich (z. B. iPhone: App und Safari) – „dieses Handy“, wenn eins davon passt
   const loadPhone = useCallback(async () => {
     const { data } = await portalDb
       .from("stamp_phones")
       .select("key_hash, registered_at")
       .eq("user_id", props.me.id)
-      .maybeSingle();
-    if (!data) return setPhone(null);
+      .order("registered_at");
+    if (!data?.length) return setPhone(null);
     const key = existingPhoneKey();
-    setPhone({ since: data.registered_at, thisPhone: !!key && (await sha256Hex(key)) === data.key_hash });
+    const hash = key ? await sha256Hex(key) : null;
+    setPhone({ since: data[0].registered_at, thisPhone: data.some((d) => d.key_hash === hash) });
   }, [props.me.id]);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function Account(props: { me: Me; onLogout: () => void }) {
 
       <VacationSection meId={props.me.id} />
 
-      <Section title="Stempel-Handy" footer="Stempeln geht nur mit deinem registrierten Handy. Neues Handy? Bitte Tobias oder Dominik, es zurückzusetzen.">
+      <Section title="Stempel-Handy" footer="Mit einem anderen Handy oder Browser gestempelt? Dann wartet die Buchung auf Freigabe durch Tobias oder Dominik – danach wird es erkannt.">
         {phone === undefined && <p className="list-empty">Lädt …</p>}
         {phone === null && (
           <Row leading={<LeadingIcon name="phone" />} title="Noch nicht registriert" subtitle="Wird beim ersten Stempeln automatisch registriert" />

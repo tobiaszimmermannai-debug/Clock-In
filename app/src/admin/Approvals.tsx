@@ -14,6 +14,7 @@ type Booking = {
   recorded_at: string;
   source: string;
   note: string | null;
+  device_unverified?: boolean;
   user: Person;
   creator: Person;
   location: { name: string } | null;
@@ -37,7 +38,7 @@ const name = (p: Person) => (p ? `${p.first_name} ${p.last_name}` : "?");
 const when = (iso: string) => `${fmtDay(berlinDate(iso))} ${berlinTime(iso)}`;
 const shiftText = (s: ShiftRef) => (s ? `${when(s.starts_at)}–${berlinTime(s.ends_at)} · ${studioShort(s.location?.name ?? "?")}` : "–");
 
-const BOOKING_SELECT = `id, event_type, recorded_at, source, note,
+const BOOKING_SELECT = `*,
   user:users!time_logs_user_id_fkey(first_name, last_name),
   creator:users!time_logs_created_by_fkey(first_name, last_name),
   location:locations(name), shift:shifts!time_logs_shift_id_fkey(ends_at)`;
@@ -107,7 +108,9 @@ export function Approvals({ profile }: { profile: Profile }) {
 
       {bookings.length > 0 && (
         <Section title="Nachträge" aside={<span>{bookings.length}</span>}
-          footer={isAdmin ? "Bei „Ausstempeln vergessen“ ablehnen und die echte Gehzeit unter Zeiten nachtragen." : "Nachträge geben nur Tobias oder Dominik frei."}>
+          footer={isAdmin
+            ? "Bei „Ausstempeln vergessen“ ablehnen und die echte Gehzeit unter Zeiten nachtragen. „Anderes Handy“ freigeben = Handy wird für die Person gemerkt."
+            : "Nachträge geben nur Tobias oder Dominik frei."}>
           {bookings.map((b) => (
             <div key={b.id} className="list-item">
               <Row
@@ -118,7 +121,9 @@ export function Approvals({ profile }: { profile: Profile }) {
                     ? `Automatisch zum Schichtende ${when(b.recorded_at)} · ${studioShort(b.location?.name ?? "")} – anrechnen?`
                     : `${when(b.recorded_at)} · ${studioShort(b.location?.name ?? "")}${b.note ? ` · „${b.note}“` : ""}`
                 }
-                trailing={<Pill tone="warn">{SOURCE_PILL[b.source] ?? `von ${b.creator?.first_name ?? "?"}`}</Pill>}
+                trailing={<Pill tone="warn">
+                  {b.device_unverified ? "anderes Handy" : SOURCE_PILL[b.source] ?? `von ${b.creator?.first_name ?? "?"}`}
+                </Pill>}
               />
               <Decision enabled={isAdmin} onDecide={(ok) => void decide("booking", b.id, ok)} />
             </div>

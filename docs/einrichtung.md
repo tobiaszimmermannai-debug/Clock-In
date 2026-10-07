@@ -100,6 +100,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 11. `supabase/migrations/20261009120000_help_requests.sql` (Aushilfe anfragen und stellen)
 12. `supabase/migrations/20261009150000_help_without_request.sql` (Aushilfe stellen auch ohne Anfrage)
 13. `supabase/migrations/20261009180000_sick_documents.sql` (Krankheit: Attest / Karenztag-Zettel abhaken)
+14. `supabase/migrations/20261010090000_unknown_phone.sql` (anderes Handy/Browser → Buchung zur Freigabe statt Sperre)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -161,6 +162,10 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   Arbeitsvertrag (Team → Person); Mitarbeiter sehen ihre Urlaubstage im Portal unter Konto und Stunden.
 - **Admin-Übersichten:** „Krankheit“ – Krankheitsfälle (zusammenhängende Krank-Tage) mit Haken „Attest da“ /
   „Karenztag-Zettel da“, Filter Offen/Alle. „Urlaub“ – je Jahr und Studio Anspruch, genommen, geplant, offen.
+- **Stempel-Handy:** Der Schlüssel liegt im Browser-Speicher (iPhone: installierte App und Safari getrennt).
+  Unbekanntes Handy/Browser → Buchung wartet auf Freigabe (📱 in Telegram / Freigaben); mit ✅ zählt sie und das
+  Handy wird gemerkt. Handy einer anderen Person → gesperrt. Der QR-Code führt immer zur Hauptadresse
+  (`PRODUCTION_URL` in `app/src/lib/config.ts`, eigene Domain: `VITE_PUBLIC_URL`).
 - **Noch nicht da:** 5 Min. (Verspätungs-Toleranz) nach Schichtbeginn nicht eingestempelt → ⏰-Meldung per
   Telegram (je Schicht einmal, an alle mit Studio-Meldungen). Prüfung jede Minute (Job `clockin-staffing`).
 - **Tablet „Good Boy“:** Gehen spätestens zum Schichtende → 3 Sekunden Bild `app/public/good-boy.webp`.

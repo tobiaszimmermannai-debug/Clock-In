@@ -244,7 +244,7 @@ function PersonDetail(props: {
       {person.role !== "admin" && (
         <Section
           title="Stempel-Handy"
-          footer="Gestempelt wird nur mit diesem Handy – Kollegen können niemanden mit ihrem Handy einstempeln. Neues Handy? Zurücksetzen; beim nächsten Stempeln wird das neue registriert."
+          footer="Kollegen können niemanden mit ihrem Handy einstempeln. Stempelt die Person mit einem anderen Handy/Browser, wartet die Buchung auf Freigabe (danach wird es erkannt). Zurücksetzen löscht alle gemerkten Handys; das nächste wird automatisch registriert."
         >
           {props.phoneSince ? (
             <Row
