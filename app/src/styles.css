@@ -477,6 +477,10 @@ input[type="time"] { font-variant-numeric: tabular-nums; font-size: 1.1rem; font
 /* ---------------- Dienstplan aller Studios (Kalender) ---------------- */
 .segmented .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
 .list-row.has-studio { box-shadow: inset 4px 0 0 var(--studio); }
+/* Offene Aushilfe-Anfrage im Tagesplan */
+.list-row.is-request { background: color-mix(in srgb, var(--warn) 7%, transparent); }
+.list-row.is-request .list-row-title { color: var(--warn); }
+.avatar.avatar-request { background: transparent; color: var(--warn); box-shadow: inset 0 0 0 2px var(--warn); font-size: 1rem; }
 .cal-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 6px; }
 .cal-legend button {

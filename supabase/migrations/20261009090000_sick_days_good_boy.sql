@@ -6,17 +6,18 @@
 --   eingetragenen Uhrzeiten, damit sich nichts „verlängern“ lässt.
 -- * Krank statt Schicht (report_sick) wird markiert (from_shift) und zählt weiter mit der Schichtdauer;
 --   setzen kann die Markierung nur report_sick bzw. ein Admin.
+-- (Mehrfach ausführbar.)
 -- * Tablet: beim Gehen spätestens zum Schichtende erscheint 3 Sekunden das „Good Boy“-Bild.
 -- * Telegram: 5 Min. (Verspätungs-Toleranz) nach Schichtbeginn noch nicht eingestempelt → Meldung,
 --   je Schicht einmal. Prüfung läuft jede Minute (Job clockin-staffing).
 -- =============================================================================
 
-alter table public.shifts add column from_shift boolean not null default false;
+alter table public.shifts add column if not exists from_shift boolean not null default false;
 update public.shifts set from_shift = true where shift_type = 'sick' and note = 'Krank statt Schicht';
 
 -- Krank-Einträge anlegen: Studioleitung und Admin; ändern weiterhin nur Admin (Studioleitung: löschen + neu)
-drop policy shifts_insert on public.shifts;
-drop policy shifts_update on public.shifts;
+drop policy if exists shifts_insert on public.shifts;
+drop policy if exists shifts_update on public.shifts;
 create policy shifts_insert on public.shifts for insert to authenticated
   with check (private.can_plan_shift(location_id, user_id, is_acquisition) and (not from_shift or private.is_admin()));
 create policy shifts_update on public.shifts for update to authenticated
@@ -264,13 +265,13 @@ end $$;
 -- -----------------------------------------------------------------------------
 -- Noch nicht da? (je Schicht eine Telegram-Meldung)
 -- -----------------------------------------------------------------------------
-create table public.no_show_alerts (
+create table if not exists public.no_show_alerts (
   shift_id uuid primary key references public.shifts (id) on delete cascade,
   sent_at  timestamptz not null default now()
 );
 alter table public.no_show_alerts enable row level security;  -- nur intern (keine Policies)
 
-create function private.no_show_check() returns integer
+create or replace function private.no_show_check() returns integer
 language plpgsql security definer set search_path = '' as $$
 declare
   v_settings public.rule_settings;
@@ -314,7 +315,7 @@ begin
 end $$;
 
 -- Jede Minute: Studio besetzt? + Wer ist noch nicht da?
-create function private.minute_checks() returns void
+create or replace function private.minute_checks() returns void
 language plpgsql security definer set search_path = '' as $$
 begin
   perform private.staffing_check();

@@ -97,6 +97,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 8. `supabase/migrations/20261008120000_acquisition_shifts.sql` (Akquise-Schichten, auch in anderen Studios)
 9. `supabase/migrations/20261008150000_vacation_sick.sql` (Urlaub mit Zähler, Krank statt Schicht, Schule)
 10. `supabase/migrations/20261009090000_sick_days_good_boy.sql` (Krank-Tage, „Good Boy“ am Tablet, „Noch nicht da“-Meldung)
+11. `supabase/migrations/20261009120000_help_requests.sql` (Aushilfe anfragen und stellen)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -159,6 +160,9 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 - **Noch nicht da:** 5 Min. (Verspätungs-Toleranz) nach Schichtbeginn nicht eingestempelt → ⏰-Meldung per
   Telegram (je Schicht einmal, an alle mit Studio-Meldungen). Prüfung jede Minute (Job `clockin-staffing`).
 - **Tablet „Good Boy“:** Gehen spätestens zum Schichtende → 3 Sekunden Bild `app/public/good-boy.webp`.
+- **Aushilfe:** Studio fragt im Dienstplan an (Eintragen → Art „Aushilfe anfragen“); alle sehen die Anfrage unter
+  „Aushilfe gesucht“. Eine andere Studioleitung tippt „Stellen“ und wählt einen eigenen Mitarbeiter – die Schicht
+  steht dann im anfragenden Studio. Ohne Anfrage keine normalen Schichten in fremden Studios.
 - **Akquise:** zählt wie eine Schicht, aber nicht als „Studio besetzt“. Studioleitung darf eigene Leute auch
   in anderen Studios zur Akquise einplanen – normale Schichten nur im eigenen Studio.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:

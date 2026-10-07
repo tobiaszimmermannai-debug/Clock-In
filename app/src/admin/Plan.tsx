@@ -1,12 +1,12 @@
-// Dienstplan schreiben: Studio → Woche → Tag antippen → „Eintragen“ mit Reitern
-// Schicht · Akquise · Urlaub · Krank · Schule.
+// Dienstplan schreiben: Studio → Woche → Tag antippen → „Eintragen“ → Art (Dropdown, Standard Studio-Schicht):
+// Studio-Schicht · Aushilfe anfragen · Aushilfe stellen · Akquise · Urlaub · Krank · Schule.
 // Studioleitung plant nur ihr eigenes Studio; wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
-// Ausnahme Akquise: eigene Leute dürfen dafür auch in andere Studios eingeplant werden.
+// Ausnahmen: Akquise und angefragte Aushilfe – dafür dürfen eigene Leute auch in andere Studios.
 // Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
-import { useEffect, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
 import { type PlanShift, ShiftRow, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
-import { Avatar, DayStrip, Empty, Field, Icon, Notice, PageHeader, Section, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
+import { Avatar, DayStrip, Empty, Field, Icon, Notice, PageHeader, Row, Section, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
 import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtHM, fmtLongDay, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { registerStudios, studioColor } from "../lib/studios";
@@ -27,22 +27,28 @@ type Staffer = {
 const ABSENCE_TIMES = { from: "08:00", to: "14:30" };
 const MAX_ABSENCE_DAYS = 62;
 
-type Category = "work" | "acq" | "vacation" | "sick" | "vocational_school";
+type Category = "work" | "help_request" | "help_fill" | "acq" | "vacation" | "sick" | "vocational_school";
 const CATEGORIES: { id: Category; label: string }[] = [
-  { id: "work", label: "Schicht" },
+  { id: "work", label: "Studio-Schicht" },
+  { id: "help_request", label: "Aushilfe anfragen" },
+  { id: "help_fill", label: "Aushilfe stellen (für anderes Studio)" },
   { id: "acq", label: "Akquise" },
   { id: "vacation", label: "Urlaub" },
   { id: "sick", label: "Krank" },
   { id: "vocational_school", label: "Schule" },
 ];
 const SHEET_TITLE: Record<Category, string> = {
-  work: "Schicht hinzufügen",
+  work: "Studio-Schicht",
+  help_request: "Aushilfe anfragen",
+  help_fill: "Aushilfe stellen",
   acq: "Akquise eintragen",
   vacation: "Urlaub eintragen",
   sick: "Krank eintragen",
   vocational_school: "Schule eintragen",
 };
 type Vacation = { user_id: string; allowance: number | null; taken: number; planned: number };
+type HelpRequest = { id: string; location_id: string; starts_at: string; ends_at: string; note: string | null; location: { name: string } | null };
+type SheetState = { shift?: PlanShift; category?: Category; requestId?: string };
 // Gutschrift zur Anzeige: minutes = Dauer des Eintrags, share = Anteil am Tag (Krank ab Uhrzeit)
 type Credit = { minutes?: number; trainee: boolean };
 type CreditOf = (userId: string, minutes: number, share: number) => Credit;
@@ -58,6 +64,25 @@ const minutesBetween = (from: string, to: string) => {
 const fullName = (p: { first_name: string; last_name: string }) => `${p.first_name} ${p.last_name}`;
 const durationMinutes = (s: { starts_at: string; ends_at: string }) => Math.round((Date.parse(s.ends_at) - Date.parse(s.starts_at)) / 60_000);
 
+// Offene Aushilfe-Anfragen aller Studios (ab jetzt) – sehen alle
+function useHelpRequests() {
+  const [requests, setRequests] = useState<HelpRequest[]>([]);
+  const reload = useCallback(async () => {
+    const { data } = await adminDb
+      .from("help_requests")
+      .select("id, location_id, starts_at, ends_at, note, location:locations(name)")
+      .eq("status", "open")
+      .gt("ends_at", new Date().toISOString())
+      .order("starts_at")
+      .limit(30);
+    setRequests((data ?? []) as unknown as HelpRequest[]);
+  }, []);
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+  return { requests, reload };
+}
+
 export function Plan({ profile }: { profile: Profile }) {
   const today = berlinDate();
   const [start, setStart] = useState(weekStart(today));
@@ -68,9 +93,10 @@ export function Plan({ profile }: { profile: Profile }) {
   const [view, setView] = useState<"plan" | "all">("plan");
   const [studio, setStudio] = useState("");
   const [people, setPeople] = useState<Staffer[]>([]);
-  const [sheet, setSheet] = useState<{ shift?: PlanShift } | null>(null);
+  const [sheet, setSheet] = useState<SheetState | null>(null);
   const [flash, setFlash] = useState<string>();
   const { shifts, error, reload } = useWeekShifts(adminDb, start);
+  const help = useHelpRequests();
 
   useEffect(() => {
     void (async () => {
@@ -122,7 +148,27 @@ export function Plan({ profile }: { profile: Profile }) {
     setSheet(null);
     setFlash(text);
     void reload();
+    void help.reload();
   };
+
+  // „Stellen“: zum Tag der Anfrage springen und Sheet „Aushilfe stellen“ öffnen
+  function fillRequest(r: HelpRequest) {
+    const d = berlinDate(r.starts_at);
+    setStart(weekStart(d));
+    setDay(d);
+    setView("plan");
+    setFlash(undefined);
+    setSheet({ category: "help_fill", requestId: r.id });
+  }
+  async function cancelRequest(r: HelpRequest) {
+    const { error } = await adminDb.from("help_requests").delete().eq("id", r.id);
+    setFlash(error ? dbMessage(error) : "Aushilfe-Anfrage zurückgezogen.");
+    void help.reload();
+  }
+  const helpBoard = (
+    <HelpBoard requests={help.requests} isOwn={(id) => id === studio} onFill={fillRequest} onCancel={(r) => void cancelRequest(r)} />
+  );
+  const dayRequests = help.requests.filter((r) => r.location_id === studio && berlinDate(r.starts_at) === day);
 
   const canEdit = (s: PlanShift) =>
     isAdmin ||
@@ -159,6 +205,7 @@ export function Plan({ profile }: { profile: Profile }) {
         <WeekNav start={start} onChange={goWeek} />
         {error && <Notice tone="error">{error}</Notice>}
         {flash && <Notice tone="ok">{flash}</Notice>}
+        {helpBoard}
         <StudioCalendar
           start={start}
           shifts={shifts}
@@ -179,10 +226,16 @@ export function Plan({ profile }: { profile: Profile }) {
       <DayStrip start={start} value={day} onChange={(d) => { setDay(d); setFlash(undefined); }} counts={counts} />
       {error && <Notice tone="error">{error}</Notice>}
       {flash && <Notice tone="ok">{flash}</Notice>}
+      {helpBoard}
 
       <Section title={fmtLongDay(day)} aside={<span>{dayEntries.length} {dayEntries.length === 1 ? "Eintrag" : "Einträge"}</span>}>
-        {dayEntries.length === 0 && <p className="list-empty">Noch niemand eingetragen.</p>}
+        {dayEntries.length === 0 && dayRequests.length === 0 && <p className="list-empty">Noch niemand eingetragen.</p>}
         {dayEntries.map((s) => <ShiftRow key={s.id} shift={s} onClick={() => setSheet({ shift: s })} />)}
+        {dayRequests.map((r) => (
+          <Row key={r.id} className="is-request" leading={<span className="avatar avatar-request" aria-hidden="true">?</span>}
+            title="Aushilfe gesucht" subtitle={r.note ?? "Anfrage an alle Studios"}
+            trailing={<strong className="num">{berlinTime(r.starts_at)}–{berlinTime(r.ends_at)}</strong>} />
+        ))}
       </Section>
       <button type="button" className="btn btn-primary btn-block" onClick={() => setSheet({})}>
         <Icon name="plus" size={20} /> Eintragen
@@ -198,6 +251,9 @@ export function Plan({ profile }: { profile: Profile }) {
           people={people}
           taken={taken}
           sickCandidates={sickCandidates}
+          helpRequests={help.requests.filter((r) => r.location_id !== studio && berlinDate(r.starts_at) === day)}
+          initialCategory={sheet.category}
+          initialRequestId={sheet.requestId}
           creditOf={creditOf}
           onClose={() => setSheet(null)}
           onSaved={done}
@@ -205,6 +261,36 @@ export function Plan({ profile }: { profile: Profile }) {
       )}
       {sheet?.shift && editSheet(sheet.shift)}
     </>
+  );
+}
+
+// Offene Anfragen: eigenes Studio → zurückziehen, andere Studios → Aushilfe stellen
+function HelpBoard(props: {
+  requests: HelpRequest[];
+  isOwn: (locationId: string) => boolean;
+  onFill: (r: HelpRequest) => void;
+  onCancel: (r: HelpRequest) => void;
+}) {
+  if (props.requests.length === 0) return null;
+  return (
+    <Section title="Aushilfe gesucht" aside={<span>{props.requests.length}</span>}
+      footer="Mit „Stellen“ trägst du einen eigenen Mitarbeiter direkt im anfragenden Studio ein.">
+      {props.requests.map((r) => {
+        const own = props.isOwn(r.location_id);
+        return (
+          <Row
+            key={r.id}
+            className="has-studio"
+            style={{ "--studio": studioColor(r.location_id) } as CSSProperties}
+            title={`${studioShort(r.location?.name ?? "")} sucht Aushilfe`}
+            subtitle={`${fmtDay(berlinDate(r.starts_at))} · ${berlinTime(r.starts_at)}–${berlinTime(r.ends_at)} Uhr${r.note ? ` · ${r.note}` : ""}`}
+            trailing={own
+              ? <button type="button" className="btn btn-outline btn-sm" onClick={() => props.onCancel(r)}>Zurückziehen</button>
+              : <button type="button" className="btn btn-primary btn-sm" onClick={() => props.onFill(r)}>Stellen</button>}
+          />
+        );
+      })}
+    </Section>
   );
 }
 
@@ -297,11 +383,16 @@ function AddShift(props: {
   people: Staffer[];
   taken: Set<string>;
   sickCandidates: PlanShift[];
+  helpRequests: HelpRequest[];
+  initialCategory?: Category;
+  initialRequestId?: string;
   creditOf: CreditOf;
   onClose: () => void;
   onSaved: (text: string) => void;
 }) {
-  const [cat, setCat] = useState<Category>("work");
+  const [cat, setCat] = useState<Category>(props.initialCategory ?? "work");
+  const [requestId, setRequestId] = useState(props.initialRequestId ?? "");
+  const [note, setNote] = useState("");
   const [userId, setUserId] = useState("");
   const [from, setFrom] = useState(lastTimes.from);
   const [to, setTo] = useState(lastTimes.to);
@@ -318,6 +409,8 @@ function AddShift(props: {
 
   const isAcq = cat === "acq";
   const isWork = cat === "work" || isAcq;
+  const isHelpReq = cat === "help_request";
+  const isHelpFill = cat === "help_fill";
   const isSwap = cat === "sick" && sickMode === "swap";
   const isAbsence = cat === "vacation" || cat === "vocational_school" || (cat === "sick" && sickMode === "day");
   const location = isAcq ? acqStudio : props.studio;
@@ -341,6 +434,7 @@ function AddShift(props: {
   const person = [...own, ...others].find((p) => p.id === userId);
   const days = absenceDays(props.day, until, saturdays);
   const sickShift = props.sickCandidates.find((s) => s.id === sickShiftId);
+  const request = props.helpRequests.find((r) => r.id === requestId);
 
   const vacationLeft = (id: string) => {
     const v = vacation[id];
@@ -355,6 +449,7 @@ function AddShift(props: {
     setCat(next);
     setUserId("");
     setSickShiftId("");
+    setRequestId("");
     setSickFrom(null);
     setSickMode(props.sickCandidates.length ? "swap" : "day");
     setAcqStudio(props.studio);
@@ -370,7 +465,31 @@ function AddShift(props: {
       setBusy(false);
       return error ? setError(dbMessage(error)) : props.onSaved(text);
     }
+    if (isHelpReq) {
+      if (minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
+      setBusy(true);
+      const { error } = await adminDb.from("help_requests").insert({
+        location_id: props.studio,
+        starts_at: berlinToISO(props.day, from),
+        ends_at: berlinToISO(props.day, to),
+        note: note.trim() || null,
+      });
+      setBusy(false);
+      if (error) return setError(dbMessage(error));
+      return props.onSaved(`Aushilfe angefragt: ${fmtDay(props.day)}, ${from}–${to} Uhr – alle Studios sehen die Anfrage.`);
+    }
     if (!person) return;
+    if (isHelpFill) {
+      if (!request) return;
+      setBusy(true);
+      const { error } = await adminDb.rpc("fill_help_request", { p_request_id: request.id, p_user_id: person.id });
+      setBusy(false);
+      if (error) return setError(dbMessage(error));
+      return props.onSaved(
+        `${fullName(person)} hilft in ${studioShort(request.location?.name ?? "")} aus: ${fmtDay(props.day)}, ` +
+          `${berlinTime(request.starts_at)}–${berlinTime(request.ends_at)} Uhr.`,
+      );
+    }
     if (isWork) {
       if (minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
       setBusy(true);
@@ -422,22 +541,53 @@ function AddShift(props: {
     </label>
   );
 
-  const canSave = isSwap ? !!sickShift && sickValid(sickShift, sickFrom) : !!person;
+  const canSave = isSwap ? !!sickShift && sickValid(sickShift, sickFrom)
+    : isHelpReq ? minutesBetween(from, to) > 0
+    : isHelpFill ? !!request && !!person
+    : !!person;
   const left = person && cat === "vacation" ? vacationLeft(person.id) : null;
   const dayCredit = person ? props.creditOf(person.id, minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to), 1) : undefined;
 
   return (
     <Sheet
       title={SHEET_TITLE[cat]}
-      subtitle={`${fmtLongDay(props.day)} · ${isAcq ? `Akquise in ${locationName}` : props.studioName}`}
+      subtitle={`${fmtLongDay(props.day)} · ${isAcq ? `Akquise in ${locationName}` : isHelpFill ? `Aushilfe aus ${props.studioName}` : props.studioName}`}
       onClose={props.onClose}
       footer={
         <button type="button" className="btn btn-primary" disabled={!canSave || busy} onClick={() => void save()}>
-          {busy ? "Speichert …" : isSwap ? "Auf Krank setzen" : "Speichern"}
+          {busy ? "Speichert …" : isSwap ? "Auf Krank setzen" : isHelpReq ? "Anfragen" : isHelpFill ? "Aushilfe stellen" : "Speichern"}
         </button>
       }
     >
-      <Segmented label="Art" value={cat} onChange={choose} options={CATEGORIES} fill />
+      <Field label="Art">
+        <select id="shift-category" value={cat} onChange={(e) => choose(e.target.value as Category)}>
+          {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
+      </Field>
+
+      {isHelpReq && (
+        <Notice>Alle Studios sehen die Anfrage unter „Aushilfe gesucht“ und können jemanden schicken.</Notice>
+      )}
+      {isHelpFill && (
+        props.helpRequests.length === 0 ? (
+          <Empty icon="users" title="Keine offene Anfrage an diesem Tag">
+            Offene Anfragen stehen oben im Dienstplan unter „Aushilfe gesucht“.
+          </Empty>
+        ) : (
+          <Section title="Welche Anfrage?">
+            {props.helpRequests.map((r) => (
+              <label key={r.id} className="list-row has-leading">
+                <input type="radio" name="help-request" value={r.id} checked={requestId === r.id} onChange={() => setRequestId(r.id)} />
+                <span className="studio-swatch" style={{ background: studioColor(r.location_id) }} aria-hidden="true" />
+                <span className="list-row-main">
+                  <span className="list-row-title">{studioShort(r.location?.name ?? "")}</span>
+                  <span className="list-row-sub">{berlinTime(r.starts_at)}–{berlinTime(r.ends_at)} Uhr{r.note ? ` · ${r.note}` : ""}</span>
+                </span>
+              </label>
+            ))}
+          </Section>
+        )
+      )}
 
       {isAcq && (
         <Section title="Wo findet die Akquise statt?" plain
@@ -453,7 +603,7 @@ function AddShift(props: {
           options={[{ id: "swap", label: "Schicht tauschen" }, { id: "day", label: "Ganzer Tag" }]} />
       )}
 
-      {isSwap ? (
+      {isHelpReq || (isHelpFill && props.helpRequests.length === 0) ? null : isSwap ? (
         props.sickCandidates.length === 0 ? (
           <Empty icon="calendar" title="Keine Schicht an diesem Tag">
             Ohne geplante Schicht „Ganzer Tag“ wählen.
@@ -486,7 +636,7 @@ function AddShift(props: {
         </Empty>
       ) : (
         <>
-          <Section title={`Wer? · ${props.studioName}`}>
+          <Section title={isHelpFill ? `Wer hilft aus? · ${props.studioName}` : `Wer? · ${props.studioName}`}>
             {own.length === 0 && <p className="list-empty">Alle aus diesem Studio sind schon eingetragen.</p>}
             {own.map(option)}
           </Section>
@@ -496,10 +646,15 @@ function AddShift(props: {
         </>
       )}
 
-      {isWork && (
+      {(isWork || isHelpReq) && (
         <Section title="Wann?" plain>
           <TimeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
         </Section>
+      )}
+      {isHelpReq && (
+        <Field label="Hinweis (optional)">
+          <input id="help-note" value={note} maxLength={200} placeholder="z. B. Kurs am Vormittag" onChange={(e) => setNote(e.target.value)} />
+        </Field>
       )}
       {isAbsence && (
         <Section title="Bis wann?" plain>
