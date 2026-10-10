@@ -103,6 +103,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 14. `supabase/migrations/20261010090000_unknown_phone.sql` (anderes Handy/Browser → Buchung zur Freigabe statt Sperre)
 15. `supabase/migrations/20261010120000_vacation_allowances.sql` (Urlaubsanspruch je Jahr, Standard 20 Tage)
 16. `supabase/migrations/20261011090000_school_import.sql` (Schul-Abgleich mit dem IST-Bildungspartner)
+17. `supabase/migrations/20261011120000_saturday_auto_free.sql` (Samstag automatisch frei)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -156,7 +157,8 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 - **Regeln (änderbar in `rule_settings`):** bis 5 Min. zu spät = pünktlich · Überstunden nur nach Freigabe ·
   jede Pause mind. 15 Min., gesetzlich 30/45 Min. ab 6/9 Std. · Ausstempeln vergessen → um 23 Uhr
   automatisch zur geplanten Endzeit eingetragen, zählt aber erst nach Freigabe per Telegram · 18 Uhr Abfrage
-  Krank/Schule/Urlaub · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
+  Krank/Schule/Urlaub (Samstag: automatisch frei, gefragt wird nur, wenn im eigenen Studio niemand eingestempelt
+  hat) · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
 - **Urlaub, Krank, Schule:** Urlaub/Schule je Tag 6,5 Std., Krank statt Schicht mit den Stunden der Schicht
   (ab Uhrzeit nur der Rest). Azubis: je Tag Wochenstunden ÷ 5,25 (`absence_week_days`), Krank ab Uhrzeit anteilig.
   Krank setzt nur die Studioleitung (eigenes Studio und eigene Leute) oder ein Admin – gegen eine geplante
