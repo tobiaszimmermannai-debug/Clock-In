@@ -1,6 +1,6 @@
 // Tablet im Studio: Uhr + QR-Code (wechselt alle 30 Sek.). Mitarbeiter scannen ihn mit dem
 // eigenen Handy und stempeln dort; das Tablet zeigt danach die Begrüßung –
-// beim pünktlichen Gehen (spätestens zum Schichtende) 3 Sekunden das „Good Boy“-Bild.
+// beim pünktlichen Gehen (spätestens zum Schichtende) 3 Sekunden das „Good Job“-Bild.
 import { useEffect, useRef, useState } from "react";
 import { ACTION_ICON, GREETING } from "../components/actions";
 import { QrCode } from "../components/QrCode";
@@ -20,8 +20,8 @@ type Ping = {
 type Greeting = Ping["recent"][number];
 
 const PING_MS = 4000;
-const GOOD_BOY_MS = 3000;
-const GOOD_BOY_SRC = `${import.meta.env.BASE_URL}good-boy.webp`;
+const GOOD_JOB_MS = 3000;
+const GOOD_JOB_SRC = `${import.meta.env.BASE_URL}good-job.webp`;
 
 export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
   const now = useNow();
@@ -59,7 +59,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
 
   useEffect(() => {
     if (!greeting) return;
-    const t = setTimeout(() => setGreeting(null), greeting.on_time ? GOOD_BOY_MS : 6000);
+    const t = setTimeout(() => setGreeting(null), greeting.on_time ? GOOD_JOB_MS : 6000);
     return () => clearTimeout(t);
   }, [greeting]);
 
@@ -101,7 +101,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
 
       {greeting?.on_time ? (
         <div className="kiosk-goodboy" onClick={() => setGreeting(null)}>
-          <img src={GOOD_BOY_SRC} alt="Good Boy" />
+          <img src={GOOD_JOB_SRC} alt="Good Job – You Rock!" />
           <p>{GREETING.clock_out(greeting.first_name)} · {fmtClock(greeting.recorded_at)} Uhr</p>
         </div>
       ) : greeting && (

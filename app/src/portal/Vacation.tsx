@@ -1,6 +1,6 @@
-// Meine Urlaubstage: Anspruch, genommen, geplant, übrig – und die nächsten Urlaubstage
+// Mein Resturlaub: Anspruch − genommen − eingetragen (zählt runter, sobald Urlaub im Dienstplan steht)
 import { useEffect, useState } from "react";
-import { Row, Section } from "../components/ui";
+import { LeadingIcon, Row, Section } from "../components/ui";
 import { berlinDate, berlinToISO, fmtDay, vacationRanges } from "../lib/dates";
 import { portalDb } from "../lib/supabase";
 
@@ -25,11 +25,11 @@ export function VacationCard(props: { year: number; vacation: MyVacation | null 
   const left = v ? vacationLeft(v) : null;
   return (
     <div className="stat">
-      <span className="stat-label">Urlaub {props.year}</span>
+      <span className="stat-label">Resturlaub {props.year}</span>
       {v && left !== null ? (
         <>
-          <span className="stat-value">{fmt(left)} <small>von {fmt(Number(v.allowance))} Tagen übrig</small></span>
-          <span className="stat-diff muted">{fmt(v.taken)} genommen · {fmt(v.planned)} geplant</span>
+          <span className="stat-value">{fmt(left)} <small>von {fmt(Number(v.allowance))} Tagen</small></span>
+          <span className="stat-diff muted">{fmt(v.taken)} genommen · {fmt(v.planned)} eingetragen</span>
         </>
       ) : (
         <span className="stat-diff muted">Urlaubsanspruch noch nicht hinterlegt – bitte Tobias oder Dominik fragen.</span>
@@ -67,16 +67,36 @@ export function VacationSection(props: { meId: string }) {
       )}
       {vacation && left !== null && (
         <>
-          <Row title={<strong>Übrig</strong>} trailing={<strong className={`num${left < 0 ? " text-danger" : ""}`}>{days(left)}</strong>} />
+          <Row title={<strong>Resturlaub</strong>} trailing={<strong className={`num${left < 0 ? " text-danger" : ""}`}>{days(left)}</strong>} />
           <Row title="Anspruch" trailing={<span className="num">{days(Number(vacation.allowance))}</span>} />
           <Row title="Genommen" trailing={<span className="num">{days(vacation.taken)}</span>} />
-          <Row title="Geplant" trailing={<span className="num">{days(vacation.planned)}</span>} />
+          <Row title="Eingetragen (kommt noch)" trailing={<span className="num">{days(vacation.planned)}</span>} />
         </>
       )}
       {ranges.slice(0, 6).map((r) => (
         <Row key={r.from} title={r.from === r.to ? fmtDay(r.from) : `${fmtDay(r.from)} – ${fmtDay(r.to)}`}
           subtitle="Urlaub geplant" trailing={<span className="num">{days(r.count)}</span>} />
       ))}
+    </Section>
+  );
+}
+
+// Kompakt auf der Startseite (Stempeln)
+export function VacationRow(props: { onOpen?: () => void }) {
+  const year = Number(berlinDate().slice(0, 4));
+  const v = useMyVacation(year);
+  const left = v ? vacationLeft(v) : null;
+  if (!v || left === null) return null;
+  return (
+    <Section>
+      <Row
+        leading={<LeadingIcon name="sun" />}
+        title={`Resturlaub ${year}`}
+        subtitle={`Anspruch ${fmt(Number(v.allowance))} · genommen ${fmt(v.taken)} · eingetragen ${fmt(v.planned)}`}
+        trailing={<strong className={`num${left < 0 ? " text-danger" : ""}`}>{days(left)}</strong>}
+        chevron={!!props.onOpen}
+        onClick={props.onOpen}
+      />
     </Section>
   );
 }

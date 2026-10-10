@@ -1,7 +1,7 @@
 // Verwaltung (Leitung/Admin): Anmeldung inkl. 2FA, danach Dienstplan, Team, Zeiten, Freigaben, Tablets
 import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from "react";
 import { Shell, type ShellTab } from "../components/Shell";
-import { BrandMark, Field, Notice } from "../components/ui";
+import { BrandMark, Field, Notice, Segmented } from "../components/ui";
 import { staffLoginEmail } from "../lib/config";
 import { adminDb } from "../lib/supabase";
 import type { Role } from "../lib/types";
@@ -204,12 +204,18 @@ function CodeForm(props: {
   );
 }
 
-type TabId = "plan" | "staff" | "times" | "approvals" | "sick" | "vacation" | "tablets";
+type TabId = "plan" | "team" | "times" | "settings";
+type TeamView = "people" | "vacation" | "sick";
+type TimesView = "approvals" | "times";
 
+// Navigation: 4 Bereiche, zusammengehörige Seiten als Unterauswahl (Team: Personen/Urlaub/Krankheit,
+// Zeiten: Freigaben/Stempelzeiten, Einstellungen: Tablets und Studios – nur Admin)
 function AdminHome(props: { profile: Profile; onLogout: () => void }) {
   const { profile } = props;
   const isAdmin = profile.role === "admin";
   const [tab, setTab] = useState<TabId>("plan");
+  const [teamView, setTeamView] = useState<TeamView>("people");
+  const [timesView, setTimesView] = useState<TimesView>("times");
   const [open, setOpen] = useState(0);
 
   // Zähler für offene Freigaben in der Navigation
@@ -219,21 +225,20 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
       adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("overtime_status", "pending"),
       adminDb.from("swap_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
     ]).then((r) => setOpen(r.reduce((n, x) => n + (x.count ?? 0), 0)));
-  }, [tab]);
+  }, [tab, timesView]);
 
   const tabs: ShellTab<TabId>[] = [
     { id: "plan", label: "Dienstplan", icon: "calendar" },
-    { id: "staff", label: "Team", icon: "users" },
-    { id: "times", label: "Zeiten", icon: "clock" },
-    { id: "approvals", label: "Freigaben", icon: "inbox", badge: open },
-    ...(isAdmin
-      ? ([
-          { id: "sick", label: "Krankheit", icon: "sick" },
-          { id: "vacation", label: "Urlaub", icon: "sun" },
-          { id: "tablets", label: "Tablets", icon: "tablet" },
-        ] as const)
-      : []),
+    { id: "team", label: "Team", icon: "users" },
+    { id: "times", label: "Zeiten", icon: "clock", badge: open },
+    ...(isAdmin ? [{ id: "settings", label: "Einstellungen", icon: "settings" } as const] : []),
   ];
+
+  // Zeiten öffnen: mit offenen Freigaben zuerst die Freigaben
+  function openTab(id: TabId) {
+    if (id === "times" && tab !== "times") setTimesView(open > 0 ? "approvals" : "times");
+    setTab(id);
+  }
 
   return (
     <Shell
@@ -241,16 +246,38 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
       subtitle={`${profile.first_name} · ${isAdmin ? "Admin" : "Studioleitung"}`}
       tabs={tabs}
       current={tab}
-      onTab={setTab}
+      onTab={openTab}
       onLogout={props.onLogout}
     >
       {tab === "plan" && <Plan profile={profile} />}
-      {tab === "staff" && <Staff profile={profile} />}
-      {tab === "times" && <Times profile={profile} />}
-      {tab === "approvals" && <Approvals profile={profile} />}
-      {tab === "sick" && isAdmin && <Sickness />}
-      {tab === "vacation" && isAdmin && <Vacations />}
-      {tab === "tablets" && isAdmin && <Tablets />}
+      {tab === "team" && (
+        <>
+          {isAdmin && (
+            <SubNav<TeamView> label="Team" value={teamView} onChange={setTeamView}
+              options={[{ id: "people", label: "Personen" }, { id: "vacation", label: "Urlaub" }, { id: "sick", label: "Krankheit" }]} />
+          )}
+          {(!isAdmin || teamView === "people") && <Staff profile={profile} />}
+          {isAdmin && teamView === "vacation" && <Vacations />}
+          {isAdmin && teamView === "sick" && <Sickness />}
+        </>
+      )}
+      {tab === "times" && (
+        <>
+          <SubNav<TimesView> label="Zeiten" value={timesView} onChange={setTimesView}
+            options={[{ id: "approvals", label: open > 0 ? `Freigaben (${open})` : "Freigaben" }, { id: "times", label: "Stempelzeiten" }]} />
+          {timesView === "approvals" ? <Approvals profile={profile} /> : <Times profile={profile} />}
+        </>
+      )}
+      {tab === "settings" && isAdmin && <Tablets />}
     </Shell>
+  );
+}
+
+// Unterauswahl oben im Bereich
+function SubNav<T extends string>(props: { label: string; value: T; onChange: (v: T) => void; options: { id: T; label: string }[] }) {
+  return (
+    <div className="subnav">
+      <Segmented label={props.label} value={props.value} onChange={props.onChange} options={props.options} fill />
+    </div>
   );
 }

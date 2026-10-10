@@ -1,12 +1,12 @@
 // Urlaub (nur Admin): genommene, geplante und noch offene Urlaubstage aller Mitarbeiter je Jahr.
-// Person antippen → ihre Urlaubstage. Anspruch ändern: Team → Person → Arbeitsvertrag.
+// Person antippen → Urlaubsanspruch für dieses und nächstes Jahr eintragen (z. B. anteilig) + ihre Urlaubstage.
 import { useCallback, useEffect, useState } from "react";
-import { Avatar, Icon, Notice, PageHeader, Pill, Row, Section, Sheet, StudioFilter } from "../components/ui";
+import { Avatar, Field, Icon, Notice, PageHeader, Pill, Row, Section, Sheet, StudioFilter } from "../components/ui";
 import { berlinDate, berlinToISO, fmtDay, vacationRanges } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
-import { type Location, ROLE_LABEL, type Role, studioShort } from "../lib/types";
+import { DEFAULT_VACATION_DAYS, type Location, ROLE_LABEL, type Role, studioShort } from "../lib/types";
 
 type Person = { id: string; first_name: string; last_name: string; role: Role; home_location_id: string | null };
 type Overview = { user_id: string; allowance: number | null; taken: number; planned: number };
@@ -80,8 +80,8 @@ export function Vacations() {
 
       <div className="stats">
         <div className="stat"><span className="stat-label">Genommen</span><span className="stat-value">{fmt(sum((v) => v.taken))} <small>Tage</small></span></div>
-        <div className="stat"><span className="stat-label">Geplant</span><span className="stat-value">{fmt(sum((v) => v.planned))} <small>Tage</small></span></div>
-        <div className="stat"><span className="stat-label">Noch offen</span><span className="stat-value">{fmt(openTotal)} <small>Tage</small></span></div>
+        <div className="stat"><span className="stat-label">Eingetragen</span><span className="stat-value">{fmt(sum((v) => v.planned))} <small>Tage</small></span></div>
+        <div className="stat"><span className="stat-label">Resturlaub</span><span className="stat-value">{fmt(openTotal)} <small>Tage</small></span></div>
       </div>
 
       {groups.map((g) => (
@@ -95,11 +95,11 @@ export function Vacations() {
                 leading={<Avatar first={p.first_name} last={p.last_name} color={studioColor(p.home_location_id)} />}
                 title={`${p.first_name} ${p.last_name}`}
                 subtitle={!v || v.allowance === null
-                  ? `${ROLE_LABEL[p.role]} · kein Anspruch hinterlegt${v?.taken || v?.planned ? ` · ${fmt(v.taken + v.planned)} Tage eingetragen` : ""}`
-                  : `Anspruch ${fmt(Number(v.allowance))} · genommen ${fmt(v.taken)} · geplant ${fmt(v.planned)}`}
+                  ? ROLE_LABEL[p.role]
+                  : `Anspruch ${fmt(Number(v.allowance))} · genommen ${fmt(v.taken)} · eingetragen ${fmt(v.planned)}`}
                 trailing={left === null
                   ? <span className="muted">–</span>
-                  : <strong className={`num${left < 0 ? " text-danger" : ""}`}>{days(left)} offen</strong>}
+                  : <strong className={`num${left < 0 ? " text-danger" : ""}`}>{days(left)} Rest</strong>}
                 chevron
                 onClick={() => setSelected(p)}
               />
@@ -107,17 +107,49 @@ export function Vacations() {
           })}
         </Section>
       ))}
-      <p className="muted small">Anspruch ändern: Team → Person → Arbeitsvertrag → „Urlaubstage pro Jahr“.</p>
+      <p className="muted small">Anspruch ändern: Person antippen. Ohne Eintrag gelten {DEFAULT_VACATION_DAYS} Tage.</p>
 
-      {selected && <PersonVacation person={selected} year={year} overview={overview[selected.id]} onClose={() => setSelected(null)} />}
+      {selected && (
+        <PersonVacation person={selected} year={year} overview={overview[selected.id]}
+          onClose={() => setSelected(null)}
+          onSaved={() => { setSelected(null); void loadYear(); }} />
+      )}
     </>
   );
 }
 
 // Urlaubstage einer Person im Jahr (zusammengefasst)
-function PersonVacation(props: { person: Person; year: number; overview?: Overview; onClose: () => void }) {
+function PersonVacation(props: { person: Person; year: number; overview?: Overview; onClose: () => void; onSaved: () => void }) {
   const [list, setList] = useState<string[] | null>(null);
   const today = berlinDate();
+  // Anspruch dieses und nächstes Jahr (manuell, z. B. anteilig); vorbelegt mit dem Standard
+  const thisYear = Number(today.slice(0, 4));
+  const years = [thisYear, thisYear + 1];
+  const [allowance, setAllowance] = useState<Record<number, string>>({});
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    void adminDb
+      .from("vacation_allowances")
+      .select("year, days")
+      .eq("user_id", props.person.id)
+      .in("year", [thisYear, thisYear + 1])
+      .then(({ data }) => {
+        const found = Object.fromEntries((data ?? []).map((r) => [r.year as number, fmt(Number(r.days))]));
+        setAllowance({ [thisYear]: found[thisYear] ?? fmt(DEFAULT_VACATION_DAYS), [thisYear + 1]: found[thisYear + 1] ?? fmt(DEFAULT_VACATION_DAYS) });
+      });
+  }, [props.person.id, thisYear]);
+
+  async function save() {
+    const rows = years.map((y) => ({ user_id: props.person.id, year: y, days: Number((allowance[y] ?? "").replace(",", ".")) }));
+    if (rows.some((r) => !Number.isFinite(r.days) || r.days < 0 || r.days > 365)) return setError("Bitte 0 bis 365 Tage eintragen (halbe Tage mit ,5).");
+    setBusy(true);
+    const { error } = await adminDb.from("vacation_allowances").upsert(rows, { onConflict: "user_id,year" });
+    setBusy(false);
+    if (error) return setError(dbMessage(error));
+    props.onSaved();
+  }
 
   useEffect(() => {
     void adminDb
@@ -134,13 +166,31 @@ function PersonVacation(props: { person: Person; year: number; overview?: Overvi
   const v = props.overview;
   const left = leftOf(v);
   return (
-    <Sheet title={`${props.person.first_name} ${props.person.last_name}`} subtitle={`Urlaub ${props.year}`} onClose={props.onClose}>
+    <Sheet
+      title={`${props.person.first_name} ${props.person.last_name}`}
+      subtitle={`Urlaub ${props.year}`}
+      onClose={props.onClose}
+      footer={<button type="button" className="btn btn-primary" disabled={busy || !allowance[thisYear]} onClick={() => void save()}>
+        {busy ? "Speichert …" : "Anspruch speichern"}
+      </button>}
+    >
+      <Section title="Urlaubsanspruch" plain footer={`Manuell, z. B. anteilig im Eintrittsjahr. Standard ${DEFAULT_VACATION_DAYS} Tage.`}>
+        <div className="grid-2">
+          {years.map((y) => (
+            <Field key={y} label={`${y} (Tage)`}>
+              <input id={`allowance-${y}`} inputMode="decimal" value={allowance[y] ?? ""}
+                onChange={(e) => setAllowance((a) => ({ ...a, [y]: e.target.value }))} />
+            </Field>
+          ))}
+        </div>
+      </Section>
+      {error && <Notice tone="error">{error}</Notice>}
       {v && v.allowance !== null && (
         <Section>
-          <Row title={<strong>Offen</strong>} trailing={<strong className={`num${left !== null && left < 0 ? " text-danger" : ""}`}>{days(left ?? 0)}</strong>} />
+          <Row title={<strong>Resturlaub {props.year}</strong>} trailing={<strong className={`num${left !== null && left < 0 ? " text-danger" : ""}`}>{days(left ?? 0)}</strong>} />
           <Row title="Anspruch" trailing={<span className="num">{days(Number(v.allowance))}</span>} />
           <Row title="Genommen" trailing={<span className="num">{days(v.taken)}</span>} />
-          <Row title="Geplant" trailing={<span className="num">{days(v.planned)}</span>} />
+          <Row title="Eingetragen (kommt noch)" trailing={<span className="num">{days(v.planned)}</span>} />
         </Section>
       )}
       <Section title="Urlaubstage">

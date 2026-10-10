@@ -90,6 +90,7 @@ export function PortalApp(props: { stampToken?: string }) {
         <Stamp
           me={me}
           token={token}
+          onOpenVacation={() => setTab("account")}
           onTokenUsed={() => {
             setToken(undefined);
             location.replace("#/portal"); // Code nicht erneut verwenden (Neuladen, Zurück-Taste)

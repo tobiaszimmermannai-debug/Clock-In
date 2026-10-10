@@ -82,7 +82,8 @@ export function Tablets() {
   return (
     <>
       <PageHeader
-        title="Tablets"
+        title="Einstellungen"
+        subtitle="Tablets und Studios"
         actions={
           <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
             <Icon name="plus" size={20} /> Neues Tablet
@@ -90,7 +91,7 @@ export function Tablets() {
         }
       />
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
-      <Section footer="Am Tablet die App-Adresse öffnen und mit Benutzername + Passwort anmelden. „Netz“ ist die Internet-Adresse des Studio-WLANs – damit müssen auch die Handys verbunden sein.">
+      <Section title="Tablets" footer="Am Tablet die App-Adresse öffnen und mit Benutzername + Passwort anmelden. „Netz“ ist die Internet-Adresse des Studio-WLANs – damit müssen auch die Handys verbunden sein.">
         {tablets.length === 0 && <p className="list-empty">Noch keine Tablets angelegt.</p>}
         {tablets.map((t) => (
           <div key={t.id} className="list-item">

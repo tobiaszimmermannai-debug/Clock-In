@@ -35,6 +35,9 @@ export const DEFAULT_RULES: RuleSettings = {
 // Urlaub/Krank/Schule: je Tag Wochenstunden ÷ 5,25 (wie rule_settings.absence_week_days)
 export const ABSENCE_WEEK_DAYS = 5.25;
 
+// Urlaubsanspruch ohne Eintrag (wie rule_settings.default_vacation_days)
+export const DEFAULT_VACATION_DAYS = 20;
+
 export type Location = { id: string; code: string; name: string };
 
 export type KioskDevice = { id: string; name: string; location_id: string | null };

@@ -101,6 +101,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 12. `supabase/migrations/20261009150000_help_without_request.sql` (Aushilfe stellen auch ohne Anfrage)
 13. `supabase/migrations/20261009180000_sick_documents.sql` (Krankheit: Attest / Karenztag-Zettel abhaken)
 14. `supabase/migrations/20261010090000_unknown_phone.sql` (anderes Handy/Browser → Buchung zur Freigabe statt Sperre)
+15. `supabase/migrations/20261010120000_vacation_allowances.sql` (Urlaubsanspruch je Jahr, Standard 20 Tage)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -160,15 +161,20 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   Krank setzt nur die Studioleitung (eigenes Studio und eigene Leute) oder ein Admin – gegen eine geplante
   Schicht oder als ganzer Tag (pauschal, Uhrzeiten zählen nicht). Urlaubsanspruch pro Jahr steht im
   Arbeitsvertrag (Team → Person); Mitarbeiter sehen ihre Urlaubstage im Portal unter Konto und Stunden.
-- **Admin-Übersichten:** „Krankheit“ – Krankheitsfälle (zusammenhängende Krank-Tage) mit Haken „Attest da“ /
-  „Karenztag-Zettel da“, Filter Offen/Alle. „Urlaub“ – je Jahr und Studio Anspruch, genommen, geplant, offen.
+- **Verwaltung:** Dienstplan · Team (Personen / Urlaub / Krankheit) · Zeiten (Freigaben / Stempelzeiten) ·
+  Einstellungen (Tablets, Studios; nur Admin). „Krankheit“: Krankheitsfälle mit Haken „Attest da“ /
+  „Karenztag-Zettel da“. „Urlaub“: je Jahr und Studio Anspruch, genommen, eingetragen, Resturlaub; Person
+  antippen → Anspruch für dieses und nächstes Jahr (manuell, z. B. anteilig; Standard 20 =
+  `rule_settings.default_vacation_days`).
+- **Resturlaub für Mitarbeiter:** Startseite (Stempeln), Konto und Stunden – zählt runter, sobald Urlaub im
+  Dienstplan eingetragen ist.
 - **Stempel-Handy:** Der Schlüssel liegt im Browser-Speicher (iPhone: installierte App und Safari getrennt).
   Unbekanntes Handy/Browser → Buchung wartet auf Freigabe (📱 in Telegram / Freigaben); mit ✅ zählt sie und das
   Handy wird gemerkt. Handy einer anderen Person → gesperrt. Der QR-Code führt immer zur Hauptadresse
   (`PRODUCTION_URL` in `app/src/lib/config.ts`, eigene Domain: `VITE_PUBLIC_URL`).
 - **Noch nicht da:** 5 Min. (Verspätungs-Toleranz) nach Schichtbeginn nicht eingestempelt → ⏰-Meldung per
   Telegram (je Schicht einmal, an alle mit Studio-Meldungen). Prüfung jede Minute (Job `clockin-staffing`).
-- **Tablet „Good Boy“:** Gehen spätestens zum Schichtende → 3 Sekunden Bild `app/public/good-boy.webp`.
+- **Tablet „Good Job“:** Gehen spätestens zum Schichtende → 3 Sekunden Bild `app/public/good-job.webp`.
 - **Aushilfe:** Studio fragt im Dienstplan an (Eintragen → Art „Aushilfe anfragen“); alle sehen die Anfrage unter
   „Aushilfe gesucht“. Eine andere Studioleitung tippt „Stellen“ und wählt einen eigenen Mitarbeiter – die Schicht
   steht dann im anfragenden Studio. Auch ohne Anfrage (telefonisch/WhatsApp abgesprochen): Eintragen → „Aushilfe

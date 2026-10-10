@@ -16,7 +16,7 @@ export type Person = {
   home_location_id: string | null;
   username: string | null;
   auth_user_id: string | null;
-  employment_details: { weekly_target_minutes: number; work_days_per_week: number; vacation_days_per_year: number | null } | null;
+  employment_details: { weekly_target_minutes: number; work_days_per_week: number } | null;
 };
 
 // Urlaubstage im laufenden Jahr (vacation_overview)
@@ -54,7 +54,7 @@ export function Staff({ profile }: { profile: Profile }) {
       adminDb
         .from("users")
         .select(
-          "id, first_name, last_name, role, home_location_id, username, auth_user_id, employment_details(weekly_target_minutes, work_days_per_week, vacation_days_per_year)",
+          "id, first_name, last_name, role, home_location_id, username, auth_user_id, employment_details(weekly_target_minutes, work_days_per_week)",
         )
         .eq("is_active", true)
         .order("first_name"),
@@ -155,7 +155,7 @@ export function Staff({ profile }: { profile: Profile }) {
 
 function vacationShort(v: VacationInfo | undefined) {
   const left = v ? vacationLeft(v) : null;
-  return v && left !== null ? `Urlaub ${String(left).replace(".", ",")}/${String(Number(v.allowance)).replace(".", ",")} übrig` : "";
+  return v && left !== null ? `Resturlaub ${String(left).replace(".", ",")}/${String(Number(v.allowance)).replace(".", ",")}` : "";
 }
 
 // Bereit zum Stempeln = Login vorhanden + Handy registriert
@@ -294,16 +294,17 @@ function VacationSection(props: { vacation?: VacationInfo; year: number; isAdmin
     return (
       <Section title={`Urlaub ${props.year}`}>
         <Row title="Noch kein Urlaubsanspruch hinterlegt"
-          subtitle={props.isAdmin ? "Oben im Arbeitsvertrag bei „Urlaubstage pro Jahr“ eintragen." : "Tobias oder Dominik tragen den Anspruch ein."} />
+          subtitle={props.isAdmin ? "Team → Urlaub → Person antippen." : "Tobias oder Dominik tragen den Anspruch ein."} />
       </Section>
     );
   }
   return (
-    <Section title={`Urlaub ${props.year}`} footer="Jeder eingetragene Urlaubstag im Dienstplan zählt als ein Tag.">
+    <Section title={`Urlaub ${props.year}`}
+      footer={`Jeder eingetragene Urlaubstag im Dienstplan zählt als ein Tag.${props.isAdmin ? " Anspruch ändern: Team → Urlaub." : ""}`}>
       <Row title="Anspruch" trailing={<span className="num">{fmtDays(Number(v.allowance))}</span>} />
       <Row title="Genommen" trailing={<span className="num">{fmtDays(v.taken)}</span>} />
-      <Row title="Geplant" trailing={<span className="num">{fmtDays(v.planned)}</span>} />
-      <Row title={<strong>Übrig</strong>}
+      <Row title="Eingetragen (kommt noch)" trailing={<span className="num">{fmtDays(v.planned)}</span>} />
+      <Row title={<strong>Resturlaub</strong>}
         trailing={<strong className={`num${left !== null && left < 0 ? " text-danger" : ""}`}>{fmtDays(left ?? 0)}</strong>} />
     </Section>
   );
@@ -324,7 +325,6 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
       user_id: person.id,
       weekly_target_minutes: Math.round(Number(f.get("weekly_hours")) * 60),
       work_days_per_week: Number(f.get("work_days")),
-      vacation_days_per_year: vacationValue(f),
     });
     const role = String(f.get("role"));
     const location = String(f.get("location"));
@@ -357,10 +357,6 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
             <input id="edit-work-days" name="work_days" type="number" min="1" max="6" step="1"
               defaultValue={details?.work_days_per_week ?? DEFAULT_WORK_DAYS} required />
           </Field>
-          <Field label="Urlaubstage pro Jahr" hint="Leer = noch nicht festgelegt">
-            <input id="edit-vacation-days" name="vacation_days" type="number" min="0" max="365" step="0.5"
-              defaultValue={details?.vacation_days_per_year ?? ""} />
-          </Field>
           <Field label="Rolle">
             <select id="edit-role" name="role" defaultValue={person.role}>
               <option value="employee">Mitarbeiter</option>
@@ -382,11 +378,6 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
       </form>
     </Section>
   );
-}
-
-function vacationValue(f: FormData): number | null {
-  const raw = String(f.get("vacation_days") ?? "").trim();
-  return raw === "" ? null : Number(raw.replace(",", "."));
 }
 
 function NewPerson(props: { locations: Location[]; defaultStudio: string; onClose: () => void; onSaved: (id: string) => void }) {
@@ -420,7 +411,6 @@ function NewPerson(props: { locations: Location[]; defaultStudio: string; onClos
       user_id: user.id,
       weekly_target_minutes: Math.round(Number(f.get("weekly_hours")) * 60),
       work_days_per_week: Number(f.get("work_days")),
-      vacation_days_per_year: vacationValue(f),
     });
     if (role === "manager") {
       await adminDb.from("location_managers").insert({ user_id: user.id, location_id: homeLocation });
@@ -458,9 +448,6 @@ function NewPerson(props: { locations: Location[]; defaultStudio: string; onClos
           </Field>
           <Field key={`d-${role}`} label="Arbeitstage pro Woche">
             <input id="new-work-days" name="work_days" type="number" min="1" max="6" step="1" defaultValue={DEFAULTS[role].days} required />
-          </Field>
-          <Field label="Urlaubstage pro Jahr" hint="Optional">
-            <input id="new-vacation-days" name="vacation_days" type="number" min="0" max="365" step="0.5" />
           </Field>
         </div>
         <p className="muted small">Vorschlag: Azubis 40 Std. an 5 Tagen, Vollangestellte 25 Std. an 4 Tagen.</p>

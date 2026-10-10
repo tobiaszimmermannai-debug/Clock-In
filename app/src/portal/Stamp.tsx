@@ -11,6 +11,7 @@ import { portalDb } from "../lib/supabase";
 import { fmtClock } from "../lib/time";
 import { DEFAULT_RULES, EVENT_LABEL, type EventType, type LogEntry, type RuleSettings, type Shift, studioShort } from "../lib/types";
 import type { Me } from "./PortalApp";
+import { VacationRow } from "./Vacation";
 
 
 type Context = { shifts: Shift[]; rules: RuleSettings };
@@ -50,7 +51,7 @@ function errorPhase(e: unknown): Phase {
     : { kind: "error", text: "Keine Verbindung. Bitte Internet prüfen." };
 }
 
-export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void }) {
+export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [status, setStatus] = useState<{ state: WorkState; since?: string }>();
   const onTokenUsed = useRef(props.onTokenUsed);
@@ -205,6 +206,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void }
           <Icon name="qr" size={20} /> {phase.kind === "error" ? "Erneut scannen" : "Scannen"}
         </button>
       </div>
+      <VacationRow onOpen={props.onOpenVacation} />
       <Section title="So geht's" footer="Kein Handy dabei oder Probleme? Bitte Tobias oder Dominik anrufen.">
         <Row leading={<LeadingIcon name="wifi" />} title="Mit dem Studio-WLAN verbinden" subtitle="Mobile Daten am besten ausschalten" />
         <Row leading={<LeadingIcon name="qr" />} title="QR-Code am Tablet scannen" subtitle="Am besten hier mit „Scannen“ – dann erkennt das System dein Handy sicher" />

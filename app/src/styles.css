@@ -253,6 +253,7 @@ label.list-row { cursor: pointer; }
   overflow-x: auto; scrollbar-width: none;
 }
 .segmented::-webkit-scrollbar { display: none; }
+.subnav { max-width: 520px; }
 .segmented.is-fill button { flex: 1 1 auto; min-width: 0; padding: 7px 2px; font-size: .86rem; overflow: hidden; text-overflow: ellipsis; }
 .segmented button {
   flex: 1 0 auto; border: 0; background: none; padding: 7px 14px; border-radius: 9px;
@@ -425,11 +426,14 @@ input[type="time"] { font-variant-numeric: tabular-nums; font-size: 1.1rem; font
 }
 .kiosk-greeting h2 { font-size: clamp(2rem, 5vw, 3.2rem); }
 /* Pünktlich gegangen: Bild bildschirmfüllend, 3 Sekunden */
-.kiosk-goodboy { position: absolute; inset: 0; z-index: 6; background: #000; display: grid; place-items: center; animation: fade .2s ease; }
-.kiosk-goodboy img { width: 100%; height: 100%; object-fit: contain; }
+.kiosk-goodboy {
+  position: absolute; inset: 0; z-index: 6; background: #fff; animation: fade .2s ease;
+  display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; gap: 12px; padding: 16px 16px 24px;
+}
+.kiosk-goodboy img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 .kiosk-goodboy p {
-  position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); margin: 0; padding: 10px 20px; border-radius: 999px;
-  background: rgba(0, 0, 0, .55); color: #fff; font-size: clamp(1.1rem, 2.6vw, 1.6rem); font-weight: 700; white-space: nowrap;
+  margin: 0; padding: 10px 20px; border-radius: 999px; background: #111827; color: #fff;
+  font-size: clamp(1.1rem, 2.6vw, 1.6rem); font-weight: 700; white-space: nowrap;
 }
 
 /* Stempel-Tasten (Handy) */
