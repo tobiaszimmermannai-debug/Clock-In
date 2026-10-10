@@ -168,7 +168,8 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   antippen → Anspruch für dieses und nächstes Jahr (manuell, z. B. anteilig; Standard 20 =
   `rule_settings.default_vacation_days`).
 - **Schul-Abgleich (IST):** Team → Schule. bildungspartner.ist.de → Termine → alles kopieren → einfügen →
-  Vorschau (neu / geändert / entfällt / Konflikt mit Schicht) → Übernehmen. Alle 2 Wochen wiederholen.
+  Vorschau (neu / geändert / entfällt / Konflikt mit Schicht; jeden Eintrag einzeln abhaken) → zweite
+  Bestätigung („Ja, so übernehmen“) – erst dann wird etwas geändert. Alle 2 Wochen wiederholen.
   Importierte Schultage tragen `import_source = 'ist'` und werden beim nächsten Abgleich angepasst oder entfernt;
   von Hand eingetragene bleiben. Abgesagte Termine und reine Monatsangaben werden übersprungen.
 - **Resturlaub für Mitarbeiter:** Startseite (Stempeln), Konto und Stunden – zählt runter, sobald Urlaub im

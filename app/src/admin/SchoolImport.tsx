@@ -1,8 +1,8 @@
 // Schule (nur Admin): Termine aus dem IST-Bildungspartner-Portal in den Dienstplan übernehmen.
-// IST-Seite „Termine“ kopieren → hier einfügen → Vorschau (neu / geändert / entfällt / Konflikte) → übernehmen.
+// IST-Seite „Termine“ kopieren → hier einfügen → Vorschau (jeden Eintrag einzeln abhaken) → separat bestätigen.
 // Alle 2 Wochen wiederholen: geänderte Zeiten werden angepasst, Abgesagtes entfernt; von Hand Eingetragenes bleibt.
 import { type CSSProperties, useCallback, useEffect, useState } from "react";
-import { Avatar, Empty, Field, Notice, PageHeader, Row, Section } from "../components/ui";
+import { Avatar, Empty, Field, Notice, PageHeader, Row, Section, Sheet } from "../components/ui";
 import { addDays, berlinDate, berlinTime, berlinToISO, fmtDay, groupDays } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import {
@@ -41,8 +41,10 @@ function saveAlias(label: string, userId: string) {
 function blocks(days: SchoolDay[]) {
   const byKey = new Map<string, SchoolDay[]>();
   for (const d of days) byKey.set(`${d.userId}|${d.title}|${d.from}|${d.to}`, [...(byKey.get(`${d.userId}|${d.title}|${d.from}|${d.to}`) ?? []), d]);
-  return [...byKey.values()].flatMap((list) => groupDays(list, (d) => d.date).map((g) => ({ ...g.items[0], start: g.from, end: g.to, count: g.items.length })))
-    .sort((a, b) => a.start.localeCompare(b.start));
+  return [...byKey.values()].flatMap((list) => groupDays(list, (d) => d.date).map((g) => ({
+    ...g.items[0], start: g.from, end: g.to, count: g.items.length, days: g.items,
+    key: `add:${g.items[0].userId}|${g.from}|${g.items[0].title}|${g.items[0].from}`,
+  }))).sort((a, b) => a.start.localeCompare(b.start));
 }
 
 export function SchoolImport() {
@@ -51,7 +53,9 @@ export function SchoolImport() {
   const [parsed, setParsed] = useState<IstParse | null>(null);
   const [assign, setAssign] = useState<Record<number, string>>({});
   const [existing, setExisting] = useState<DayEntry[] | null>(null);
-  const [keep, setKeep] = useState<Set<string>>(new Set());
+  // abgewählte Einträge (add:… / upd:… / del:…) – bleiben unverändert
+  const [skip, setSkip] = useState<Set<string>>(new Set());
+  const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState<{ tone: "ok" | "error" | "warn"; text: string }>();
   const [busy, setBusy] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
@@ -87,7 +91,7 @@ export function SchoolImport() {
 
   async function check() {
     setMessage(undefined);
-    setKeep(new Set());
+    setSkip(new Set());
     const result = parseIst(text, people);
     // gemerkte Zuordnungen anwenden
     const aliases = loadAliases();
@@ -108,14 +112,15 @@ export function SchoolImport() {
 
   async function apply() {
     if (!plan) return;
+    setConfirming(false);
     setBusy(true);
     const problems: string[] = [];
-    const removeIds = plan.remove.filter((e) => !keep.has(e.id)).map((e) => e.id);
+    const removeIds = selDel.map((e) => e.id);
     if (removeIds.length) {
       const { error } = await adminDb.from("shifts").delete().in("id", removeIds);
       if (error) problems.push(`Löschen: ${dbMessage(error)}`);
     }
-    for (const u of plan.update) {
+    for (const u of selUpd) {
       const { error } = await adminDb.from("shifts").update({
         starts_at: berlinToISO(u.day.date, u.day.from),
         ends_at: berlinToISO(u.day.date, u.day.to),
@@ -123,7 +128,7 @@ export function SchoolImport() {
       }).eq("id", u.entry.id);
       if (error) problems.push(`${name(u.day.userId)} ${fmtDay(u.day.date)}: ${dbMessage(error)}`);
     }
-    const rows = plan.add.map((d) => ({
+    const rows = selAdd.map((d) => ({
       user_id: d.userId,
       shift_type: "vocational_school",
       location_id: null,
@@ -143,7 +148,8 @@ export function SchoolImport() {
       }
     }
     setBusy(false);
-    const done = `${plan.add.length} neu, ${plan.update.length} angepasst, ${removeIds.length} entfernt.`;
+    const skipped = skip.size ? ` ${plan.add.length - selAdd.length + plan.update.length - selUpd.length + plan.remove.length - selDel.length} abgewählt (unverändert).` : "";
+    const done = `${rows.length} neu, ${selUpd.length} angepasst, ${removeIds.length} entfernt.${skipped}`;
     setMessage(problems.length
       ? { tone: "warn", text: `Übernommen mit Hinweisen (${done}) ${problems.join(" · ")}` }
       : { tone: "ok", text: `Schule übernommen: ${done}${plan.conflicts.length ? ` ${plan.conflicts.length} Tag(e) mit Schicht-Konflikt bitte im Dienstplan klären.` : ""}` });
@@ -155,7 +161,30 @@ export function SchoolImport() {
 
   const unknown = (parsed?.records ?? []).map((r, i) => ({ r, i })).filter(({ r }) => !r.userId && !r.cancelled);
   const cancelled = (parsed?.records ?? []).filter((r) => r.cancelled).length;
-  const changes = plan ? plan.add.length + plan.update.length + plan.remove.filter((e) => !keep.has(e.id)).length : 0;
+  const addBlocks = plan ? blocks(plan.add) : [];
+  const selBlocks = addBlocks.filter((b) => !skip.has(b.key));
+  const selAdd = selBlocks.flatMap((b) => b.days);
+  const selUpd = plan ? plan.update.filter((u) => !skip.has(`upd:${u.entry.id}`)) : [];
+  const selDel = plan ? plan.remove.filter((e) => !skip.has(`del:${e.id}`)) : [];
+  const changes = selAdd.length + selUpd.length + selDel.length;
+  const toggle = (key: string) => setSkip((k) => {
+    const n = new Set(k);
+    if (n.has(key)) n.delete(key);
+    else n.add(key);
+    return n;
+  });
+  // Zeile mit Haken (Haken raus = bleibt unverändert)
+  const checkRow = (key: string, userId: string, title: string, subtitle: string, trailing?: string) => (
+    <label key={key} className="list-row has-leading">
+      <input type="checkbox" checked={!skip.has(key)} onChange={() => toggle(key)} />
+      {avatar(userId)}
+      <span className="list-row-main">
+        <span className="list-row-title">{title}</span>
+        <span className="list-row-sub">{subtitle}</span>
+      </span>
+      {trailing && <span className="list-row-trail num">{trailing}</span>}
+    </label>
+  );
 
   return (
     <>
@@ -211,38 +240,29 @@ export function SchoolImport() {
             </Section>
           )}
 
-          {plan.add.length > 0 && (
+          {plan.add.length + plan.update.length + plan.remove.length > 0 && (
+            <Notice>Jeden Eintrag prüfen – Haken raus = bleibt unverändert. Übernommen wird erst nach einer zweiten Bestätigung.</Notice>
+          )}
+
+          {addBlocks.length > 0 && (
             <Section title="Neu eintragen">
-              {blocks(plan.add).map((b) => (
-                <Row key={`${b.userId}${b.start}${b.title}`} leading={avatar(b.userId)} title={name(b.userId)}
-                  subtitle={`${range(b.start, b.end)} · ${b.from}–${b.to} Uhr${b.title ? ` · ${b.title}` : ""}`}
-                  trailing={<span className="num">{b.count} {b.count === 1 ? "Tag" : "Tage"}</span>} />
-              ))}
+              {addBlocks.map((b) => checkRow(b.key, b.userId, name(b.userId),
+                `${range(b.start, b.end)} · ${b.from}–${b.to} Uhr${b.title ? ` · ${b.title}` : ""}`,
+                `${b.count} ${b.count === 1 ? "Tag" : "Tage"}`))}
             </Section>
           )}
 
           {plan.update.length > 0 && (
             <Section title="Geändert">
-              {plan.update.map((u) => (
-                <Row key={u.entry.id} leading={avatar(u.day.userId)} title={name(u.day.userId)}
-                  subtitle={`${fmtDay(u.day.date)} · vorher ${berlinTime(u.entry.starts_at)}–${berlinTime(u.entry.ends_at)}, jetzt ${u.day.from}–${u.day.to}${u.day.title ? ` · ${u.day.title}` : ""}`} />
-              ))}
+              {plan.update.map((u) => checkRow(`upd:${u.entry.id}`, u.day.userId, name(u.day.userId),
+                `${fmtDay(u.day.date)} · vorher ${berlinTime(u.entry.starts_at)}–${berlinTime(u.entry.ends_at)}, jetzt ${u.day.from}–${u.day.to}${u.day.title ? ` · ${u.day.title}` : ""}`))}
             </Section>
           )}
 
           {plan.remove.length > 0 && (
-            <Section title="Entfällt (nicht mehr bei IST)" footer="Haken raus = Eintrag bleibt.">
-              {plan.remove.map((e) => (
-                <label key={e.id} className="list-row has-leading">
-                  <input type="checkbox" checked={!keep.has(e.id)}
-                    onChange={() => setKeep((k) => { const n = new Set(k); if (n.has(e.id)) n.delete(e.id); else n.add(e.id); return n; })} />
-                  {avatar(e.user_id)}
-                  <span className="list-row-main">
-                    <span className="list-row-title">{name(e.user_id)}</span>
-                    <span className="list-row-sub">{fmtDay(berlinDate(e.starts_at))}{e.note ? ` · ${e.note.replace(IST_NOTE_PREFIX, "")}` : ""}</span>
-                  </span>
-                </label>
-              ))}
+            <Section title="Entfällt (nicht mehr bei IST)">
+              {plan.remove.map((e) => checkRow(`del:${e.id}`, e.user_id, name(e.user_id),
+                `${fmtDay(berlinDate(e.starts_at))}${e.note ? ` · ${e.note.replace(IST_NOTE_PREFIX, "")}` : ""}`))}
             </Section>
           )}
 
@@ -265,17 +285,57 @@ export function SchoolImport() {
             </Section>
           )}
 
-          {changes === 0 && plan.conflicts.length === 0 && (
+          {plan.add.length + plan.update.length + plan.remove.length === 0 && plan.conflicts.length === 0 && (
             <Empty icon="checkCircle" title="Alles aktuell">Der Dienstplan stimmt schon mit den IST-Terminen überein.</Empty>
           )}
 
           <div className="form-actions">
             <button type="button" className="btn btn-outline" disabled={busy} onClick={() => { setParsed(null); setExisting(null); }}>Zurück</button>
-            <button type="button" className="btn btn-primary" disabled={busy || changes === 0} onClick={() => void apply()}>
-              {busy ? "Übernimmt …" : `Übernehmen (${changes})`}
+            <button type="button" className="btn btn-primary" disabled={busy || changes === 0} onClick={() => setConfirming(true)}>
+              {busy ? "Übernimmt …" : `Weiter zur Bestätigung (${changes})`}
             </button>
           </div>
         </>
+      )}
+
+      {/* Zweite Bestätigung: genau diese Änderungen werden übernommen */}
+      {confirming && plan && (
+        <Sheet
+          title="Bitte bestätigen"
+          subtitle={`${changes} Änderung${changes === 1 ? "" : "en"} im Dienstplan`}
+          onClose={() => setConfirming(false)}
+          footer={
+            <>
+              <button type="button" className="btn btn-outline" onClick={() => setConfirming(false)}>Zurück</button>
+              <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void apply()}>Ja, so übernehmen</button>
+            </>
+          }
+        >
+          {selBlocks.length > 0 && (
+            <Section title={`Wird eingetragen (${selAdd.length} ${selAdd.length === 1 ? "Tag" : "Tage"})`}>
+              {selBlocks.map((b) => (
+                <Row key={b.key} title={name(b.userId)} subtitle={`${range(b.start, b.end)} · ${b.from}–${b.to} Uhr${b.title ? ` · ${b.title}` : ""}`} />
+              ))}
+            </Section>
+          )}
+          {selUpd.length > 0 && (
+            <Section title={`Wird geändert (${selUpd.length})`}>
+              {selUpd.map((u) => (
+                <Row key={u.entry.id} title={name(u.day.userId)}
+                  subtitle={`${fmtDay(u.day.date)} · ${berlinTime(u.entry.starts_at)}–${berlinTime(u.entry.ends_at)} → ${u.day.from}–${u.day.to}`} />
+              ))}
+            </Section>
+          )}
+          {selDel.length > 0 && (
+            <Section title={`Wird entfernt (${selDel.length})`}>
+              {selDel.map((e) => (
+                <Row key={e.id} className="is-danger" title={name(e.user_id)}
+                  subtitle={`${fmtDay(berlinDate(e.starts_at))}${e.note ? ` · ${e.note.replace(IST_NOTE_PREFIX, "")}` : ""}`} />
+              ))}
+            </Section>
+          )}
+          <p className="muted small">Alles andere bleibt unverändert. Schultage lassen sich später im Dienstplan wie gewohnt ändern oder löschen.</p>
+        </Sheet>
       )}
     </>
   );
