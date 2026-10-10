@@ -7,6 +7,7 @@ import { adminDb } from "../lib/supabase";
 import type { Role } from "../lib/types";
 import { Approvals } from "./Approvals";
 import { Plan } from "./Plan";
+import { SchoolImport } from "./SchoolImport";
 import { Sickness } from "./Sickness";
 import { Staff } from "./Staff";
 import { Tablets } from "./Tablets";
@@ -205,10 +206,10 @@ function CodeForm(props: {
 }
 
 type TabId = "plan" | "team" | "times" | "settings";
-type TeamView = "people" | "vacation" | "sick";
+type TeamView = "people" | "vacation" | "sick" | "school";
 type TimesView = "approvals" | "times";
 
-// Navigation: 4 Bereiche, zusammengehörige Seiten als Unterauswahl (Team: Personen/Urlaub/Krankheit,
+// Navigation: 4 Bereiche, zusammengehörige Seiten als Unterauswahl (Team: Personen/Urlaub/Krankheit/Schule,
 // Zeiten: Freigaben/Stempelzeiten, Einstellungen: Tablets und Studios – nur Admin)
 function AdminHome(props: { profile: Profile; onLogout: () => void }) {
   const { profile } = props;
@@ -254,11 +255,17 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
         <>
           {isAdmin && (
             <SubNav<TeamView> label="Team" value={teamView} onChange={setTeamView}
-              options={[{ id: "people", label: "Personen" }, { id: "vacation", label: "Urlaub" }, { id: "sick", label: "Krankheit" }]} />
+              options={[
+                { id: "people", label: "Personen" },
+                { id: "vacation", label: "Urlaub" },
+                { id: "sick", label: "Krankheit" },
+                { id: "school", label: "Schule" },
+              ]} />
           )}
           {(!isAdmin || teamView === "people") && <Staff profile={profile} />}
           {isAdmin && teamView === "vacation" && <Vacations />}
           {isAdmin && teamView === "sick" && <Sickness />}
+          {isAdmin && teamView === "school" && <SchoolImport />}
         </>
       )}
       {tab === "times" && (

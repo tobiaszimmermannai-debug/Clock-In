@@ -102,6 +102,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 13. `supabase/migrations/20261009180000_sick_documents.sql` (Krankheit: Attest / Karenztag-Zettel abhaken)
 14. `supabase/migrations/20261010090000_unknown_phone.sql` (anderes Handy/Browser → Buchung zur Freigabe statt Sperre)
 15. `supabase/migrations/20261010120000_vacation_allowances.sql` (Urlaubsanspruch je Jahr, Standard 20 Tage)
+16. `supabase/migrations/20261011090000_school_import.sql` (Schul-Abgleich mit dem IST-Bildungspartner)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -166,6 +167,10 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   „Karenztag-Zettel da“. „Urlaub“: je Jahr und Studio Anspruch, genommen, eingetragen, Resturlaub; Person
   antippen → Anspruch für dieses und nächstes Jahr (manuell, z. B. anteilig; Standard 20 =
   `rule_settings.default_vacation_days`).
+- **Schul-Abgleich (IST):** Team → Schule. bildungspartner.ist.de → Termine → alles kopieren → einfügen →
+  Vorschau (neu / geändert / entfällt / Konflikt mit Schicht) → Übernehmen. Alle 2 Wochen wiederholen.
+  Importierte Schultage tragen `import_source = 'ist'` und werden beim nächsten Abgleich angepasst oder entfernt;
+  von Hand eingetragene bleiben. Abgesagte Termine und reine Monatsangaben werden übersprungen.
 - **Resturlaub für Mitarbeiter:** Startseite (Stempeln), Konto und Stunden – zählt runter, sobald Urlaub im
   Dienstplan eingetragen ist.
 - **Stempel-Handy:** Der Schlüssel liegt im Browser-Speicher (iPhone: installierte App und Safari getrennt).

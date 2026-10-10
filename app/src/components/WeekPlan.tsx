@@ -61,6 +61,7 @@ export function ShiftRow(props: { shift: PlanShift; mine?: boolean; showStudio?:
     props.showStudio && !s.is_acquisition && s.location ? studioShort(s.location.name) : "",
     isHelpShift(s) ? "Aushilfe" : "",
     isSickSwap(s) ? `${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} statt Schicht` : "",
+    s.shift_type === "vocational_school" && s.note?.startsWith("IST: ") ? s.note.slice(5) : "",
     s.shift_type === "work" && s.note && !isHelpShift(s) ? s.note : "",
   ].filter(Boolean).join(" · ");
   return (

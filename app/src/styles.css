@@ -204,7 +204,7 @@ label.list-row { cursor: pointer; }
 .list-row.is-mine { box-shadow: inset 3px 0 0 var(--accent); }
 .list-row.is-danger .list-row-title { color: var(--danger); }
 .list-row.is-accent .list-row-title { color: var(--accent); }
-.list-row input[type="radio"] { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); flex: none; }
+.list-row input[type="radio"], .list-row input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; margin: 0; accent-color: var(--accent); flex: none; }
 .list-empty { padding: 18px 16px; color: var(--muted); font-size: .95rem; }
 .list-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 14px 16px; }
 .list-row.has-leading ~ .list-actions, .list-actions.indent { padding-left: 64px; }
@@ -286,6 +286,9 @@ label.list-row { cursor: pointer; }
 
 /* ---------------- Kennzahlen ---------------- */
 .stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.stats.is-compact { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.stats.is-compact .stat { padding: 14px 16px; }
+.stats.is-compact .stat-value { font-size: 1.4rem; }
 .stat {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow);
   padding: 16px; display: grid; gap: 4px;
