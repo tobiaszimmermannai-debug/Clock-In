@@ -105,6 +105,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 16. `supabase/migrations/20261011090000_school_import.sql` (Schul-Abgleich mit dem IST-Bildungspartner)
 17. `supabase/migrations/20261011120000_saturday_auto_free.sql` (Samstag automatisch frei)
 18. `supabase/migrations/20261012090000_herold_shifts.sql` (Schichttyp „Herold + Schicht“)
+19. `supabase/migrations/20261012120000_school_7h_day_off.sql` (Schule 7 Std., „Frei“ für Vollzeitkräfte)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -160,8 +161,9 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   automatisch zur geplanten Endzeit eingetragen, zählt aber erst nach Freigabe per Telegram · 18 Uhr Abfrage
   Krank/Schule/Urlaub (Samstag: automatisch frei, gefragt wird nur, wenn im eigenen Studio niemand eingestempelt
   hat) · Einstempeln ohne Schicht = Aushilfsschicht im Dienstplan.
-- **Urlaub, Krank, Schule:** Urlaub/Schule je Tag 6,5 Std., Krank statt Schicht mit den Stunden der Schicht
-  (ab Uhrzeit nur der Rest). Azubis: je Tag Wochenstunden ÷ 5,25 (`absence_week_days`), Krank ab Uhrzeit anteilig.
+- **Urlaub, Krank, Schule:** Urlaub je Tag 6,5 Std., Krank statt Schicht mit den Stunden der Schicht
+  (ab Uhrzeit nur der Rest). Azubis: Urlaub/Krank je Tag Wochenstunden ÷ 5,25 (`absence_week_days`), Krank ab
+  Uhrzeit anteilig. Schule für alle 7 Std. (`school_credit_minutes`).
   Krank setzt nur die Studioleitung (eigenes Studio und eigene Leute) oder ein Admin – gegen eine geplante
   Schicht oder als ganzer Tag (pauschal, Uhrzeiten zählen nicht). Urlaubsanspruch pro Jahr steht im
   Arbeitsvertrag (Team → Person); Mitarbeiter sehen ihre Urlaubstage im Portal unter Konto und Stunden.
@@ -193,6 +195,10 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 - **Herold + Schicht:** Eintragen → „Herold + Schicht“: erst Herold im Studio Krailling, danach die Schicht im
   eigenen Studio – zwei Einträge, je einmal ein- und auschecken (Krailling, dann Studio). Herold zählt wie
   Arbeitszeit, aber nicht als „Krailling besetzt“. Studioleitung trägt das für sich und ihre Leute ein.
+- **Noch ohne Schicht:** Im Dienstplan stehen unter dem Tag alle eigenen Leute ohne Eintrag (gestrichelt
+  markiert) – „Planen“ öffnet die Schicht-Eingabe. Vollzeitkräfte (ab 35 Std./Woche laut Personen-Daten) lassen
+  sich dort mit „Frei“ auf frei setzen (zählt keine Stunden, keine 18-Uhr-Nachfrage).
+- **Schule:** zählt je Tag pauschal 7 Std. – für alle, auch Azubis.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:
   beide Studioleitungen müssen zustimmen; ein Admin (auch per Telegram) gibt für beide frei.
 - **Studio besetzt:** erste Stempelung des Tages je Studio → 🟢-Meldung; 10 Min. nach der ersten geplanten

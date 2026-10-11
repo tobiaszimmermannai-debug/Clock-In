@@ -5,7 +5,7 @@ import { Notice, PageHeader, WeekNav } from "../components/ui";
 import { addDays, berlinDate, berlinToISO, daysBetween, fmtHM, monthStart, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { portalDb } from "../lib/supabase";
-import { ABSENCE_WEEK_DAYS } from "../lib/types";
+import { ABSENCE_WEEK_DAYS, SCHOOL_CREDIT_MINUTES } from "../lib/types";
 import type { Me } from "./PortalApp";
 import { VacationCard, useMyVacation } from "./Vacation";
 
@@ -66,8 +66,8 @@ export function Hours({ me }: { me: Me }) {
           Ab Schichtbeginn (bis 5 Min. Verspätung gilt als pünktlich) bis Schichtende; Überstunden nach Freigabe.
           Jede Pause zählt mindestens 15 Min., gesetzlich 30 Min. ab 6 Std. und 45 Min. ab 9 Std. Arbeit.
           {me.role === "trainee"
-            ? `Urlaub, Schule und Krank zählen je Tag Wochenstunden ÷ ${String(ABSENCE_WEEK_DAYS).replace(".", ",")}${target > 0 ? ` (bei dir ${fmtHM(Math.round(target / ABSENCE_WEEK_DAYS))} Std.)` : ""}; krank ab einer Uhrzeit anteilig.`
-            : "Urlaub und Schule zählen je 6,5 Std., Krank mit den Stunden der geplanten Schicht."}{" "}
+            ? `Urlaub und Krank zählen je Tag Wochenstunden ÷ ${String(ABSENCE_WEEK_DAYS).replace(".", ",")}${target > 0 ? ` (bei dir ${fmtHM(Math.round(target / ABSENCE_WEEK_DAYS))} Std.)` : ""}, Schule ${fmtHM(SCHOOL_CREDIT_MINUTES)} Std.; krank ab einer Uhrzeit anteilig.`
+            : `Urlaub zählt 6,5 Std., Schule ${fmtHM(SCHOOL_CREDIT_MINUTES)} Std., Krank mit den Stunden der geplanten Schicht.`}{" "}
           Ausstempeln vergessen? Dann zählt die Zeit erst nach Freigabe durch Tobias oder Dominik.
         </p>
       </details>

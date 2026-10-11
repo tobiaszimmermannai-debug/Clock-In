@@ -74,7 +74,7 @@ type CallbackQuery = {
   message?: Message;
 };
 type Admin = { user_id: string; user: Person };
-type Settings = { late_tolerance_minutes: number; absence_credit_minutes: number };
+type Settings = { late_tolerance_minutes: number; absence_credit_minutes: number; school_credit_minutes?: number };
 
 // -----------------------------------------------------------------------------
 // Neue Buchung melden
@@ -261,12 +261,14 @@ async function absenceCheck(day: string): Promise<Response> {
   if (list.length === 0) return new Response("nobody");
 
   const admins = await adminChats();
-  const hours = formatHours((await ruleSettings()).absence_credit_minutes);
+  const settings = await ruleSettings();
+  const hours = formatHours(settings.absence_credit_minutes);
+  const school = formatHours(settings.school_credit_minutes ?? 420);
   const compact = day.replaceAll("-", "");
   for (const p of list) {
     const text =
       `❓ <b>${escapeHtml(fullName(p))}</b> hatte am ${formatDay(day)} keine Schicht und hat nicht gestempelt.\n` +
-      `Was war los? (Krank, Schule und Urlaub werden mit ${hours} gutgeschrieben, bei Azubis Wochenstunden ÷ 5,25)`;
+      `Was war los? (Krank und Urlaub werden mit ${hours} gutgeschrieben, bei Azubis Wochenstunden ÷ 5,25; Schule mit ${school})`;
     const cb = (code: string) => `ab:${code}:${p.user_id}:${compact}`;
     const keyboard = [
       [{ text: ABSENCE.s.label, callback_data: cb("s") }, { text: ABSENCE.i.label, callback_data: cb("i") }],
@@ -613,7 +615,7 @@ async function adminChats() {
 }
 
 async function ruleSettings(): Promise<Settings> {
-  const { data } = await supabase.from("rule_settings").select("late_tolerance_minutes, absence_credit_minutes")
+  const { data } = await supabase.from("rule_settings").select("*")
     .single();
   return (data as Settings | null) ?? { late_tolerance_minutes: 5, absence_credit_minutes: 390 };
 }

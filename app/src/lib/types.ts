@@ -8,13 +8,14 @@ export const EVENT_LABEL: Record<EventType, string> = {
   clock_out: "Gehen",
 };
 
-export type ShiftType = "work" | "vocational_school" | "vacation" | "sick";
+export type ShiftType = "work" | "vocational_school" | "vacation" | "sick" | "day_off";
 
 export const SHIFT_TYPE_LABEL: Record<ShiftType, string> = {
   work: "Schicht",
   vocational_school: "Schule",
   vacation: "Urlaub",
   sick: "Krank",
+  day_off: "Frei",
 };
 
 // Regel-Werte aus rule_settings (durch Admins änderbar)
@@ -32,8 +33,12 @@ export const DEFAULT_RULES: RuleSettings = {
   help_shift_minutes: 390,
 };
 
-// Urlaub/Krank/Schule: je Tag Wochenstunden ÷ 5,25 (wie rule_settings.absence_week_days)
+// Azubis Urlaub/Krank: je Tag Wochenstunden ÷ 5,25 (wie rule_settings.absence_week_days)
 export const ABSENCE_WEEK_DAYS = 5.25;
+// Schule: je Tag pauschal 7 Std. – für alle (wie rule_settings.school_credit_minutes)
+export const SCHOOL_CREDIT_MINUTES = 420;
+// Vollzeit ab 35 Wochenstunden (laut Arbeitsvertrag in den Personen-Daten) – nur sie können auf „Frei“ gesetzt werden
+export const FULL_TIME_WEEKLY_MINUTES = 35 * 60;
 
 // Urlaubsanspruch ohne Eintrag (wie rule_settings.default_vacation_days)
 export const DEFAULT_VACATION_DAYS = 20;

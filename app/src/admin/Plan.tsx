@@ -4,6 +4,7 @@
 // Studioleitung plant ihr Studio (auch mit Aushilfen von woanders) und ihre eigenen Leute in jedem Studio
 // (Aushilfe stellen – mit oder ohne Anfrage, Akquise). Wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
 // Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
+// Unter dem Tag: „Noch ohne Schicht“ – eigene Leute ohne Eintrag; planen oder (nur Vollzeit) auf frei setzen.
 import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
 import { type PlanShift, ShiftRow, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
@@ -12,7 +13,10 @@ import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtH
 import { dbMessage } from "../lib/errors";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
-import { ABSENCE_WEEK_DAYS, type Location, ROLE_LABEL, type Role, SHIFT_TYPE_LABEL, type ShiftType, studioShort } from "../lib/types";
+import {
+  ABSENCE_WEEK_DAYS, FULL_TIME_WEEKLY_MINUTES, type Location, ROLE_LABEL, type Role, SCHOOL_CREDIT_MINUTES, SHIFT_TYPE_LABEL,
+  type ShiftType, studioShort,
+} from "../lib/types";
 import type { Profile } from "./AdminApp";
 
 type Staffer = {
@@ -21,14 +25,20 @@ type Staffer = {
   last_name: string;
   role: Role;
   home_location_id: string | null;
-  employment_details: { weekly_target_minutes: number } | null;
+  employment_details: { weekly_target_minutes: number; employment_start: string | null; employment_end: string | null } | null;
 };
+const isFullTime = (p: Staffer) => (p.employment_details?.weekly_target_minutes ?? 0) >= FULL_TIME_WEEKLY_MINUTES;
+// beschäftigt an dem Tag (Eintritt/Austritt laut Arbeitsvertrag)
+const employedOn = (p: Staffer, day: string) =>
+  (!p.employment_details?.employment_start || p.employment_details.employment_start <= day)
+  && (!p.employment_details?.employment_end || p.employment_details.employment_end >= day);
 
-// Urlaub/Schule: Ganztags-Eintrag mit 6,5 Std. – Azubis je Tag Wochenstunden ÷ 5,25 (rechnet die Datenbank)
+// Urlaub/Krank-Tag: Ganztags-Eintrag mit 6,5 Std. – Azubis je Tag Wochenstunden ÷ 5,25; Schule 7 Std.; Frei 0
+// (rechnet die Datenbank)
 const ABSENCE_TIMES = { from: "08:00", to: "14:30" };
 const MAX_ABSENCE_DAYS = 62;
 
-type Category = "work" | "help_request" | "help_fill" | "acq" | "herold" | "vacation" | "sick" | "vocational_school";
+type Category = "work" | "help_request" | "help_fill" | "acq" | "herold" | "vacation" | "sick" | "vocational_school" | "day_off";
 const CATEGORIES: { id: Category; label: string }[] = [
   { id: "work", label: "Studio-Schicht" },
   { id: "help_request", label: "Aushilfe anfragen" },
@@ -38,6 +48,7 @@ const CATEGORIES: { id: Category; label: string }[] = [
   { id: "vacation", label: "Urlaub" },
   { id: "sick", label: "Krank" },
   { id: "vocational_school", label: "Schule" },
+  { id: "day_off", label: "Frei (nur Vollzeit)" },
 ];
 const SHEET_TITLE: Record<Category, string> = {
   work: "Studio-Schicht",
@@ -48,10 +59,11 @@ const SHEET_TITLE: Record<Category, string> = {
   vacation: "Urlaub eintragen",
   sick: "Krank eintragen",
   vocational_school: "Schule eintragen",
+  day_off: "Frei eintragen",
 };
 type Vacation = { user_id: string; allowance: number | null; taken: number; planned: number };
 type HelpRequest = { id: string; location_id: string; starts_at: string; ends_at: string; note: string | null; location: { name: string } | null };
-type SheetState = { shift?: PlanShift; category?: Category; requestId?: string };
+type SheetState = { shift?: PlanShift; category?: Category; requestId?: string; userId?: string };
 // Gutschrift zur Anzeige: minutes = Dauer des Eintrags, share = Anteil am Tag (Krank ab Uhrzeit)
 type Credit = { minutes?: number; trainee: boolean };
 type CreditOf = (userId: string, minutes: number, share: number) => Credit;
@@ -101,13 +113,14 @@ export function Plan({ profile }: { profile: Profile }) {
   const [people, setPeople] = useState<Staffer[]>([]);
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [flash, setFlash] = useState<string>();
+  const [failure, setFailure] = useState<string>();
   const { shifts, error, reload } = useWeekShifts(adminDb, start);
   const help = useHelpRequests();
 
   useEffect(() => {
     void (async () => {
       const [users, locs, managed] = await Promise.all([
-        adminDb.from("users").select("id, first_name, last_name, role, home_location_id, employment_details(weekly_target_minutes)").eq("is_active", true).neq("role", "admin").order("first_name"),
+        adminDb.from("users").select("id, first_name, last_name, role, home_location_id, employment_details(weekly_target_minutes, employment_start, employment_end)").eq("is_active", true).neq("role", "admin").order("first_name"),
         adminDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
         adminDb.from("location_managers").select("location_id").eq("user_id", profile.id),
       ]);
@@ -151,6 +164,7 @@ export function Plan({ profile }: { profile: Profile }) {
 
   const done = (text: string) => {
     setSheet(null);
+    setFailure(undefined);
     setFlash(text);
     void reload();
     void help.reload();
@@ -174,6 +188,17 @@ export function Plan({ profile }: { profile: Profile }) {
     <HelpBoard requests={help.requests} isOwn={(id) => id === studio} onFill={fillRequest} onCancel={(r) => void cancelRequest(r)} />
   );
   const dayRequests = help.requests.filter((r) => r.location_id === studio && berlinDate(r.starts_at) === day);
+  // Eigene Leute ohne Eintrag an diesem Tag (weder Schicht noch Abwesenheit noch frei)
+  const unplanned = people.filter((p) => p.home_location_id === studio && !taken.has(p.id) && employedOn(p, day));
+  async function setDayOff(p: Staffer) {
+    setFlash(undefined);
+    const { error } = await adminDb.from("shifts").insert({
+      user_id: p.id, shift_type: "day_off", location_id: null,
+      starts_at: berlinToISO(day, ABSENCE_TIMES.from), ends_at: berlinToISO(day, ABSENCE_TIMES.to),
+    });
+    if (error) return setFailure(dbMessage(error));
+    done(`${fullName(p)}: ${fmtDay(day)} frei eingetragen.`);
+  }
 
   // Ändern: Schichten im eigenen Studio und alle Einträge der eigenen Leute; Admin alles
   const canEdit = (s: PlanShift) =>
@@ -248,6 +273,31 @@ export function Plan({ profile }: { profile: Profile }) {
       <button type="button" className="btn btn-primary btn-block" onClick={() => setSheet({})}>
         <Icon name="plus" size={20} /> Eintragen
       </button>
+      {failure && <Notice tone="error">{failure}</Notice>}
+
+      {unplanned.length > 0 && (
+        <Section title="Noch ohne Schicht" aside={<span>{unplanned.length}</span>}
+          footer={`Bitte einplanen. Vollzeitkräfte (ab ${FULL_TIME_WEEKLY_MINUTES / 60} Std./Woche) können auch frei bekommen.`}>
+          {unplanned.map((p) => (
+            <Row
+              key={p.id}
+              className="is-unplanned"
+              leading={<Avatar first={p.first_name} last={p.last_name} color={studioColor(p.home_location_id)} />}
+              title={fullName(p)}
+              subtitle={`Keine Schicht · ${isFullTime(p) ? "Vollzeit" : ROLE_LABEL[p.role]}`}
+              trailing={
+                <span className="row-actions">
+                  {isFullTime(p) && (
+                    <button type="button" className="btn btn-outline btn-sm" onClick={() => void setDayOff(p)}>Frei</button>
+                  )}
+                  <button type="button" className="btn btn-primary btn-sm"
+                    onClick={() => { setFlash(undefined); setSheet({ category: "work", userId: p.id }); }}>Planen</button>
+                </span>
+              }
+            />
+          ))}
+        </Section>
+      )}
 
       {sheet && !sheet.shift && (
         <AddShift
@@ -262,6 +312,7 @@ export function Plan({ profile }: { profile: Profile }) {
           helpRequests={help.requests.filter((r) => r.location_id !== studio && berlinDate(r.starts_at) === day)}
           initialCategory={sheet.category}
           initialRequestId={sheet.requestId}
+          initialUserId={sheet.userId}
           creditOf={creditOf}
           onClose={() => setSheet(null)}
           onSaved={done}
@@ -395,6 +446,7 @@ function AddShift(props: {
   helpRequests: HelpRequest[];
   initialCategory?: Category;
   initialRequestId?: string;
+  initialUserId?: string;
   creditOf: CreditOf;
   onClose: () => void;
   onSaved: (text: string) => void;
@@ -405,7 +457,7 @@ function AddShift(props: {
   const otherStudios = props.locations.filter((l) => l.id !== props.studio);
   const [target, setTarget] = useState(otherStudios[0]?.id ?? "");
   const [note, setNote] = useState("");
-  const [userId, setUserId] = useState("");
+  const [userId, setUserId] = useState(props.initialUserId ?? "");
   const [from, setFrom] = useState(lastTimes.from);
   const [to, setTo] = useState(lastTimes.to);
   const [acqStudio, setAcqStudio] = useState(props.studio);
@@ -432,7 +484,7 @@ function AddShift(props: {
   const isHelpReq = cat === "help_request";
   const isHelpFill = cat === "help_fill";
   const isSwap = cat === "sick" && sickMode === "swap";
-  const isAbsence = cat === "vacation" || cat === "vocational_school" || (cat === "sick" && sickMode === "day");
+  const isAbsence = cat === "vacation" || cat === "vocational_school" || cat === "day_off" || (cat === "sick" && sickMode === "day");
   const location = isAcq ? acqStudio : props.studio;
   const locationName = studioShort(props.locations.find((l) => l.id === location)?.name ?? props.studioName);
   // Akquise in einem fremden Studio: nur eigene Leute (normale Schichten dort plant die dortige Leitung)
@@ -446,7 +498,8 @@ function AddShift(props: {
   }, [year]);
 
   const free = props.people.filter((p) => !props.taken.has(p.id));
-  const own = free.filter((p) => p.home_location_id === props.studio);
+  // Frei nur für Vollzeitkräfte
+  const own = free.filter((p) => p.home_location_id === props.studio && (cat !== "day_off" || isFullTime(p)));
   // Aushilfen aus anderen Studios nur für Schichten (Abwesenheiten trägt das Heimatstudio ein)
   const others = isWork
     ? free.filter((p) => p.home_location_id !== props.studio && (!foreign || props.canPlanAt(p.home_location_id ?? "")))
@@ -588,7 +641,7 @@ function AddShift(props: {
       <Avatar first={p.first_name} last={p.last_name} color={studioColor(p.home_location_id)} />
       <span className="list-row-main">
         <span className="list-row-title">{fullName(p)}</span>
-        <span className="list-row-sub">{cat === "vacation" ? vacationHint(p.id) : ROLE_LABEL[p.role]}</span>
+        <span className="list-row-sub">{cat === "vacation" ? vacationHint(p.id) : cat === "day_off" ? "Vollzeit" : ROLE_LABEL[p.role]}</span>
       </span>
     </label>
   );
@@ -694,7 +747,7 @@ function AddShift(props: {
           </>
         )
       ) : own.length + others.length === 0 ? (
-        <Empty icon="users" title="Alle sind schon eingetragen">
+        <Empty icon="users" title={cat === "day_off" ? "Keine Vollzeitkraft ohne Eintrag" : "Alle sind schon eingetragen"}>
           Bestehende Einträge lassen sich über den Tag bearbeiten oder löschen.
         </Empty>
       ) : (
@@ -740,8 +793,12 @@ function AddShift(props: {
             <SwitchRow title="Samstage mitzählen" subtitle="Sonntage zählen nie" checked={saturdays} onChange={setSaturdays} />
           )}
           <p className="muted small">
-            {days.length === 1 ? "1 Tag" : `${days.length} Tage (${saturdays ? "Mo–Sa" : "Mo–Fr"})`} · zählt je Tag{" "}
-            {!dayCredit ? `6,5 Std. (${TRAINEE_RULE.replace("Azubi", "Azubis")})`
+            {days.length === 1 ? "1 Tag" : `${days.length} Tage (${saturdays ? "Mo–Sa" : "Mo–Fr"})`} ·{" "}
+            {cat === "day_off" ? "zählt keine Stunden"
+              : cat === "vocational_school" ? `zählt je Tag ${fmtHM(SCHOOL_CREDIT_MINUTES)} Std.`
+              : "zählt je Tag "}
+            {cat === "day_off" || cat === "vocational_school" ? null
+              : !dayCredit ? `6,5 Std. (${TRAINEE_RULE.replace("Azubi", "Azubis")})`
               : dayCredit.minutes === undefined ? `den Tagesanteil (${TRAINEE_RULE})`
               : `${fmtHM(dayCredit.minutes)} Std.${dayCredit.trainee ? ` (${TRAINEE_RULE})` : ""}`}
             {left !== null && ` · danach ${left - days.length} Urlaubstage übrig`}
@@ -868,9 +925,14 @@ function EditShift(props: {
       ) : (
         <p>
           {SHIFT_TYPE_LABEL[s.shift_type]}
-          {isSickSwap(s) && ` ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} Uhr (statt Schicht)`} · zählt mit{" "}
-          {credit.minutes === undefined ? `anteiligem Tagesanteil (${TRAINEE_RULE})` : `${fmtHM(credit.minutes)} Std.`}
-          {credit.trainee && credit.minutes !== undefined && ` (${TRAINEE_RULE})`}
+          {isSickSwap(s) && ` ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} Uhr (statt Schicht)`}
+          {s.shift_type === "day_off" ? " · zählt keine Stunden"
+            : s.shift_type === "vocational_school" ? ` · zählt mit ${fmtHM(SCHOOL_CREDIT_MINUTES)} Std.`
+            : <>
+              {" · zählt mit "}
+              {credit.minutes === undefined ? `anteiligem Tagesanteil (${TRAINEE_RULE})` : `${fmtHM(credit.minutes)} Std.`}
+              {credit.trainee && credit.minutes !== undefined && ` (${TRAINEE_RULE})`}
+            </>}
         </p>
       )}
       {error && <Notice tone="error">{error}</Notice>}

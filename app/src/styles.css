@@ -492,6 +492,14 @@ input[type="time"] { font-variant-numeric: tabular-nums; font-size: 1.1rem; font
 .list-row.is-request .list-row-title { color: var(--warn); }
 .btn-check[aria-pressed="true"] { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
 .avatar.avatar-request { background: transparent; color: var(--warn); box-shadow: inset 0 0 0 2px var(--warn); font-size: 1rem; }
+/* Noch ohne Schicht: gestrichelt in Warnfarbe, Avatar blass */
+.list-row.is-unplanned {
+  background: color-mix(in srgb, var(--warn) 7%, transparent);
+  outline: 1.5px dashed color-mix(in srgb, var(--warn) 70%, transparent); outline-offset: -5px; border-radius: 12px;
+}
+.list-row.is-unplanned .list-row-sub { color: var(--warn); font-weight: 600; }
+.list-row.is-unplanned .avatar { opacity: .5; }
+.row-actions { display: inline-flex; gap: 8px; flex: none; }
 .cal-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 6px; }
 .cal-legend button {
