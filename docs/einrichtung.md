@@ -104,6 +104,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 15. `supabase/migrations/20261010120000_vacation_allowances.sql` (Urlaubsanspruch je Jahr, Standard 20 Tage)
 16. `supabase/migrations/20261011090000_school_import.sql` (Schul-Abgleich mit dem IST-Bildungspartner)
 17. `supabase/migrations/20261011120000_saturday_auto_free.sql` (Samstag automatisch frei)
+18. `supabase/migrations/20261012090000_herold_shifts.sql` (Schichttyp „Herold + Schicht“)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -189,6 +190,9 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   stellen“ → Studio, Mitarbeiter, Zeit. Die Studioleitung plant so nur ihre eigenen Leute in fremden Studios.
 - **Akquise:** zählt wie eine Schicht, aber nicht als „Studio besetzt“. Studioleitung darf eigene Leute auch
   in anderen Studios zur Akquise einplanen.
+- **Herold + Schicht:** Eintragen → „Herold + Schicht“: erst Herold im Studio Krailling, danach die Schicht im
+  eigenen Studio – zwei Einträge, je einmal ein- und auschecken (Krailling, dann Studio). Herold zählt wie
+  Arbeitszeit, aber nicht als „Krailling besetzt“. Studioleitung trägt das für sich und ihre Leute ein.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:
   beide Studioleitungen müssen zustimmen; ein Admin (auch per Telegram) gibt für beide frei.
 - **Studio besetzt:** erste Stempelung des Tages je Studio → 🟢-Meldung; 10 Min. nach der ersten geplanten

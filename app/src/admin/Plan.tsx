@@ -1,5 +1,6 @@
 // Dienstplan schreiben: Studio → Woche → Tag antippen → „Eintragen“ → Art (Dropdown, Standard Studio-Schicht):
-// Studio-Schicht · Aushilfe anfragen · Aushilfe stellen · Akquise · Urlaub · Krank · Schule.
+// Studio-Schicht · Aushilfe anfragen · Aushilfe stellen · Akquise · Herold + Schicht · Urlaub · Krank · Schule.
+// Herold + Schicht: erst Herold in Krailling, danach Schicht im Studio – zwei Schichten, je ein- und auschecken.
 // Studioleitung plant ihr Studio (auch mit Aushilfen von woanders) und ihre eigenen Leute in jedem Studio
 // (Aushilfe stellen – mit oder ohne Anfrage, Akquise). Wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
 // Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
@@ -27,12 +28,13 @@ type Staffer = {
 const ABSENCE_TIMES = { from: "08:00", to: "14:30" };
 const MAX_ABSENCE_DAYS = 62;
 
-type Category = "work" | "help_request" | "help_fill" | "acq" | "vacation" | "sick" | "vocational_school";
+type Category = "work" | "help_request" | "help_fill" | "acq" | "herold" | "vacation" | "sick" | "vocational_school";
 const CATEGORIES: { id: Category; label: string }[] = [
   { id: "work", label: "Studio-Schicht" },
   { id: "help_request", label: "Aushilfe anfragen" },
   { id: "help_fill", label: "Aushilfe stellen (in anderem Studio)" },
   { id: "acq", label: "Akquise" },
+  { id: "herold", label: "Herold + Schicht" },
   { id: "vacation", label: "Urlaub" },
   { id: "sick", label: "Krank" },
   { id: "vocational_school", label: "Schule" },
@@ -42,6 +44,7 @@ const SHEET_TITLE: Record<Category, string> = {
   help_request: "Aushilfe anfragen",
   help_fill: "Aushilfe stellen",
   acq: "Akquise eintragen",
+  herold: "Herold + Schicht",
   vacation: "Urlaub eintragen",
   sick: "Krank eintragen",
   vocational_school: "Schule eintragen",
@@ -55,6 +58,9 @@ type CreditOf = (userId: string, minutes: number, share: number) => Credit;
 const TRAINEE_RULE = `Azubi: Wochenstunden ÷ ${String(ABSENCE_WEEK_DAYS).replace(".", ",")}`;
 // Zuletzt eingetragene Zeiten als Vorschlag für die nächste Schicht
 let lastTimes = { from: "09:00", to: "15:30" };
+let lastHerold = { from: "09:00", to: "11:00" };
+// Herold findet immer im Studio Krailling statt
+const HEROLD_STUDIO = "KRAILLING";
 
 const minutesBetween = (from: string, to: string) => {
   const [fh, fm] = from.split(":").map(Number);
@@ -296,13 +302,14 @@ function HelpBoard(props: {
   );
 }
 
-function TimeFields(props: { from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void }) {
+function TimeFields(props: { id?: string; from: string; to: string; onFrom: (v: string) => void; onTo: (v: string) => void }) {
   const minutes = minutesBetween(props.from, props.to);
+  const id = props.id ?? "shift";
   return (
     <div className="grid-2">
-      <Field label="Von"><input id="shift-from" type="time" value={props.from} onChange={(e) => props.onFrom(e.target.value)} required /></Field>
+      <Field label="Von"><input id={`${id}-from`} type="time" value={props.from} onChange={(e) => props.onFrom(e.target.value)} required /></Field>
       <Field label="Bis" hint={minutes > 0 ? `Dauer ${fmtHM(minutes)} Std.` : "Ende muss nach Beginn liegen"}>
-        <input id="shift-to" type="time" value={props.to} onChange={(e) => props.onTo(e.target.value)} required />
+        <input id={`${id}-to`} type="time" value={props.to} onChange={(e) => props.onTo(e.target.value)} required />
       </Field>
     </div>
   );
@@ -402,6 +409,8 @@ function AddShift(props: {
   const [from, setFrom] = useState(lastTimes.from);
   const [to, setTo] = useState(lastTimes.to);
   const [acqStudio, setAcqStudio] = useState(props.studio);
+  const [heroldFrom, setHeroldFrom] = useState(lastHerold.from);
+  const [heroldTo, setHeroldTo] = useState(lastHerold.to);
   const [until, setUntil] = useState(props.day);
   const [saturdays, setSaturdays] = useState(false);
   const [sickShiftId, setSickShiftId] = useState("");
@@ -413,6 +422,12 @@ function AddShift(props: {
   const [busy, setBusy] = useState(false);
 
   const isAcq = cat === "acq";
+  const isHerold = cat === "herold";
+  const herold = props.locations.find((l) => l.code === HEROLD_STUDIO);
+  const heroldName = studioShort(herold?.name ?? "Krailling");
+  // Herold und Schicht dürfen sich nicht überschneiden (Reihenfolge egal)
+  const heroldValid = minutesBetween(heroldFrom, heroldTo) > 0 && minutesBetween(from, to) > 0
+    && (minutesBetween(heroldTo, from) >= 0 || minutesBetween(to, heroldFrom) >= 0);
   const isWork = cat === "work" || isAcq;
   const isHelpReq = cat === "help_request";
   const isHelpFill = cat === "help_fill";
@@ -508,6 +523,24 @@ function AddShift(props: {
           `${request ? `${berlinTime(request.starts_at)}–${berlinTime(request.ends_at)}` : `${from}–${to}`} Uhr.`,
       );
     }
+    if (isHerold) {
+      if (!herold) return setError("Studio Krailling nicht gefunden.");
+      if (!heroldValid) return setError("Bitte Zeiten prüfen: Ende nach Beginn, Herold und Schicht ohne Überschneidung.");
+      setBusy(true);
+      // zwei Schichten: Herold in Krailling (markiert) + Schicht im Studio – beides in einem Schritt
+      const { error } = await adminDb.from("shifts").insert([
+        { user_id: person.id, shift_type: "work", location_id: herold.id, is_herold: true,
+          starts_at: berlinToISO(props.day, heroldFrom), ends_at: berlinToISO(props.day, heroldTo) },
+        { user_id: person.id, shift_type: "work", location_id: props.studio, is_herold: false,
+          starts_at: berlinToISO(props.day, from), ends_at: berlinToISO(props.day, to) },
+      ]);
+      setBusy(false);
+      if (error?.code === "23P01") return setError("An diesem Tag ist schon eine Schicht zu dieser Zeit eingetragen.");
+      if (error) return setError(dbMessage(error));
+      lastHerold = { from: heroldFrom, to: heroldTo };
+      lastTimes = { from, to };
+      return props.onSaved(`${fullName(person)}: Herold in ${heroldName} ${heroldFrom}–${heroldTo} Uhr + Schicht in ${props.studioName} ${from}–${to} Uhr eingetragen.`);
+    }
     if (isWork) {
       if (minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
       setBusy(true);
@@ -563,6 +596,7 @@ function AddShift(props: {
   const canSave = isSwap ? !!sickShift && sickValid(sickShift, sickFrom)
     : isHelpReq ? minutesBetween(from, to) > 0
     : isHelpFill ? !!person && (!!request || (!!target && minutesBetween(from, to) > 0))
+    : isHerold ? !!person && !!herold && heroldValid
     : !!person;
   const left = person && cat === "vacation" ? vacationLeft(person.id) : null;
   const dayCredit = person ? props.creditOf(person.id, minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to), 1) : undefined;
@@ -570,7 +604,8 @@ function AddShift(props: {
   return (
     <Sheet
       title={SHEET_TITLE[cat]}
-      subtitle={`${fmtLongDay(props.day)} · ${isAcq ? `Akquise in ${locationName}` : isHelpFill ? `Aushilfe aus ${props.studioName} → ${targetName}` : props.studioName}`}
+      subtitle={`${fmtLongDay(props.day)} · ${isAcq ? `Akquise in ${locationName}` : isHelpFill ? `Aushilfe aus ${props.studioName} → ${targetName}`
+        : isHerold ? `Herold in ${heroldName} + Schicht in ${props.studioName}` : props.studioName}`}
       onClose={props.onClose}
       footer={
         <button type="button" className="btn btn-primary" disabled={!canSave || busy} onClick={() => void save()}>
@@ -580,7 +615,7 @@ function AddShift(props: {
     >
       <Field label="Art">
         <select id="shift-category" value={cat} onChange={(e) => choose(e.target.value as Category)}>
-          {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+          {CATEGORIES.filter((c) => c.id !== "herold" || herold).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
         </select>
       </Field>
 
@@ -614,6 +649,9 @@ function AddShift(props: {
         </Section>
       )}
 
+      {isHerold && (
+        <Notice>Zwei Schichten an einem Tag: erst Herold in {heroldName} (dort ein- und auschecken), danach die Schicht in {props.studioName} (dort noch einmal ein- und auschecken).</Notice>
+      )}
       {isAcq && (
         <Section title="Wo findet die Akquise statt?" plain>
           <StudioFilter all={false} locations={props.locations} value={acqStudio}
@@ -645,6 +683,7 @@ function AddShift(props: {
                     <span className="list-row-sub">
                       {berlinTime(s.starts_at)}–{berlinTime(s.ends_at)} Uhr
                       {s.is_acquisition ? ` · Akquise in ${studioShort(s.location?.name ?? "")}`
+                        : s.is_herold ? ` · Herold in ${studioShort(s.location?.name ?? "")}`
                         : s.location_id !== props.studio ? ` · in ${studioShort(s.location?.name ?? "")}` : ""}
                     </span>
                   </span>
@@ -670,10 +709,18 @@ function AddShift(props: {
         </>
       )}
 
-      {(isWork || isHelpReq || (isHelpFill && !request)) && (
-        <Section title="Wann?" plain>
+      {isHerold && (
+        <Section title={`Herold in ${heroldName}`} plain>
+          <TimeFields id="herold" from={heroldFrom} to={heroldTo} onFrom={setHeroldFrom} onTo={setHeroldTo} />
+        </Section>
+      )}
+      {(isWork || isHelpReq || isHerold || (isHelpFill && !request)) && (
+        <Section title={isHerold ? `Schicht in ${props.studioName}` : "Wann?"} plain>
           <TimeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
         </Section>
+      )}
+      {isHerold && minutesBetween(heroldFrom, heroldTo) > 0 && minutesBetween(from, to) > 0 && !heroldValid && (
+        <Notice tone="warn">Herold und Schicht überschneiden sich – bitte Zeiten anpassen.</Notice>
       )}
       {isHelpReq && (
         <Field label="Hinweis (optional)">
@@ -760,7 +807,9 @@ function EditShift(props: {
   // ganzer Tag pauschal, Krank statt Schicht mit der Schichtdauer
   const credit = props.creditOf(s.user_id, isSickSwap(s) ? durationMinutes(s) : minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to),
     Number(s.credit_share ?? 1));
-  const where = isWork ? `${s.is_acquisition ? "Akquise in " : ""}${studioShort(s.location?.name ?? "")}` : SHIFT_TYPE_LABEL[s.shift_type];
+  const where = isWork
+    ? `${s.is_acquisition ? "Akquise in " : s.is_herold ? "Herold in " : ""}${studioShort(s.location?.name ?? "")}`
+    : SHIFT_TYPE_LABEL[s.shift_type];
 
   if (sick) {
     return (
@@ -806,7 +855,9 @@ function EditShift(props: {
       {isHelpShift(s) && <Notice>Automatisch eingetragen: eingestempelt ohne geplante Schicht (Aushilfe).</Notice>}
       {isWork ? (
         <>
-          {props.canPlanNormal ? (
+          {s.is_herold ? (
+            <Notice>Herold-Teil von „Herold + Schicht“ – die Schicht im Studio ist ein eigener Eintrag.</Notice>
+          ) : props.canPlanNormal ? (
             <Segmented label="Art" value={acq ? "acq" : "work"} onChange={(v) => setAcq(v === "acq")}
               options={[{ id: "work", label: "Schicht" }, { id: "acq", label: "Akquise" }]} />
           ) : (

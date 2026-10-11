@@ -16,6 +16,7 @@ export type PlanShift = {
   ends_at: string;
   note: string | null;
   is_acquisition?: boolean;
+  is_herold?: boolean;
   credit_share?: number;
   user: { first_name: string; last_name: string; home_location_id?: string | null } | null;
   location: { name: string } | null;
@@ -29,7 +30,8 @@ export function useWeekShifts(db: SupabaseClient, start: string) {
     const { data, error } = await db
       .from("shifts")
       .select(
-        "id, user_id, location_id, shift_type, starts_at, ends_at, note, is_acquisition, credit_share, user:users!shifts_user_id_fkey(first_name, last_name, home_location_id), location:locations(name)",
+        // * statt Spaltenliste: neue Spalten (z. B. is_herold) brechen die Ansicht nicht, falls das SQL noch fehlt
+        "*, user:users!shifts_user_id_fkey(first_name, last_name, home_location_id), location:locations(name)",
       )
       .gte("starts_at", berlinToISO(start))
       .lt("starts_at", berlinToISO(addDays(start, 7)))
@@ -55,10 +57,11 @@ export const shiftTime = (s: PlanShift) =>
 export function ShiftRow(props: { shift: PlanShift; mine?: boolean; showStudio?: boolean; onClick?: () => void }) {
   const s = props.shift;
   const name = s.user ? `${s.user.first_name} ${s.user.last_name}` : "?";
-  // Akquise: Studio immer zeigen – es sagt, wo die Akquise stattfindet
+  // Akquise/Herold: Studio immer zeigen – es sagt, wo sie stattfinden
+  const marked = s.is_acquisition || s.is_herold;
   const sub = [
-    s.is_acquisition && s.location ? `in ${studioShort(s.location.name)}` : "",
-    props.showStudio && !s.is_acquisition && s.location ? studioShort(s.location.name) : "",
+    marked && s.location ? `in ${studioShort(s.location.name)}` : "",
+    props.showStudio && !marked && s.location ? studioShort(s.location.name) : "",
     isHelpShift(s) ? "Aushilfe" : "",
     isSickSwap(s) ? `${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} statt Schicht` : "",
     s.shift_type === "vocational_school" && s.note?.startsWith("IST: ") ? s.note.slice(5) : "",
@@ -69,7 +72,7 @@ export function ShiftRow(props: { shift: PlanShift; mine?: boolean; showStudio?:
       className="has-studio"
       style={{ "--studio": studioColor(s.location_id ?? s.user?.home_location_id) } as CSSProperties}
       leading={<Avatar first={s.user?.first_name ?? "?"} last={s.user?.last_name} color={studioColor(s.user?.home_location_id)} />}
-      title={<>{name}{s.is_acquisition && <> <Pill tone="warn">Akquise</Pill></>}{props.mine && <> <Pill tone="accent">Du</Pill></>}</>}
+      title={<>{name}{s.is_acquisition && <> <Pill tone="warn">Akquise</Pill></>}{s.is_herold && <> <Pill tone="warn">Herold</Pill></>}{props.mine && <> <Pill tone="accent">Du</Pill></>}</>}
       subtitle={sub || undefined}
       trailing={
         s.shift_type === "work"

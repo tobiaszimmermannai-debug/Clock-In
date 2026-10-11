@@ -17,7 +17,8 @@ const minutesOf = (iso: string) => {
 // Ende am Folgetag (Nachtschicht) → bis Mitternacht zeichnen
 const endMinutes = (s: PlanShift) => (berlinDate(s.ends_at) !== berlinDate(s.starts_at) ? 24 * 60 : minutesOf(s.ends_at));
 const shortName = (s: PlanShift) => (s.user ? `${s.user.first_name} ${s.user.last_name[0] ?? ""}.` : "?");
-const label = (s: PlanShift) => (s.is_acquisition ? "Akquise" : isHelpShift(s) ? "Aushilfe" : "");
+const label = (s: PlanShift) => (s.is_acquisition ? "Akquise" : s.is_herold ? "Herold" : isHelpShift(s) ? "Aushilfe" : "");
+const where = (s: PlanShift) => `${s.is_acquisition ? "Akquise in " : s.is_herold ? "Herold in " : ""}${studioShort(s.location?.name ?? "")}`;
 
 // Überlappende Schichten nebeneinander (wie im Google Kalender)
 function layout(items: PlanShift[]) {
@@ -185,7 +186,7 @@ export function StudioCalendar(props: {
                       className={`cal-pill${s.user_id === props.highlightUserId ? " is-mine" : ""}${s.is_acquisition ? " is-acq" : ""}`}
                       style={{ "--studio": studioColor(s.location_id) } as CSSProperties}
                       disabled={!editable(s)}
-                      title={`${s.user?.first_name} ${s.user?.last_name} · ${s.is_acquisition ? "Akquise in " : ""}${studioShort(s.location?.name ?? "")}`}
+                      title={`${s.user?.first_name} ${s.user?.last_name} · ${where(s)}`}
                       onClick={() => props.onSelect?.(s)}>
                       <span className="num">{berlinTime(s.starts_at)}–{berlinTime(s.ends_at)}</span>
                       <strong>{shortName(s)}</strong>
@@ -251,7 +252,7 @@ export function StudioCalendar(props: {
                         "--studio": studioColor(s.location_id),
                       } as CSSProperties}
                       disabled={!editable(s)}
-                      title={`${s.user?.first_name} ${s.user?.last_name} · ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} · ${s.is_acquisition ? "Akquise in " : ""}${studioShort(s.location?.name ?? "")}`}
+                      title={`${s.user?.first_name} ${s.user?.last_name} · ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} · ${where(s)}`}
                       onClick={() => props.onSelect?.(s)}
                     >
                       <strong>{shortName(s)}</strong>
