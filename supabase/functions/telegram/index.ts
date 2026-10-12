@@ -1,6 +1,6 @@
 // Telegram-Integration – eine Datei, damit sie direkt im Supabase-Dashboard deploybar ist.
 // Meldungen: Stempelungen, Freigaben (Nachtrag, Überstunden, Schichttausch), 18-Uhr-Abwesenheitsfrage,
-// Wochenbericht am Freitag.
+// Wochenbericht am Freitag. Dazu am 1. jedes Monats die Monatsübersicht per Mail (Resend, Secret RESEND_API_KEY).
 //   POST mit Header x-notify-secret                 → neue Buchung melden (Aufruf per pg_net aus der DB)
 //   POST mit Header x-telegram-bot-api-secret-token → Update von Telegram (/start, Buttons ✅/❌)
 // JWT-Prüfung der Function muss AUS sein; abgesichert wird über die beiden Secrets.
@@ -9,6 +9,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const NOTIFY_SECRET = Deno.env.get("NOTIFY_SECRET") ?? "";
 const WEBHOOK_SECRET = Deno.env.get("TELEGRAM_WEBHOOK_SECRET") ?? "";
+// Mail-Versand: ohne eigene Domain nur an die Adresse, mit der das Resend-Konto angelegt wurde
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const MAIL_FROM = Deno.env.get("MAIL_FROM") || "Clock-In <onboarding@resend.dev>";
 
 // Service-Role-Client: umgeht RLS, daher nur serverseitig
 const supabase = createClient(
@@ -98,8 +101,15 @@ const ABSENCE: Record<string, { type: string; label: string }> = {
 };
 
 async function handleNotify(
-  body: { type?: string; id?: unknown; date?: unknown; from?: unknown; to?: unknown },
+  body: { type?: string; id?: unknown; date?: unknown; from?: unknown; to?: unknown; month?: unknown },
 ): Promise<Response> {
+  if (body.type === "monthly_report") {
+    const result = await monthlyReport(typeof body.month === "string" ? body.month : undefined);
+    if (!result.ok) {
+      for (const a of await adminChats()) await sendMessage(a.chat_id, `⚠️ Monatsübersicht per Mail fehlgeschlagen: ${escapeHtml(result.text)}`);
+    }
+    return new Response(result.text, { status: result.ok ? 200 : 500 });
+  }
   if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
   if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
@@ -425,12 +435,165 @@ async function weeklyReport(from: string, to: string): Promise<Response> {
 // -----------------------------------------------------------------------------
 // Telegram-Updates: /start und Buttons
 // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Monatsübersicht per Mail (1. des Monats bzw. /monatsbericht): Vormonat, aktueller und kommender Monat –
+// alle Schichten mit Zeiten, Abwesenheiten und Urlaub (genommen / eingetragen / übrig). Dazu eine CSV für Excel.
+// -----------------------------------------------------------------------------
+type ReportPerson = { id: string; first_name: string; last_name: string; role: string; studio: string | null };
+type ReportEntry = {
+  user_id: string; type: string; starts_at: string; ends_at: string; note: string | null;
+  is_acquisition: boolean; is_herold: boolean; studio: string | null; day: string;
+};
+type ReportVacation = { user_id: string; year: number; allowance: number; taken: number; planned: number };
+type ReportData = { from: string; to: string; today: string; people: ReportPerson[]; entries: ReportEntry[]; vacation: ReportVacation[] };
+
+const TYPE_LABEL: Record<string, string> = { work: "Schicht", vacation: "Urlaub", sick: "Krank", vocational_school: "Schule", day_off: "Frei" };
+const ABSENCE_TYPES = ["vacation", "sick", "vocational_school", "day_off"];
+const monthFmt = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric", timeZone: "UTC" });
+const shortDayFmt = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" });
+const studioShort = (name: string | null) => (name ?? "Ohne Studio").replace(/^Studio\s+/i, "");
+const numDe = (n: number) => n.toLocaleString("de-DE", { maximumFractionDigits: 2 });
+const hoursDe = (minutes: number) => numDe(minutes / 60);
+const minutesOf = (e: ReportEntry) => Math.round((Date.parse(e.ends_at) - Date.parse(e.starts_at)) / 60_000);
+const entryLabel = (e: ReportEntry) =>
+  e.type === "work" ? (e.is_herold ? "Herold" : e.is_acquisition ? "Akquise" : "Schicht") : TYPE_LABEL[e.type] ?? e.type;
+
+async function monthlyReport(month?: string): Promise<{ ok: boolean; text: string }> {
+  const settings = await ruleSettings() as Settings & { monthly_report_email?: string | null };
+  const to = (settings.monthly_report_email ?? "gf@bsnewfitness.de").split(/[,;\s]+/).filter(Boolean);
+  if (!RESEND_API_KEY) return { ok: false, text: "Secret RESEND_API_KEY fehlt (Supabase → Edge Functions → Secrets)." };
+  if (to.length === 0) return { ok: false, text: "Keine Empfänger-Adresse hinterlegt." };
+
+  const now = new Date();
+  const current = month ?? `${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit" }).format(now)}-01`;
+  const { data, error } = await supabase.rpc("monthly_report", { p_month: current });
+  if (error || !data) return { ok: false, text: `Daten fehlen: ${error?.message ?? "leer"}` };
+  const report = data as ReportData;
+
+  const months = [0, 1, 2].map((i) => {
+    const d = new Date(`${report.from}T12:00:00Z`);
+    d.setUTCMonth(d.getUTCMonth() + i);
+    const key = d.toISOString().slice(0, 7);
+    return { key, label: monthFmt.format(d), hint: ["Vormonat", "aktueller Monat", "kommender Monat"][i] };
+  });
+  const title = `Monatsübersicht ${months[1].label}`;
+  const html = reportHtml(report, months, title);
+  const csv = reportCsv(report, months);
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      from: MAIL_FROM,
+      to,
+      subject: `Clock-In · ${title}`,
+      html,
+      attachments: [{ filename: `dienstplan_${months[0].key}_bis_${months[2].key}.csv`, content: base64(csv) }],
+    }),
+  });
+  if (!res.ok) return { ok: false, text: `Mail-Versand fehlgeschlagen (${res.status}): ${(await res.text()).slice(0, 300)}` };
+  return { ok: true, text: `${title} an ${to.join(", ")} verschickt.` };
+}
+
+function reportHtml(r: ReportData, months: { key: string; label: string; hint: string }[], title: string): string {
+  const th = 'style="text-align:left;padding:6px 8px;border-bottom:2px solid #d0d5dd;font-size:12px;color:#475467;white-space:nowrap"';
+  const thNum = 'style="text-align:right;padding:6px 8px;border-bottom:2px solid #d0d5dd;font-size:12px;color:#475467;white-space:nowrap"';
+  const td = 'style="padding:6px 8px;border-bottom:1px solid #eaecf0;vertical-align:top;font-size:13px"';
+  const tdNum = 'style="padding:6px 8px;border-bottom:1px solid #eaecf0;vertical-align:top;font-size:13px;text-align:right;white-space:nowrap"';
+  const name = (p: ReportPerson) => escapeHtml(`${p.first_name} ${p.last_name}`);
+  const studios = [...new Set(r.people.map((p) => studioShort(p.studio)))];
+  const out: string[] = [];
+  out.push(`<div style="font-family:Arial,Helvetica,sans-serif;color:#101828;max-width:960px">`);
+  out.push(`<h1 style="font-size:20px;margin:0 0 4px">${escapeHtml(title)}</h1>`);
+  out.push(`<p style="margin:0 0 20px;color:#475467;font-size:13px">${escapeHtml(months.map((m) => m.label).join(" · "))} (Stand ${escapeHtml(formatDay(r.today))}) · Alle Einträge auch als CSV im Anhang (Excel).</p>`);
+
+  // Urlaub je Jahr
+  for (const year of [...new Set(r.vacation.map((v) => v.year))]) {
+    out.push(`<h2 style="font-size:16px;margin:24px 0 8px">Urlaub ${year}</h2>`);
+    out.push(`<table style="border-collapse:collapse;width:100%"><tr><th ${th}>Mitarbeiter</th><th ${th}>Studio</th><th ${thNum}>Anspruch</th><th ${thNum}>genommen</th><th ${thNum}>eingetragen</th><th ${thNum}>übrig</th></tr>`);
+    for (const p of r.people) {
+      const v = r.vacation.find((x) => x.user_id === p.id && x.year === year);
+      if (!v) continue;
+      const left = Number(v.allowance) - v.taken - v.planned;
+      out.push(`<tr><td ${td}>${name(p)}</td><td ${td}>${escapeHtml(studioShort(p.studio))}</td><td ${tdNum}>${numDe(Number(v.allowance))}</td><td ${tdNum}>${v.taken}</td><td ${tdNum}>${v.planned}</td><td ${tdNum}><b${left < 0 ? ' style="color:#d1293d"' : ""}>${numDe(left)}</b></td></tr>`);
+    }
+    out.push(`</table>`);
+  }
+
+  // Monate
+  for (const m of months) {
+    const inMonth = r.entries.filter((e) => e.day.startsWith(m.key));
+    out.push(`<h2 style="font-size:16px;margin:28px 0 4px">${escapeHtml(m.label)} <span style="color:#667085;font-weight:normal">(${m.hint})</span></h2>`);
+    for (const studio of studios) {
+      const people = r.people.filter((p) => studioShort(p.studio) === studio);
+      out.push(`<h3 style="font-size:13px;margin:14px 0 6px;color:#475467;text-transform:uppercase;letter-spacing:.04em">${escapeHtml(studio)}</h3>`);
+      out.push(`<table style="border-collapse:collapse;width:100%"><tr><th ${th}>Mitarbeiter</th><th ${thNum}>Schichten</th><th ${thNum}>Std.</th><th ${thNum}>Urlaub</th><th ${thNum}>Krank</th><th ${thNum}>Schule</th><th ${thNum}>Frei</th><th ${th}>Einträge</th></tr>`);
+      for (const p of people) {
+        const mine = inMonth.filter((e) => e.user_id === p.id);
+        const work = mine.filter((e) => e.type === "work");
+        const days = (type: string) => new Set(mine.filter((e) => e.type === type).map((e) => e.day)).size || "–";
+        const list = mine.map((e) => {
+          const day = shortDayFmt.format(new Date(e.starts_at));
+          const label = entryLabel(e);
+          const where = e.type === "work" && e.studio && studioShort(e.studio) !== studio ? ` ${studioShort(e.studio)}` : "";
+          const text = e.type === "work"
+            ? `${day} ${formatClock(e.starts_at)}–${formatClock(e.ends_at)}${label !== "Schicht" ? ` ${label}` : ""}${where}`
+            : `${day} ${label}`;
+          const color = e.type === "work" ? "#101828" : e.type === "sick" ? "#d1293d" : "#027a48";
+          return `<span style="white-space:nowrap;color:${color}">${escapeHtml(text)}</span>`;
+        });
+        out.push(`<tr><td ${td}><b>${name(p)}</b></td><td ${tdNum}>${work.length || "–"}</td><td ${tdNum}>${work.length ? hoursDe(work.reduce((n, e) => n + minutesOf(e), 0)) : "–"}</td>` +
+          `<td ${tdNum}>${days("vacation")}</td><td ${tdNum}>${days("sick")}</td><td ${tdNum}>${days("vocational_school")}</td><td ${tdNum}>${days("day_off")}</td>` +
+          `<td ${td}>${list.length ? list.join(" · ") : '<span style="color:#98a2b3">keine Einträge</span>'}</td></tr>`);
+      }
+      out.push(`</table>`);
+    }
+  }
+  out.push(`<p style="margin:24px 0 0;color:#98a2b3;font-size:12px">Automatisch erstellt von Clock-In (Dienstplan-Stand zum Versand). Std. = geplante Schichtstunden.</p></div>`);
+  return out.join("\n");
+}
+
+function reportCsv(r: ReportData, months: { key: string; label: string }[]): string {
+  const cell = (v: string | number) => {
+    const s = String(v);
+    return /[;"\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
+  };
+  const rows = [["Monat", "Heimatstudio", "Mitarbeiter", "Datum", "Tag", "Art", "Von", "Bis", "Stunden", "Ort", "Hinweis"]];
+  const people = new Map(r.people.map((p) => [p.id, p]));
+  for (const e of r.entries) {
+    const p = people.get(e.user_id);
+    const m = months.find((x) => e.day.startsWith(x.key));
+    if (!p || !m) continue;
+    const work = e.type === "work";
+    rows.push([
+      m.label, studioShort(p.studio), `${p.first_name} ${p.last_name}`, e.day.split("-").reverse().join("."),
+      shortDayFmt.format(new Date(e.starts_at)).split(",")[0], entryLabel(e),
+      work ? formatClock(e.starts_at) : "", work ? formatClock(e.ends_at) : "", work ? hoursDe(minutesOf(e)) : "",
+      work ? studioShort(e.studio) : "", e.note ?? "",
+    ]);
+  }
+  // BOM + Semikolon: Excel (deutsch) öffnet die Datei direkt richtig
+  return "﻿" + rows.map((row) => row.map(cell).join(";")).join("\r\n");
+}
+
+function base64(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
 async function handleMessage(msg: Message) {
   if (msg.chat.type !== "private" || !msg.text?.startsWith("/")) return;
 
   const admin = await findAdminByTelegramId(msg.chat.id);
   if (admin) {
     const command = msg.text.split(/[\s@]/)[0].toLowerCase();
+    if (command === "/monatsbericht") {
+      const result = await monthlyReport();
+      await sendMessage(msg.chat.id, result.ok ? `📧 ${escapeHtml(result.text)}` : `⚠️ ${escapeHtml(result.text)}`);
+      return;
+    }
     if (command === "/kurz" || command === "/alle") {
       const all = command === "/alle";
       await supabase.from("telegram_links").update({ notify_bookings: all }).eq("chat_id", msg.chat.id);
@@ -445,7 +608,8 @@ async function handleMessage(msg: Message) {
     await sendMessage(
       msg.chat.id,
       `✅ Verbunden als <b>${escapeHtml(fullName(admin.user))}</b>.\n\n` +
-        "Befehle:\n/kurz – nur Studio besetzt, Freigaben und Berichte\n/alle – zusätzlich jede Stempelung",
+        "Befehle:\n/kurz – nur Studio besetzt, Freigaben und Berichte\n/alle – zusätzlich jede Stempelung\n" +
+        "/monatsbericht – Monatsübersicht jetzt per Mail schicken",
     );
   } else {
     await sendMessage(

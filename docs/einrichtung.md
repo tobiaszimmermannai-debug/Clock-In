@@ -106,6 +106,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 17. `supabase/migrations/20261011120000_saturday_auto_free.sql` (Samstag automatisch frei)
 18. `supabase/migrations/20261012090000_herold_shifts.sql` (Schichttyp „Herold + Schicht“)
 19. `supabase/migrations/20261012120000_school_7h_day_off.sql` (Schule 7 Std., „Frei“ für Vollzeitkräfte)
+20. `supabase/migrations/20261012150000_monthly_report_network.sql` (Netz-Check /16, Monatsübersicht per Mail)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -199,6 +200,13 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   markiert) – „Planen“ öffnet die Schicht-Eingabe. Vollzeitkräfte (ab 35 Std./Woche laut Personen-Daten) lassen
   sich dort mit „Frei“ auf frei setzen (zählt keine Stunden, keine 18-Uhr-Nachfrage).
 - **Schule:** zählt je Tag pauschal 7 Std. – für alle, auch Azubis.
+- **Stempeln per Handy – WLAN:** Handy und Tablet müssen im selben Adressbereich sein (IPv4 /16, z. B. 93.104.x.x),
+  nicht exakt dieselbe Adresse – Anbieter wie M-net (CGNAT) geben Geräten im selben WLAN verschiedene Adressen.
+- **Monatsübersicht per Mail:** am 1. jedes Monats um 7 Uhr an `rule_settings.monthly_report_email`
+  (gf@bsnewfitness.de): Vormonat, aktueller und kommender Monat mit allen Schichten/Zeiten, Urlaub, Krank,
+  Schule, Frei und Urlaub genommen/eingetragen/übrig – plus CSV für Excel. Versand über Resend (Secret
+  `RESEND_API_KEY`; ohne eigene Domain muss das Resend-Konto mit der Empfänger-Adresse angelegt sein).
+  Sofort testen: im Telegram-Bot `/monatsbericht`.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:
   beide Studioleitungen müssen zustimmen; ein Admin (auch per Telegram) gibt für beide frei.
 - **Studio besetzt:** erste Stempelung des Tages je Studio → 🟢-Meldung; 10 Min. nach der ersten geplanten
