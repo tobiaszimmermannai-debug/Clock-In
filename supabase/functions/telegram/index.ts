@@ -1,11 +1,12 @@
 // Telegram-Integration – eine Datei, damit sie direkt im Supabase-Dashboard deploybar ist.
 // Meldungen: Stempelungen, Freigaben (Nachtrag, Überstunden, Schichttausch), 18-Uhr-Abwesenheitsfrage,
-// Wochenbericht am Freitag. Dazu am 1. jedes Monats die Monatsübersicht per Mail (Resend, Secret RESEND_API_KEY).
+// Wochenbericht am Freitag. Dazu am 1. jedes Monats der Monatsbericht per Mail (Resend, Secret RESEND_API_KEY).
 // PC als Terminal: Anfrage mit „✅ Ja, passt“ → Terminal-Konto anlegen (wie ein Tablet, fest einem Studio zugeordnet).
 //   POST mit Header x-notify-secret                 → neue Buchung melden (Aufruf per pg_net aus der DB)
 //   POST mit Header x-telegram-bot-api-secret-token → Update von Telegram (/start, Buttons ✅/❌)
 // JWT-Prüfung der Function muss AUS sein; abgesichert wird über die beiden Secrets.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import * as XLSX from "npm:xlsx@0.18.5";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const NOTIFY_SECRET = Deno.env.get("NOTIFY_SECRET") ?? "";
@@ -115,7 +116,7 @@ async function handleNotify(
   if (body.type === "monthly_report") {
     const result = await monthlyReport(typeof body.month === "string" ? body.month : undefined);
     if (!result.ok) {
-      for (const a of await adminChats()) await sendMessage(a.chat_id, `⚠️ Monatsübersicht per Mail fehlgeschlagen: ${escapeHtml(result.text)}`);
+      for (const a of await adminChats()) await sendMessage(a.chat_id, `⚠️ Monatsbericht per Mail fehlgeschlagen: ${escapeHtml(result.text)}`);
     }
     return new Response(result.text, { status: result.ok ? 200 : 500 });
   }
@@ -516,27 +517,76 @@ async function createTerminal(id: string): Promise<{ ok: boolean; text: string }
 }
 
 // -----------------------------------------------------------------------------
-// Monatsübersicht per Mail (1. des Monats bzw. /monatsbericht): Vormonat, aktueller und kommender Monat –
-// alle Schichten mit Zeiten, Abwesenheiten und Urlaub (genommen / eingetragen / übrig). Dazu eine CSV für Excel.
+// Monatsbericht per Mail (1. des Monats bzw. /monatsbericht) – aufgebaut wie Personio/Papershift-Auswertungen:
+// 1. Kennzahlen des Vormonats  2. Auffälligkeiten (Minusstunden, häufig zu spät, Krank)  3. je Studio eine Zeile
+// pro Mitarbeiter (Soll/Ist/Saldo, Verspätungen mit Ampel, Krank, Urlaub)  4. Wochenübersicht  5. Ausblick
+// (aktueller + kommender Monat: geplant vs. Soll). Excel im Anhang: Übersicht, Wochen, Ausblick, Dienstplan
+// und je Mitarbeiter ein Stundenzettel. Soll = Wochenstunden ÷ 7 × Kalendertage (wie im Portal).
 // -----------------------------------------------------------------------------
-type ReportPerson = { id: string; first_name: string; last_name: string; role: string; studio: string | null };
+type ReportPerson = {
+  id: string; first_name: string; last_name: string; role: string; studio: string | null;
+  weekly_target_minutes: number | null; employment_start: string | null; employment_end: string | null;
+};
 type ReportEntry = {
   user_id: string; type: string; starts_at: string; ends_at: string; note: string | null;
   is_acquisition: boolean; is_herold: boolean; studio: string | null; day: string;
 };
+type ReportDay = {
+  user_id: string; day: string; planned: number; worked: number; break: number; credit: number;
+  absence: string | null; late: number; ot_pending: number; ot_approved: number; open: boolean;
+};
 type ReportVacation = { user_id: string; year: number; allowance: number; taken: number; planned: number };
-type ReportData = { from: string; to: string; today: string; people: ReportPerson[]; entries: ReportEntry[]; vacation: ReportVacation[] };
+type ReportData = {
+  from: string; to: string; trend_from: string; today: string;
+  settings: { absence_credit_minutes: number; absence_week_days: number; school_credit_minutes: number | null };
+  people: ReportPerson[]; entries: ReportEntry[]; days: ReportDay[]; vacation: ReportVacation[];
+  sick_year: Record<string, number>;
+};
+type Month = { key: string; label: string; first: string; last: string };
+type Stats = {
+  p: ReportPerson; soll: number; ist: number; saldo: number; late: number; lateMin: number; late3: number;
+  sick: number; sickYear: number; vacation: number; school: number; vacationLeft: number | null; open: number; otPending: number;
+  noShow: number; // geplante Schicht ohne Stempelung und ohne Abwesenheit
+};
 
 const TYPE_LABEL: Record<string, string> = { work: "Schicht", vacation: "Urlaub", sick: "Krank", vocational_school: "Schule", day_off: "Frei" };
-const ABSENCE_TYPES = ["vacation", "sick", "vocational_school", "day_off"];
+const LATE_ALERT = 3; // ab so vielen Verspätungen im Monat rot
+const MINUS_ALERT = -60; // Saldo unter −1 Std. gilt als Minusstunden
 const monthFmt = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric", timeZone: "UTC" });
 const shortDayFmt = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" });
 const studioShort = (name: string | null) => (name ?? "Ohne Studio").replace(/^Studio\s+/i, "");
-const numDe = (n: number) => n.toLocaleString("de-DE", { maximumFractionDigits: 2 });
+const numDe = (n: number, digits = 1) => n.toLocaleString("de-DE", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 const hoursDe = (minutes: number) => numDe(minutes / 60);
-const minutesOf = (e: ReportEntry) => Math.round((Date.parse(e.ends_at) - Date.parse(e.starts_at)) / 60_000);
+const signedHours = (minutes: number) => (Math.abs(minutes) < 15 ? "±0,0" : `${minutes > 0 ? "+" : "−"}${hoursDe(Math.abs(minutes))}`);
+const hours2 = (minutes: number) => Math.round(minutes / 0.6) / 100; // Excel: Dezimalstunden
+const minutesOf = (e: { starts_at: string; ends_at: string }) => Math.round((Date.parse(e.ends_at) - Date.parse(e.starts_at)) / 60_000);
+const fullNameOf = (p: ReportPerson) => `${p.first_name} ${p.last_name}`;
 const entryLabel = (e: ReportEntry) =>
   e.type === "work" ? (e.is_herold ? "Herold" : e.is_acquisition ? "Akquise" : "Schicht") : TYPE_LABEL[e.type] ?? e.type;
+const ROLE_DE: Record<string, string> = { employee: "Mitarbeiter", trainee: "Azubi", manager: "Studioleitung" };
+
+function addDaysIso(day: string, n: number): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function datesBetween(first: string, last: string): string[] {
+  const out: string[] = [];
+  for (let d = first; d <= last; d = addDaysIso(d, 1)) out.push(d);
+  return out;
+}
+function isoWeek(day: string): number {
+  const d = new Date(`${day}T12:00:00Z`);
+  const dow = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dow + 3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  return 1 + Math.round((d.getTime() - firstThursday.getTime()) / 604_800_000 - ((firstThursday.getUTCDay() + 6) % 7 - 3) / 7);
+}
+const employedOn = (p: ReportPerson, day: string) =>
+  (!p.employment_start || p.employment_start <= day) && (!p.employment_end || p.employment_end >= day);
+const sollFor = (p: ReportPerson, days: string[]) =>
+  Math.round(((p.weekly_target_minutes ?? 0) / 7) * days.filter((d) => employedOn(p, d)).length);
+const shortDate = (day: string) => `${day.slice(8, 10)}.${day.slice(5, 7)}.`;
 
 async function monthlyReport(month?: string): Promise<{ ok: boolean; text: string }> {
   const settings = await ruleSettings() as Settings & { monthly_report_email?: string | null };
@@ -544,21 +594,23 @@ async function monthlyReport(month?: string): Promise<{ ok: boolean; text: strin
   if (!RESEND_API_KEY) return { ok: false, text: "Secret RESEND_API_KEY fehlt (Supabase → Edge Functions → Secrets)." };
   if (to.length === 0) return { ok: false, text: "Keine Empfänger-Adresse hinterlegt." };
 
-  const now = new Date();
-  const current = month ?? `${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit" }).format(now)}-01`;
+  const current = month ?? `${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit" }).format(new Date())}-01`;
   const { data, error } = await supabase.rpc("monthly_report", { p_month: current });
   if (error || !data) return { ok: false, text: `Daten fehlen: ${error?.message ?? "leer"}` };
   const report = data as ReportData;
 
-  const months = [0, 1, 2].map((i) => {
+  const months: Month[] = [0, 1, 2].map((i) => {
     const d = new Date(`${report.from}T12:00:00Z`);
     d.setUTCMonth(d.getUTCMonth() + i);
-    const key = d.toISOString().slice(0, 7);
-    return { key, label: monthFmt.format(d), hint: ["Vormonat", "aktueller Monat", "kommender Monat"][i] };
+    const first = d.toISOString().slice(0, 10);
+    const next = new Date(d);
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    return { key: first.slice(0, 7), label: monthFmt.format(d), first, last: addDaysIso(next.toISOString().slice(0, 10), -1) };
   });
-  const title = `Monatsübersicht ${months[1].label}`;
-  const html = reportHtml(report, months, title);
-  const csv = reportCsv(report, months);
+  const stats = monthStats(report, months[0]);
+  const title = `Monatsbericht ${months[0].label}`;
+  const html = reportHtml(report, months, stats, title);
+  const xlsx = reportXlsx(report, months, stats);
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -566,101 +618,280 @@ async function monthlyReport(month?: string): Promise<{ ok: boolean; text: strin
     body: JSON.stringify({
       from: MAIL_FROM,
       to,
-      subject: `Clock-In · ${title}`,
+      subject: `Clock-In · ${title} + Ausblick ${months[1].label.split(" ")[0]}/${months[2].label.split(" ")[0]}`,
       html,
-      attachments: [{ filename: `dienstplan_${months[0].key}_bis_${months[2].key}.csv`, content: base64(csv) }],
+      attachments: [{ filename: `clockin_${months[0].key}.xlsx`, content: xlsx }],
     }),
   });
   if (!res.ok) return { ok: false, text: `Mail-Versand fehlgeschlagen (${res.status}): ${(await res.text()).slice(0, 300)}` };
   return { ok: true, text: `${title} an ${to.join(", ")} verschickt.` };
 }
 
-function reportHtml(r: ReportData, months: { key: string; label: string; hint: string }[], title: string): string {
-  const th = 'style="text-align:left;padding:6px 8px;border-bottom:2px solid #d0d5dd;font-size:12px;color:#475467;white-space:nowrap"';
-  const thNum = 'style="text-align:right;padding:6px 8px;border-bottom:2px solid #d0d5dd;font-size:12px;color:#475467;white-space:nowrap"';
-  const td = 'style="padding:6px 8px;border-bottom:1px solid #eaecf0;vertical-align:top;font-size:13px"';
-  const tdNum = 'style="padding:6px 8px;border-bottom:1px solid #eaecf0;vertical-align:top;font-size:13px;text-align:right;white-space:nowrap"';
-  const name = (p: ReportPerson) => escapeHtml(`${p.first_name} ${p.last_name}`);
-  const studios = [...new Set(r.people.map((p) => studioShort(p.studio)))];
-  const out: string[] = [];
-  out.push(`<div style="font-family:Arial,Helvetica,sans-serif;color:#101828;max-width:960px">`);
-  out.push(`<h1 style="font-size:20px;margin:0 0 4px">${escapeHtml(title)}</h1>`);
-  out.push(`<p style="margin:0 0 20px;color:#475467;font-size:13px">${escapeHtml(months.map((m) => m.label).join(" · "))} (Stand ${escapeHtml(formatDay(r.today))}) · Alle Einträge auch als CSV im Anhang (Excel).</p>`);
+// Kennzahlen je Mitarbeiter im Vormonat
+function monthStats(r: ReportData, m: Month): Stats[] {
+  const dates = datesBetween(m.first, m.last);
+  const year = Number(r.today.slice(0, 4));
+  return r.people.map((p) => {
+    const days = r.days.filter((d) => d.user_id === p.id);
+    const inMonth = days.filter((d) => d.day >= m.first && d.day <= m.last);
+    const entries = r.entries.filter((e) => e.user_id === p.id && e.day >= m.first && e.day <= m.last);
+    const countDays = (type: string) => new Set(entries.filter((e) => e.type === type).map((e) => e.day)).size;
+    const v = r.vacation.find((x) => x.user_id === p.id && x.year === year);
+    const soll = sollFor(p, dates);
+    const ist = inMonth.reduce((n, d) => n + d.worked + d.credit, 0);
+    return {
+      p, soll, ist, saldo: ist - soll,
+      late: inMonth.filter((d) => d.late > 0).length,
+      lateMin: inMonth.reduce((n, d) => n + d.late, 0),
+      late3: days.filter((d) => d.late > 0).length,
+      sick: countDays("sick"), sickYear: r.sick_year[p.id] ?? 0,
+      vacation: countDays("vacation"), school: countDays("vocational_school"),
+      vacationLeft: v ? Number(v.allowance) - v.taken - v.planned : null,
+      open: inMonth.filter((d) => d.open).length,
+      otPending: inMonth.reduce((n, d) => n + d.ot_pending, 0),
+      noShow: inMonth.filter((d) => d.planned > 0 && d.worked === 0 && d.credit === 0 && !d.absence && !d.open && d.day < r.today).length,
+    };
+  });
+}
 
-  // Urlaub je Jahr
-  for (const year of [...new Set(r.vacation.map((v) => v.year))]) {
-    out.push(`<h2 style="font-size:16px;margin:24px 0 8px">Urlaub ${year}</h2>`);
-    out.push(`<table style="border-collapse:collapse;width:100%"><tr><th ${th}>Mitarbeiter</th><th ${th}>Studio</th><th ${thNum}>Anspruch</th><th ${thNum}>genommen</th><th ${thNum}>eingetragen</th><th ${thNum}>übrig</th></tr>`);
-    for (const p of r.people) {
-      const v = r.vacation.find((x) => x.user_id === p.id && x.year === year);
-      if (!v) continue;
-      const left = Number(v.allowance) - v.taken - v.planned;
-      out.push(`<tr><td ${td}>${name(p)}</td><td ${td}>${escapeHtml(studioShort(p.studio))}</td><td ${tdNum}>${numDe(Number(v.allowance))}</td><td ${tdNum}>${v.taken}</td><td ${tdNum}>${v.planned}</td><td ${tdNum}><b${left < 0 ? ' style="color:#d1293d"' : ""}>${numDe(left)}</b></td></tr>`);
+// Plan (aktueller/kommender Monat): Schichtstunden + Gutschrift für Abwesenheiten gegen das Soll
+function planStats(r: ReportData, m: Month) {
+  const dates = datesBetween(m.first, m.last);
+  return r.people.map((p) => {
+    const entries = r.entries.filter((e) => e.user_id === p.id && e.day >= m.first && e.day <= m.last);
+    const daily = p.role === "trainee" && p.weekly_target_minutes
+      ? p.weekly_target_minutes / r.settings.absence_week_days : r.settings.absence_credit_minutes;
+    const work = entries.filter((e) => e.type === "work").reduce((n, e) => n + minutesOf(e), 0);
+    const days = (type: string) => new Set(entries.filter((e) => e.type === type).map((e) => e.day)).size;
+    const credit = (days("vacation") + days("sick")) * daily + days("vocational_school") * (r.settings.school_credit_minutes ?? 420);
+    const soll = sollFor(p, dates);
+    return { p, soll, work, credit: Math.round(credit), diff: Math.round(work + credit - soll), shifts: entries.filter((e) => e.type === "work").length,
+      vacation: days("vacation"), school: days("vocational_school"), dayOff: days("day_off"), sick: days("sick") };
+  });
+}
+
+// Wochen des Monats (an Monatsgrenzen gekürzt)
+function monthWeeks(m: Month) {
+  const weeks: { kw: number; days: string[] }[] = [];
+  for (const d of datesBetween(m.first, m.last)) {
+    const kw = isoWeek(d);
+    if (weeks.at(-1)?.kw === kw) weeks.at(-1)!.days.push(d);
+    else weeks.push({ kw, days: [d] });
+  }
+  return weeks;
+}
+
+const C = {
+  red: "#b42318", redBg: "#fef3f2", amber: "#b54708", amberBg: "#fffaeb", green: "#067647", greenBg: "#ecfdf3",
+  grey: "#667085", line: "#eaecf0", head: "#475467",
+};
+
+function reportHtml(r: ReportData, months: Month[], stats: Stats[], title: string): string {
+  const th = (align = "left") => `style="text-align:${align};padding:6px 8px;border-bottom:2px solid #d0d5dd;font-size:11px;color:${C.head};text-transform:uppercase;letter-spacing:.03em;white-space:nowrap"`;
+  const td = (align = "left", extra = "") => `style="padding:7px 8px;border-bottom:1px solid ${C.line};font-size:13px;text-align:${align};vertical-align:top;${extra}"`;
+  const pill = (text: string, fg: string, bg: string) =>
+    `<span style="display:inline-block;padding:1px 8px;border-radius:10px;background:${bg};color:${fg};font-weight:600;white-space:nowrap">${escapeHtml(text)}</span>`;
+  const muted = (text: string) => `<span style="color:${C.grey}">${escapeHtml(text)}</span>`;
+  const saldoCell = (min: number) =>
+    min < MINUS_ALERT ? pill(signedHours(min), C.red, C.redBg) : min > 15 ? pill(signedHours(min), C.green, C.greenBg) : muted(signedHours(min));
+  const lateCell = (n: number, minutes: number) =>
+    n === 0 ? muted("–") : n >= LATE_ALERT ? pill(`${n}× · ${minutes} Min.`, C.red, C.redBg) : pill(`${n}× · ${minutes} Min.`, C.amber, C.amberBg);
+  const late3Cell = (n: number) => (n === 0 ? muted("–") : n >= LATE_ALERT * 2 ? pill(`${n}×`, C.red, C.redBg) : `${n}×`);
+  const studios = [...new Set(r.people.map((p) => studioShort(p.studio)))];
+  const vm = months[0];
+  const out: string[] = [];
+  out.push(`<div style="font-family:Arial,Helvetica,sans-serif;color:#101828;max-width:980px">`);
+  out.push(`<h1 style="font-size:22px;margin:0 0 2px">${escapeHtml(title)}</h1>`);
+  out.push(`<p style="margin:0 0 18px;color:${C.grey};font-size:13px">Abrechnungsmonat ${escapeHtml(vm.label)} · Ausblick ${escapeHtml(months[1].label)} und ${escapeHtml(months[2].label)} · Stand ${escapeHtml(formatDay(r.today))}</p>`);
+
+  // 1. Kennzahlen
+  const sum = (f: (s: Stats) => number) => stats.reduce((n, s) => n + f(s), 0);
+  const minus = stats.filter((s) => s.saldo < MINUS_ALERT);
+  const lateAlerts = stats.filter((s) => s.late >= LATE_ALERT);
+  const kpi = (label: string, value: string, hint: string, color = "#101828") =>
+    `<td style="padding:12px 14px;border:1px solid ${C.line};border-radius:10px;background:#fcfcfd;vertical-align:top;width:20%">
+      <div style="font-size:11px;color:${C.head};text-transform:uppercase;letter-spacing:.03em">${label}</div>
+      <div style="font-size:22px;font-weight:700;color:${color};margin:4px 0 2px">${value}</div>
+      <div style="font-size:12px;color:${C.grey}">${hint}</div></td>`;
+  out.push(`<table style="border-collapse:separate;border-spacing:8px 0;width:100%;margin:0 -8px 18px"><tr>
+    ${kpi("Ist-Stunden", hoursDe(sum((s) => s.ist)), `Soll ${hoursDe(sum((s) => s.soll))} Std.`)}
+    ${kpi("Minusstunden", minus.length ? hoursDe(-minus.reduce((n, s) => n + s.saldo, 0)) : "0", `${minus.length} Mitarbeiter im Minus`, minus.length ? C.red : C.green)}
+    ${kpi("Verspätungen", String(sum((s) => s.late)), `${lateAlerts.length} Mitarbeiter ≥ ${LATE_ALERT}×`, lateAlerts.length ? C.red : "#101828")}
+    ${kpi("Krankheitstage", String(sum((s) => s.sick)), `${sum((s) => s.sickYear)} im Jahr ${r.today.slice(0, 4)}`)}
+    ${kpi("Urlaubstage", String(sum((s) => s.vacation)), `Schule: ${sum((s) => s.school)} ${sum((s) => s.school) === 1 ? "Tag" : "Tage"}`)}
+  </tr></table>`);
+
+  // 2. Auffälligkeiten
+  const notes: string[] = [];
+  for (const s of [...minus].sort((a, b) => a.saldo - b.saldo)) {
+    notes.push(`${pill("Minus", C.red, C.redBg)} <b>${escapeHtml(fullNameOf(s.p))}</b> ${muted(studioShort(s.p.studio))}: ${signedHours(s.saldo)} Std. (Ist ${hoursDe(s.ist)} / Soll ${hoursDe(s.soll)})`);
+  }
+  for (const s of stats.filter((x) => x.late >= LATE_ALERT || x.late3 >= LATE_ALERT * 2).sort((a, b) => b.late - a.late || b.late3 - a.late3)) {
+    notes.push(`${pill("Zu spät", C.red, C.redBg)} <b>${escapeHtml(fullNameOf(s.p))}</b> ${muted(studioShort(s.p.studio))}: ${s.late}× im ${escapeHtml(vm.label.split(" ")[0])} (${s.lateMin} Min.), ${s.late3}× in 3 Monaten`);
+  }
+  for (const s of stats.filter((x) => x.sick >= 3 || x.sickYear >= 10).sort((a, b) => b.sickYear - a.sickYear)) {
+    notes.push(`${pill("Krank", C.amber, C.amberBg)} <b>${escapeHtml(fullNameOf(s.p))}</b>: ${s.sick} Tage im Monat, ${s.sickYear} im Jahr`);
+  }
+  for (const s of stats.filter((x) => x.noShow > 0).sort((a, b) => b.noShow - a.noShow)) {
+    notes.push(`${pill("Fehlt", C.red, C.redBg)} <b>${escapeHtml(fullNameOf(s.p))}</b> ${muted(studioShort(s.p.studio))}: ${s.noShow}× geplante Schicht ohne Stempelung (weder gearbeitet noch Urlaub/Krank eingetragen)`);
+  }
+  for (const s of stats.filter((x) => x.open > 0)) {
+    notes.push(`${pill("Stempeln", C.amber, C.amberBg)} <b>${escapeHtml(fullNameOf(s.p))}</b>: ${s.open}× Ausstempeln vergessen bzw. offen`);
+  }
+  out.push(`<h2 style="font-size:16px;margin:8px 0 8px">Auffälligkeiten</h2>`);
+  out.push(notes.length
+    ? `<div style="border:1px solid ${C.line};border-radius:10px;padding:6px 12px">${notes.map((n, i) =>
+      `<div style="padding:6px 0;font-size:13px;${i < notes.length - 1 ? `border-bottom:1px solid ${C.line}` : ""}">${n}</div>`).join("")}</div>`
+    : `<p style="font-size:13px;color:${C.green}">Keine Auffälligkeiten – alle im Soll, niemand häufig zu spät.</p>`);
+
+  // 3. Je Studio: Mitarbeiter-Übersicht
+  out.push(`<h2 style="font-size:16px;margin:26px 0 4px">Mitarbeiter je Studio · ${escapeHtml(vm.label)}</h2>`);
+  out.push(`<p style="margin:0 0 6px;font-size:12px;color:${C.grey}">Ist = gearbeitete Zeit + Gutschrift (Urlaub/Krank/Schule). Verspätungen: ${pill("1–2×", C.amber, C.amberBg)} ${pill(`ab ${LATE_ALERT}×`, C.red, C.redBg)}</p>`);
+  for (const studio of studios) {
+    const rows = stats.filter((s) => studioShort(s.p.studio) === studio).sort((a, b) => fullNameOf(a.p).localeCompare(fullNameOf(b.p)));
+    out.push(`<h3 style="font-size:13px;margin:16px 0 4px;color:${C.head};text-transform:uppercase;letter-spacing:.04em">${escapeHtml(studio)} <span style="font-weight:normal">· ${rows.length}</span></h3>`);
+    out.push(`<table style="border-collapse:collapse;width:100%"><tr><th ${th()}>Mitarbeiter</th><th ${th("right")}>Soll</th><th ${th("right")}>Ist</th><th ${th("right")}>Saldo</th><th ${th()}>Zu spät</th><th ${th("right")}>3 Mon.</th><th ${th("right")}>Krank</th><th ${th("right")}>Urlaub</th><th ${th("right")}>Rest</th></tr>`);
+    for (const s of rows) {
+      const hint = [s.noShow ? `${s.noShow}× Schicht ohne Stempelung` : "", s.open ? `${s.open}× nicht ausgestempelt` : "", s.otPending ? `${hoursDe(s.otPending)} Std. Überstunden offen` : ""].filter(Boolean).join(" · ");
+      out.push(`<tr><td ${td()}><b>${escapeHtml(fullNameOf(s.p))}</b><br><span style="font-size:11px;color:${C.grey}">${escapeHtml(ROLE_DE[s.p.role] ?? s.p.role)}${hint ? ` · ${escapeHtml(hint)}` : ""}</span></td>` +
+        `<td ${td("right")}>${hoursDe(s.soll)}</td><td ${td("right")}>${hoursDe(s.ist)}</td><td ${td("right")}>${saldoCell(s.saldo)}</td>` +
+        `<td ${td()}>${lateCell(s.late, s.lateMin)}</td><td ${td("right")}>${late3Cell(s.late3)}</td>` +
+        `<td ${td("right")}>${s.sick ? `<b>${s.sick}</b>` : muted("0")} ${muted(`/ ${s.sickYear}`)}</td>` +
+        `<td ${td("right")}>${s.vacation || muted("0")}</td><td ${td("right")}>${s.vacationLeft === null ? muted("–") : s.vacationLeft < 0 ? pill(numDe(s.vacationLeft, 0), C.red, C.redBg) : numDe(s.vacationLeft, s.vacationLeft % 1 ? 1 : 0)}</td></tr>`);
+    }
+    const t = (f: (s: Stats) => number) => rows.reduce((n, s) => n + f(s), 0);
+    out.push(`<tr><td ${td("left", "font-weight:700;border-bottom:0")}>Summe</td><td ${td("right", "font-weight:700;border-bottom:0")}>${hoursDe(t((s) => s.soll))}</td><td ${td("right", "font-weight:700;border-bottom:0")}>${hoursDe(t((s) => s.ist))}</td><td ${td("right", "border-bottom:0")}>${saldoCell(t((s) => s.saldo))}</td><td ${td("left", "border-bottom:0")}>${t((s) => s.late) ? `${t((s) => s.late)}×` : muted("–")}</td><td ${td("right", "border-bottom:0")}></td><td ${td("right", "font-weight:700;border-bottom:0")}>${t((s) => s.sick)}</td><td ${td("right", "font-weight:700;border-bottom:0")}>${t((s) => s.vacation)}</td><td ${td("right", "border-bottom:0")}></td></tr></table>`);
+  }
+  out.push(`<p style="margin:6px 0 0;font-size:11px;color:${C.grey}">Krank: Tage im Monat / im Jahr ${r.today.slice(0, 4)}. Rest = Resturlaub ${r.today.slice(0, 4)} (nach allen eingetragenen Tagen). 3 Mon. = Verspätungen seit ${r.trend_from.split("-").reverse().join(".")}.</p>`);
+
+  // 4. Wochenübersicht
+  const weeks = monthWeeks(vm);
+  out.push(`<h2 style="font-size:16px;margin:26px 0 4px">Wochenübersicht · ${escapeHtml(vm.label)}</h2>`);
+  out.push(`<p style="margin:0 0 6px;font-size:12px;color:${C.grey}">Ist / Soll in Stunden je Kalenderwoche (rot: unter 90 %, grün: über 110 %; angeschnittene Wochen ohne Farbe) · ⏰ zu spät · K krank · U Urlaub · S Schule</p>`);
+  for (const studio of studios) {
+    const people = r.people.filter((p) => studioShort(p.studio) === studio);
+    out.push(`<h3 style="font-size:13px;margin:14px 0 4px;color:${C.head};text-transform:uppercase;letter-spacing:.04em">${escapeHtml(studio)}</h3>`);
+    out.push(`<table style="border-collapse:collapse;width:100%"><tr><th ${th()}>Mitarbeiter</th>${weeks.map((w) => `<th ${th("center")}>KW ${w.kw}<br><span style="font-weight:normal;text-transform:none">${shortDate(w.days[0])}–${shortDate(w.days.at(-1)!)}</span></th>`).join("")}</tr>`);
+    for (const p of people) {
+      const cells = weeks.map((w) => {
+        const days = r.days.filter((d) => d.user_id === p.id && w.days.includes(d.day));
+        const entries = r.entries.filter((e) => e.user_id === p.id && w.days.includes(e.day));
+        const soll = sollFor(p, w.days);
+        const ist = days.reduce((n, d) => n + d.worked + d.credit, 0);
+        const count = (type: string) => new Set(entries.filter((e) => e.type === type).map((e) => e.day)).size;
+        const marks = [days.filter((d) => d.late > 0).length ? `⏰${days.filter((d) => d.late > 0).length}` : "",
+          count("sick") ? `K${count("sick")}` : "", count("vacation") ? `U${count("vacation")}` : "", count("vocational_school") ? `S${count("vocational_school")}` : ""].filter(Boolean).join(" ");
+        if (!soll && !ist) return `<td ${td("center")}>${muted("–")}</td>`;
+        // Farbe nur für ganze Wochen – angeschnittene Wochen am Monatsrand wären sonst verzerrt
+        const ratio = soll && w.days.length === 7 ? ist / soll : 1;
+        const bg = ratio < 0.9 ? C.redBg : ratio > 1.1 ? C.greenBg : "transparent";
+        const fg = ratio < 0.9 ? C.red : "#101828";
+        return `<td ${td("center", `background:${bg};color:${fg};white-space:nowrap`)}>${hoursDe(ist)} / ${hoursDe(soll)}${marks ? `<br><span style="font-size:11px;color:${C.head}">${escapeHtml(marks)}</span>` : ""}</td>`;
+      });
+      out.push(`<tr><td ${td()}><b>${escapeHtml(fullNameOf(p))}</b></td>${cells.join("")}</tr>`);
     }
     out.push(`</table>`);
   }
 
-  // Monate
-  for (const m of months) {
-    const inMonth = r.entries.filter((e) => e.day.startsWith(m.key));
-    out.push(`<h2 style="font-size:16px;margin:28px 0 4px">${escapeHtml(m.label)} <span style="color:#667085;font-weight:normal">(${m.hint})</span></h2>`);
+  // 5. Ausblick
+  for (const m of months.slice(1)) {
+    const plan = planStats(r, m);
+    out.push(`<h2 style="font-size:16px;margin:26px 0 4px">Ausblick ${escapeHtml(m.label)} · geplant</h2>`);
+    out.push(`<p style="margin:0 0 6px;font-size:12px;color:${C.grey}">Geplante Schichten + Gutschrift für Urlaub/Krank/Schule gegen das Soll. ${pill("rot", C.red, C.redBg)} = mehr als 8 Std. unter Soll (noch nicht ausgeplant).</p>`);
+    out.push(`<table style="border-collapse:collapse;width:100%"><tr><th ${th()}>Studio</th><th ${th()}>Mitarbeiter</th><th ${th("right")}>Schichten</th><th ${th("right")}>Geplant</th><th ${th("right")}>+ Abw.</th><th ${th("right")}>Soll</th><th ${th("right")}>Differenz</th><th ${th("right")}>Urlaub</th><th ${th("right")}>Schule</th><th ${th("right")}>Frei</th></tr>`);
     for (const studio of studios) {
-      const people = r.people.filter((p) => studioShort(p.studio) === studio);
-      out.push(`<h3 style="font-size:13px;margin:14px 0 6px;color:#475467;text-transform:uppercase;letter-spacing:.04em">${escapeHtml(studio)}</h3>`);
-      out.push(`<table style="border-collapse:collapse;width:100%"><tr><th ${th}>Mitarbeiter</th><th ${thNum}>Schichten</th><th ${thNum}>Std.</th><th ${thNum}>Urlaub</th><th ${thNum}>Krank</th><th ${thNum}>Schule</th><th ${thNum}>Frei</th><th ${th}>Einträge</th></tr>`);
-      for (const p of people) {
-        const mine = inMonth.filter((e) => e.user_id === p.id);
-        const work = mine.filter((e) => e.type === "work");
-        const days = (type: string) => new Set(mine.filter((e) => e.type === type).map((e) => e.day)).size || "–";
-        const list = mine.map((e) => {
-          const day = shortDayFmt.format(new Date(e.starts_at));
-          const label = entryLabel(e);
-          const where = e.type === "work" && e.studio && studioShort(e.studio) !== studio ? ` ${studioShort(e.studio)}` : "";
-          const text = e.type === "work"
-            ? `${day} ${formatClock(e.starts_at)}–${formatClock(e.ends_at)}${label !== "Schicht" ? ` ${label}` : ""}${where}`
-            : `${day} ${label}`;
-          const color = e.type === "work" ? "#101828" : e.type === "sick" ? "#d1293d" : "#027a48";
-          return `<span style="white-space:nowrap;color:${color}">${escapeHtml(text)}</span>`;
-        });
-        out.push(`<tr><td ${td}><b>${name(p)}</b></td><td ${tdNum}>${work.length || "–"}</td><td ${tdNum}>${work.length ? hoursDe(work.reduce((n, e) => n + minutesOf(e), 0)) : "–"}</td>` +
-          `<td ${tdNum}>${days("vacation")}</td><td ${tdNum}>${days("sick")}</td><td ${tdNum}>${days("vocational_school")}</td><td ${tdNum}>${days("day_off")}</td>` +
-          `<td ${td}>${list.length ? list.join(" · ") : '<span style="color:#98a2b3">keine Einträge</span>'}</td></tr>`);
+      for (const s of plan.filter((x) => studioShort(x.p.studio) === studio)) {
+        const diff = s.diff < -480 ? pill(signedHours(s.diff), C.red, C.redBg) : s.diff < -60 ? pill(signedHours(s.diff), C.amber, C.amberBg) : muted(signedHours(s.diff));
+        out.push(`<tr><td ${td("left", `color:${C.grey}`)}>${escapeHtml(studio)}</td><td ${td()}><b>${escapeHtml(fullNameOf(s.p))}</b></td><td ${td("right")}>${s.shifts || muted("0")}</td>` +
+          `<td ${td("right")}>${hoursDe(s.work)}</td><td ${td("right")}>${s.credit ? hoursDe(s.credit) : muted("–")}</td><td ${td("right")}>${hoursDe(s.soll)}</td><td ${td("right")}>${diff}</td>` +
+          `<td ${td("right")}>${s.vacation || muted("0")}</td><td ${td("right")}>${s.school || muted("0")}</td><td ${td("right")}>${s.dayOff || muted("0")}</td></tr>`);
       }
-      out.push(`</table>`);
     }
+    out.push(`</table>`);
   }
-  out.push(`<p style="margin:24px 0 0;color:#98a2b3;font-size:12px">Automatisch erstellt von Clock-In (Dienstplan-Stand zum Versand). Std. = geplante Schichtstunden.</p></div>`);
+
+  out.push(`<p style="margin:24px 0 0;color:${C.grey};font-size:12px">Im Excel-Anhang: Übersicht, Wochen, Ausblick, kompletter Dienstplan und je Mitarbeiter ein Stundenzettel (Tag für Tag). ` +
+    `Soll = Wochenstunden ÷ 7 × Kalendertage (wie im Portal, Feiertage nicht abgezogen). Automatisch erstellt von Clock-In.</p></div>`);
   return out.join("\n");
 }
 
-function reportCsv(r: ReportData, months: { key: string; label: string }[]): string {
-  const cell = (v: string | number) => {
-    const s = String(v);
-    return /[;"\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
+function reportXlsx(r: ReportData, months: Month[], stats: Stats[]): string {
+  const wb = XLSX.utils.book_new();
+  const sheet = (name: string, rows: (string | number | null)[][], widths: number[]) => {
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = widths.map((wch) => ({ wch }));
+    XLSX.utils.book_append_sheet(wb, ws, name);
   };
-  const rows = [["Monat", "Heimatstudio", "Mitarbeiter", "Datum", "Tag", "Art", "Von", "Bis", "Stunden", "Ort", "Hinweis"]];
-  const people = new Map(r.people.map((p) => [p.id, p]));
-  for (const e of r.entries) {
-    const p = people.get(e.user_id);
-    const m = months.find((x) => e.day.startsWith(x.key));
-    if (!p || !m) continue;
-    const work = e.type === "work";
-    rows.push([
-      m.label, studioShort(p.studio), `${p.first_name} ${p.last_name}`, e.day.split("-").reverse().join("."),
-      shortDayFmt.format(new Date(e.starts_at)).split(",")[0], entryLabel(e),
-      work ? formatClock(e.starts_at) : "", work ? formatClock(e.ends_at) : "", work ? hoursDe(minutesOf(e)) : "",
-      work ? studioShort(e.studio) : "", e.note ?? "",
-    ]);
-  }
-  // BOM + Semikolon: Excel (deutsch) öffnet die Datei direkt richtig
-  return "﻿" + rows.map((row) => row.map(cell).join(";")).join("\r\n");
-}
+  const vm = months[0];
+  const sorted = [...stats].sort((a, b) => studioShort(a.p.studio).localeCompare(studioShort(b.p.studio)) || fullNameOf(a.p).localeCompare(fullNameOf(b.p)));
 
-function base64(text: string): string {
-  const bytes = new TextEncoder().encode(text);
-  let bin = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(bin);
+  sheet(`Übersicht ${vm.key}`, [
+    ["Studio", "Mitarbeiter", "Rolle", "Soll Std.", "Ist Std.", "Saldo Std.", "Zu spät (Anzahl)", "Zu spät (Min.)", "Zu spät 3 Monate", "Krank Tage", `Krank Tage ${r.today.slice(0, 4)}`, "Urlaub Tage", "Resturlaub", "Schule Tage", "Schicht ohne Stempelung", "Nicht ausgestempelt", "Überstunden offen Std."],
+    ...sorted.map((s) => [studioShort(s.p.studio), fullNameOf(s.p), ROLE_DE[s.p.role] ?? s.p.role, hours2(s.soll), hours2(s.ist), hours2(s.saldo), s.late, s.lateMin, s.late3,
+      s.sick, s.sickYear, s.vacation, s.vacationLeft, s.school, s.noShow, s.open, hours2(s.otPending)]),
+  ], [14, 24, 14, 10, 10, 10, 15, 13, 15, 10, 14, 11, 11, 11, 22, 18, 20]);
+
+  const weekRows: (string | number | null)[][] = [["Studio", "Mitarbeiter", "KW", "Von", "Bis", "Soll Std.", "Ist Std.", "Saldo Std.", "Zu spät", "Krank", "Urlaub", "Schule"]];
+  for (const s of sorted) {
+    for (const w of monthWeeks(vm)) {
+      const days = r.days.filter((d) => d.user_id === s.p.id && w.days.includes(d.day));
+      const entries = r.entries.filter((e) => e.user_id === s.p.id && w.days.includes(e.day));
+      const count = (type: string) => new Set(entries.filter((e) => e.type === type).map((e) => e.day)).size;
+      const soll = sollFor(s.p, w.days);
+      const ist = days.reduce((n, d) => n + d.worked + d.credit, 0);
+      weekRows.push([studioShort(s.p.studio), fullNameOf(s.p), w.kw, shortDate(w.days[0]), shortDate(w.days.at(-1)!), hours2(soll), hours2(ist), hours2(ist - soll),
+        days.filter((d) => d.late > 0).length, count("sick"), count("vacation"), count("vocational_school")]);
+    }
+  }
+  sheet("Wochen", weekRows, [14, 24, 6, 8, 8, 10, 10, 10, 9, 7, 8, 8]);
+
+  const planRows: (string | number | null)[][] = [["Monat", "Studio", "Mitarbeiter", "Schichten", "Geplant Std.", "Abwesenheit Std.", "Soll Std.", "Differenz Std.", "Urlaub", "Schule", "Frei", "Krank"]];
+  for (const m of months.slice(1)) {
+    for (const s of planStats(r, m).sort((a, b) => studioShort(a.p.studio).localeCompare(studioShort(b.p.studio)))) {
+      planRows.push([m.label, studioShort(s.p.studio), fullNameOf(s.p), s.shifts, hours2(s.work), hours2(s.credit), hours2(s.soll), hours2(s.diff), s.vacation, s.school, s.dayOff, s.sick]);
+    }
+  }
+  sheet("Ausblick", planRows, [16, 14, 24, 10, 12, 16, 10, 14, 8, 8, 6, 7]);
+
+  const people = new Map(r.people.map((p) => [p.id, p]));
+  sheet("Dienstplan", [
+    ["Monat", "Heimatstudio", "Mitarbeiter", "Datum", "Tag", "Art", "Von", "Bis", "Stunden", "Ort", "Hinweis"],
+    ...r.entries.filter((e) => people.has(e.user_id) && e.day >= vm.first).map((e) => {
+      const p = people.get(e.user_id)!;
+      const work = e.type === "work";
+      const m = months.find((x) => e.day.startsWith(x.key));
+      return [m?.label ?? "", studioShort(p.studio), fullNameOf(p), e.day.split("-").reverse().join("."), shortDayFmt.format(new Date(e.starts_at)).split(",")[0],
+        entryLabel(e), work ? formatClock(e.starts_at) : "", work ? formatClock(e.ends_at) : "", work ? hours2(minutesOf(e)) : "", work ? studioShort(e.studio) : "", e.note ?? ""];
+    }),
+  ], [16, 14, 24, 11, 5, 9, 7, 7, 9, 12, 30]);
+
+  // Stundenzettel je Mitarbeiter (Vormonat, Tag für Tag)
+  const used = new Set<string>();
+  const ABS: Record<string, string> = { sick: "Krank", vacation: "Urlaub", vocational_school: "Schule", day_off: "Frei" };
+  for (const s of sorted) {
+    let name = fullNameOf(s.p).replace(/[[\]:*?/\\]/g, "").slice(0, 28);
+    for (let i = 2; used.has(name); i++) name = `${name.slice(0, 26)} ${i}`;
+    used.add(name);
+    const rows: (string | number | null)[][] = [
+      [`Stundenzettel ${vm.label}`, fullNameOf(s.p), studioShort(s.p.studio)],
+      ["Soll Std.", hours2(s.soll), "Ist Std.", hours2(s.ist), "Saldo Std.", hours2(s.saldo)],
+      [],
+      ["Datum", "Tag", "Geplant Std.", "Gearbeitet Std.", "Pause Min.", "Gutschrift Std.", "Abwesenheit", "Zu spät Min.", "Überstunden offen Min.", "Hinweis"],
+    ];
+    for (const d of datesBetween(vm.first, vm.last)) {
+      const day = r.days.find((x) => x.user_id === s.p.id && x.day === d);
+      const wd = new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
+      rows.push([d.split("-").reverse().join("."), wd, day ? hours2(day.planned) : 0, day ? hours2(day.worked) : 0, day?.break ?? 0,
+        day ? hours2(day.credit) : 0, day?.absence ? ABS[day.absence] ?? day.absence : "", day?.late ?? 0, day?.ot_pending ?? 0,
+        day?.open ? "Ausstempeln fehlt"
+          : day && day.planned > 0 && day.worked === 0 && day.credit === 0 && !day.absence && d < r.today ? "Schicht ohne Stempelung" : ""]);
+    }
+    rows.push([], ["Summe", "", hours2(r.days.filter((x) => x.user_id === s.p.id && x.day >= vm.first && x.day <= vm.last).reduce((n, x) => n + x.planned, 0)),
+      hours2(r.days.filter((x) => x.user_id === s.p.id && x.day >= vm.first && x.day <= vm.last).reduce((n, x) => n + x.worked, 0)), "",
+      hours2(r.days.filter((x) => x.user_id === s.p.id && x.day >= vm.first && x.day <= vm.last).reduce((n, x) => n + x.credit, 0)), "", s.lateMin]);
+    sheet(name, rows, [12, 6, 12, 15, 10, 15, 12, 12, 20, 18]);
+  }
+  return XLSX.write(wb, { type: "base64", bookType: "xlsx" }) as string;
 }
 
 async function handleMessage(msg: Message) {
@@ -689,7 +920,7 @@ async function handleMessage(msg: Message) {
       msg.chat.id,
       `✅ Verbunden als <b>${escapeHtml(fullName(admin.user))}</b>.\n\n` +
         "Befehle:\n/kurz – nur Studio besetzt, Freigaben und Berichte\n/alle – zusätzlich jede Stempelung\n" +
-        "/monatsbericht – Monatsübersicht jetzt per Mail schicken",
+        "/monatsbericht – Monatsbericht jetzt per Mail schicken",
     );
   } else {
     await sendMessage(

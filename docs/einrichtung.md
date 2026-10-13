@@ -108,6 +108,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 19. `supabase/migrations/20261012120000_school_7h_day_off.sql` (Schule 7 Std., „Frei“ für Vollzeitkräfte)
 20. `supabase/migrations/20261012150000_monthly_report_network.sql` (Netz-Check /16, Monatsübersicht per Mail)
 21. `supabase/migrations/20261013090000_pc_terminals.sql` (PC als Terminal je Studio, Stempeln nur per Handy)
+22. `supabase/migrations/20261013120000_monthly_report_v2.sql` (Monatsbericht 2.0: Soll/Ist, Verspätungen, Krank)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -203,11 +204,15 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 - **Schule:** zählt je Tag pauschal 7 Std. – für alle, auch Azubis.
 - **Stempeln per Handy – WLAN:** Handy und Tablet müssen im selben Adressbereich sein (IPv4 /16, z. B. 93.104.x.x),
   nicht exakt dieselbe Adresse – Anbieter wie M-net (CGNAT) geben Geräten im selben WLAN verschiedene Adressen.
-- **Monatsübersicht per Mail:** am 1. jedes Monats um 7 Uhr an `rule_settings.monthly_report_email`
-  (gf@bsnewfitness.de): Vormonat, aktueller und kommender Monat mit allen Schichten/Zeiten, Urlaub, Krank,
-  Schule, Frei und Urlaub genommen/eingetragen/übrig – plus CSV für Excel. Versand über Resend (Secret
-  `RESEND_API_KEY`; ohne eigene Domain muss das Resend-Konto mit der Empfänger-Adresse angelegt sein).
-  Sofort testen: im Telegram-Bot `/monatsbericht`.
+- **Monatsbericht per Mail:** am 1. jedes Monats um 7 Uhr an `rule_settings.monthly_report_email`
+  (gf@bsnewfitness.de). Aufbau wie in Personio/Papershift: Kennzahlen des Vormonats (Ist/Soll, Minusstunden,
+  Verspätungen, Krank, Urlaub) → Auffälligkeiten (Minusstunden, ab 3× zu spät, viel krank, Schicht ohne
+  Stempelung, Ausstempeln vergessen) → je Studio eine Zeile pro Mitarbeiter (Soll/Ist/Saldo, Verspätungen mit
+  Ampel, Verspätungen 3 Monate, Krank Monat/Jahr, Urlaub, Resturlaub) → Wochenübersicht (Ist/Soll je KW) →
+  Ausblick aktueller und kommender Monat (geplant gegen Soll). Excel-Anhang mit Übersicht, Wochen, Ausblick,
+  Dienstplan und je Mitarbeiter einem Stundenzettel. Soll = Wochenstunden ÷ 7 × Kalendertage (wie im Portal).
+  Versand über Resend (Secret `RESEND_API_KEY`; ohne eigene Domain muss das Resend-Konto mit der
+  Empfänger-Adresse angelegt sein). Sofort testen: im Telegram-Bot `/monatsbericht`.
 - **PC als zweites Terminal:** Am PC die App öffnen → „PC im Studio als Terminal“ → mit dem eigenen
   Clock-In-Zugang anmelden (wird direkt danach wieder abgemeldet) → Studio wählen → „Freigabe anfragen“.
   Tobias/Dominik bekommen die Anfrage per Telegram („✅ Ja, passt“) oder unter Einstellungen → PC-Anfragen.
