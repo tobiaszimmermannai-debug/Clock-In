@@ -1,6 +1,7 @@
 // Telegram-Integration – eine Datei, damit sie direkt im Supabase-Dashboard deploybar ist.
 // Meldungen: Stempelungen, Freigaben (Nachtrag, Überstunden, Schichttausch), 18-Uhr-Abwesenheitsfrage,
 // Wochenbericht am Freitag. Dazu am 1. jedes Monats die Monatsübersicht per Mail (Resend, Secret RESEND_API_KEY).
+// PC als Terminal: Anfrage mit „✅ Ja, passt“ → Terminal-Konto anlegen (wie ein Tablet, fest einem Studio zugeordnet).
 //   POST mit Header x-notify-secret                 → neue Buchung melden (Aufruf per pg_net aus der DB)
 //   POST mit Header x-telegram-bot-api-secret-token → Update von Telegram (/start, Buttons ✅/❌)
 // JWT-Prüfung der Function muss AUS sein; abgesichert wird über die beiden Secrets.
@@ -103,6 +104,14 @@ const ABSENCE: Record<string, { type: string; label: string }> = {
 async function handleNotify(
   body: { type?: string; id?: unknown; date?: unknown; from?: unknown; to?: unknown; month?: unknown },
 ): Promise<Response> {
+  if (body.type === "terminal_request" && typeof body.id === "string") return await terminalRequest(body.id);
+  if (body.type === "terminal_create" && typeof body.id === "string") {
+    const result = await createTerminal(body.id);
+    if (!result.ok) {
+      for (const a of await adminChats()) await sendMessage(a.chat_id, `⚠️ PC-Terminal konnte nicht angelegt werden: ${escapeHtml(result.text)}`);
+    }
+    return new Response(result.text, { status: result.ok ? 200 : 500 });
+  }
   if (body.type === "monthly_report") {
     const result = await monthlyReport(typeof body.month === "string" ? body.month : undefined);
     if (!result.ok) {
@@ -436,6 +445,77 @@ async function weeklyReport(from: string, to: string): Promise<Response> {
 // Telegram-Updates: /start und Buttons
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+// PC als Terminal: Anfrage → „Ja, passt“ → Konto anlegen (Benutzer pc-<studio>-xxxx, Passwort = Schlüssel des PCs)
+// -----------------------------------------------------------------------------
+const TERMINAL_DOMAIN = "kiosk.clockin.invalid"; // wie Tablets (account-admin)
+type TerminalRequest = {
+  id: string; name: string; status: string; password: string | null; location_id: string;
+  location: { name: string; code: string } | null; requester: Person | null;
+};
+
+async function loadTerminalRequest(id: string) {
+  const { data } = await supabase
+    .from("terminal_requests")
+    .select("id, name, status, password, location_id, location:locations(name, code), requester:users!terminal_requests_requested_by_fkey(first_name, last_name)")
+    .eq("id", id)
+    .maybeSingle<TerminalRequest>();
+  return data;
+}
+
+async function terminalRequest(id: string): Promise<Response> {
+  const r = await loadTerminalRequest(id);
+  if (!r) return new Response("not found", { status: 404 });
+  const text = `🖥 <b>Neues Terminal</b>\nPC „${escapeHtml(r.name)}“ möchte Terminal für <b>${escapeHtml(r.location?.name ?? "?")}</b> sein.\n` +
+    `Angefragt von ${escapeHtml(fullName(r.requester))}.`;
+  const keyboard = [[{ text: "✅ Ja, passt", callback_data: `tm:ok:${id}` }, { text: "❌ Nein", callback_data: `tm:no:${id}` }]];
+  await Promise.all((await adminChats()).map((a) => sendMessage(a.chat_id, text, keyboard)));
+  return new Response("sent");
+}
+
+async function decideTerminal(cq: CallbackQuery, admin: Admin, approve: boolean, id: string) {
+  const { data: updated } = await supabase
+    .from("terminal_requests")
+    .update(approve
+      ? { status: "approved", decided_by: admin.user_id, decided_at: new Date().toISOString() }
+      : { status: "rejected", password: null, decided_by: admin.user_id, decided_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("status", "pending")
+    .select("id");
+  if (!updated?.length) return await alreadyDone(cq, "Diese Anfrage ist schon entschieden.");
+  if (!approve) return await done(cq, "Abgelehnt", `❌ Abgelehnt von ${escapeHtml(fullName(admin.user))}`);
+  const result = await createTerminal(id);
+  return await done(cq, result.ok ? "Freigegeben" : "Fehler",
+    result.ok ? `✅ Freigegeben von ${escapeHtml(fullName(admin.user))} – ${escapeHtml(result.text)}` : `⚠️ ${escapeHtml(result.text)}`);
+}
+
+async function createTerminal(id: string): Promise<{ ok: boolean; text: string }> {
+  const r = await loadTerminalRequest(id);
+  if (!r || r.status !== "approved" || !r.password) return { ok: false, text: "Anfrage nicht gefunden oder schon erledigt." };
+  const code = (r.location?.code ?? "studio").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const username = `pc-${code}-${crypto.randomUUID().slice(0, 4)}`;
+  const { data: auth, error } = await supabase.auth.admin.createUser({
+    email: `${username}@${TERMINAL_DOMAIN}`,
+    password: r.password,
+    email_confirm: true,
+    app_metadata: { kiosk: true },
+  });
+  if (error || !auth.user) return { ok: false, text: `Konto konnte nicht angelegt werden: ${error?.message}` };
+  const { data: device, error: devErr } = await supabase
+    .from("kiosk_devices")
+    .insert({ auth_user_id: auth.user.id, name: r.name, location_id: r.location_id, username, kind: "pc" })
+    .select("id")
+    .single();
+  if (devErr || !device) {
+    await supabase.auth.admin.deleteUser(auth.user.id); // nichts Halbes zurücklassen
+    return { ok: false, text: `Terminal konnte nicht registriert werden: ${devErr?.message}` };
+  }
+  await supabase.from("terminal_requests")
+    .update({ status: "ready", username, device_id: device.id, password: null })
+    .eq("id", id);
+  return { ok: true, text: `„${r.name}“ ist jetzt Terminal für ${r.location?.name ?? "das Studio"}.` };
+}
+
+// -----------------------------------------------------------------------------
 // Monatsübersicht per Mail (1. des Monats bzw. /monatsbericht): Vormonat, aktueller und kommender Monat –
 // alle Schichten mit Zeiten, Abwesenheiten und Urlaub (genommen / eingetragen / übrig). Dazu eine CSV für Excel.
 // -----------------------------------------------------------------------------
@@ -637,6 +717,8 @@ async function handleCallback(cq: CallbackQuery) {
       return await decideAbsence(cq, admin, parts[1], parts[2], parts[3]);
     case "sw":
       return await decideSwap(cq, admin, parts[1] === "ok", parts[2]);
+    case "tm":
+      return await decideTerminal(cq, admin, parts[1] === "ok", parts[2]);
     default:
       await tg("answerCallbackQuery", { callback_query_id: cq.id });
   }

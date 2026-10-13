@@ -51,6 +51,9 @@ function errorPhase(e: unknown): Phase {
     : { kind: "error", text: "Keine Verbindung. Bitte Internet prüfen." };
 }
 
+// Nur das eigene Handy stempelt (prüft auch der Server) – nicht Studio-PC oder -Tablet
+const IS_PHONE = typeof navigator === "undefined" || !navigator.userAgent || /mobi|iphone|ipod/i.test(navigator.userAgent);
+
 export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [status, setStatus] = useState<{ state: WorkState; since?: string }>();
@@ -200,16 +203,22 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
       )}
       <div className="panel stamp-hero">
         <span className="stamp-hero-icon"><Icon name="qr" size={34} /></span>
-        <h2>QR-Code am Tablet scannen</h2>
-        <p className="muted">Kommen, Pause und Gehen – im Studio direkt am Tablet.</p>
-        <button type="button" className="btn btn-primary btn-block btn-lg" onClick={() => setPhase({ kind: "scan" })}>
-          <Icon name="qr" size={20} /> {phase.kind === "error" ? "Erneut scannen" : "Scannen"}
-        </button>
+        <h2>QR-Code am Tablet oder PC scannen</h2>
+        {IS_PHONE ? (
+          <>
+            <p className="muted">Kommen, Pause und Gehen – im Studio direkt am Tablet oder PC.</p>
+            <button type="button" className="btn btn-primary btn-block btn-lg" onClick={() => setPhase({ kind: "scan" })}>
+              <Icon name="qr" size={20} /> {phase.kind === "error" ? "Erneut scannen" : "Scannen"}
+            </button>
+          </>
+        ) : (
+          <Notice tone="warn">Stempeln geht nur mit deinem eigenen Handy – nicht am PC oder Tablet.</Notice>
+        )}
       </div>
-      <VacationRow onOpen={props.onOpenVacation} />
+      <VacationRow meId={props.me.id} onOpen={props.onOpenVacation} />
       <Section title="So geht's" footer="Kein Handy dabei oder Probleme? Bitte Tobias oder Dominik anrufen.">
         <Row leading={<LeadingIcon name="wifi" />} title="Mit dem Studio-WLAN verbinden" subtitle="Mobile Daten am besten ausschalten" />
-        <Row leading={<LeadingIcon name="qr" />} title="QR-Code am Tablet scannen" subtitle="Am besten hier mit „Scannen“ – dann erkennt das System dein Handy sicher" />
+        <Row leading={<LeadingIcon name="qr" />} title="QR-Code am Tablet oder PC scannen" subtitle="Am besten hier mit „Scannen“ – dann erkennt das System dein Handy sicher" />
         <Row leading={<LeadingIcon name="checkCircle" />} title="Kommen, Pause oder Gehen wählen" />
       </Section>
     </>

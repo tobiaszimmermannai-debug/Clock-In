@@ -16,7 +16,7 @@ export function Hours({ me }: { me: Me }) {
   const [stamps, setStamps] = useState<Stamp[]>([]);
   const [month, setMonth] = useState<{ ist: number; soll: number }>();
   const year = Number(today.slice(0, 4));
-  const vacation = useMyVacation(year);
+  const vacation = useMyVacation(me.id, year);
   const [error, setError] = useState<string>();
   const target = me.employment_details?.weekly_target_minutes ?? 0;
 

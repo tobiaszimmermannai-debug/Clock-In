@@ -24,7 +24,7 @@ const hasSession = (key: string) => {
   }
 };
 
-// Routen: #/kiosk = Tablet, #/portal = Mitarbeiter-Handy, #/s/<code> = QR vom Tablet gescannt, #/admin = Verwaltung.
+// Routen: #/kiosk = Tablet (#/kiosk/pc = PC als Terminal anfragen), #/portal = Mitarbeiter-Handy, #/s/<code> = QR vom Tablet gescannt, #/admin = Verwaltung.
 // Ohne Route (z. B. App vom Startbildschirm): eingerichtetes Tablet → Kiosk, angemeldetes Handy → Portal.
 export default function App() {
   const hash = useHash();
@@ -51,6 +51,7 @@ function Start() {
       <div className="list">
         <Row leading={<LeadingIcon name="phone" />} title="Mitarbeiter-Login" subtitle="Stempeln, Stunden, Dienstplan, Tausch" chevron onClick={go("#/portal")} />
         <Row leading={<LeadingIcon name="tablet" />} title="Tablet im Studio einrichten" subtitle="Zeigt den QR-Code zum Stempeln" chevron onClick={go("#/kiosk")} />
+        <Row leading={<LeadingIcon name="monitor" />} title="PC im Studio als Terminal" subtitle="Anfragen – Tobias oder Dominik geben frei" chevron onClick={go("#/kiosk/pc")} />
         <Row leading={<LeadingIcon name="shield" />} title="Verwaltung" subtitle="Studioleitung und Geschäftsführung" chevron onClick={go("#/admin")} />
       </div>
     </AuthLayout>

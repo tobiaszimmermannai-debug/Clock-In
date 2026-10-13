@@ -1,4 +1,5 @@
-// Tablets (nur Admin): anlegen, sperren, löschen, Passwort neu setzen – darunter die Studios
+// Tablets & PCs (nur Admin): anlegen, sperren, löschen, Passwort neu setzen – darunter die Studios.
+// PCs fragen selbst an (Startseite → „PC im Studio als Terminal“); hier oder per Telegram „Ja, passt“.
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Field, Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet } from "../components/ui";
 import { accountAdmin, generatePassword } from "../lib/accountAdmin";
@@ -6,7 +7,8 @@ import { adminDb } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
 import { StudiosSection } from "./Studios";
 
-type Tablet = { id: string; name: string; username: string | null; location_id: string | null; is_active: boolean };
+type Tablet = { id: string; name: string; username: string | null; location_id: string | null; is_active: boolean; kind?: string };
+type TerminalRequest = { id: string; name: string; location_name: string; requested_by: string | null; created_at: string; status: string };
 type Seen = { last_seen_at: string; network: string | null };
 
 // "vor 3 Min." – zuletzt online
@@ -25,14 +27,17 @@ export function Tablets() {
   const [creating, setCreating] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string }>();
+  const [requests, setRequests] = useState<TerminalRequest[]>([]);
 
   const load = useCallback(async () => {
-    const [devices, locs, qr, nets] = await Promise.all([
-      adminDb.from("kiosk_devices").select("id, name, username, location_id, is_active").is("archived_at", null).order("name"),
+    const [devices, locs, qr, nets, open] = await Promise.all([
+      adminDb.from("kiosk_devices").select("*").is("archived_at", null).order("name"),
       adminDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
       adminDb.from("kiosk_qr").select("device_id, last_seen_at"),
       adminDb.from("kiosk_networks").select("device_id, network, last_seen_at").order("last_seen_at", { ascending: false }),
+      adminDb.rpc("open_terminal_requests"),
     ]);
+    setRequests((open.data ?? []) as TerminalRequest[]);
     // Zuletzt gesehenes Netz je Tablet (öffentliche Adresse des Studio-WLANs)
     const map: Record<string, Seen> = {};
     for (const q of qr.data ?? []) map[q.device_id] = { last_seen_at: q.last_seen_at, network: null };
@@ -67,6 +72,19 @@ export function Tablets() {
     void load();
   }
 
+  async function decide(r: TerminalRequest, approve: boolean) {
+    const { error } = await adminDb.rpc("decide_terminal_request", { p_id: r.id, p_approve: approve });
+    if (error) return setMessage({ tone: "error", text: error.message });
+    setMessage({
+      tone: "ok",
+      text: approve
+        ? `„${r.name}“ freigegeben – der PC startet gleich von selbst mit dem QR-Code für ${studioShort(r.location_name)}.`
+        : `Anfrage „${r.name}“ abgelehnt.`,
+    });
+    void load();
+    if (approve) setTimeout(() => void load(), 4000); // Konto legt die Telegram-Function an
+  }
+
   async function resetPassword(t: Tablet) {
     const password = generatePassword();
     try {
@@ -83,7 +101,7 @@ export function Tablets() {
     <>
       <PageHeader
         title="Einstellungen"
-        subtitle="Tablets und Studios"
+        subtitle="Tablets, PCs und Studios"
         actions={
           <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
             <Icon name="plus" size={20} /> Neues Tablet
@@ -91,12 +109,33 @@ export function Tablets() {
         }
       />
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
-      <Section title="Tablets" footer="Am Tablet die App-Adresse öffnen und mit Benutzername + Passwort anmelden. „Netz“ ist die Internet-Adresse des Studio-WLANs – damit müssen auch die Handys verbunden sein.">
+      {requests.length > 0 && (
+        <Section title="PC-Anfragen" aside={<span>{requests.length}</span>}
+          footer="Der PC zeigt nach der Freigabe den QR-Code wie das Tablet. Gestempelt wird nur mit dem eigenen Handy.">
+          {requests.map((r) => (
+            <div key={r.id} className="list-item">
+              <Row
+                leading={<LeadingIcon name="monitor" />}
+                title={`${r.name} → ${studioShort(r.location_name)}`}
+                subtitle={`angefragt von ${r.requested_by ?? "?"} · ${ago(r.created_at).replace(" online", "")}`}
+                trailing={r.status === "approved" ? <Pill tone="accent">wird eingerichtet</Pill> : undefined}
+              />
+              {r.status === "pending" && (
+                <div className="list-actions indent">
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => void decide(r, true)}>Ja, passt</button>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => void decide(r, false)}>Nein</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </Section>
+      )}
+      <Section title="Tablets & PCs" footer="Am Tablet die App-Adresse öffnen und mit Benutzername + Passwort anmelden. „Netz“ ist die Internet-Adresse des Studio-WLANs – damit müssen auch die Handys verbunden sein.">
         {tablets.length === 0 && <p className="list-empty">Noch keine Tablets angelegt.</p>}
         {tablets.map((t) => (
           <div key={t.id} className="list-item">
             <Row
-              leading={<LeadingIcon name="tablet" />}
+              leading={<LeadingIcon name={t.kind === "pc" ? "monitor" : "tablet"} />}
               title={t.name}
               subtitle={
                 <>

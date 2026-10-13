@@ -4,17 +4,19 @@ import { LeadingIcon, Row, Section } from "../components/ui";
 import { berlinDate, berlinToISO, fmtDay, vacationRanges } from "../lib/dates";
 import { portalDb } from "../lib/supabase";
 
-export type MyVacation = { allowance: number | null; taken: number; planned: number };
+export type MyVacation = { user_id: string; allowance: number | null; taken: number; planned: number };
 
 const fmt = (n: number) => String(n).replace(".", ",");
 const days = (n: number) => `${fmt(n)} ${n === 1 ? "Tag" : "Tage"}`;
 export const vacationLeft = (v: MyVacation) => (v.allowance === null ? null : Number(v.allowance) - v.taken - v.planned);
 
-export function useMyVacation(year: number) {
+// Eigene Zeile wählen: Studioleitungen bekommen hier auch ihre Leute zurück – nicht einfach die erste nehmen
+export function useMyVacation(meId: string, year: number) {
   const [vacation, setVacation] = useState<MyVacation | null>();
   useEffect(() => {
-    void portalDb.rpc("vacation_overview", { p_year: year }).then(({ data }) => setVacation((data ?? [])[0] ?? null));
-  }, [year]);
+    void portalDb.rpc("vacation_overview", { p_year: year }).then(({ data }) =>
+      setVacation(((data ?? []) as MyVacation[]).find((v) => v.user_id === meId) ?? null));
+  }, [meId, year]);
   return vacation;
 }
 
@@ -42,7 +44,7 @@ export function VacationCard(props: { year: number; vacation: MyVacation | null 
 export function VacationSection(props: { meId: string }) {
   const today = berlinDate();
   const year = Number(today.slice(0, 4));
-  const vacation = useMyVacation(year);
+  const vacation = useMyVacation(props.meId, year);
   const [upcoming, setUpcoming] = useState<string[]>([]);
 
   useEffect(() => {
@@ -82,9 +84,9 @@ export function VacationSection(props: { meId: string }) {
 }
 
 // Kompakt auf der Startseite (Stempeln)
-export function VacationRow(props: { onOpen?: () => void }) {
+export function VacationRow(props: { meId: string; onOpen?: () => void }) {
   const year = Number(berlinDate().slice(0, 4));
-  const v = useMyVacation(year);
+  const v = useMyVacation(props.meId, year);
   const left = v ? vacationLeft(v) : null;
   if (!v || left === null) return null;
   return (

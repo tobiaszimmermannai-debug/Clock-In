@@ -1,4 +1,5 @@
-// Tablet-Einrichtung: Kiosk-Konto anmelden, Gerät prüfen, Studio wählen
+// Tablet-Einrichtung: Kiosk-Konto anmelden, Gerät prüfen, Studio wählen.
+// PC als Terminal: ohne Konto anfragen → nach „Ja, passt“ meldet sich der PC selbst an (TerminalRequest).
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { kioskLoginEmail } from "../lib/config";
 import { clearAll, getCache, setCache } from "../lib/db";
@@ -7,10 +8,13 @@ import { Field, Notice } from "../components/ui";
 import { kioskDb } from "../lib/supabase";
 import { type KioskDevice, type Location, studioShort } from "../lib/types";
 import { Kiosk, type KioskSession } from "./Kiosk";
+import { type StoredRequest, TerminalRequest, TerminalWait, storedRequest } from "./TerminalRequest";
 
 type Phase =
   | { kind: "loading" }
   | { kind: "login"; error?: string }
+  | { kind: "terminal-request" }
+  | { kind: "terminal-wait"; request: StoredRequest }
   | { kind: "pick-location"; device: KioskDevice; locations: Location[] }
   | { kind: "ready"; session: KioskSession };
 
@@ -19,7 +23,11 @@ export function KioskApp() {
 
   const resolve = useCallback(async () => {
     const { data } = await kioskDb.auth.getSession();
-    if (!data.session) return setPhase({ kind: "login" });
+    if (!data.session) {
+      const request = storedRequest();
+      if (request) return setPhase({ kind: "terminal-wait", request });
+      return setPhase(window.location.hash.startsWith("#/kiosk/pc") ? { kind: "terminal-request" } : { kind: "login" });
+    }
 
     // Gerät & Studios: online frisch laden, offline aus dem Cache
     let device = await getCache<KioskDevice>("device");
@@ -55,7 +63,15 @@ export function KioskApp() {
   }, [resolve]);
 
   if (phase.kind === "loading") return <div className="screen center muted">Lädt …</div>;
-  if (phase.kind === "login") return <KioskLogin error={phase.error} onDone={resolve} />;
+  if (phase.kind === "login") {
+    return <KioskLogin error={phase.error} onDone={resolve} onTerminal={() => setPhase({ kind: "terminal-request" })} />;
+  }
+  if (phase.kind === "terminal-request") {
+    return <TerminalRequest onRequested={resolve} onCancel={() => setPhase({ kind: "login" })} />;
+  }
+  if (phase.kind === "terminal-wait") {
+    return <TerminalWait request={phase.request} onReady={resolve} onRestart={() => setPhase({ kind: "login" })} />;
+  }
   if (phase.kind === "pick-location") {
     return (
       <div className="auth">
@@ -92,7 +108,7 @@ export function KioskApp() {
   );
 }
 
-function KioskLogin(props: { error?: string; onDone: () => void }) {
+function KioskLogin(props: { error?: string; onDone: () => void; onTerminal: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(props.error);
 
@@ -125,6 +141,9 @@ function KioskLogin(props: { error?: string; onDone: () => void }) {
           {busy ? "Anmelden …" : "Anmelden"}
         </button>
       </form>
+      <p className="auth-foot">
+        <button type="button" className="btn btn-outline btn-block" onClick={props.onTerminal}>PC als Terminal einrichten (ohne Tablet-Konto)</button>
+      </p>
       <p className="auth-foot"><a href="#/">Zur Startseite</a></p>
     </AuthLayout>
   );

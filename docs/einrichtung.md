@@ -107,6 +107,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 18. `supabase/migrations/20261012090000_herold_shifts.sql` (Schichttyp „Herold + Schicht“)
 19. `supabase/migrations/20261012120000_school_7h_day_off.sql` (Schule 7 Std., „Frei“ für Vollzeitkräfte)
 20. `supabase/migrations/20261012150000_monthly_report_network.sql` (Netz-Check /16, Monatsübersicht per Mail)
+21. `supabase/migrations/20261013090000_pc_terminals.sql` (PC als Terminal je Studio, Stempeln nur per Handy)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -207,6 +208,12 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   Schule, Frei und Urlaub genommen/eingetragen/übrig – plus CSV für Excel. Versand über Resend (Secret
   `RESEND_API_KEY`; ohne eigene Domain muss das Resend-Konto mit der Empfänger-Adresse angelegt sein).
   Sofort testen: im Telegram-Bot `/monatsbericht`.
+- **PC als zweites Terminal:** Am PC die App öffnen → „PC im Studio als Terminal“ → mit dem eigenen
+  Clock-In-Zugang anmelden (wird direkt danach wieder abgemeldet) → Studio wählen → „Freigabe anfragen“.
+  Tobias/Dominik bekommen die Anfrage per Telegram („✅ Ja, passt“) oder unter Einstellungen → PC-Anfragen.
+  Danach zeigt der PC den QR-Code wie das Tablet (fest dem Studio zugeordnet).
+- **Stempeln nur mit dem eigenen Handy:** Am Studio-PC oder -Tablet (auch per Kamera auf den Code des
+  anderen Geräts) geht Stempeln nicht – Server und App prüfen, ob es ein Handy ist.
 - **Schichttausch:** normal nur im eigenen Studio (Studioleitung gibt frei). Knopf „Mit anderem Studio“:
   beide Studioleitungen müssen zustimmen; ein Admin (auch per Telegram) gibt für beide frei.
 - **Studio besetzt:** erste Stempelung des Tages je Studio → 🟢-Meldung; 10 Min. nach der ersten geplanten

@@ -14,6 +14,13 @@ function client(storageKey: string): SupabaseClient {
   });
 }
 
+/** Einmal-Sitzung ohne Speichern (z. B. Anmeldung am PC nur für die Terminal-Anfrage) */
+export function tempClient(): SupabaseClient {
+  return createClient(url ?? "http://localhost", key ?? "missing", {
+    auth: { storageKey: "clockin-temp", persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
 export const kioskDb = client("clockin-kiosk");
 export const adminDb = client("clockin-admin");
 export const portalDb = client("clockin-portal");
