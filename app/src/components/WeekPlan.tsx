@@ -17,6 +17,7 @@ export type PlanShift = {
   note: string | null;
   is_acquisition?: boolean;
   is_herold?: boolean;
+  credit_by_time?: boolean; // Schule/Prüfung als Teil des Tages (zählt mit der Dauer)
   credit_share?: number;
   user: { first_name: string; last_name: string; home_location_id?: string | null } | null;
   location: { name: string } | null;
@@ -65,6 +66,7 @@ export function ShiftRow(props: { shift: PlanShift; mine?: boolean; showStudio?:
     isHelpShift(s) ? "Aushilfe" : "",
     isSickSwap(s) ? `${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} statt Schicht` : "",
     s.shift_type === "vocational_school" && s.note?.startsWith("IST: ") ? s.note.slice(5) : "",
+    s.credit_by_time ? `${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)}${s.note ? ` ${s.note}` : ""}` : "",
     s.shift_type === "work" && s.note && !isHelpShift(s) ? s.note : "",
   ].filter(Boolean).join(" · ");
   return (

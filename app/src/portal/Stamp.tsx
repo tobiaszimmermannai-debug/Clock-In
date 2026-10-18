@@ -5,9 +5,10 @@ import { ACTIONS, ACTION_ICON, GREETING } from "../components/actions";
 import { QrScanner } from "../components/QrScanner";
 import { Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
 import { type Notice as ShiftNote, relevantShift, shiftNotice } from "../lib/shiftInfo";
-import { type StampCheck, StampError, parseToken, stamp, stampCheck } from "../lib/stamp";
+import { type EarlyReason, type StampCheck, StampError, parseToken, stamp, stampCheck } from "../lib/stamp";
 import { currentState, validateAction, type WorkState } from "../lib/status";
 import { portalDb } from "../lib/supabase";
+import { fmtHM } from "../lib/dates";
 import { fmtClock } from "../lib/time";
 import { DEFAULT_RULES, EVENT_LABEL, type EventType, type LogEntry, type RuleSettings, type Shift, studioShort } from "../lib/types";
 import type { Me } from "./PortalApp";
@@ -20,7 +21,9 @@ type Phase =
   | { kind: "scan" }
   | { kind: "checking" }
   | { kind: "choose"; token: string; check: StampCheck; ctx: Context; busy?: boolean }
-  | { kind: "done"; event: EventType; at: string; location: string; note: ShiftNote | null; registered: boolean; pending: boolean }
+  // mehr als 30 Min. vor Schichtende gehen: erst nach dem Grund fragen
+  | { kind: "early"; choose: Extract<Phase, { kind: "choose" }>; minutes: number; end: string; busy?: boolean }
+  | { kind: "done"; event: EventType; at: string; location: string; note: ShiftNote | null; registered: boolean; pending: boolean; early?: boolean }
   | { kind: "error"; text: string; detail?: string };
 
 function StatusPill(props: { state: WorkState; since?: string | null }) {
@@ -40,7 +43,7 @@ async function loadContext(userId: string): Promise<Context> {
       .eq("user_id", userId)
       .gte("starts_at", new Date(now - 86_400_000).toISOString())
       .lte("starts_at", new Date(now + 86_400_000).toISOString()),
-    portalDb.from("rule_settings").select("late_tolerance_minutes, overtime_threshold_minutes, min_break_minutes, help_shift_minutes").maybeSingle(),
+    portalDb.from("rule_settings").select("late_tolerance_minutes, overtime_threshold_minutes, min_break_minutes, help_shift_minutes, early_leave_minutes").maybeSingle(),
   ]);
   return { shifts: (shifts.data ?? []) as Shift[], rules: (rules.data as RuleSettings | null) ?? DEFAULT_RULES };
 }
@@ -97,10 +100,16 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
     void check(token);
   }
 
-  async function book(p: Extract<Phase, { kind: "choose" }>, event: EventType) {
-    setPhase({ ...p, busy: true });
+  async function book(p: Extract<Phase, { kind: "choose" }>, event: EventType, earlyReason?: EarlyReason) {
+    // Früher gehen? Dann erst fragen: wenig los oder krank (Tobias/Dominik geben frei)
+    if (event === "clock_out" && !earlyReason) {
+      const shift = relevantShift(p.ctx.shifts, props.me.id, new Date());
+      const minutes = shift ? Math.round((Date.parse(shift.ends_at) - Date.now()) / 60_000) : 0;
+      if (shift && minutes > (p.ctx.rules.early_leave_minutes ?? 30)) return setPhase({ kind: "early", choose: p, minutes, end: shift.ends_at });
+    }
+    setPhase((prev) => (prev.kind === "early" ? { ...prev, busy: true } : { ...p, busy: true }));
     try {
-      const result = await stamp(p.token, event);
+      const result = await stamp(p.token, event, earlyReason);
       const at = new Date(result.recorded_at);
       const note = shiftNotice(event, relevantShift(p.ctx.shifts, props.me.id, at), at, {
         since: p.check.since ?? undefined,
@@ -108,7 +117,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
       });
       setPhase({
         kind: "done", event, at: result.recorded_at, location: result.location, note,
-        registered: p.check.registered, pending: !!result.pending,
+        registered: p.check.registered, pending: !!result.pending, early: !!result.early,
       });
       void loadStatus();
     } catch (e) {
@@ -133,6 +142,29 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         <h2>Prüfe …</h2>
         <p className="muted">Handy, QR-Code und Studio-WLAN</p>
       </div>
+    );
+  }
+
+  if (phase.kind === "early") {
+    const p = phase.choose;
+    return (
+      <>
+        <PageHeader title="Früher gehen?" subtitle={phase.end ? `Schicht bis ${fmtClock(phase.end)} Uhr` : undefined} />
+        <div className="panel stamp-hero">
+          <span className="stamp-hero-icon"><Icon name="clock" size={34} /></span>
+          <h2>{phase.minutes ? `${fmtHM(phase.minutes)} Std. vor Schichtende` : "Warum gehst du früher?"}</h2>
+          <p className="muted">Warum gehst du früher? Tobias oder Dominik geben frei – sonst zählen die fehlenden Stunden als Minusstunden.</p>
+          <div className="early-actions">
+            <button type="button" className="btn btn-outline btn-block btn-lg" disabled={phase.busy} onClick={() => void book(p, "clock_out", "slow")}>
+              📉 Wenig los / weniger Trainings
+            </button>
+            <button type="button" className="btn btn-outline btn-block btn-lg" disabled={phase.busy} onClick={() => void book(p, "clock_out", "sick")}>
+              🤒 Ich bin krank
+            </button>
+          </div>
+        </div>
+        <button type="button" className="btn btn-plain btn-block" disabled={phase.busy} onClick={() => setPhase(p)}>Zurück</button>
+      </>
     );
   }
 
@@ -186,6 +218,9 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         {phase.registered && <Notice tone="ok">Dieses Handy ist jetzt dein Stempel-Handy.</Notice>}
         {phase.pending && (
           <Notice tone="warn">Gespeichert – wartet auf Freigabe durch Tobias oder Dominik (anderes Handy/Browser).</Notice>
+        )}
+        {phase.early && (
+          <Notice tone="warn">Früher gegangen – Tobias oder Dominik entscheiden, wie die restliche Zeit zählt. Gute Besserung, falls du krank bist!</Notice>
         )}
         <button type="button" className="btn btn-primary btn-block" onClick={() => setPhase({ kind: "idle" })}>Fertig</button>
       </div>

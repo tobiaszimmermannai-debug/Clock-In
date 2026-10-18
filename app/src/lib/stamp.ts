@@ -40,7 +40,9 @@ export const stampUrl = (token: string, origin = publicAppUrl()) => `${origin}/#
 
 // unverified: anderes Handy/Browser als registriert → Buchung wartet auf Freigabe (pending)
 export type StampCheck = { location: string; state: WorkState; since: string | null; registered: boolean; unverified?: boolean };
-export type StampResult = { id: string; event_type: EventType; recorded_at: string; location: string; pending?: boolean };
+export type StampResult = { id: string; event_type: EventType; recorded_at: string; location: string; pending?: boolean; early?: boolean };
+/** Grund beim früheren Gehen: wenig los (weniger Trainings) oder krank */
+export type EarlyReason = "slow" | "sick";
 
 /** Serverfehler: Haupttext + technischer Zusatz in eckigen Klammern (Netz-Adressen) */
 export class StampError extends Error {
@@ -59,4 +61,5 @@ async function call<T>(fn: string, args: Record<string, unknown>): Promise<T> {
 }
 
 export const stampCheck = (token: string) => call<StampCheck>("stamp_check", { p_token: token });
-export const stamp = (token: string, event: EventType) => call<StampResult>("stamp", { p_token: token, p_event: event });
+export const stamp = (token: string, event: EventType, earlyReason?: EarlyReason) =>
+  call<StampResult>("stamp", { p_token: token, p_event: event, ...(earlyReason ? { p_early_reason: earlyReason } : {}) });

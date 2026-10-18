@@ -1,6 +1,8 @@
 // Dienstplan schreiben: Studio → Woche → Tag antippen → „Eintragen“ → Art (Dropdown, Standard Studio-Schicht):
 // Studio-Schicht · Aushilfe anfragen · Aushilfe stellen · Akquise · Herold + Schicht · Urlaub · Krank · Schule.
 // Herold + Schicht: erst Herold in Krailling, danach Schicht im Studio – zwei Schichten, je ein- und auschecken.
+// Splitschicht: zwei Zeiten im selben Studio. Schule/Prüfung + Schicht: Schul-Teil zählt mit seiner Dauer.
+// Pausen rechnet die Datenbank für den ganzen Tag (gesetzlich; Lücke zwischen den Teilen ab 15 Min.).
 // Studioleitung plant ihr Studio (auch mit Aushilfen von woanders) und ihre eigenen Leute in jedem Studio
 // (Aushilfe stellen – mit oder ohne Anfrage, Akquise). Wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
 // Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
@@ -38,13 +40,16 @@ const employedOn = (p: Staffer, day: string) =>
 const ABSENCE_TIMES = { from: "08:00", to: "14:30" };
 const MAX_ABSENCE_DAYS = 62;
 
-type Category = "work" | "help_request" | "help_fill" | "acq" | "herold" | "vacation" | "sick" | "vocational_school" | "day_off";
+type Category = "work" | "split" | "help_request" | "help_fill" | "acq" | "herold" | "school_shift" | "vacation" | "sick"
+  | "vocational_school" | "day_off";
 const CATEGORIES: { id: Category; label: string }[] = [
   { id: "work", label: "Studio-Schicht" },
+  { id: "split", label: "Splitschicht (2 Zeiten)" },
   { id: "help_request", label: "Aushilfe anfragen" },
   { id: "help_fill", label: "Aushilfe stellen (in anderem Studio)" },
   { id: "acq", label: "Akquise" },
   { id: "herold", label: "Herold + Schicht" },
+  { id: "school_shift", label: "Schule/Prüfung + Schicht" },
   { id: "vacation", label: "Urlaub" },
   { id: "sick", label: "Krank" },
   { id: "vocational_school", label: "Schule" },
@@ -56,6 +61,8 @@ const SHEET_TITLE: Record<Category, string> = {
   help_fill: "Aushilfe stellen",
   acq: "Akquise eintragen",
   herold: "Herold + Schicht",
+  split: "Splitschicht",
+  school_shift: "Schule/Prüfung + Schicht",
   vacation: "Urlaub eintragen",
   sick: "Krank eintragen",
   vocational_school: "Schule eintragen",
@@ -71,6 +78,8 @@ const TRAINEE_RULE = `Azubi: Wochenstunden ÷ ${String(ABSENCE_WEEK_DAYS).replac
 // Zuletzt eingetragene Zeiten als Vorschlag für die nächste Schicht
 let lastTimes = { from: "09:00", to: "15:30" };
 let lastHerold = { from: "09:00", to: "11:00" };
+let lastSplit = { from: "08:00", to: "12:00" };
+let lastSchool = { from: "08:00", to: "12:00" };
 // Herold findet immer im Studio Krailling statt
 const HEROLD_STUDIO = "KRAILLING";
 
@@ -461,8 +470,10 @@ function AddShift(props: {
   const [from, setFrom] = useState(lastTimes.from);
   const [to, setTo] = useState(lastTimes.to);
   const [acqStudio, setAcqStudio] = useState(props.studio);
-  const [heroldFrom, setHeroldFrom] = useState(lastHerold.from);
-  const [heroldTo, setHeroldTo] = useState(lastHerold.to);
+  // Erster Teil bei zwei Zeiten (Herold, Splitschicht, Schule/Prüfung)
+  const [firstFrom, setFirstFrom] = useState(lastHerold.from);
+  const [firstTo, setFirstTo] = useState(lastHerold.to);
+  const [schoolKind, setSchoolKind] = useState<"Schule" | "Nachprüfung">("Schule");
   const [until, setUntil] = useState(props.day);
   const [saturdays, setSaturdays] = useState(false);
   const [sickShiftId, setSickShiftId] = useState("");
@@ -477,9 +488,14 @@ function AddShift(props: {
   const isHerold = cat === "herold";
   const herold = props.locations.find((l) => l.code === HEROLD_STUDIO);
   const heroldName = studioShort(herold?.name ?? "Krailling");
-  // Herold und Schicht dürfen sich nicht überschneiden (Reihenfolge egal)
-  const heroldValid = minutesBetween(heroldFrom, heroldTo) > 0 && minutesBetween(from, to) > 0
-    && (minutesBetween(heroldTo, from) >= 0 || minutesBetween(to, heroldFrom) >= 0);
+  const isSplit = cat === "split";
+  const isSchoolShift = cat === "school_shift";
+  const twoPart = isHerold || isSplit || isSchoolShift;
+  // Zwei Teile dürfen sich nicht überschneiden (Reihenfolge egal)
+  const twoValid = minutesBetween(firstFrom, firstTo) > 0 && minutesBetween(from, to) > 0
+    && (minutesBetween(firstTo, from) >= 0 || minutesBetween(to, firstFrom) >= 0);
+  const firstTitle = isHerold ? `Herold in ${heroldName}` : isSplit ? "1. Teil" : schoolKind;
+  const secondTitle = isSplit ? "2. Teil" : `Schicht in ${props.studioName}`;
   const isWork = cat === "work" || isAcq;
   const isHelpReq = cat === "help_request";
   const isHelpFill = cat === "help_fill";
@@ -522,6 +538,9 @@ function AddShift(props: {
 
   function choose(next: Category) {
     setCat(next);
+    const first = next === "herold" ? lastHerold : next === "split" ? lastSplit : lastSchool;
+    setFirstFrom(first.from);
+    setFirstTo(first.to);
     setUserId("");
     setSickShiftId("");
     setRequestId("");
@@ -578,21 +597,44 @@ function AddShift(props: {
     }
     if (isHerold) {
       if (!herold) return setError("Studio Krailling nicht gefunden.");
-      if (!heroldValid) return setError("Bitte Zeiten prüfen: Ende nach Beginn, Herold und Schicht ohne Überschneidung.");
+      if (!twoValid) return setError("Bitte Zeiten prüfen: Ende nach Beginn, Herold und Schicht ohne Überschneidung.");
       setBusy(true);
       // zwei Schichten: Herold in Krailling (markiert) + Schicht im Studio – beides in einem Schritt
       const { error } = await adminDb.from("shifts").insert([
         { user_id: person.id, shift_type: "work", location_id: herold.id, is_herold: true,
-          starts_at: berlinToISO(props.day, heroldFrom), ends_at: berlinToISO(props.day, heroldTo) },
+          starts_at: berlinToISO(props.day, firstFrom), ends_at: berlinToISO(props.day, firstTo) },
         { user_id: person.id, shift_type: "work", location_id: props.studio, is_herold: false,
           starts_at: berlinToISO(props.day, from), ends_at: berlinToISO(props.day, to) },
       ]);
       setBusy(false);
       if (error?.code === "23P01") return setError("An diesem Tag ist schon eine Schicht zu dieser Zeit eingetragen.");
       if (error) return setError(dbMessage(error));
-      lastHerold = { from: heroldFrom, to: heroldTo };
+      lastHerold = { from: firstFrom, to: firstTo };
       lastTimes = { from, to };
-      return props.onSaved(`${fullName(person)}: Herold in ${heroldName} ${heroldFrom}–${heroldTo} Uhr + Schicht in ${props.studioName} ${from}–${to} Uhr eingetragen.`);
+      return props.onSaved(`${fullName(person)}: Herold in ${heroldName} ${firstFrom}–${firstTo} Uhr + Schicht in ${props.studioName} ${from}–${to} Uhr eingetragen.`);
+    }
+    if (isSplit || isSchoolShift) {
+      if (!twoValid) return setError("Bitte Zeiten prüfen: Ende nach Beginn, beide Teile ohne Überschneidung.");
+      setBusy(true);
+      // gleiche Felder in beiden Zeilen (sonst setzt die Datenbank fehlende auf leer)
+      const work = (a: string, b: string) => ({
+        user_id: person.id, shift_type: "work", location_id: props.studio, credit_by_time: false,
+        starts_at: berlinToISO(props.day, a), ends_at: berlinToISO(props.day, b), note: isSplit ? "Splitschicht" : null,
+      });
+      const { error } = await adminDb.from("shifts").insert(isSplit
+        ? [work(firstFrom, firstTo), work(from, to)]
+        : [{ user_id: person.id, shift_type: "vocational_school", location_id: null, credit_by_time: true,
+            starts_at: berlinToISO(props.day, firstFrom), ends_at: berlinToISO(props.day, firstTo), note: schoolKind },
+          work(from, to)]);
+      setBusy(false);
+      if (error?.code === "23P01") return setError("An diesem Tag ist schon etwas zu dieser Zeit eingetragen.");
+      if (error) return setError(dbMessage(error));
+      if (isSplit) lastSplit = { from: firstFrom, to: firstTo };
+      else lastSchool = { from: firstFrom, to: firstTo };
+      lastTimes = { from, to };
+      return props.onSaved(isSplit
+        ? `${fullName(person)}: Splitschicht ${firstFrom}–${firstTo} + ${from}–${to} Uhr eingetragen.`
+        : `${fullName(person)}: ${schoolKind} ${firstFrom}–${firstTo} + Schicht ${from}–${to} Uhr eingetragen.`);
     }
     if (isWork) {
       if (minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
@@ -649,7 +691,7 @@ function AddShift(props: {
   const canSave = isSwap ? !!sickShift && sickValid(sickShift, sickFrom)
     : isHelpReq ? minutesBetween(from, to) > 0
     : isHelpFill ? !!person && (!!request || (!!target && minutesBetween(from, to) > 0))
-    : isHerold ? !!person && !!herold && heroldValid
+    : twoPart ? !!person && twoValid && (!isHerold || !!herold)
     : !!person;
   const left = person && cat === "vacation" ? vacationLeft(person.id) : null;
   const dayCredit = person ? props.creditOf(person.id, minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to), 1) : undefined;
@@ -658,7 +700,8 @@ function AddShift(props: {
     <Sheet
       title={SHEET_TITLE[cat]}
       subtitle={`${fmtLongDay(props.day)} · ${isAcq ? `Akquise in ${locationName}` : isHelpFill ? `Aushilfe aus ${props.studioName} → ${targetName}`
-        : isHerold ? `Herold in ${heroldName} + Schicht in ${props.studioName}` : props.studioName}`}
+        : isHerold ? `Herold in ${heroldName} + Schicht in ${props.studioName}`
+        : isSplit ? `Splitschicht · ${props.studioName}` : isSchoolShift ? `${schoolKind} + Schicht in ${props.studioName}` : props.studioName}`}
       onClose={props.onClose}
       footer={
         <button type="button" className="btn btn-primary" disabled={!canSave || busy} onClick={() => void save()}>
@@ -702,6 +745,16 @@ function AddShift(props: {
         </Section>
       )}
 
+      {isSplit && (
+        <Notice>Zwei Zeiten in {props.studioName}: zu jedem Teil ein- und auschecken. Die Lücke dazwischen zählt als Pause (gesetzlich ab 15 Min. am Stück).</Notice>
+      )}
+      {isSchoolShift && (
+        <>
+          <Segmented label="Art" value={schoolKind} fill onChange={setSchoolKind}
+            options={[{ id: "Schule", label: "Schule" }, { id: "Nachprüfung", label: "Nachprüfung" }]} />
+          <Notice>{schoolKind} zählt mit der eingetragenen Dauer (statt pauschal 7 Std.), die Schicht wird ganz normal gestempelt.</Notice>
+        </>
+      )}
       {isHerold && (
         <Notice>Zwei Schichten an einem Tag: erst Herold in {heroldName} (dort ein- und auschecken), danach die Schicht in {props.studioName} (dort noch einmal ein- und auschecken).</Notice>
       )}
@@ -762,18 +815,18 @@ function AddShift(props: {
         </>
       )}
 
-      {isHerold && (
-        <Section title={`Herold in ${heroldName}`} plain>
-          <TimeFields id="herold" from={heroldFrom} to={heroldTo} onFrom={setHeroldFrom} onTo={setHeroldTo} />
+      {twoPart && (
+        <Section title={firstTitle} plain>
+          <TimeFields id="first" from={firstFrom} to={firstTo} onFrom={setFirstFrom} onTo={setFirstTo} />
         </Section>
       )}
-      {(isWork || isHelpReq || isHerold || (isHelpFill && !request)) && (
-        <Section title={isHerold ? `Schicht in ${props.studioName}` : "Wann?"} plain>
+      {(isWork || isHelpReq || twoPart || (isHelpFill && !request)) && (
+        <Section title={twoPart ? secondTitle : "Wann?"} plain>
           <TimeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
         </Section>
       )}
-      {isHerold && minutesBetween(heroldFrom, heroldTo) > 0 && minutesBetween(from, to) > 0 && !heroldValid && (
-        <Notice tone="warn">Herold und Schicht überschneiden sich – bitte Zeiten anpassen.</Notice>
+      {twoPart && minutesBetween(firstFrom, firstTo) > 0 && minutesBetween(from, to) > 0 && !twoValid && (
+        <Notice tone="warn">{firstTitle} und {secondTitle} überschneiden sich – bitte Zeiten anpassen.</Notice>
       )}
       {isHelpReq && (
         <Field label="Hinweis (optional)">
@@ -926,8 +979,10 @@ function EditShift(props: {
         <p>
           {SHIFT_TYPE_LABEL[s.shift_type]}
           {isSickSwap(s) && ` ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} Uhr (statt Schicht)`}
+          {s.credit_by_time && ` ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} Uhr${s.note ? ` (${s.note})` : ""}`}
           {s.shift_type === "day_off" ? " · zählt keine Stunden"
-            : s.shift_type === "vocational_school" ? ` · zählt mit ${fmtHM(SCHOOL_CREDIT_MINUTES)} Std.`
+            : s.shift_type === "vocational_school"
+              ? ` · zählt mit ${fmtHM(s.credit_by_time ? durationMinutes(s) : SCHOOL_CREDIT_MINUTES)} Std.`
             : <>
               {" · zählt mit "}
               {credit.minutes === undefined ? `anteiligem Tagesanteil (${TRAINEE_RULE})` : `${fmtHM(credit.minutes)} Std.`}

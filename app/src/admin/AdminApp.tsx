@@ -224,6 +224,7 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
     void Promise.all([
       adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
       adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("overtime_status", "pending"),
+      adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("early_status", "pending"),
       adminDb.from("swap_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
     ]).then((r) => setOpen(r.reduce((n, x) => n + (x.count ?? 0), 0)));
   }, [tab, timesView]);

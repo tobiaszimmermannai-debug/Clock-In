@@ -15,11 +15,13 @@ type Booking = {
   source: string;
   note: string | null;
   device_unverified?: boolean;
+  early_reason?: "slow" | "sick" | null;
   user: Person;
   creator: Person;
   location: { name: string } | null;
-  shift: { ends_at: string } | null;
+  shift: { starts_at: string; ends_at: string } | null;
 };
+type EarlyDecision = "sick" | "approved" | "rejected";
 type ShiftRef = { starts_at: string; ends_at: string; location: { name: string } | null } | null;
 type SwapRow = {
   id: string;
@@ -41,17 +43,18 @@ const shiftText = (s: ShiftRef) => (s ? `${when(s.starts_at)}–${berlinTime(s.e
 const BOOKING_SELECT = `*,
   user:users!time_logs_user_id_fkey(first_name, last_name),
   creator:users!time_logs_created_by_fkey(first_name, last_name),
-  location:locations(name), shift:shifts!time_logs_shift_id_fkey(ends_at)`;
+  location:locations(name), shift:shifts!time_logs_shift_id_fkey(starts_at, ends_at)`;
 
 export function Approvals({ profile }: { profile: Profile }) {
   const isAdmin = profile.role === "admin";
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [overtime, setOvertime] = useState<Booking[]>([]);
+  const [early, setEarly] = useState<Booking[]>([]);
   const [swaps, setSwaps] = useState<SwapRow[]>([]);
   const [message, setMessage] = useState<{ tone: "ok" | "info" | "error"; text: string }>();
 
   const load = useCallback(async () => {
-    const [b, o, s] = await Promise.all([
+    const [b, o, s, e] = await Promise.all([
       adminDb.from("time_logs").select(BOOKING_SELECT).eq("approval_status", "pending").order("recorded_at"),
       adminDb.from("time_logs").select(BOOKING_SELECT).eq("overtime_status", "pending").order("recorded_at"),
       adminDb
@@ -63,7 +66,9 @@ export function Approvals({ profile }: { profile: Profile }) {
           target_shift:shifts!swap_requests_target_shift_id_fkey(starts_at, ends_at, location:locations(name))`)
         .eq("status", "pending")
         .order("created_at"),
+      adminDb.from("time_logs").select(BOOKING_SELECT).eq("early_status", "pending").order("recorded_at"),
     ]);
+    setEarly((e.data ?? []) as unknown as Booking[]);
     setBookings((b.data ?? []) as unknown as Booking[]);
     setOvertime((o.data ?? []) as unknown as Booking[]);
     setSwaps((s.data ?? []) as unknown as SwapRow[]);
@@ -92,7 +97,17 @@ export function Approvals({ profile }: { profile: Profile }) {
     void load();
   }
 
-  const empty = bookings.length + overtime.length + swaps.length === 0;
+  // Früher gegangen: krank (Rest als Krank) / bis Schichtende anrechnen / ablehnen (Minusstunden)
+  async function decideEarly(id: string, decision: EarlyDecision) {
+    const { error } = await adminDb.rpc("decide_early_leave", { p_log_id: id, p_decision: decision });
+    setMessage(error ? { tone: "error", text: dbMessage(error) } : {
+      tone: "ok",
+      text: decision === "sick" ? "Ab dem Gehen als krank angerechnet." : decision === "approved" ? "Bis Schichtende angerechnet." : "Abgelehnt – es zählt nur die gearbeitete Zeit.",
+    });
+    void load();
+  }
+
+  const empty = bookings.length + overtime.length + swaps.length + early.length === 0;
 
   const avatar = (p: Person) => <Avatar first={p?.first_name ?? "?"} last={p?.last_name} />;
 
@@ -144,6 +159,38 @@ export function Approvals({ profile }: { profile: Profile }) {
                   subtitle={`${studioShort(o.location?.name ?? "")} · Schichtende ${o.shift ? berlinTime(o.shift.ends_at) : "?"} · gegangen ${when(o.recorded_at)}`}
                 />
                 <Decision enabled={isAdmin} onDecide={(ok) => void decide("overtime", o.id, ok)} />
+              </div>
+            );
+          })}
+        </Section>
+      )}
+
+      {early.length > 0 && (
+        <Section title="Früher gegangen" aside={<span>{early.length}</span>}
+          footer={isAdmin ? "Ohne Freigabe zählt nur die gearbeitete Zeit (Minusstunden)." : "Entscheiden Tobias oder Dominik (auch per Telegram)."}>
+          {early.map((e) => {
+            const minutes = e.shift ? Math.max(0, Math.round((Date.parse(e.shift.ends_at) - Date.parse(e.recorded_at)) / 60_000)) : 0;
+            return (
+              <div key={e.id} className="list-item">
+                <Row
+                  leading={avatar(e.user)}
+                  title={`${name(e.user)} · ${minutes} Min. früher`}
+                  subtitle={`${studioShort(e.location?.name ?? "")} · Schicht ${e.shift ? `${berlinTime(e.shift.starts_at)}–${berlinTime(e.shift.ends_at)}` : "?"} · gegangen ${when(e.recorded_at)}`}
+                  trailing={<Pill tone={e.early_reason === "sick" ? "bad" : "warn"}>
+                    {e.early_reason === "sick" ? "krank" : e.early_reason === "slow" ? "wenig los" : "ohne Grund"}
+                  </Pill>}
+                />
+                {isAdmin && (
+                  <div className="list-actions indent">
+                    <button type="button" className="btn btn-outline btn-sm" onClick={() => void decideEarly(e.id, "rejected")}>Ablehnen</button>
+                    {e.early_reason !== "slow" && (
+                      <button type="button" className="btn btn-outline btn-sm" onClick={() => void decideEarly(e.id, "sick")}>Krank anrechnen</button>
+                    )}
+                    {e.early_reason !== "sick" && (
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => void decideEarly(e.id, "approved")}>Bis Schichtende</button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

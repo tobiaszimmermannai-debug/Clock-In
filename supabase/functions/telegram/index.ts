@@ -62,6 +62,8 @@ type TimeLog = {
   overtime_status: "pending" | "approved" | "rejected" | null;
   note: string | null;
   device_unverified?: boolean;  // gestempelt mit nicht registriertem Handy/Browser
+  early_status?: string | null; // „pending“: mehr als 30 Min. vor Schichtende gegangen
+  early_reason?: "slow" | "sick" | null;
   user: Person | null;
   creator: Person | null;
   location: { name: string } | null;
@@ -150,6 +152,7 @@ async function handleNotify(
 
   const isApproval = log.approval_status === "pending";
   const isOvertime = !isApproval && log.overtime_status === "pending";
+  const isEarly = !isApproval && log.event_type === "clock_out" && log.early_status === "pending";
   // Erstes Einstempeln des Tages im Studio → "Studio besetzt" (auch für Admins mit /kurz)
   let isFirst = false;
   if (!isApproval && log.event_type === "clock_in") {
@@ -158,7 +161,7 @@ async function handleNotify(
   }
   // Entscheidungen gehen immer raus, einfache Meldungen nur bei notify_bookings
   const recipients = (await adminChats()).filter((l) =>
-    isApproval || isOvertime || l.notify_bookings || (isFirst && l.notify_studio_status)
+    isApproval || isOvertime || isEarly || l.notify_bookings || (isFirst && l.notify_studio_status)
   );
   if (recipients.length === 0) return new Response("no recipients");
 
@@ -182,6 +185,12 @@ async function handleNotify(
       text: "❌ Ablehnen",
       callback_data: `no:${log.id}`,
     }]];
+  } else if (isEarly) {
+    text = earlyText(log);
+    const no = { text: "❌ Ablehnen (Minusstunden)", callback_data: `el:no:${log.id}` };
+    const sick = { text: "🤒 Ab da krank anrechnen", callback_data: `el:sick:${log.id}` };
+    const ok = { text: "✅ OK – bis Schichtende anrechnen", callback_data: `el:ok:${log.id}` };
+    keyboard = log.early_reason === "sick" ? [[sick], [no]] : log.early_reason === "slow" ? [[ok], [no]] : [[sick], [ok], [no]];
   } else if (isOvertime) {
     text = overtimeText(log);
     keyboard = [[
@@ -195,6 +204,20 @@ async function handleNotify(
 
   await Promise.all(recipients.map((r) => sendMessage(r.chat_id, text, keyboard)));
   return new Response("sent");
+}
+
+// Früher gegangen (mehr als 30 Min. vor Schichtende) – Grund vom Handy, Entscheidung per Button
+function earlyText(log: TimeLog): string {
+  const end = log.shift?.ends_at ?? log.recorded_at;
+  const minutes = Math.max(0, Math.round((Date.parse(end) - Date.parse(log.recorded_at)) / 60_000));
+  const reason = log.early_reason === "sick" ? "🤒 krank"
+    : log.early_reason === "slow" ? "📉 wenig los / weniger Trainings" : "nicht angegeben";
+  return [
+    `🏃 <b>${escapeHtml(fullName(log.user))}</b> ist <b>${formatHours(minutes)}</b> vor Schichtende gegangen`,
+    `${escapeHtml(log.location?.name ?? "")} · Schicht ${log.shift ? `${formatClock(log.shift.starts_at)}–${formatClock(log.shift.ends_at)}` : "?"} · gegangen ${formatClock(log.recorded_at)}`,
+    `Grund: <b>${reason}</b>`,
+    "Ohne Freigabe zählt nur die gearbeitete Zeit (Minusstunden).",
+  ].join("\n");
 }
 
 // "🔔 Max Muster ist im Studio Krailling eingestempelt (08:57)"
@@ -944,6 +967,8 @@ async function handleCallback(cq: CallbackQuery) {
       return await decideBooking(cq, admin, parts[0] === "ok", parts[1]);
     case "ot":
       return await decideOvertime(cq, admin, parts[1] === "ok", parts[2]);
+    case "el":
+      return await decideEarly(cq, admin, parts[1], parts[2]);
     case "ab":
       return await decideAbsence(cq, admin, parts[1], parts[2], parts[3]);
     case "sw":
@@ -1014,6 +1039,21 @@ async function decideOvertime(cq: CallbackQuery, admin: Admin, approve: boolean,
     cq,
     approve ? "Überstunden freigegeben ✅" : "Überstunden abgelehnt ❌",
     approve ? `✅ Überstunden freigegeben von ${by}` : `❌ Abgelehnt von ${by} – gezählt bis Schichtende`,
+  );
+}
+
+// Früher gegangen: krank (Rest als Krank statt Schicht) / OK (bis Schichtende) / abgelehnt (Minusstunden)
+async function decideEarly(cq: CallbackQuery, admin: Admin, code: string, id: string) {
+  const decision = code === "sick" ? "sick" : code === "ok" ? "approved" : "rejected";
+  const { data, error } = await supabase.rpc("decide_early_leave", { p_log_id: id, p_decision: decision, p_reviewer: admin.user_id });
+  if (error) return await alreadyDone(cq, `Fehler: ${error.message}`);
+  if (data === "already") return await alreadyDone(cq, "Bereits entschieden.");
+  const by = escapeHtml(fullName(admin.user));
+  return await done(
+    cq,
+    decision === "sick" ? "Als krank angerechnet" : decision === "approved" ? "Bis Schichtende angerechnet" : "Abgelehnt – Minusstunden",
+    decision === "sick" ? `🤒 Ab dem Gehen krank angerechnet – von ${by}`
+      : decision === "approved" ? `✅ Bis Schichtende angerechnet – von ${by}` : `❌ Abgelehnt von ${by} – es zählt nur die gearbeitete Zeit`,
   );
 }
 

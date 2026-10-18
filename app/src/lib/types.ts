@@ -24,6 +24,7 @@ export type RuleSettings = {
   overtime_threshold_minutes: number;
   min_break_minutes: number;
   help_shift_minutes: number;
+  early_leave_minutes?: number; // früher gehen ab so vielen Minuten vor Schichtende → Grund + Freigabe
 };
 
 export const DEFAULT_RULES: RuleSettings = {
@@ -31,6 +32,7 @@ export const DEFAULT_RULES: RuleSettings = {
   overtime_threshold_minutes: 5,
   min_break_minutes: 15,
   help_shift_minutes: 390,
+  early_leave_minutes: 30,
 };
 
 // Azubis Urlaub/Krank: je Tag Wochenstunden ÷ 5,25 (wie rule_settings.absence_week_days)

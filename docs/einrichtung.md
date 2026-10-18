@@ -109,6 +109,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 20. `supabase/migrations/20261012150000_monthly_report_network.sql` (Netz-Check /16, Monatsübersicht per Mail)
 21. `supabase/migrations/20261013090000_pc_terminals.sql` (PC als Terminal je Studio, Stempeln nur per Handy)
 22. `supabase/migrations/20261013120000_monthly_report_v2.sql` (Monatsbericht 2.0: Soll/Ist, Verspätungen, Krank)
+23. `supabase/migrations/20261018090000_split_shifts.sql` (früher gehen mit Freigabe, Schule/Prüfung + Schicht, Splitschicht, Pausen)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -201,7 +202,17 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 - **Noch ohne Schicht:** Im Dienstplan stehen unter dem Tag alle eigenen Leute ohne Eintrag (gestrichelt
   markiert) – „Planen“ öffnet die Schicht-Eingabe. Vollzeitkräfte (ab 35 Std./Woche laut Personen-Daten) lassen
   sich dort mit „Frei“ auf frei setzen (zählt keine Stunden, keine 18-Uhr-Nachfrage).
-- **Schule:** zählt je Tag pauschal 7 Std. – für alle, auch Azubis.
+- **Schule:** zählt je Tag pauschal 7 Std. – für alle, auch Azubis. Als Teil des Tages (Eintragen → „Schule/Prüfung +
+  Schicht“, z. B. Nachprüfung 8–10:30 + Schicht 13–18) zählt sie mit der eingetragenen Dauer.
+- **Splitschicht:** Eintragen → „Splitschicht (2 Zeiten)“ – zwei Zeiten im selben Studio, zu jedem Teil ein- und
+  auschecken.
+- **Früher gehen:** Wer mehr als 30 Min. vor Schichtende geht (`early_leave_minutes`), wird am Handy gefragt:
+  „wenig los / weniger Trainings“ oder „krank“. Tobias/Dominik entscheiden per Telegram oder unter Zeiten →
+  Freigaben: krank → ab dem Gehen „Krank statt Schicht“ (Gutschrift für den Rest), OK → zählt bis Schichtende,
+  abgelehnt → nur die gearbeitete Zeit (Minusstunden).
+- **Pausen (§ 4 ArbZG):** über den ganzen Tag – mehr als 6 Std. → 30 Min., mehr als 9 Std. → 45 Min.
+  Gestempelte Pausen und Lücken zwischen zwei Teilen (Splitschicht, Herold + Schicht) zählen mit, Lücken aber
+  erst ab 15 Min. am Stück.
 - **Stempeln per Handy – WLAN:** Handy und Tablet müssen im selben Adressbereich sein (IPv4 /16, z. B. 93.104.x.x),
   nicht exakt dieselbe Adresse – Anbieter wie M-net (CGNAT) geben Geräten im selben WLAN verschiedene Adressen.
 - **Monatsbericht per Mail:** am 1. jedes Monats um 7 Uhr an `rule_settings.monthly_report_email`
