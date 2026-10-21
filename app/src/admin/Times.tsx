@@ -1,8 +1,9 @@
-// Zeiten je Mitarbeiter (Soll/Ist, Stempelungen) und Nachtrag (Admin sofort, Studioleitung mit Freigabe)
+// Zeiten je Mitarbeiter (Soll/Ist, Stempelungen) und Nachtrag (Admin sofort, Studioleitung mit Freigabe).
+// Admin: Tag antippen → Stempelungen des Tages korrigieren (alle löschen und neu eintragen, ein Schritt).
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { DayTable, type DaySummary, istMinutes, type Stamp, SummaryCard } from "../components/DayTable";
 import { Field, Icon, Notice, PageHeader, Sheet, WeekNav } from "../components/ui";
-import { addDays, berlinDate, berlinTime, berlinToISO, weekStart } from "../lib/dates";
+import { addDays, berlinDate, berlinTime, berlinToISO, fmtLongDay, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
 import { EVENT_LABEL, type EventType, type Location, studioShort } from "../lib/types";
@@ -27,6 +28,7 @@ export function Times({ profile }: { profile: Profile }) {
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
   const [entry, setEntry] = useState(false);
+  const [editDay, setEditDay] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -52,7 +54,7 @@ export function Times({ profile }: { profile: Profile }) {
       adminDb.rpc("work_day_summary", { p_user: personId, p_from: start, p_to: addDays(start, 6) }),
       adminDb
         .from("time_logs")
-        .select("id, event_type, recorded_at, approval_status, source")
+        .select("id, event_type, recorded_at, approval_status, source, location_id")
         .eq("user_id", personId)
         .gte("recorded_at", berlinToISO(start))
         .lt("recorded_at", berlinToISO(addDays(start, 7)))
@@ -119,7 +121,24 @@ export function Times({ profile }: { profile: Profile }) {
       )}
       {error && !entry && <Notice tone="error">{error}</Notice>}
       {message && <Notice tone="ok">{message}</Notice>}
-      <DayTable days={days} stamps={stamps} />
+      <DayTable days={days} stamps={stamps} onEdit={isAdmin ? setEditDay : undefined} />
+      {isAdmin && <p className="muted small">Tag antippen, um die Stempelungen zu korrigieren (z. B. falsche Pausen).</p>}
+
+      {editDay && person && (
+        <DayEditor
+          person={person}
+          day={editDay}
+          stamps={stamps.filter((s) => berlinDate(s.recorded_at) === editDay && s.approval_status !== "rejected")}
+          locations={locations}
+          onClose={() => setEditDay(null)}
+          onSaved={(text) => {
+            setEditDay(null);
+            setError(undefined);
+            setMessage(text);
+            void load();
+          }}
+        />
+      )}
 
       {entry && (
         <Sheet
@@ -131,7 +150,7 @@ export function Times({ profile }: { profile: Profile }) {
           <form id="entry-form" className="form" onSubmit={addEntry}>
             <p className="muted small">
               {isAdmin
-                ? "Bis 7 Tage rückwirkend, sofort gültig – z. B. nach einem Anruf (kein Handy dabei)."
+                ? "Rückwirkend, sofort gültig – z. B. nach einem Anruf (kein Handy dabei). Ganzen Tag korrigieren: Tag in der Liste antippen."
                 : "Nur mit Freischaltung durch einen Admin; der Nachtrag wartet auf Freigabe durch Tobias oder Dominik."}
             </p>
             <div className="grid-2">
@@ -156,5 +175,93 @@ export function Times({ profile }: { profile: Profile }) {
         </Sheet>
       )}
     </>
+  );
+}
+
+// Tag korrigieren: Buchungen bearbeiten/löschen/ergänzen → ersetzt alle Stempelungen des Tages (protokolliert)
+type EditRow = { key: number; event: EventType; time: string };
+const NEXT: Record<EventType, EventType> = { clock_in: "clock_out", break_start: "break_end", break_end: "clock_out", clock_out: "clock_in" };
+let rowKey = 0;
+
+function DayEditor(props: {
+  person: Staffer;
+  day: string;
+  stamps: Stamp[];
+  locations: Location[];
+  onClose: () => void;
+  onSaved: (text: string) => void;
+}) {
+  const [rows, setRows] = useState<EditRow[]>(() =>
+    props.stamps.map((s) => ({ key: rowKey++, event: s.event_type as EventType, time: berlinTime(s.recorded_at) })));
+  const [location, setLocation] = useState(props.stamps.find((s) => s.location_id)?.location_id ?? props.person.home_location_id ?? props.locations[0]?.id ?? "");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+
+  const update = (key: number, patch: Partial<EditRow>) => setRows((r) => r.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  const add = () => setRows((r) => {
+    const last = r.at(-1);
+    return [...r, { key: rowKey++, event: last ? NEXT[last.event] : "clock_in", time: last?.time ?? "09:00" }];
+  });
+  const addBreak = () => setRows((r) => [...r,
+    { key: rowKey++, event: "break_start" as EventType, time: "12:00" }, { key: rowKey++, event: "break_end" as EventType, time: "12:30" }]
+    .sort((a, b) => a.time.localeCompare(b.time)));
+
+  async function save() {
+    setError(undefined);
+    if (note.trim().length < 3) return setError("Bitte einen Grund angeben (mind. 3 Zeichen).");
+    const sorted = [...rows].sort((a, b) => a.time.localeCompare(b.time));
+    setBusy(true);
+    const { error } = await adminDb.rpc("replace_day_logs", {
+      p_user: props.person.id,
+      p_day: props.day,
+      p_location: location || null,
+      p_events: sorted.map((r) => ({ event: r.event, at: berlinToISO(props.day, r.time) })),
+      p_note: note.trim(),
+    });
+    setBusy(false);
+    if (error) return setError(dbMessage(error));
+    props.onSaved(sorted.length
+      ? `${props.person.first_name}: ${fmtLongDay(props.day)} neu erfasst (${sorted.length} Buchungen). Pausen und Stunden sind neu berechnet.`
+      : `${props.person.first_name}: alle Stempelungen am ${fmtLongDay(props.day)} gelöscht.`);
+  }
+
+  return (
+    <Sheet
+      title="Tag korrigieren"
+      subtitle={`${props.person.first_name} ${props.person.last_name} · ${fmtLongDay(props.day)}`}
+      onClose={props.onClose}
+      footer={<button type="button" className="btn btn-primary" disabled={busy} onClick={() => void save()}>{busy ? "Speichert …" : "Tag neu speichern"}</button>}
+    >
+      <Notice>Alle bisherigen Stempelungen dieses Tages werden durch diese Liste ersetzt. Pausen (gesetzlich), Schicht und Überstunden rechnet das System danach neu.</Notice>
+      <div className="list day-edit">
+        {rows.length === 0 && <p className="list-empty">Keine Buchungen – speichern löscht den Tag.</p>}
+        {rows.map((r) => (
+          <div key={r.key} className="list-row day-edit-row">
+            <select aria-label="Buchung" value={r.event} onChange={(e) => update(r.key, { event: e.target.value as EventType })}>
+              {(Object.keys(EVENT_LABEL) as EventType[]).map((t) => <option key={t} value={t}>{EVENT_LABEL[t]}</option>)}
+            </select>
+            <input aria-label="Uhrzeit" type="time" value={r.time} onChange={(e) => update(r.key, { time: e.target.value })} required />
+            <button type="button" className="icon-btn" aria-label="Buchung löschen" onClick={() => setRows((x) => x.filter((y) => y.key !== r.key))}>
+              <Icon name="trash" size={18} />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="list-actions">
+        <button type="button" className="btn btn-outline btn-sm" onClick={add}><Icon name="plus" size={16} /> Buchung</button>
+        <button type="button" className="btn btn-outline btn-sm" onClick={addBreak}><Icon name="plus" size={16} /> Pause</button>
+        {rows.length > 0 && <button type="button" className="btn btn-danger btn-sm" onClick={() => setRows([])}>Alle löschen</button>}
+      </div>
+      <Field label="Studio">
+        <select id="edit-location" value={location} onChange={(e) => setLocation(e.target.value)}>
+          {props.locations.map((l) => <option key={l.id} value={l.id}>{studioShort(l.name)}</option>)}
+        </select>
+      </Field>
+      <Field label="Grund (Pflicht)">
+        <input id="edit-note" value={note} maxLength={200} placeholder="z. B. Pause falsch gestempelt" onChange={(e) => setNote(e.target.value)} />
+      </Field>
+      {error && <Notice tone="error">{error}</Notice>}
+    </Sheet>
   );
 }

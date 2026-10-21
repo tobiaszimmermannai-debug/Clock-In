@@ -15,14 +15,15 @@ export type DaySummary = {
   overtime_approved_minutes: number;
   open_session: boolean;
 };
-export type Stamp = { id?: string; event_type: string; recorded_at: string; approval_status: string; source?: string };
+export type Stamp = { id?: string; event_type: string; recorded_at: string; approval_status: string; source?: string; location_id?: string | null };
 
 const STAMP_LABEL: Record<string, string> = { clock_in: "Kommen", break_start: "Pause", break_end: "zurück", clock_out: "Gehen" };
 const SOURCE_HINT: Record<string, string> = { manual: " ✍️", auto_checkout: " 🤖", offline_sync: " 📶" };
 
 export const istMinutes = (days: DaySummary[]) => days.reduce((n, d) => n + d.worked_minutes + d.credit_minutes, 0);
 
-export function DayTable(props: { days: DaySummary[]; stamps: Stamp[] }) {
+/** onEdit: Tag antippen → Stempelungen korrigieren (nur Admin) */
+export function DayTable(props: { days: DaySummary[]; stamps: Stamp[]; onEdit?: (day: string) => void }) {
   const today = berlinDate();
   return (
     <Section title="Tage" footer="✍️ Nachtrag · 🤖 automatisch ausgestempelt · 📶 offline nachgesendet">
@@ -63,6 +64,8 @@ export function DayTable(props: { days: DaySummary[]; stamps: Stamp[] }) {
                 {badges.length > 0 && <span className="badges">{badges}</span>}
               </span>
             }
+            chevron={!!props.onEdit}
+            onClick={props.onEdit ? () => props.onEdit?.(d.day) : undefined}
           />
         );
       })}

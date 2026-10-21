@@ -16,6 +16,7 @@ export type Person = {
   home_location_id: string | null;
   username: string | null;
   auth_user_id: string | null;
+  any_phone?: boolean; // darf mit verschiedenen Handys/Browsern stempeln (ohne Freigabe)
   employment_details: { weekly_target_minutes: number; work_days_per_week: number } | null;
 };
 
@@ -54,7 +55,8 @@ export function Staff({ profile }: { profile: Profile }) {
       adminDb
         .from("users")
         .select(
-          "id, first_name, last_name, role, home_location_id, username, auth_user_id, employment_details(weekly_target_minutes, work_days_per_week)",
+          // * statt Spaltenliste: neue Spalten (z. B. any_phone) brechen die Liste nicht, falls das SQL noch fehlt
+          "*, employment_details(weekly_target_minutes, work_days_per_week)",
         )
         .eq("is_active", true)
         .order("first_name"),
@@ -190,6 +192,15 @@ function PersonDetail(props: {
     await props.onChanged();
   }
 
+  async function toggleAnyPhone(on: boolean) {
+    const { error } = await adminDb.from("users").update({ any_phone: on }).eq("id", person.id);
+    if (error) return setMessage({ tone: "error", text: error.message });
+    setMessage({ tone: "ok", text: on
+      ? `${person.first_name} darf jetzt mit verschiedenen Handys/Browsern stempeln – ohne Freigabe.`
+      : `${person.first_name} stempelt wieder nur mit dem registrierten Handy (andere warten auf Freigabe).` });
+    await props.onChanged();
+  }
+
   async function resetPassword() {
     const password = generatePassword();
     try {
@@ -260,6 +271,16 @@ function PersonDetail(props: {
             />
           ) : (
             <Row leading={<LeadingIcon name="phone" />} title="Noch nicht registriert" subtitle="Wird beim ersten Stempeln automatisch registriert" />
+          )}
+          {isAdmin && (
+            <label className="list-row">
+              <span className="list-row-main">
+                <span className="list-row-title">Mehrere Handys/Browser erlauben</span>
+                <span className="list-row-sub">Stempeln ohne Freigabe, auch wenn ein anderes Handy oder ein anderer Browser erkannt wird</span>
+              </span>
+              <input id="any-phone" type="checkbox" role="switch" className="switch" checked={!!person.any_phone}
+                onChange={(e) => void toggleAnyPhone(e.target.checked)} />
+            </label>
           )}
         </Section>
       )}

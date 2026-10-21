@@ -110,6 +110,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 21. `supabase/migrations/20261013090000_pc_terminals.sql` (PC als Terminal je Studio, Stempeln nur per Handy)
 22. `supabase/migrations/20261013120000_monthly_report_v2.sql` (Monatsbericht 2.0: Soll/Ist, Verspätungen, Krank)
 23. `supabase/migrations/20261018090000_split_shifts.sql` (früher gehen mit Freigabe, Schule/Prüfung + Schicht, Splitschicht, Pausen)
+24. `supabase/migrations/20261021090000_day_correction_any_phone.sql` (Tag korrigieren, mehrere Handys je Person)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -210,6 +211,12 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   „wenig los / weniger Trainings“ oder „krank“. Tobias/Dominik entscheiden per Telegram oder unter Zeiten →
   Freigaben: krank → ab dem Gehen „Krank statt Schicht“ (Gutschrift für den Rest), OK → zählt bis Schichtende,
   abgelehnt → nur die gearbeitete Zeit (Minusstunden).
+- **Tag korrigieren (Admin):** Zeiten → Stempelzeiten → Person → Tag antippen → Buchungen ändern, löschen
+  oder ergänzen (z. B. falsche Pause) → „Tag neu speichern“. Ersetzt alle Stempelungen des Tages in einem
+  Schritt (Grund Pflicht, im Änderungsprotokoll); Pausen, Schicht und Überstunden werden neu berechnet.
+  Admins können ohne 7-Tage-Grenze nachtragen.
+- **Mehrere Handys:** Team → Person → Stempel-Handy → „Mehrere Handys/Browser erlauben“ – die Person stempelt
+  dann auch mit einem anderen Handy/Browser ohne Freigabe.
 - **Pausen (§ 4 ArbZG):** über den ganzen Tag – mehr als 6 Std. → 30 Min., mehr als 9 Std. → 45 Min.
   Gestempelte Pausen und Lücken zwischen zwei Teilen (Splitschicht, Herold + Schicht) zählen mit, Lücken aber
   erst ab 15 Min. am Stück.

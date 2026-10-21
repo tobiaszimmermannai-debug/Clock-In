@@ -452,6 +452,8 @@ input[type="time"] { font-variant-numeric: tabular-nums; font-size: 1.1rem; font
   padding: 28px 16px; border-radius: var(--radius-lg); border: 1px solid var(--line); background: var(--surface);
   color: var(--fg); font-size: 1.25rem; font-weight: 650;
 }
+.day-edit-row { display: grid; grid-template-columns: minmax(0, 1fr) 116px auto; gap: 8px; align-items: center; }
+.day-edit-row select, .day-edit-row input { min-width: 0; }
 .early-actions { display: grid; gap: 10px; width: 100%; min-width: 0; margin-top: 8px; }
 .early-actions .btn { white-space: normal; height: auto; min-height: 52px; }
 .studio-btn.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
