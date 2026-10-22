@@ -4696,7 +4696,7 @@ grant execute on all functions in schema private to authenticated, service_role;
 --   gone    heute schon gegangen                since = letztes Gehen
 --   missed  Schicht ist vorbei, nie eingestempelt
 --   absent  krank / Urlaub / Schule / frei      tag = Art
--- Admin sieht alle Studios, Studioleitung ihre Studios und ihre Leute.
+-- Nur für Admins.
 -- (Mehrfach ausführbar.)
 -- =============================================================================
 
@@ -4712,8 +4712,7 @@ declare
   v_to    timestamptz := private.berlin_day_start(v_today + 1);
   v_tol   integer;
 begin
-  if not (private.is_admin() or exists (select 1 from public.location_managers lm
-                                        where lm.user_id = private.current_user_id())) then
+  if not private.is_admin() then
     raise exception 'Dafür fehlt die Berechtigung.' using errcode = '42501';
   end if;
   select r.late_tolerance_minutes into v_tol from public.rule_settings r;
@@ -4827,7 +4826,6 @@ begin
   )
   select s.uid, s.fn, s.ln, s.loc, s.st, s.clk, s.at, s.t_out, s.s_start, s.s_end, s.late, s.tg, s.t_pending
   from shaped s
-  where private.is_admin() or private.manages_location(s.loc) or private.manages_user(s.uid)
   order by s.fn, s.ln;
 end $$;
 revoke execute on function public.presence_today() from public, anon;

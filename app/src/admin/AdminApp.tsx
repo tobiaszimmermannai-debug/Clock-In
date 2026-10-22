@@ -211,13 +211,13 @@ type TeamView = "people" | "vacation" | "sick" | "school";
 type TimesView = "presence" | "approvals" | "times";
 
 // Navigation: 4 Bereiche, zusammengehörige Seiten als Unterauswahl (Team: Personen/Urlaub/Krankheit/Schule,
-// Zeiten: Wer ist da/Freigaben/Stempelzeiten, Einstellungen: Tablets und Studios – nur Admin)
+// Zeiten: Wer ist da (Admin)/Freigaben/Stempelzeiten, Einstellungen: Tablets und Studios – nur Admin)
 function AdminHome(props: { profile: Profile; onLogout: () => void }) {
   const { profile } = props;
   const isAdmin = profile.role === "admin";
   const [tab, setTab] = useState<TabId>("plan");
   const [teamView, setTeamView] = useState<TeamView>("people");
-  const [timesView, setTimesView] = useState<TimesView>("presence");
+  const [timesView, setTimesView] = useState<TimesView>(isAdmin ? "presence" : "times");
   const [open, setOpen] = useState(0);
 
   // Zähler für offene Freigaben in der Navigation
@@ -237,9 +237,9 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
     ...(isAdmin ? [{ id: "settings", label: "Einstellungen", icon: "settings" } as const] : []),
   ];
 
-  // Zeiten öffnen: mit offenen Freigaben zuerst die Freigaben, sonst „Wer ist da?“
+  // Zeiten öffnen: mit offenen Freigaben zuerst die Freigaben, sonst „Wer ist da?“ (Admin) bzw. Stempelzeiten
   function openTab(id: TabId) {
-    if (id === "times" && tab !== "times") setTimesView(open > 0 ? "approvals" : "presence");
+    if (id === "times" && tab !== "times") setTimesView(open > 0 ? "approvals" : isAdmin ? "presence" : "times");
     setTab(id);
   }
 
@@ -274,11 +274,11 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
         <>
           <SubNav<TimesView> label="Zeiten" value={timesView} onChange={setTimesView}
             options={[
-              { id: "presence", label: "Wer ist da" },
+              ...(isAdmin ? [{ id: "presence", label: "Wer ist da" } as const] : []),
               { id: "approvals", label: open > 0 ? `Freigaben (${open})` : "Freigaben" },
               { id: "times", label: "Stempelzeiten" },
             ]} />
-          {timesView === "presence" && <Presence profile={profile} />}
+          {timesView === "presence" && isAdmin && <Presence />}
           {timesView === "approvals" && <Approvals profile={profile} />}
           {timesView === "times" && <Times profile={profile} />}
         </>

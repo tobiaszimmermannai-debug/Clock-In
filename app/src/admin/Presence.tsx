@@ -1,5 +1,5 @@
 // „Wer ist da?“ – Live-Überblick je Studio: eingestempelt (seit wann), in Pause, noch nicht da, gegangen.
-// Daten aus presence_today() (Admin: alle Studios, Studioleitung: ihre Studios); aktualisiert alle 30 Sek.
+// Nur für Admins: alle Studios auf einer Seite, Daten aus presence_today(); aktualisiert alle 30 Sek.
 import { useCallback, useEffect, useState } from "react";
 import { Avatar, Empty, Icon, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
 import { berlinTime } from "../lib/dates";
@@ -7,7 +7,6 @@ import { dbMessage } from "../lib/errors";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
-import type { Profile } from "./AdminApp";
 
 type State = "in" | "break" | "missing" | "later" | "gone" | "missed" | "absent";
 
@@ -41,8 +40,7 @@ const REFRESH_MS = 30_000;
 const minutesSince = (iso: string) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000));
 const span = (from: string | null, to: string | null) => (from && to ? `${berlinTime(from)}–${berlinTime(to)}` : "");
 
-export function Presence({ profile }: { profile: Profile }) {
-  const isAdmin = profile.role === "admin";
+export function Presence() {
   const [rows, setRows] = useState<Presence[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [error, setError] = useState<string>();
@@ -75,9 +73,9 @@ export function Presence({ profile }: { profile: Profile }) {
   }, [load]);
 
   const count = (s: State) => rows.filter((r) => r.state === s).length;
-  // Admin: alle Studios (auch leere); Studioleitung: Studios mit Einträgen
+  // alle Studios (auch leere), dazu „Ohne Studio“ falls nötig
   const studios = [
-    ...locations.filter((l) => isAdmin || rows.some((r) => r.location_id === l.id)),
+    ...locations,
     ...(rows.some((r) => !r.location_id || !locations.some((l) => l.id === r.location_id))
       ? [{ id: "", code: "", name: "Ohne Studio" } as Location]
       : []),

@@ -212,9 +212,9 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   „wenig los / weniger Trainings“ oder „krank“. Tobias/Dominik entscheiden per Telegram oder unter Zeiten →
   Freigaben: krank → ab dem Gehen „Krank statt Schicht“ (Gutschrift für den Rest), OK → zählt bis Schichtende,
   abgelehnt → nur die gearbeitete Zeit (Minusstunden).
-- **Wer ist da? (Admin + Studioleitung):** Zeiten → „Wer ist da“. Je Studio: arbeitet (seit wann), Pause (seit
+- **Wer ist da? (nur Admins):** Zeiten → „Wer ist da“, alle Studios auf einer Seite. Je Studio: arbeitet (seit wann), Pause (seit
   wann, wie lange), fehlt (Schicht begonnen, nicht eingestempelt), kommt noch, gegangen, nicht gekommen, abwesend
-  (krank/Urlaub/Schule/frei). Aktualisiert sich alle 30 Sek.; Studioleitung sieht nur ihre Studios und Leute.
+  (krank/Urlaub/Schule/frei). Aktualisiert sich alle 30 Sek.
 - **Tag korrigieren (Admin):** Zeiten → Stempelzeiten → Person → Tag antippen → Buchungen ändern, löschen
   oder ergänzen (z. B. falsche Pause) → „Tag neu speichern“. Ersetzt alle Stempelungen des Tages in einem
   Schritt (Grund Pflicht, im Änderungsprotokoll); Pausen, Schicht und Überstunden werden neu berechnet.
