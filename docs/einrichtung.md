@@ -111,6 +111,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 22. `supabase/migrations/20261013120000_monthly_report_v2.sql` (Monatsbericht 2.0: Soll/Ist, Verspätungen, Krank)
 23. `supabase/migrations/20261018090000_split_shifts.sql` (früher gehen mit Freigabe, Schule/Prüfung + Schicht, Splitschicht, Pausen)
 24. `supabase/migrations/20261021090000_day_correction_any_phone.sql` (Tag korrigieren, mehrere Handys je Person)
+25. `supabase/migrations/20261022090000_presence.sql` („Wer ist da?“ – Live-Überblick)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -211,6 +212,9 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   „wenig los / weniger Trainings“ oder „krank“. Tobias/Dominik entscheiden per Telegram oder unter Zeiten →
   Freigaben: krank → ab dem Gehen „Krank statt Schicht“ (Gutschrift für den Rest), OK → zählt bis Schichtende,
   abgelehnt → nur die gearbeitete Zeit (Minusstunden).
+- **Wer ist da? (Admin + Studioleitung):** Zeiten → „Wer ist da“. Je Studio: arbeitet (seit wann), Pause (seit
+  wann, wie lange), fehlt (Schicht begonnen, nicht eingestempelt), kommt noch, gegangen, nicht gekommen, abwesend
+  (krank/Urlaub/Schule/frei). Aktualisiert sich alle 30 Sek.; Studioleitung sieht nur ihre Studios und Leute.
 - **Tag korrigieren (Admin):** Zeiten → Stempelzeiten → Person → Tag antippen → Buchungen ändern, löschen
   oder ergänzen (z. B. falsche Pause) → „Tag neu speichern“. Ersetzt alle Stempelungen des Tages in einem
   Schritt (Grund Pflicht, im Änderungsprotokoll); Pausen, Schicht und Überstunden werden neu berechnet.

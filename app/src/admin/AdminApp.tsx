@@ -7,6 +7,7 @@ import { adminDb } from "../lib/supabase";
 import type { Role } from "../lib/types";
 import { Approvals } from "./Approvals";
 import { Plan } from "./Plan";
+import { Presence } from "./Presence";
 import { SchoolImport } from "./SchoolImport";
 import { Sickness } from "./Sickness";
 import { Staff } from "./Staff";
@@ -207,16 +208,16 @@ function CodeForm(props: {
 
 type TabId = "plan" | "team" | "times" | "settings";
 type TeamView = "people" | "vacation" | "sick" | "school";
-type TimesView = "approvals" | "times";
+type TimesView = "presence" | "approvals" | "times";
 
 // Navigation: 4 Bereiche, zusammengehörige Seiten als Unterauswahl (Team: Personen/Urlaub/Krankheit/Schule,
-// Zeiten: Freigaben/Stempelzeiten, Einstellungen: Tablets und Studios – nur Admin)
+// Zeiten: Wer ist da/Freigaben/Stempelzeiten, Einstellungen: Tablets und Studios – nur Admin)
 function AdminHome(props: { profile: Profile; onLogout: () => void }) {
   const { profile } = props;
   const isAdmin = profile.role === "admin";
   const [tab, setTab] = useState<TabId>("plan");
   const [teamView, setTeamView] = useState<TeamView>("people");
-  const [timesView, setTimesView] = useState<TimesView>("times");
+  const [timesView, setTimesView] = useState<TimesView>("presence");
   const [open, setOpen] = useState(0);
 
   // Zähler für offene Freigaben in der Navigation
@@ -236,9 +237,9 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
     ...(isAdmin ? [{ id: "settings", label: "Einstellungen", icon: "settings" } as const] : []),
   ];
 
-  // Zeiten öffnen: mit offenen Freigaben zuerst die Freigaben
+  // Zeiten öffnen: mit offenen Freigaben zuerst die Freigaben, sonst „Wer ist da?“
   function openTab(id: TabId) {
-    if (id === "times" && tab !== "times") setTimesView(open > 0 ? "approvals" : "times");
+    if (id === "times" && tab !== "times") setTimesView(open > 0 ? "approvals" : "presence");
     setTab(id);
   }
 
@@ -272,8 +273,14 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
       {tab === "times" && (
         <>
           <SubNav<TimesView> label="Zeiten" value={timesView} onChange={setTimesView}
-            options={[{ id: "approvals", label: open > 0 ? `Freigaben (${open})` : "Freigaben" }, { id: "times", label: "Stempelzeiten" }]} />
-          {timesView === "approvals" ? <Approvals profile={profile} /> : <Times profile={profile} />}
+            options={[
+              { id: "presence", label: "Wer ist da" },
+              { id: "approvals", label: open > 0 ? `Freigaben (${open})` : "Freigaben" },
+              { id: "times", label: "Stempelzeiten" },
+            ]} />
+          {timesView === "presence" && <Presence profile={profile} />}
+          {timesView === "approvals" && <Approvals profile={profile} />}
+          {timesView === "times" && <Times profile={profile} />}
         </>
       )}
       {tab === "settings" && isAdmin && <Tablets />}
