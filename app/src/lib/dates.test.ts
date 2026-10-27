@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { absenceDays, addDays, groupDays, vacationRanges, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, isoWeek, weekRangeLabel, weekStart, weekdayShort } from "./dates";
+import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, daysBetween, fmtDay, fmtHM, groupDays, isoWeek, isSunday, vacationRanges, weekdayShort, weekRangeLabel, weekStart } from "./dates";
 
 describe("Berliner Zeit", () => {
   it("Sommerzeit: 09:00 Berlin = 07:00 UTC", () => {
@@ -80,5 +80,13 @@ describe("Tage gruppieren", () => {
       ["2026-10-09", "2026-10-12", 3],
       ["2026-10-14", "2026-10-14", 1],
     ]);
+  });
+});
+
+describe("isSunday", () => {
+  it("erkennt Sonntag (auch bei Zeitumstellung)", () => {
+    expect(isSunday("2026-10-25")).toBe(true);
+    expect(isSunday("2026-10-24")).toBe(false);
+    expect(isSunday("2026-10-26")).toBe(false);
   });
 });

@@ -37,6 +37,8 @@ export const DEFAULT_RULES: RuleSettings = {
 
 // Azubis Urlaub/Krank: je Tag Wochenstunden ÷ 5,25 (wie rule_settings.absence_week_days)
 export const ABSENCE_WEEK_DAYS = 5.25;
+// Krank (auch „Schicht + krank“): Arbeitszeit + Krank-Gutschrift höchstens 6,5 Std. am Tag (wie rule_settings.sick_max_minutes)
+export const SICK_MAX_MINUTES = 390;
 // Schule: je Tag pauschal 7 Std. – für alle (wie rule_settings.school_credit_minutes)
 export const SCHOOL_CREDIT_MINUTES = 420;
 // Vollzeit ab 35 Wochenstunden (laut Arbeitsvertrag in den Personen-Daten) – nur sie können auf „Frei“ gesetzt werden

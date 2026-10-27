@@ -102,6 +102,9 @@ export function weekdayShort(date: string): string {
 
 export const dayOfMonth = (date: string) => Number(date.slice(8, 10));
 
+/** Sonntag: Studios ohne Planung (keine „Noch ohne Schicht“-Liste, keine Nachfragen) */
+export const isSunday = (date: string) => weekdayShort(date) === "So";
+
 /** "5.–11. Okt." bzw. "29. Sept. – 5. Okt." */
 export function weekRangeLabel(start: string): string {
   const end = addDays(start, 6);

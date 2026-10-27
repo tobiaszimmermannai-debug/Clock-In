@@ -561,7 +561,7 @@ type ReportDay = {
 type ReportVacation = { user_id: string; year: number; allowance: number; taken: number; planned: number };
 type ReportData = {
   from: string; to: string; trend_from: string; today: string;
-  settings: { absence_credit_minutes: number; absence_week_days: number; school_credit_minutes: number | null };
+  settings: { absence_credit_minutes: number; absence_week_days: number; school_credit_minutes: number | null; sick_max_minutes?: number };
   people: ReportPerson[]; entries: ReportEntry[]; days: ReportDay[]; vacation: ReportVacation[];
   sick_year: Record<string, number>;
 };
@@ -686,7 +686,9 @@ function planStats(r: ReportData, m: Month) {
       ? p.weekly_target_minutes / r.settings.absence_week_days : r.settings.absence_credit_minutes;
     const work = entries.filter((e) => e.type === "work").reduce((n, e) => n + minutesOf(e), 0);
     const days = (type: string) => new Set(entries.filter((e) => e.type === type).map((e) => e.day)).size;
-    const credit = (days("vacation") + days("sick")) * daily + days("vocational_school") * (r.settings.school_credit_minutes ?? 420);
+    // Krank höchstens 6,5 Std. am Tag (Azubis: Tagesanteil ggf. gedeckelt)
+    const sickDaily = Math.min(daily, r.settings.sick_max_minutes ?? 390);
+    const credit = days("vacation") * daily + days("sick") * sickDaily + days("vocational_school") * (r.settings.school_credit_minutes ?? 420);
     const soll = sollFor(p, dates);
     return { p, soll, work, credit: Math.round(credit), diff: Math.round(work + credit - soll), shifts: entries.filter((e) => e.type === "work").length,
       vacation: days("vacation"), school: days("vocational_school"), dayOff: days("day_off"), sick: days("sick") };

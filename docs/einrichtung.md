@@ -112,6 +112,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 23. `supabase/migrations/20261018090000_split_shifts.sql` (früher gehen mit Freigabe, Schule/Prüfung + Schicht, Splitschicht, Pausen)
 24. `supabase/migrations/20261021090000_day_correction_any_phone.sql` (Tag korrigieren, mehrere Handys je Person)
 25. `supabase/migrations/20261022090000_presence.sql` („Wer ist da?“ – Live-Überblick)
+26. `supabase/migrations/20261027090000_sick_cap_sunday.sql` (Krank höchstens 6,5 Std. am Tag, Sonntag ohne Planung/Telegram)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -212,6 +213,11 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   „wenig los / weniger Trainings“ oder „krank“. Tobias/Dominik entscheiden per Telegram oder unter Zeiten →
   Freigaben: krank → ab dem Gehen „Krank statt Schicht“ (Gutschrift für den Rest), OK → zählt bis Schichtende,
   abgelehnt → nur die gearbeitete Zeit (Minusstunden).
+- **Krank höchstens 6,5 Std. am Tag:** Krank und „Schicht + krank“ zählen zusammen mit der Arbeitszeit höchstens
+  6,5 Std. (`rule_settings.sick_max_minutes`). Beispiel: 4 Std. gearbeitet, dann krank → 2,5 Std. Gutschrift.
+  Wer schon länger gearbeitet hat, behält seine Arbeitszeit (es wird nichts gekürzt), bekommt aber keine Krank-Gutschrift.
+- **Sonntag:** keine „Noch ohne Schicht“-Liste, keine 18-Uhr-Abfrage, keine Meldungen „nicht eingestempelt“ /
+  „Studio nicht besetzt“ und keine einfachen Stempel-Meldungen. Freigaben (z. B. fremdes Handy) kommen weiter.
 - **Wer ist da? (nur Admins):** Zeiten → „Wer ist da“, alle Studios auf einer Seite. Je Studio: arbeitet (seit wann), Pause (seit
   wann, wie lange), fehlt (Schicht begonnen, nicht eingestempelt), kommt noch, gegangen, nicht gekommen, abwesend
   (krank/Urlaub/Schule/frei). Aktualisiert sich alle 30 Sek.

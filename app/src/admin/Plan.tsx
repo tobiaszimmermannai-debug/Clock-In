@@ -11,12 +11,13 @@ import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
 import { type PlanShift, ShiftRow, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
 import { Avatar, DayStrip, Empty, Field, Icon, Notice, PageHeader, Row, Section, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
-import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtHM, fmtLongDay, weekStart } from "../lib/dates";
+import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtHM, fmtLongDay, isSunday, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
 import {
   ABSENCE_WEEK_DAYS, FULL_TIME_WEEKLY_MINUTES, type Location, ROLE_LABEL, type Role, SCHOOL_CREDIT_MINUTES, SHIFT_TYPE_LABEL,
+  SICK_MAX_MINUTES,
   type ShiftType, studioShort,
 } from "../lib/types";
 import type { Profile } from "./AdminApp";
@@ -74,6 +75,10 @@ type SheetState = { shift?: PlanShift; category?: Category; requestId?: string; 
 // Gutschrift zur Anzeige: minutes = Dauer des Eintrags, share = Anteil am Tag (Krank ab Uhrzeit)
 type Credit = { minutes?: number; trainee: boolean };
 type CreditOf = (userId: string, minutes: number, share: number) => Credit;
+// Krank: zusammen mit der Arbeitszeit davor höchstens 6,5 Std. am Tag
+const sickCap = (c: Credit, workedBefore = 0): Credit =>
+  c.minutes === undefined ? c : { ...c, minutes: Math.min(c.minutes, Math.max(0, SICK_MAX_MINUTES - workedBefore)) };
+const SICK_RULE = `Krank zählt höchstens ${fmtHM(SICK_MAX_MINUTES)} Std. am Tag, zusammen mit der Arbeitszeit`;
 const TRAINEE_RULE = `Azubi: Wochenstunden ÷ ${String(ABSENCE_WEEK_DAYS).replace(".", ",")}`;
 // Zuletzt eingetragene Zeiten als Vorschlag für die nächste Schicht
 let lastTimes = { from: "09:00", to: "15:30" };
@@ -197,8 +202,8 @@ export function Plan({ profile }: { profile: Profile }) {
     <HelpBoard requests={help.requests} isOwn={(id) => id === studio} onFill={fillRequest} onCancel={(r) => void cancelRequest(r)} />
   );
   const dayRequests = help.requests.filter((r) => r.location_id === studio && berlinDate(r.starts_at) === day);
-  // Eigene Leute ohne Eintrag an diesem Tag (weder Schicht noch Abwesenheit noch frei)
-  const unplanned = people.filter((p) => p.home_location_id === studio && !taken.has(p.id) && employedOn(p, day));
+  // Eigene Leute ohne Eintrag an diesem Tag (weder Schicht noch Abwesenheit noch frei) – sonntags niemand
+  const unplanned = isSunday(day) ? [] : people.filter((p) => p.home_location_id === studio && !taken.has(p.id) && employedOn(p, day));
   async function setDayOff(p: Staffer) {
     setFlash(undefined);
     const { error } = await adminDb.from("shifts").insert({
@@ -395,7 +400,8 @@ function SickChoice(props: { shift: PlanShift; creditOf: CreditOf; from: string 
   const end = berlinTime(props.shift.ends_at);
   const sickMinutes = props.from ? minutesBetween(props.from, end) : durationMinutes(props.shift);
   const valid = !props.from || (minutesBetween(start, props.from) > 0 && sickMinutes > 0);
-  const credit = props.creditOf(props.shift.user_id, sickMinutes, sickMinutes / durationMinutes(props.shift));
+  const credit = sickCap(props.creditOf(props.shift.user_id, sickMinutes, sickMinutes / durationMinutes(props.shift)),
+    props.from ? minutesBetween(start, props.from) : 0);
   return (
     <>
       <Segmented
@@ -416,6 +422,7 @@ function SickChoice(props: { shift: PlanShift; creditOf: CreditOf; from: string 
             : <><strong>{fmtHM(credit.minutes)} Std.</strong> werden gutgeschrieben
               {credit.trainee && ` (${TRAINEE_RULE}${props.from ? ", anteilig" : ""})`}.</>}
           {props.from && ` ${start}–${props.from} Uhr bleibt Arbeitszeit (es zählen die Stempelzeiten).`}
+          {` ${SICK_RULE}.`}
         </Notice>
       )}
     </>
@@ -694,7 +701,8 @@ function AddShift(props: {
     : twoPart ? !!person && twoValid && (!isHerold || !!herold)
     : !!person;
   const left = person && cat === "vacation" ? vacationLeft(person.id) : null;
-  const dayCredit = person ? props.creditOf(person.id, minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to), 1) : undefined;
+  const baseCredit = person ? props.creditOf(person.id, minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to), 1) : undefined;
+  const dayCredit = baseCredit && cat === "sick" ? sickCap(baseCredit) : baseCredit;
 
   return (
     <Sheet
@@ -915,8 +923,9 @@ function EditShift(props: {
   }
 
   // ganzer Tag pauschal, Krank statt Schicht mit der Schichtdauer
-  const credit = props.creditOf(s.user_id, isSickSwap(s) ? durationMinutes(s) : minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to),
+  const baseCredit = props.creditOf(s.user_id, isSickSwap(s) ? durationMinutes(s) : minutesBetween(ABSENCE_TIMES.from, ABSENCE_TIMES.to),
     Number(s.credit_share ?? 1));
+  const credit = s.shift_type === "sick" ? sickCap(baseCredit) : baseCredit;
   const where = isWork
     ? `${s.is_acquisition ? "Akquise in " : s.is_herold ? "Herold in " : ""}${studioShort(s.location?.name ?? "")}`
     : SHIFT_TYPE_LABEL[s.shift_type];
