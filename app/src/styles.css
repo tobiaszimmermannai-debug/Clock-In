@@ -526,7 +526,28 @@ input[type="time"] { font-variant-numeric: tabular-nums; font-size: 1.1rem; font
 }
 .cal-grid { display: grid; grid-template-columns: 52px repeat(var(--cols), minmax(0, 1fr)); }
 .cal-weekgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); min-width: 760px; }
-.cal-weekgrid .cal-colhead:first-child, .cal-weekgrid .cal-daycell:nth-child(8) { border-left: 0; }
+.cal-weekgrid .cal-colhead:first-child, .cal-weekgrid > .cal-colhead + .cal-daycell,
+.cal-weekgrid > .cal-bars + .cal-daycell { border-left: 0; }
+/* Mehrtägige Abwesenheiten: durchgehende Balken über die Tage (wie im Google Kalender) */
+.cal-bars {
+  grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-flow: row dense; align-items: start;
+  gap: 3px 0; padding: 5px 0; border-bottom: 1px solid var(--line);
+  background-image: repeating-linear-gradient(to right, transparent 0 calc(100% / 7 - 1px), var(--line) calc(100% / 7 - 1px) calc(100% / 7));
+}
+.cal-bar {
+  margin: 0 4px; border: 0; border-radius: 5px; padding: 3px 7px; min-width: 0; text-align: left;
+  font-size: .74rem; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; /* Titel immer ganz ausgeschrieben */
+  color: var(--studio); background: color-mix(in srgb, var(--studio) 15%, var(--surface));
+  border-left: 3px solid var(--studio);
+}
+.cal-bar.is-sick { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--surface)); border-left-color: var(--studio); }
+.cal-bar.is-cont-before { margin-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.cal-bar.is-cont-after { margin-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.cal-bar.is-mine { box-shadow: inset 0 0 0 2px var(--studio); }
+.cal-bar:disabled { opacity: 1; cursor: default; }
+.cal-bar:not(:disabled):hover { filter: brightness(.97); }
+.cal-bar-range { font-weight: 500; opacity: .85; }
+.cal-chip.is-sick { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--surface)); }
 .cal-daycell {
   border-left: 1px solid var(--line); padding: 6px; display: grid; gap: 4px; align-content: start; min-width: 0; min-height: 220px;
 }

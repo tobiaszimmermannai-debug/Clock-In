@@ -109,7 +109,7 @@ function Plan(props: { me: Me; locations: Location[] }) {
   const [start, setStart] = useState(weekStart(berlinDate()));
   const [studio, setStudio] = useState("");
   const [view, setView] = useState<"list" | "calendar">("list");
-  const { shifts, error } = useWeekShifts(portalDb, start);
+  const { shifts, error, blockOf } = useWeekShifts(portalDb, start);
   return (
     <>
       <PageHeader
@@ -123,8 +123,8 @@ function Plan(props: { me: Me; locations: Location[] }) {
       <WeekNav start={start} onChange={setStart} />
       {error && <Notice tone="error">{error}</Notice>}
       {view === "list"
-        ? <WeekPlan start={start} shifts={shifts} studio={studio} highlightUserId={props.me.id} />
-        : <StudioCalendar start={start} shifts={shifts} locations={props.locations} highlightUserId={props.me.id} />}
+        ? <WeekPlan start={start} shifts={shifts} studio={studio} highlightUserId={props.me.id} blockOf={blockOf} />
+        : <StudioCalendar start={start} shifts={shifts} locations={props.locations} highlightUserId={props.me.id} blockOf={blockOf} />}
     </>
   );
 }

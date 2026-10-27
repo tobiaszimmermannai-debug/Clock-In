@@ -1,14 +1,17 @@
 // Dienstplan aller Studios im Kalender-Stil: Woche (Einträge je Tag) oder Tag (Zeitachse, Spalte je Studio).
 // Jede Schicht erscheint in der Farbe ihres Studios, mit Name und Uhrzeit; Akquise gestreift.
-import { type CSSProperties, useEffect, useState } from "react";
-import { addDays, berlinDate, berlinTime, weekdayShort, dayOfMonth } from "../lib/dates";
+// Krank/Urlaub/Schule/Frei: in der Woche als durchgehender Balken über die Tage (wie im Google Kalender).
+import { type CSSProperties, type MouseEvent, useEffect, useState } from "react";
+import { addDays, berlinDate, berlinTime, dayOfMonth, rangeLabel, weekdayShort } from "../lib/dates";
 import { studioColor } from "../lib/studios";
 import { type Location, SHIFT_TYPE_LABEL, studioShort } from "../lib/types";
-import { type PlanShift, isHelpShift } from "./WeekPlan";
+import { type AbsenceBlock, type PlanShift, absenceTitle, blockRange, isAllDay, isHelpShift } from "./WeekPlan";
 import { DayStrip, Segmented } from "./ui";
 
 type Mode = "week" | "day";
 type Column = { key: string; label: string; color?: string; today?: boolean; items: PlanShift[]; allDay: PlanShift[] };
+// Balken in der Wochenansicht: zusammenhängende Tage eines Blocks innerhalb der Woche
+type Bar = { key: string; first: number; days: PlanShift[]; before: boolean; after: boolean; block?: AbsenceBlock };
 
 const minutesOf = (iso: string) => {
   const [h, m] = berlinTime(iso).split(":").map(Number);
@@ -17,7 +20,8 @@ const minutesOf = (iso: string) => {
 // Ende am Folgetag (Nachtschicht) → bis Mitternacht zeichnen
 const endMinutes = (s: PlanShift) => (berlinDate(s.ends_at) !== berlinDate(s.starts_at) ? 24 * 60 : minutesOf(s.ends_at));
 const shortName = (s: PlanShift) => (s.user ? `${s.user.first_name} ${s.user.last_name[0] ?? ""}.` : "?");
-const label = (s: PlanShift) => (s.is_acquisition ? "Akquise" : s.is_herold ? "Herold" : isHelpShift(s) ? "Aushilfe" : "");
+const label = (s: PlanShift) =>
+  s.shift_type !== "work" ? SHIFT_TYPE_LABEL[s.shift_type] : s.is_acquisition ? "Akquise" : s.is_herold ? "Herold" : isHelpShift(s) ? "Aushilfe" : "";
 const where = (s: PlanShift) => `${s.is_acquisition ? "Akquise in " : s.is_herold ? "Herold in " : ""}${studioShort(s.location?.name ?? "")}`;
 
 // Überlappende Schichten nebeneinander (wie im Google Kalender)
@@ -75,6 +79,7 @@ export function StudioCalendar(props: {
   highlightUserId?: string;
   canEdit?: (shift: PlanShift) => boolean;
   onSelect?: (shift: PlanShift) => void;
+  blockOf?: (id: string) => AbsenceBlock | undefined;
 }) {
   const narrow = useNarrow();
   const today = berlinDate();
@@ -106,9 +111,45 @@ export function StudioCalendar(props: {
     label: studioShort(l.name),
     color: studioColor(l.id),
     today: day === today,
-    items: onDay(day).filter((s) => s.shift_type === "work" && s.location_id === l.id),
-    allDay: onDay(day).filter((s) => s.shift_type !== "work" && placeOf(s) === l.id),
+    // mit Uhrzeit: Schichten im Studio, Schule/Prüfung als Teil des Tages beim Heimatstudio
+    items: onDay(day).filter((s) => !isAllDay(s) && (s.shift_type === "work" ? s.location_id : placeOf(s)) === l.id),
+    allDay: onDay(day).filter((s) => isAllDay(s) && placeOf(s) === l.id),
   }));
+
+  // Wochenbalken: je Block die aufeinanderfolgenden Tage dieser Woche zu einem Balken
+  const bars: Bar[] = [];
+  const byBlock = new Map<string, PlanShift[]>();
+  for (const s of props.shifts) {
+    if (!isAllDay(s) || !isVisible(s)) continue;
+    const key = props.blockOf?.(s.id)?.key ?? s.id;
+    byBlock.set(key, [...(byBlock.get(key) ?? []), s]);
+  }
+  for (const [key, list] of byBlock) {
+    const sorted = list
+      .map((s) => ({ s, i: days.indexOf(berlinDate(s.starts_at)) }))
+      .filter((x) => x.i >= 0)
+      .sort((a, b) => a.i - b.i);
+    let bar: Bar | null = null;
+    for (const { s, i } of sorted) {
+      if (bar && i <= bar.first + bar.days.length) {
+        if (i === bar.first + bar.days.length) bar.days.push(s);
+        continue;
+      }
+      const block = props.blockOf?.(s.id);
+      bar = { key: `${key}|${i}`, first: i, days: [s], before: !!block && block.from < days[i], after: false, block };
+      bars.push(bar);
+    }
+  }
+  for (const b of bars) b.after = !!b.block && b.block.to > days[b.first + b.days.length - 1];
+  bars.sort((a, b) => a.first - b.first || b.days.length - a.days.length
+    || order(placeOf(a.days[0])) - order(placeOf(b.days[0])) || absenceTitle(a.days[0]).localeCompare(absenceTitle(b.days[0]), "de"));
+  const barOnDay = (i: number) => bars.some((b) => i >= b.first && i < b.first + b.days.length);
+  // Klick auf einen Balken: Eintrag des angeklickten Tages öffnen
+  const pickDay = (b: Bar, e: MouseEvent<HTMLButtonElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const i = Math.floor(((e.clientX - r.left) / Math.max(r.width, 1)) * b.days.length);
+    return b.days[Math.min(b.days.length - 1, Math.max(0, i))];
+  };
 
   // Sichtbarer Zeitraum: mindestens 7–21 Uhr, sonst passend zu den Schichten
   const all = columns.flatMap((c) => c.items);
@@ -166,25 +207,38 @@ export function StudioCalendar(props: {
                 <strong>{dayOfMonth(d)}</strong>
               </div>
             ))}
-            {days.map((d) => {
-              const list = onDay(d);
-              const work = list
-                .filter((s) => s.shift_type === "work")
+            {bars.length > 0 && (
+              <div className="cal-bars">
+                {bars.map((b) => {
+                  const s = b.days[0];
+                  const title = absenceTitle(s);
+                  const range = b.block ? rangeLabel(b.block.from, b.block.to) : undefined;
+                  return (
+                    <button key={b.key} type="button"
+                      className={`cal-bar is-${s.shift_type}${b.before ? " is-cont-before" : ""}${b.after ? " is-cont-after" : ""}${s.user_id === props.highlightUserId ? " is-mine" : ""}`}
+                      style={{ gridColumn: `${b.first + 1} / span ${b.days.length}`, "--studio": studioColor(placeOf(s)) } as CSSProperties}
+                      disabled={!editable(s)}
+                      title={range && (b.before || b.after || b.days.length > 1) ? `${title} · ${range}` : title}
+                      onClick={(e) => props.onSelect?.(pickDay(b, e))}>
+                      {b.before && <span aria-hidden="true">◂ </span>}
+                      {title}
+                      {(b.before || b.after) && range && <span className="cal-bar-range"> · {range}</span>}
+                      {b.after && <span aria-hidden="true"> ▸</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {days.map((d, i) => {
+              const work = onDay(d)
+                .filter((s) => !isAllDay(s))
                 .sort((a, b) => order(a.location_id) - order(b.location_id) || a.starts_at.localeCompare(b.starts_at));
-              const absent = list.filter((s) => s.shift_type !== "work");
               return (
                 <div key={d} className={d === today ? "cal-daycell is-today" : "cal-daycell"}>
-                  {absent.map((s) => (
-                    <button key={s.id} type="button" className="cal-chip"
-                      style={{ "--studio": studioColor(placeOf(s)) } as CSSProperties}
-                      disabled={!editable(s)} onClick={() => props.onSelect?.(s)}>
-                      {shortName(s)} · {SHIFT_TYPE_LABEL[s.shift_type]}
-                    </button>
-                  ))}
                   {work.map((s) => (
                     <button key={s.id} type="button"
                       className={`cal-pill${s.user_id === props.highlightUserId ? " is-mine" : ""}${s.is_acquisition ? " is-acq" : ""}`}
-                      style={{ "--studio": studioColor(s.location_id) } as CSSProperties}
+                      style={{ "--studio": studioColor(placeOf(s)) } as CSSProperties}
                       disabled={!editable(s)}
                       title={`${s.user?.first_name} ${s.user?.last_name} · ${where(s)}`}
                       onClick={() => props.onSelect?.(s)}>
@@ -193,7 +247,7 @@ export function StudioCalendar(props: {
                       {label(s) && <span>{label(s)}</span>}
                     </button>
                   ))}
-                  {list.length === 0 && <span className="cal-empty">–</span>}
+                  {work.length === 0 && !barOnDay(i) && <span className="cal-empty">–</span>}
                 </div>
               );
             })}
@@ -216,14 +270,18 @@ export function StudioCalendar(props: {
                 <div className="cal-gutter-label">ganztags</div>
                 {columns.map((c) => (
                   <div key={c.key} className="cal-allday">
-                    {c.allDay.map((s) => (
-                      <button key={s.id} type="button" className="cal-chip"
-                        style={{ "--studio": studioColor(placeOf(s)) } as CSSProperties}
-                        disabled={!editable(s)}
-                        onClick={() => props.onSelect?.(s)}>
-                        {shortName(s)} · {SHIFT_TYPE_LABEL[s.shift_type]}
-                      </button>
-                    ))}
+                    {c.allDay.map((s) => {
+                      const range = blockRange(props.blockOf?.(s.id));
+                      return (
+                        <button key={s.id} type="button" className={`cal-chip is-${s.shift_type}`}
+                          style={{ "--studio": studioColor(placeOf(s)) } as CSSProperties}
+                          disabled={!editable(s)}
+                          title={range ? `${absenceTitle(s)} · ${range}` : absenceTitle(s)}
+                          onClick={() => props.onSelect?.(s)}>
+                          {absenceTitle(s)}{range && <span className="cal-bar-range"> · {range}</span>}
+                        </button>
+                      );
+                    })}
                   </div>
                 ))}
               </>
@@ -249,7 +307,7 @@ export function StudioCalendar(props: {
                         top, height: h,
                         left: `calc(${(lane / lanes) * 100}% + 2px)`,
                         width: `calc(${100 / lanes}% - 4px)`,
-                        "--studio": studioColor(s.location_id),
+                        "--studio": studioColor(placeOf(s)),
                       } as CSSProperties}
                       disabled={!editable(s)}
                       title={`${s.user?.first_name} ${s.user?.last_name} · ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)} · ${where(s)}`}

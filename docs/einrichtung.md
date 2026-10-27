@@ -218,6 +218,10 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
   Wer schon länger gearbeitet hat, behält seine Arbeitszeit (es wird nichts gekürzt), bekommt aber keine Krank-Gutschrift.
 - **Sonntag:** keine „Noch ohne Schicht“-Liste, keine 18-Uhr-Abfrage, keine Meldungen „nicht eingestempelt“ /
   „Studio nicht besetzt“ und keine einfachen Stempel-Meldungen. Freigaben (z. B. fremdes Handy) kommen weiter.
+- **Dienstplan – mehrtägige Abwesenheiten:** Krank, Urlaub, Schule und Frei an aufeinanderfolgenden Tagen erscheinen
+  in der Wochenansicht als ein durchgehender Balken mit ausgeschriebenem Titel (z. B. „Mia Lang · Urlaub“, bei IST-Schule
+  mit Kurs), wie im Google Kalender. Geht der Block über die Woche hinaus: ◂/▸ und Zeitraum („26. Okt. – 4. Nov.“).
+  Wochenenden dazwischen zählen als durchgehend. Tagesansicht und Listen zeigen den Zeitraum ebenfalls.
 - **Wer ist da? (nur Admins):** Zeiten → „Wer ist da“, alle Studios auf einer Seite. Je Studio: arbeitet (seit wann), Pause (seit
   wann, wie lange), fehlt (Schicht begonnen, nicht eingestempelt), kommt noch, gegangen, nicht gekommen, abwesend
   (krank/Urlaub/Schule/frei). Aktualisiert sich alle 30 Sek.

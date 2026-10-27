@@ -114,6 +114,15 @@ export function weekRangeLabel(start: string): string {
     : `${dayOfMonth(start)}. ${month(start)} – ${dayOfMonth(end)}. ${month(end)}`;
 }
 
+/** Zeitraum kurz: "20. Okt.", "20.–24. Okt." bzw. "30. Okt. – 3. Nov." */
+export function rangeLabel(from: string, to: string): string {
+  const month = (date: string) => MONTHS[Number(date.slice(5, 7)) - 1];
+  if (from === to) return `${dayOfMonth(from)}. ${month(from)}`;
+  return from.slice(0, 7) === to.slice(0, 7)
+    ? `${dayOfMonth(from)}.–${dayOfMonth(to)}. ${month(to)}`
+    : `${dayOfMonth(from)}. ${month(from)} – ${dayOfMonth(to)}. ${month(to)}`;
+}
+
 const isWeekend = (date: string) => [0, 6].includes(new Date(`${date}T12:00:00Z`).getUTCDay());
 
 /** Einträge zu Blöcken aufeinanderfolgender Tage zusammenfassen (Wochenenden dazwischen zählen als durchgehend) */

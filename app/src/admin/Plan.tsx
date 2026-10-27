@@ -9,7 +9,7 @@
 // Unter dem Tag: „Noch ohne Schicht“ – eigene Leute ohne Eintrag; planen oder (nur Vollzeit) auf frei setzen.
 import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
-import { type PlanShift, ShiftRow, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
+import { type PlanShift, ShiftRow, blockRange, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
 import { Avatar, DayStrip, Empty, Field, Icon, Notice, PageHeader, Row, Section, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
 import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtHM, fmtLongDay, isSunday, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
@@ -128,7 +128,7 @@ export function Plan({ profile }: { profile: Profile }) {
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [flash, setFlash] = useState<string>();
   const [failure, setFailure] = useState<string>();
-  const { shifts, error, reload } = useWeekShifts(adminDb, start);
+  const { shifts, error, reload, blockOf } = useWeekShifts(adminDb, start);
   const help = useHelpRequests();
 
   useEffect(() => {
@@ -255,6 +255,7 @@ export function Plan({ profile }: { profile: Profile }) {
           shifts={shifts}
           locations={allLocations}
           canEdit={canEdit}
+          blockOf={blockOf}
           onSelect={(s) => setSheet({ shift: s })}
         />
         {sheet?.shift && editSheet(sheet.shift)}
@@ -276,7 +277,7 @@ export function Plan({ profile }: { profile: Profile }) {
         {dayEntries.length === 0 && dayRequests.length === 0 && <p className="list-empty">Noch niemand eingetragen.</p>}
         {dayEntries.map((s) => (
           <ShiftRow key={s.id} shift={s} showStudio={!!s.location_id && s.location_id !== studio}
-            onClick={() => setSheet({ shift: s })} />
+            range={blockRange(blockOf(s.id))} onClick={() => setSheet({ shift: s })} />
         ))}
         {dayRequests.map((r) => (
           <Row key={r.id} className="is-request" leading={<span className="avatar avatar-request" aria-hidden="true">?</span>}
