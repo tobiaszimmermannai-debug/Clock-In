@@ -541,6 +541,8 @@ input[type="time"] { font-variant-numeric: tabular-nums; font-size: 1.1rem; font
   border-left: 3px solid var(--studio);
 }
 .cal-bar.is-sick { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--surface)); border-left-color: var(--studio); }
+/* Schule: Kurs-Titel sind lang → eine Zeile, Rest „…“ (ganzer Titel beim Darüberfahren) */
+.cal-bar.is-vocational_school { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
 .cal-bar.is-cont-before { margin-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
 .cal-bar.is-cont-after { margin-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
 .cal-bar.is-mine { box-shadow: inset 0 0 0 2px var(--studio); }
