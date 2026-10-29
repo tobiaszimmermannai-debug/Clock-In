@@ -3,6 +3,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { AuthLayout } from "../admin/AdminApp";
 import { Shell, type ShellTab } from "../components/Shell";
 import { StudioCalendar } from "../components/StudioCalendar";
+import { Tasks } from "../components/Tasks";
 import { WeekPlan, useWeekShifts } from "../components/WeekPlan";
 import { Field, Notice, PageHeader, Segmented, StudioFilter, WeekNav } from "../components/ui";
 import { staffLoginEmail } from "../lib/config";
@@ -25,12 +26,13 @@ export type Me = {
 };
 export type Colleague = { id: string; first_name: string; last_name: string; home_location_id: string | null };
 
-type Tab = "stamp" | "hours" | "plan" | "swap" | "account";
+type Tab = "stamp" | "hours" | "plan" | "swap" | "tasks" | "account";
 const TABS: ShellTab<Tab>[] = [
   { id: "stamp", label: "Stempeln", icon: "qr" },
   { id: "hours", label: "Stunden", icon: "clock" },
   { id: "plan", label: "Dienstplan", icon: "calendar" },
   { id: "swap", label: "Tausch", icon: "swap" },
+  { id: "tasks", label: "Aufgaben", icon: "tasks" },
   { id: "account", label: "Konto", icon: "user" },
 ];
 
@@ -85,7 +87,7 @@ export function PortalApp(props: { stampToken?: string }) {
   };
 
   return (
-    <Shell title="Clock-In" subtitle={`${me.first_name} ${me.last_name}`} tabs={TABS} current={tab} onTab={setTab}>
+    <Shell title="Clock-In" subtitle={`${me.first_name} ${me.last_name}`} tabs={TABS} current={tab} onTab={setTab} full={tab === "tasks"}>
       {tab === "stamp" && (
         <Stamp
           me={me}
@@ -100,6 +102,7 @@ export function PortalApp(props: { stampToken?: string }) {
       {tab === "hours" && <Hours me={me} />}
       {tab === "plan" && <Plan me={me} locations={locations} />}
       {tab === "swap" && <Swap me={me} colleagues={colleagues} locations={locations} />}
+      {tab === "tasks" && <Tasks db={portalDb} />}
       {tab === "account" && <Account me={me} onLogout={logout} />}
     </Shell>
   );

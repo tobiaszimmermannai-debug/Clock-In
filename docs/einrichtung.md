@@ -113,6 +113,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 24. `supabase/migrations/20261021090000_day_correction_any_phone.sql` (Tag korrigieren, mehrere Handys je Person)
 25. `supabase/migrations/20261022090000_presence.sql` („Wer ist da?“ – Live-Überblick)
 26. `supabase/migrations/20261027090000_sick_cap_sunday.sql` (Krank höchstens 6,5 Std. am Tag, Sonntag ohne Planung/Telegram)
+27. `supabase/migrations/20261029090000_notes.sql` (Bereich „Aufgaben“: Seiten, Notizen, Aufgaben-Datenbanken, Datei-Speicher)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und

@@ -10,6 +10,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@blocknote/core": "^0.56.0",
+    "@blocknote/mantine": "^0.56.0",
+    "@blocknote/react": "^0.56.0",
+    "@mantine/core": "^9.7.4",
+    "@mantine/hooks": "^9.7.4",
     "@supabase/supabase-js": "^2.117.2",
     "idb": "^8.0.3",
     "jsqr": "^1.4.0",
