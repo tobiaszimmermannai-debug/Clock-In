@@ -20,11 +20,32 @@ export type PropType =
   | "phone"
   | "created_time"
   | "last_edited_time"
-  | "created_by";
+  | "created_by"
+  | "formula"
+  | "relation"
+  | "rollup";
 
 export type StatusGroup = "todo" | "doing" | "done";
 
 export type SelectOption = { id: string; name: string; color: Color; group?: StatusGroup };
+
+export type RollupFn =
+  | "show"
+  | "count"
+  | "count_values"
+  | "count_unique"
+  | "empty"
+  | "not_empty"
+  | "sum"
+  | "average"
+  | "min"
+  | "max"
+  | "range"
+  | "earliest"
+  | "latest"
+  | "checked"
+  | "unchecked"
+  | "percent_checked";
 
 export type PropDef = {
   id: string;
@@ -32,6 +53,12 @@ export type PropDef = {
   type: PropType;
   options?: SelectOption[];
   format?: "number" | "euro" | "percent";
+  /** Formel, z. B. prop("Preis") * prop("Menge") */
+  formula?: string;
+  /** Verknüpfung: Ziel-Datenbank und (bei gegenseitiger Verknüpfung) die Gegen-Eigenschaft dort */
+  relation?: { dbId: string; backPropId?: string };
+  /** Rollup: Werte der verknüpften Einträge zusammenfassen */
+  rollup?: { relationPropId: string; targetPropId: string; fn: RollupFn };
 };
 
 export type ViewType = "table" | "board" | "list" | "calendar" | "gallery";
@@ -101,15 +128,31 @@ export type PageMeta = {
 /** BlockNote-Dokument (JSON) */
 export type Blocks = unknown[];
 
-export type PagePatch = Partial<Omit<PageMeta, "id" | "createdAt" | "createdBy">> & { content?: Blocks; plain?: string };
+export type PagePatch = Partial<Omit<PageMeta, "id" | "createdAt" | "createdBy">> & {
+  content?: Blocks;
+  plain?: string;
+  /** Yjs-Dokument (Base64) – Grundlage für gemeinsames Bearbeiten und Kommentare */
+  ydoc?: string | null;
+};
 
 export type NewPage = PageMeta & { content: Blocks; plain: string };
 
 export type Member = { id: string; name: string; color: Color };
 
 export type StoreEvent =
-  | { type: "upsert"; page: PageMeta; content?: Blocks }
+  | { type: "upsert"; page: PageMeta; content?: Blocks; ydoc?: string | null }
   | { type: "delete"; id: string };
+
+/** Nachrichten zwischen Editoren derselben Seite (Yjs-Änderungen, Cursor/Anwesenheit) */
+export type CollabMessage =
+  | { type: "update"; data: string }
+  | { type: "awareness"; data: string }
+  | { type: "hello"; from: string; sv: string }
+  | { type: "sync"; to: string; data: string; sv?: string };
+
+export type CollabChannel = { send(message: CollabMessage): void; close(): void };
+
+export type Version = { id: string; pageId: string; createdAt: string; createdBy: string | null; title: string; content?: Blocks };
 
 /** Speicher-Schnittstelle: lokal (Browser) oder Supabase (gemeinsam mit Clock-In) */
 export interface NotesStore {
@@ -118,6 +161,13 @@ export interface NotesStore {
   members(): Promise<Member[]>;
   listPages(): Promise<PageMeta[]>;
   getContent(id: string): Promise<Blocks>;
+  /** Inhalt und Yjs-Dokument einer Seite */
+  getDoc(id: string): Promise<{ content: Blocks; ydoc: string | null }>;
+  /** Kanal für Live-Bearbeitung einer Seite */
+  collab(pageId: string, onMessage: (message: CollabMessage) => void): CollabChannel;
+  listVersions(pageId: string): Promise<Version[]>;
+  getVersion(id: string): Promise<Version | null>;
+  saveVersion(version: { pageId: string; title: string; content: Blocks }): Promise<void>;
   create(page: NewPage): Promise<void>;
   update(id: string, patch: PagePatch): Promise<void>;
   remove(ids: string[]): Promise<void>;

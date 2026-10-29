@@ -5,7 +5,8 @@ import type { Member, PageMeta, PropDef, PropType, PropValue, SelectOption, Stat
 import { Icon, type IconName } from "../ui/Icon";
 import { MenuDivider, MenuItem, MenuLabel, Popover, usePopover } from "../ui/Popover";
 import { addDays, COLOR_LABELS, COLORS, formatDate, formatTimestamp, today } from "../util";
-import { addOption, formatNumber, getValue, isEmpty, optionById, READONLY_TYPES } from "./logic";
+import { dateToIso, type FValue } from "./formula";
+import { addOption, formatNumber, formulaResult, getValue, isEmpty, optionById, READONLY_TYPES, relationUpdates, rollupValue } from "./logic";
 
 export const TYPE_ICONS: Record<PropType, IconName> = {
   title: "title",
@@ -23,6 +24,9 @@ export const TYPE_ICONS: Record<PropType, IconName> = {
   created_time: "clock",
   last_edited_time: "clock",
   created_by: "person",
+  formula: "formula",
+  relation: "relation",
+  rollup: "rollup",
 };
 
 export function Tag(props: { option: SelectOption; onRemove?: () => void; status?: boolean }) {
@@ -49,9 +53,66 @@ export function PersonChip(props: { member?: Member; fallback?: string }) {
   );
 }
 
+/** Ergebnis einer Formel oder eines Rollups */
+function ComputedView(props: { value: FValue; format?: PropDef["format"] }): ReactNode {
+  const v = props.value;
+  if (v === null || v === "" || (Array.isArray(v) && !v.length)) return null;
+  if (typeof v === "boolean") return <span className={`nk-check${v ? " is-on" : ""}`}>{v ? <Icon name="check" size={12} /> : null}</span>;
+  if (typeof v === "number") return <span className="nk-num">{formatNumber(v, props.format)}</span>;
+  if (v instanceof Date) return <span className={dateTone(dateToIso(v))}>{formatDate(dateToIso(v))}</span>;
+  if (Array.isArray(v)) {
+    return (
+      <span className="nk-tags">
+        {v.map((x, i) => (
+          <span key={i} className="nk-tag is-default">
+            {x instanceof Date ? formatDate(dateToIso(x)) : typeof x === "number" ? formatNumber(x, props.format) : String(x)}
+          </span>
+        ))}
+      </span>
+    );
+  }
+  return <span className="nk-text-value">{String(v)}</span>;
+}
+
+export function RelationChips(props: { ids: string[] }) {
+  const notes = useNotes();
+  return (
+    <span className="nk-tags">
+      {props.ids.map((id) => {
+        const p = notes.pages.get(id);
+        if (!p || p.archivedAt) return null;
+        return (
+          <span key={id} className="nk-rel-chip">
+            <span>{p.icon ?? <Icon name="page" size={13} />}</span>
+            <span>{p.title || "Ohne Titel"}</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 /** Nur Anzeige (Karten, Liste, Galerie) */
-export function ValueView(props: { row: PageMeta; prop: PropDef; members: Member[] }): ReactNode {
-  const { row, prop, members } = props;
+export function ValueView(props: { row: PageMeta; prop: PropDef }): ReactNode {
+  const notes = useNotes();
+  const { row, prop } = props;
+  const { members } = notes;
+  if (prop.type === "formula" || prop.type === "rollup") {
+    const ctx = { pages: notes.pages, members };
+    const res = prop.type === "formula" ? formulaResult(row, prop, ctx) : { value: rollupValue(row, prop, ctx), error: undefined };
+    if (res.error) {
+      return (
+        <span className="nk-formula-error" title={res.error}>
+          Fehler
+        </span>
+      );
+    }
+    return <ComputedView value={res.value} format={prop.format} />;
+  }
+  if (prop.type === "relation") {
+    const ids = row.props[prop.id];
+    return Array.isArray(ids) && ids.length ? <RelationChips ids={ids} /> : null;
+  }
   const v = getValue(row, prop);
   if (isEmpty(v) && prop.type !== "checkbox") return null;
   switch (prop.type) {
@@ -146,7 +207,8 @@ export function ValueCell(props: {
 
   const value = getValue(row, prop);
   const empty = isEmpty(value) && prop.type !== "checkbox";
-  const cls = `nk-cell${props.className ? ` ${props.className}` : ""}${readonly ? " is-readonly" : ""}`;
+  const computed = prop.type === "formula" || prop.type === "rollup";
+  const cls = `nk-cell${props.className ? ` ${props.className}` : ""}${readonly ? " is-readonly" : ""}${computed ? " is-computed" : ""}`;
 
   if (prop.type === "checkbox") {
     return (
@@ -187,7 +249,11 @@ export function ValueCell(props: {
       }}
       onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLElement).click()}
     >
-      {empty ? <span className="nk-placeholder">{props.placeholder ?? ""}</span> : <ValueView row={row} prop={prop} members={notes.members} />}
+      {empty && prop.type !== "formula" && prop.type !== "rollup" ? (
+        <span className="nk-placeholder">{props.placeholder ?? ""}</span>
+      ) : (
+        <ValueView row={row} prop={prop} />
+      )}
       {pop.anchor && (prop.type === "select" || prop.type === "status" || prop.type === "multi_select") && (
         <OptionPicker anchor={pop.anchor} onClose={pop.close} prop={prop} value={value} onChange={set} onPropChange={setProp} />
       )}
@@ -195,6 +261,7 @@ export function ValueCell(props: {
         <PersonPicker anchor={pop.anchor} onClose={pop.close} members={notes.members} value={(value as string[] | null) ?? []} onChange={set} />
       )}
       {pop.anchor && prop.type === "date" && <DatePicker anchor={pop.anchor} onClose={pop.close} value={(value as string | null) ?? null} onChange={set} />}
+      {pop.anchor && prop.type === "relation" && <RelationPicker anchor={pop.anchor} onClose={pop.close} prop={prop} row={row} />}
     </div>
   );
 }
@@ -461,6 +528,76 @@ export function DatePicker(props: {
         }}
       />
       <MenuItem icon="trash" label="Datum entfernen" onClick={() => (props.onChange(null), props.onClose())} />
+    </Popover>
+  );
+}
+
+/** Einträge einer anderen Datenbank verknüpfen (bei gegenseitiger Verknüpfung auch auf der Gegenseite) */
+export function RelationPicker(props: { anchor: HTMLElement | DOMRect | { x: number; y: number }; onClose: () => void; prop: PropDef; row: PageMeta }) {
+  const notes = useNotes();
+  const { prop } = props;
+  const [query, setQuery] = useState("");
+  const target = prop.relation ? notes.pages.get(prop.relation.dbId) : undefined;
+  const row = notes.pages.get(props.row.id) ?? props.row;
+  const selected = Array.isArray(row.props[prop.id]) ? (row.props[prop.id] as string[]) : [];
+
+  if (!target || !notes.isLive(target.id)) {
+    return (
+      <Popover anchor={props.anchor} onClose={props.onClose} width={280}>
+        <div className="nk-empty-hint">Noch keine Ziel-Datenbank gewählt. Spaltenkopf anklicken → „Verknüpfen mit“.</div>
+      </Popover>
+    );
+  }
+
+  const apply = (next: string[], pages = notes.pages) => {
+    for (const u of relationUpdates(pages.get(row.id) ?? row, prop, next, pages)) notes.updatePage(u.id, { props: u.props });
+  };
+  const toggle = (id: string) => apply(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  const q = query.trim().toLowerCase();
+  const rows = notes
+    .childrenOf(target.id)
+    .filter((r) => (r.title || "Ohne Titel").toLowerCase().includes(q))
+    .sort((a, b) => Number(selected.includes(b.id)) - Number(selected.includes(a.id)));
+  const create = async () => {
+    const page = await notes.createPage({ parentId: target.id, title: query.trim() });
+    apply([...selected, page.id], new Map(notes.pages).set(page.id, page));
+    setQuery("");
+  };
+
+  return (
+    <Popover anchor={props.anchor} onClose={props.onClose} width={320}>
+      <div className="nk-pad">
+        <input
+          autoFocus
+          className="nk-input"
+          placeholder={`In „${target.title || "Ohne Titel"}“ suchen …`}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (rows[0] && q) toggle(rows[0].id);
+              else if (q) void create();
+            }
+          }}
+        />
+      </div>
+      <MenuLabel>{target.icon ? `${target.icon} ` : ""}{target.title || "Ohne Titel"}</MenuLabel>
+      <div className="nk-menu-scroll">
+        {rows.map((r) => (
+          <div key={r.id} className="nk-option-row">
+            <MenuItem icon={<span>{r.icon ?? <Icon name="page" />}</span>} label={r.title || "Ohne Titel"} active={selected.includes(r.id)} onClick={() => toggle(r.id)} />
+            <button type="button" className="nk-icon-btn" aria-label="Öffnen" title="Öffnen" onClick={() => (props.onClose(), notes.openPeek(r.id))}>
+              <Icon name="expand" size={14} />
+            </button>
+          </div>
+        ))}
+        {!rows.length && !q && <div className="nk-empty-hint">Die Datenbank hat noch keine Einträge.</div>}
+        {q && !rows.some((r) => (r.title || "").toLowerCase() === q) && (
+          <MenuItem icon="plus" label={<>Neu anlegen: <b>{query.trim()}</b></>} onClick={() => void create()} />
+        )}
+      </div>
     </Popover>
   );
 }

@@ -1,15 +1,20 @@
 // Zentraler Zustand: Seitenliste im Speicher, gebündeltes Speichern, Navigation, Live-Updates
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { taskSchema, welcomeContent } from "./templates";
-import type { Blocks, DbSchema, Member, NewPage, NotesStore, PageKind, PageMeta, PagePatch, PropValue, Space } from "./types";
+import type { Blocks, DbSchema, Member, NewPage, NotesStore, PageKind, PageMeta, PagePatch, PropValue, Space, Version } from "./types";
 import { between, bySort, descendants, plainText, storageGet, storageSet, uid } from "./util";
 
 /** Schnittstelle zum gerade offenen Editor einer Seite (für Live-Updates und Unterseiten-Links) */
 export type EditorHandle = {
   appendPageLink(pageId: string): void;
+  /** Inhalt ersetzen (Version wiederherstellen) – geht über Yjs an alle Mitbearbeitenden */
   replaceContent(blocks: Blocks): void;
-  isBusy(): boolean;
+  /** Gespeicherten Yjs-Stand eines anderen Geräts einmischen */
+  applyRemote(ydoc: string): void;
 };
+
+/** Wer gerade auf einer Seite ist (aus den Live-Cursorn) */
+export type Presence = { clientId: number; name: string; color: string };
 
 export type Toast = { id: number; text: string; action?: { label: string; run: () => void } };
 
@@ -49,6 +54,17 @@ type Ctx = {
   createPage: (opts?: CreateOptions) => Promise<PageMeta>;
   updatePage: (id: string, patch: PagePatch, opts?: { delay?: number }) => void;
   saveContent: (id: string, blocks: Blocks) => void;
+  /** Inhalt + Yjs-Stand speichern (Live-Editor) */
+  saveDoc: (id: string, blocks: Blocks, ydoc: string) => void;
+  loadDoc: (id: string) => Promise<{ content: Blocks; ydoc: string | null }>;
+  /** Aktuellen Stand sofort als Version sichern */
+  saveVersionNow: (id: string, blocks: Blocks) => Promise<void>;
+  /** Version wiederherstellen (vorher wird der aktuelle Stand gesichert) */
+  restoreVersion: (id: string, version: Version) => Promise<void>;
+  presence: Record<string, Presence[]>;
+  setPresence: (id: string, peers: Presence[]) => void;
+  commentsOpen: boolean;
+  setCommentsOpen: (open: boolean) => void;
   loadContent: (id: string) => Promise<Blocks>;
   archive: (id: string) => void;
   restore: (id: string) => void;
@@ -76,6 +92,7 @@ export const useNotesOptional = () => useContext(NotesContext);
 
 const CONTENT_DELAY = 700;
 const META_DELAY = 400;
+const VERSION_GAP = 10 * 60 * 1000;
 
 export function NotesProvider(props: {
   store: NotesStore;
@@ -105,6 +122,9 @@ export function NotesProvider(props: {
   const chains = useRef(new Map<string, Promise<void>>());
   const lastSaved = useRef(new Map<string, string>());
   const editors = useRef(new Map<string, EditorHandle>());
+  const versionAt = useRef(new Map<string, number>());
+  const [presence, setPresenceState] = useState<Record<string, Presence[]>>({});
+  const [commentsOpen, setCommentsOpenState] = useState(() => storageGet<boolean>("aun-comments", false));
   const toastSeq = useRef(0);
 
   const toast = useCallback((text: string, action?: Toast["action"]) => {
@@ -124,6 +144,25 @@ export function NotesProvider(props: {
     return next;
   }, []);
 
+  // Automatischer Versionsverlauf: höchstens alle 10 Minuten den Stand vor einer neuen Bearbeitung sichern
+  const snapshot = useCallback(
+    async (id: string, prevJson: string) => {
+      const now = Date.now();
+      let last = versionAt.current.get(id);
+      if (last === undefined) {
+        versionAt.current.set(id, now); // Sperre, solange die letzte Version abgefragt wird
+        const list = await store.listVersions(id).catch(() => []);
+        last = list[0] ? new Date(list[0].createdAt).getTime() : 0;
+        versionAt.current.set(id, last);
+      }
+      if (now - last < VERSION_GAP) return;
+      versionAt.current.set(id, now);
+      const title = pagesRef.current.get(id)?.title ?? "";
+      await store.saveVersion({ pageId: id, title, content: JSON.parse(prevJson) as Blocks }).catch(() => versionAt.current.delete(id));
+    },
+    [store],
+  );
+
   const flushOne = useCallback(
     (id: string) => {
       const t = timers.current.get(id);
@@ -134,7 +173,10 @@ export function NotesProvider(props: {
       pending.current.delete(id);
       if (patch.content) {
         patch.plain = plainText(patch.content);
-        lastSaved.current.set(id, JSON.stringify(patch.content));
+        const json = JSON.stringify(patch.content);
+        const prev = lastSaved.current.get(id);
+        lastSaved.current.set(id, json);
+        if (prev && prev !== json) void snapshot(id, prev);
       }
       return enqueue(id, async () => {
         try {
@@ -150,7 +192,7 @@ export function NotesProvider(props: {
         }
       });
     },
-    [enqueue, store, toast],
+    [enqueue, snapshot, store, toast],
   );
 
   const flush = useCallback(async () => {
@@ -238,16 +280,12 @@ export function NotesProvider(props: {
         return;
       }
       const id = ev.page.id;
-      // Eigene, noch offene Änderungen haben Vorrang
+      // Live-Inhalt immer einmischen (Yjs führt zusammen, nichts wird überschrieben)
+      if (ev.ydoc) editors.current.get(id)?.applyRemote(ev.ydoc);
+      if (ev.content) lastSaved.current.set(id, JSON.stringify(ev.content));
+      // Eigene, noch offene Änderungen an Titel/Eigenschaften haben Vorrang
       if (pending.current.has(id) || chains.current.has(id)) return;
       setPage(ev.page);
-      if (ev.content) {
-        const json = JSON.stringify(ev.content);
-        if (json === lastSaved.current.get(id)) return;
-        lastSaved.current.set(id, json);
-        const editor = editors.current.get(id);
-        if (editor && !editor.isBusy()) editor.replaceContent(ev.content);
-      }
     });
   }, [loaded, setPage, store]);
 
@@ -367,15 +405,8 @@ export function NotesProvider(props: {
           throw e;
         }
       });
-      if (opts.linkInParent && parent && parent.kind === "page") {
-        const editor = editors.current.get(parent.id);
-        if (editor) editor.appendPageLink(page.id);
-        else {
-          await flushOne(parent.id);
-          const blocks = await store.getContent(parent.id);
-          schedule(parent.id, { content: [...blocks, { type: "pageLink", props: { pageId: page.id } }] }, 0);
-        }
-      }
+      // Ist die Elternseite gerade offen, erscheint der Link als Block; sonst listet sie die Unterseite unten auf
+      if (opts.linkInParent && parent && parent.kind === "page") editors.current.get(parent.id)?.appendPageLink(page.id);
       return meta;
     },
     [enqueue, flushOne, schedule, setPage, store, toast],
@@ -434,6 +465,60 @@ export function NotesProvider(props: {
     },
     [patchLocal, schedule],
   );
+
+  const saveDoc = useCallback(
+    (id: string, blocks: Blocks, ydoc: string) => {
+      patchLocal(id, {});
+      schedule(id, { content: blocks, ydoc }, 0);
+    },
+    [patchLocal, schedule],
+  );
+
+  const loadDoc = useCallback(
+    async (id: string) => {
+      await flushOne(id);
+      const doc = await store.getDoc(id);
+      lastSaved.current.set(id, JSON.stringify(doc.content));
+      return doc;
+    },
+    [flushOne, store],
+  );
+
+  const saveVersionNow = useCallback(
+    async (id: string, blocks: Blocks) => {
+      await store.saveVersion({ pageId: id, title: pagesRef.current.get(id)?.title ?? "", content: blocks });
+      versionAt.current.set(id, Date.now());
+    },
+    [store],
+  );
+
+  const restoreVersion = useCallback(
+    async (id: string, version: Version) => {
+      const blocks = version.content ?? [];
+      const current = lastSaved.current.get(id);
+      if (current) await saveVersionNow(id, JSON.parse(current) as Blocks);
+      const editor = editors.current.get(id);
+      // Offener Editor: Änderung läuft über Yjs zu allen Mitbearbeitenden; sonst Inhalt neu aufbauen lassen
+      if (editor) editor.replaceContent(blocks);
+      else schedule(id, { content: blocks, ydoc: null }, 0);
+      const page = pagesRef.current.get(id);
+      if (page && version.title && version.title !== page.title) updatePage(id, { title: version.title }, { delay: 0 });
+    },
+    [saveVersionNow, schedule, updatePage],
+  );
+
+  const setPresence = useCallback((id: string, peers: Presence[]) => {
+    setPresenceState((p) => {
+      const cur = p[id] ?? [];
+      if (cur.length === peers.length && cur.every((x, i) => x.clientId === peers[i].clientId && x.name === peers[i].name)) return p;
+      return { ...p, [id]: peers };
+    });
+  }, []);
+
+  const setCommentsOpen = useCallback((open: boolean) => {
+    setCommentsOpenState(open);
+    storageSet("aun-comments", open);
+  }, []);
 
   const loadContent = useCallback(
     async (id: string) => {
@@ -586,6 +671,14 @@ export function NotesProvider(props: {
       createPage,
       updatePage,
       saveContent,
+      saveDoc,
+      loadDoc,
+      saveVersionNow,
+      restoreVersion,
+      presence,
+      setPresence,
+      commentsOpen,
+      setCommentsOpen,
       loadContent,
       archive,
       restore,
@@ -599,7 +692,7 @@ export function NotesProvider(props: {
       dismissToast,
       flush,
     }),
-    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush],
+    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, saveDoc, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush],
   );
 
   return <NotesContext.Provider value={value}>{props.children}</NotesContext.Provider>;

@@ -24,6 +24,20 @@ export const COLOR_LABELS: Record<Color, string> = {
   red: "Rot",
 };
 
+/** Kräftige Farbtöne für Cursor anderer Personen im Editor */
+export const COLOR_HEX: Record<Color, string> = {
+  default: "#787774",
+  gray: "#787774",
+  brown: "#9f6b53",
+  orange: "#d9730d",
+  yellow: "#cb912f",
+  green: "#448361",
+  blue: "#337ea9",
+  purple: "#9065b0",
+  pink: "#c14c8a",
+  red: "#d44c47",
+};
+
 export const randomColor = (): Color => COLORS[1 + Math.floor(Math.random() * (COLORS.length - 1))];
 
 export const untitled = (p: Pick<PageMeta, "title"> | undefined) => p?.title.trim() || "Ohne Titel";

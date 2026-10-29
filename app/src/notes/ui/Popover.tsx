@@ -25,7 +25,8 @@ export function Popover(props: {
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [style, setStyle] = useState<CSSProperties>({ visibility: "hidden" });
+  // Bis zur Positionierung nur durchsichtig (nicht "hidden"), damit Eingabefelder mit autoFocus den Fokus bekommen
+  const [style, setStyle] = useState<CSSProperties>({ opacity: 0, left: 0, top: 0 });
   const { onClose } = props;
 
   useLayoutEffect(() => {
@@ -45,9 +46,12 @@ export function Popover(props: {
   }, [props.anchor, props.placement, props.width]);
 
   useEffect(() => {
+    // Ein Dialog, der aus dem Menü geöffnet wurde, liegt darüber – Klicks dort zählen nicht als "daneben"
+    const modalAbove = () => !ref.current?.closest(".nk-modal-backdrop") && document.querySelector(".nk-modal-backdrop");
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
       if (ref.current?.contains(t)) return;
+      if ((t as HTMLElement).closest?.(".nk-modal-backdrop") && modalAbove()) return;
       // Verschachtelte Popover (z. B. Untermenü) zählen als innen
       if ((t as HTMLElement).closest?.(".nk-popover")) {
         const all = [...document.querySelectorAll(".nk-popover")];
@@ -56,7 +60,7 @@ export function Popover(props: {
       onClose();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !modalAbove()) {
         e.stopPropagation();
         onClose();
       }

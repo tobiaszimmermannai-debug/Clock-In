@@ -190,7 +190,20 @@ export function TableView(p: ViewProps) {
           updateSchema={p.updateSchema}
         />
       )}
-      {add.anchor && <AddPropertyMenu anchor={add.anchor} onClose={add.close} updateSchema={p.updateSchema} view={p.view} updateView={p.updateView} />}
+      {add.anchor && (
+        <AddPropertyMenu
+          anchor={add.anchor}
+          onClose={add.close}
+          updateSchema={p.updateSchema}
+          view={p.view}
+          updateView={p.updateView}
+          onNeedsSetup={(prop) => {
+            const anchor = add.anchor;
+            setMenuProp(prop);
+            if (anchor) setTimeout(() => head.open(anchor));
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -299,7 +312,7 @@ export function BoardView(p: ViewProps) {
                   if (isEmpty(v) || (x.type === "checkbox" && !v)) return null;
                   return (
                     <div key={x.id} className="nk-card-prop">
-                      <ValueView row={row} prop={x} members={notes.members} />
+                      <ValueView row={row} prop={x} />
                     </div>
                   );
                 })}
@@ -327,7 +340,6 @@ function coverStyle(cover: string, notes: ReturnType<typeof useNotes>) {
 // ---------------- Liste ----------------
 
 export function ListView(p: ViewProps) {
-  const notes = useNotes();
   const extra = p.visible.filter((x) => x.type !== "title");
   return (
     <div className="nk-list">
@@ -338,7 +350,7 @@ export function ListView(p: ViewProps) {
           <span className="nk-list-props">
             {extra.map((x) => (
               <span key={x.id}>
-                <ValueView row={row} prop={x} members={notes.members} />
+                <ValueView row={row} prop={x} />
               </span>
             ))}
           </span>
@@ -479,7 +491,7 @@ export function GalleryView(p: ViewProps) {
             <div className="nk-card-title">{untitled(row)}</div>
             {extra.map((x) => (
               <div key={x.id} className="nk-card-prop">
-                <ValueView row={row} prop={x} members={notes.members} />
+                <ValueView row={row} prop={x} />
               </div>
             ))}
           </div>

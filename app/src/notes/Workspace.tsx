@@ -2,6 +2,7 @@
 import "@blocknote/mantine/style.css";
 import "./notes.css";
 import { useCallback, useEffect, useState } from "react";
+import { VersionHistory } from "./History";
 import { Home } from "./Home";
 import { MovePicker, PageMenu, PageView } from "./PageView";
 import { Search } from "./Search";
@@ -150,7 +151,7 @@ function Layout(props: NotesWorkspaceProps) {
         </>
       )}
       <div className="nk-main">
-        <Topbar page={page} sidebarOpen={showSidebar} onToggleSidebar={toggleSidebar} />
+        <Topbar page={page} sidebarOpen={showSidebar} onToggleSidebar={toggleSidebar} theme={resolved} />
         <div className="nk-scroll">
           {!notes.loaded ? (
             <div className="nk-page">
@@ -174,11 +175,12 @@ function Layout(props: NotesWorkspaceProps) {
   );
 }
 
-function Topbar(props: { page?: PageMeta; sidebarOpen: boolean; onToggleSidebar: () => void }) {
+function Topbar(props: { page?: PageMeta; sidebarOpen: boolean; onToggleSidebar: () => void; theme: "light" | "dark" }) {
   const notes = useNotes();
   const menu = usePopover();
   const share = usePopover();
   const [moving, setMoving] = useState(false);
+  const [history, setHistory] = useState(false);
   const { page } = props;
   const trail = page ? [...ancestors(page.id, notes.pages), page] : [];
   const fav = page && notes.favorites.includes(page.id);
@@ -205,22 +207,53 @@ function Topbar(props: { page?: PageMeta; sidebarOpen: boolean; onToggleSidebar:
       <span className="nk-spacer" />
       {page && (
         <>
+          <Facepile peers={notes.presence[page.id] ?? []} />
           <span className="nk-muted nk-hide-sm nk-edited">Bearbeitet {relativeTime(page.updatedAt)}</span>
           <button type="button" className="nk-btn is-ghost" onClick={(e) => share.open(e.currentTarget)}>
             <Icon name={page.space === "team" ? "users" : "lock"} /> <span className="nk-hide-sm">{page.space === "team" ? "Team" : "Privat"}</span>
           </button>
+          {page.kind === "page" && (
+            <button
+              type="button"
+              className={`nk-icon-btn${notes.commentsOpen ? " is-on" : ""}`}
+              aria-label="Kommentare"
+              aria-pressed={notes.commentsOpen}
+              title="Kommentare"
+              onClick={() => notes.setCommentsOpen(!notes.commentsOpen)}
+            >
+              <Icon name="comment" />
+            </button>
+          )}
           <button type="button" className="nk-icon-btn" aria-label={fav ? "Aus Favoriten entfernen" : "Zu Favoriten"} onClick={() => notes.toggleFavorite(page.id)}>
             <Icon name={fav ? "starFilled" : "star"} className={fav ? "nk-star-on" : ""} />
           </button>
           <button type="button" className="nk-icon-btn" aria-label="Seitenmenü" onClick={(e) => menu.open(e.currentTarget)}>
             <Icon name="more" />
           </button>
-          {menu.anchor && <PageMenu anchor={menu.anchor} page={page} onClose={menu.close} onMove={() => setMoving(true)} />}
+          {menu.anchor && <PageMenu anchor={menu.anchor} page={page} onClose={menu.close} onMove={() => setMoving(true)} onHistory={() => setHistory(true)} />}
           {share.anchor && <SharePanel anchor={share.anchor} page={page} onClose={share.close} />}
+          {history && <VersionHistory page={page} theme={props.theme} onClose={() => setHistory(false)} />}
           {moving && <MovePicker pageId={page.id} onClose={() => setMoving(false)} />}
         </>
       )}
     </header>
+  );
+}
+
+/** Wer gerade auf der Seite ist (Live-Cursor anderer Personen) */
+function Facepile(props: { peers: { clientId: number; name: string; color: string }[] }) {
+  // Dieselbe Person in mehreren Tabs nur einmal zeigen
+  const people = [...new Map(props.peers.map((p) => [p.name, p])).values()];
+  if (!people.length) return null;
+  return (
+    <div className="nk-facepile" title={`Gerade hier: ${people.map((p) => p.name).join(", ")}`}>
+      {people.slice(0, 4).map((p) => (
+        <span key={p.clientId} className="nk-avatar" style={{ background: p.color }}>
+          {p.name[0]}
+        </span>
+      ))}
+      {people.length > 4 && <span className="nk-avatar is-more">+{people.length - 4}</span>}
+    </div>
   );
 }
 
@@ -253,6 +286,7 @@ function Peek(props: { id: string; theme: "light" | "dark"; mobile: boolean }) {
   const notes = useNotes();
   const menu = usePopover();
   const [moving, setMoving] = useState(false);
+  const [history, setHistory] = useState(false);
   const page = notes.pages.get(props.id);
   return (
     <>
@@ -278,7 +312,8 @@ function Peek(props: { id: string; theme: "light" | "dark"; mobile: boolean }) {
         <div className="nk-peek-scroll">
           <PageView key={props.id} id={props.id} theme={props.theme} peek />
         </div>
-        {menu.anchor && page && <PageMenu anchor={menu.anchor} page={page} onClose={menu.close} onMove={() => setMoving(true)} />}
+        {menu.anchor && page && <PageMenu anchor={menu.anchor} page={page} onClose={menu.close} onMove={() => setMoving(true)} onHistory={() => setHistory(true)} />}
+        {history && page && <VersionHistory page={page} theme={props.theme} onClose={() => setHistory(false)} />}
         {moving && <MovePicker pageId={props.id} onClose={() => setMoving(false)} />}
       </aside>
     </>

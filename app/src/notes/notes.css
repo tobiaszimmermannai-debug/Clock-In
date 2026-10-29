@@ -554,6 +554,72 @@ select.nk-input { padding-right: 4px; }
 .nk-peek .nk-page-head { padding-top: 24px; }
 .nk-peek .nk-page-inner.has-cover .nk-page-head { padding-top: 0; }
 
+/* ---------------- Zusammenarbeit ---------------- */
+.nk-icon-btn.is-on { color: var(--nk-accent); background: var(--nk-accent-soft); }
+.nk-facepile { display: flex; align-items: center; padding: 0 6px; }
+.nk-facepile .nk-avatar { width: 24px; height: 24px; font-size: 11px; margin-left: -6px; box-shadow: 0 0 0 2px var(--nk-bg); }
+.nk-facepile .nk-avatar:first-child { margin-left: 0; }
+.nk-facepile .nk-avatar.is-more { background: var(--nk-hover-strong); color: var(--nk-muted); }
+/* Cursor-Beschriftung anderer Personen */
+.nk .collaboration-cursor__label, .nk .bn-collaboration-cursor__label { font: 600 11px/1.4 var(--nk-font); border-radius: 4px 4px 4px 0; }
+
+/* Kommentare: Spalte rechts neben der Seite */
+.nk-page-row { display: flex; align-items: flex-start; min-height: 100%; }
+.nk-page-row > .nk-page { flex: 1; min-width: 0; }
+.nk-comments-col {
+  position: sticky; top: 0; flex: none; width: 340px; max-height: 100%; height: calc(100dvh - 45px); overflow-y: auto;
+  border-left: 1px solid var(--nk-line); background: var(--nk-bg);
+}
+.nk.is-embedded .nk-comments-col { height: 100%; }
+.nk-comments { display: grid; gap: 8px; padding: 12px; }
+.nk-comments-head { display: flex; align-items: center; gap: 6px; }
+.nk-comments-hint { margin: 0; font-size: 12px; }
+.nk-comments .bn-threads-sidebar { display: grid; gap: 8px; }
+.nk-comments .bn-thread { border-radius: 8px; box-shadow: 0 0 0 1px var(--nk-line); }
+
+/* Unterseiten, die im Text nicht verlinkt sind */
+.nk-subpages { display: grid; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--nk-line); }
+
+/* Verknüpfungen */
+.nk-rel-chip {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 0 4px; border-radius: 3px; font-size: 13px;
+  text-decoration: underline; text-decoration-color: var(--nk-line); text-underline-offset: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nk-cell.is-computed { color: var(--nk-fg); cursor: default; }
+.nk-formula-error { color: var(--nk-danger); font-size: 13px; }
+.nk-rollup-config label { display: grid; gap: 2px; font-size: 12px; }
+
+/* Formel-Editor */
+.nk-modal-foot { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--nk-line); font-size: 13px; }
+.nk-formula-modal { width: min(760px, 100%); max-height: 84vh; }
+.nk-formula-body { display: grid; gap: 10px; padding: 12px; overflow-y: auto; }
+.nk-formula-input {
+  width: 100%; min-height: 84px; resize: vertical; padding: 10px; border-radius: 6px; border: 1px solid var(--nk-line) !important;
+  background: var(--nk-hover) !important; font: 14px/1.5 var(--nk-mono) !important;
+}
+.nk-formula-input:focus { border-color: var(--nk-accent) !important; box-shadow: 0 0 0 2px var(--nk-accent-soft) !important; }
+.nk-formula-status { font-size: 13px; color: var(--c-green); }
+.nk-formula-status.is-error { color: var(--nk-danger); }
+.nk-formula-preview { border-radius: 6px; box-shadow: 0 0 0 1px var(--nk-line); padding-bottom: 4px; }
+.nk-formula-row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 10px; font-size: 14px; }
+.nk-formula-help { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.nk-formula-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 2px 0 6px; }
+.nk-formula-chips .nk-chip { font-family: var(--nk-mono); font-size: 12px; height: 22px; padding: 0 8px; }
+.nk-formula-docs { margin: 0; display: grid; gap: 6px; font-size: 12px; max-height: 300px; overflow-y: auto; }
+.nk-formula-docs dt { font-family: var(--nk-mono); color: var(--nk-fg); }
+.nk-formula-docs dd { margin: 0; color: var(--nk-muted); }
+
+/* Versionsverlauf */
+.nk-history { width: min(1080px, 100%); max-height: 86vh; height: 86vh; }
+.nk-history-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 260px minmax(0, 1fr); }
+.nk-history-list { overflow-y: auto; padding: 6px; border-right: 1px solid var(--nk-line); display: grid; align-content: start; gap: 2px; }
+.nk-history-item { display: grid; gap: 1px; padding: 8px 10px; border-radius: 6px; font-size: 14px; }
+.nk-history-item:hover { background: var(--nk-hover); }
+.nk-history-item.is-active { background: var(--nk-accent-soft); }
+.nk-history-preview { overflow-y: auto; padding: 24px 32px; }
+.nk-history-title { margin: 0 0 8px; font-size: 32px; font-weight: 700; }
+.nk-history-doc .nk-editor { margin: 0 -54px; }
+
 /* ---------------- Handy ---------------- */
 @media (max-width: 760px) {
   .nk-page-inner, .nk-page.is-full .nk-page-inner, .nk-page.is-peek .nk-page-inner { padding: 0 16px; }
@@ -571,4 +637,10 @@ select.nk-input { padding-right: 4px; }
   .nk-board-col { width: 240px; }
   .nk-db-search { width: 110px; }
   .nk-modal-backdrop { padding-top: 8vh; }
+  .nk-comments-col { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; height: 55vh; z-index: 45; border-left: 0; border-top: 1px solid var(--nk-line); box-shadow: var(--nk-shadow); }
+  .nk-formula-help { grid-template-columns: 1fr; }
+  .nk-history-body { grid-template-columns: 1fr; grid-template-rows: 160px minmax(0, 1fr); }
+  .nk-history-list { border-right: 0; border-bottom: 1px solid var(--nk-line); }
+  .nk-history-preview { padding: 16px; }
+  .nk-history-doc .nk-editor { margin: 0 -16px; }
 }

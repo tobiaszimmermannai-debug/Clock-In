@@ -6,6 +6,7 @@ import { Icon, type IconName } from "../ui/Icon";
 import { type Anchor, MenuDivider, MenuItem, MenuLabel, Popover, usePopover } from "../ui/Popover";
 import { shortId, storageGet, storageSet, untitled } from "../util";
 import { TYPE_ICONS } from "./cells";
+import { FormulaModal, RelationConfig, RollupConfig } from "./config";
 import {
   defaultsFromView,
   needsValue,
@@ -22,7 +23,27 @@ import {
 import { BoardView, CalendarView, GalleryView, ListView, TableView, type ViewProps } from "./views";
 
 const VIEW_ICONS: Record<ViewType, IconName> = { table: "table", board: "board", list: "list", calendar: "calendar", gallery: "gallery" };
-const ADDABLE: PropType[] = ["text", "number", "select", "multi_select", "status", "date", "person", "checkbox", "url", "email", "phone", "created_time", "last_edited_time", "created_by"];
+const ADDABLE: PropType[] = [
+  "text",
+  "number",
+  "select",
+  "multi_select",
+  "status",
+  "date",
+  "person",
+  "checkbox",
+  "url",
+  "email",
+  "phone",
+  "formula",
+  "relation",
+  "rollup",
+  "created_time",
+  "last_edited_time",
+  "created_by",
+];
+/** Typen, die nach dem Anlegen eingerichtet werden müssen */
+const NEEDS_SETUP: PropType[] = ["formula", "relation", "rollup"];
 
 export function DatabaseView(props: { dbId: string; inline?: boolean }) {
   const notes = useNotes();
@@ -52,8 +73,8 @@ export function DatabaseView(props: { dbId: string; inline?: boolean }) {
   const view = schema?.views.find((v) => v.id === viewId) ?? schema?.views[0];
   const allRows = useMemo(() => (db ? notes.childrenOf(db.id) : []), [db, notes]);
   const rows = useMemo(
-    () => (schema && view ? viewRows(allRows, view, schema, { meId: notes.me.id, members: notes.members, query }) : []),
-    [allRows, schema, view, notes.me.id, notes.members, query],
+    () => (schema && view ? viewRows(allRows, view, schema, { pages: notes.pages, meId: notes.me.id, members: notes.members, query }) : []),
+    [allRows, schema, view, notes.pages, notes.me.id, notes.members, query],
   );
 
   if (!db) return null;
@@ -344,6 +365,18 @@ function FilterEditor(props: {
           ))}
         </select>
       );
+    } else if (prop.type === "relation") {
+      const rows = prop.relation ? notes.childrenOf(prop.relation.dbId) : [];
+      input = (
+        <select className="nk-input" value={f.value ?? ""} onChange={(e) => set({ value: e.target.value })}>
+          <option value="">– wählen –</option>
+          {rows.map((r) => (
+            <option key={r.id} value={r.id}>
+              {untitled(r)}
+            </option>
+          ))}
+        </select>
+      );
     } else if (prop.type === "person" || prop.type === "created_by") {
       input = (
         <select className="nk-input" value={f.value ?? ""} onChange={(e) => set({ value: e.target.value })}>
@@ -542,8 +575,12 @@ export function PropertyMenu(props: {
   updateView?: (patch: Partial<ViewDef>) => void;
   updateSchema: (fn: (s: DbSchema) => DbSchema) => void;
 }) {
-  const { prop, view } = props;
+  const notes = useNotes();
+  const { view } = props;
+  // Immer den aktuellen Stand anzeigen (das Menü bleibt beim Einrichten offen)
+  const prop = notes.pages.get(props.db.id)?.schema?.properties.find((p) => p.id === props.prop.id) ?? props.prop;
   const [name, setName] = useState(prop.name);
+  const [formulaOpen, setFormulaOpen] = useState(false);
   const types = usePopover();
   const setProp = (patch: Partial<PropDef>) =>
     props.updateSchema((s) => ({ ...s, properties: s.properties.map((p) => (p.id === prop.id ? { ...p, ...patch } : p)) }));
@@ -575,7 +612,12 @@ export function PropertyMenu(props: {
       {prop.type !== "title" && (
         <MenuItem icon={TYPE_ICONS[prop.type]} label="Typ" hint={TYPE_LABELS[prop.type]} chevron onClick={() => types.open(props.anchor instanceof HTMLElement ? props.anchor : { x: 0, y: 0 })} />
       )}
-      {prop.type === "number" && (
+      {prop.type === "formula" && (
+        <MenuItem icon="formula" label="Formel bearbeiten …" hint={prop.formula?.trim() ? undefined : "leer"} onClick={() => setFormulaOpen(true)} />
+      )}
+      {prop.type === "relation" && <RelationConfig db={props.db} prop={prop} updateSchema={props.updateSchema} />}
+      {prop.type === "rollup" && <RollupConfig db={props.db} prop={prop} setProp={setProp} />}
+      {(prop.type === "number" || prop.type === "formula" || prop.type === "rollup") && (
         <>
           <MenuLabel>Zahlenformat</MenuLabel>
           {(["number", "euro", "percent"] as const).map((f) => (
@@ -617,6 +659,15 @@ export function PropertyMenu(props: {
             label="Eigenschaft löschen"
             danger
             onClick={() => {
+              // Gegenseite einer Verknüpfung wird einseitig
+              const back = prop.relation?.backPropId;
+              const tid = prop.relation?.dbId;
+              const target = tid && tid !== props.db.id ? notes.pages.get(tid) : undefined;
+              if (back && target?.schema) {
+                notes.updatePage(target.id, {
+                  schema: { ...target.schema, properties: target.schema.properties.map((p) => (p.id === back ? { ...p, relation: { dbId: props.db.id } } : p)) },
+                });
+              }
               props.updateSchema((s) => ({
                 ...s,
                 properties: s.properties.filter((p) => p.id !== prop.id),
@@ -645,13 +696,15 @@ export function PropertyMenu(props: {
               onClick={() => {
                 const fresh = newProperty(t, prop.name);
                 const keepOptions = ["select", "multi_select", "status"].includes(t) && prop.options?.length;
-                setProp({ type: t, options: keepOptions ? prop.options : fresh.options, format: fresh.format });
+                setProp({ type: t, options: keepOptions ? prop.options : fresh.options, format: fresh.format, formula: fresh.formula });
                 types.close();
+                if (t === "formula") setFormulaOpen(true);
               }}
             />
           ))}
         </Popover>
       )}
+      {formulaOpen && <FormulaModal db={props.db} prop={prop} onClose={() => setFormulaOpen(false)} onSave={(formula) => setProp({ formula })} />}
     </Popover>
   );
 }
@@ -662,6 +715,8 @@ export function AddPropertyMenu(props: {
   updateSchema: (fn: (s: DbSchema) => DbSchema) => void;
   view?: ViewDef;
   updateView?: (patch: Partial<ViewDef>) => void;
+  /** Neue Eigenschaft, die noch eingerichtet werden muss (Formel, Verknüpfung, Rollup) */
+  onNeedsSetup?: (prop: PropDef) => void;
 }) {
   const [query, setQuery] = useState("");
   const list = ADDABLE.filter((t) => TYPE_LABELS[t].toLowerCase().includes(query.toLowerCase()));
@@ -683,6 +738,7 @@ export function AddPropertyMenu(props: {
               props.updateSchema((s) => ({ ...s, properties: [...s.properties, p] }));
               if (props.view && props.updateView && props.view.hidden.includes(p.id)) props.updateView({ hidden: props.view.hidden.filter((h) => h !== p.id) });
               props.onClose();
+              if (NEEDS_SETUP.includes(t)) props.onNeedsSetup?.(p);
             }}
           />
         ))}

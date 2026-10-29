@@ -1,63 +1,179 @@
-// Block-Editor einer Seite (BlockNote): Slash-Menü mit eigenen Blöcken, @-Erwähnungen, Live-Updates
-import { filterSuggestionItems, insertOrUpdateBlockForSlashMenu } from "@blocknote/core";
+// Block-Editor einer Seite (BlockNote): Live-Bearbeitung mit Cursorn (Yjs), Kommentare, Slash-Menü, @-Erwähnungen
+import { BlockNoteEditor, filterSuggestionItems, insertOrUpdateBlockForSlashMenu } from "@blocknote/core";
+import { CommentsExtension, DefaultThreadStoreAuth } from "@blocknote/core/comments";
 import { de } from "@blocknote/core/locales";
+import { blocksToYXmlFragment, withCollaboration, YjsThreadStore } from "@blocknote/core/yjs";
 import { BlockNoteView } from "@blocknote/mantine";
-import { type DefaultReactSuggestionItem, getDefaultReactSlashMenuItems, SuggestionMenuController, useCreateBlockNote } from "@blocknote/react";
-import { useEffect, useRef, useState } from "react";
+import {
+  type DefaultReactSuggestionItem,
+  getDefaultReactSlashMenuItems,
+  SuggestionMenuController,
+  ThreadsSidebar,
+  useCreateBlockNote,
+} from "@blocknote/react";
+import { type MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { newDatabaseSchema } from "../database/logic";
 import { useNotes } from "../state";
 import { TEMPLATES } from "../templates";
 import type { Blocks, PageMeta } from "../types";
 import { Icon } from "../ui/Icon";
-import { addDays, formatDate, today, uid, untitled } from "../util";
+import { addDays, COLOR_HEX, formatDate, today, uid, untitled } from "../util";
 import { type NotesEditor, schema } from "./blocks";
+import { CollabSession } from "./collab";
 
 const dictionary = {
   ...de,
   placeholders: { ...de.placeholders, default: "Tippe „/“ für Befehle, „@“ für Erwähnungen", emptyDocument: "Tippe „/“ für Befehle" },
 };
 
-export function PageEditor(props: { page: PageMeta; theme: "light" | "dark"; onEditorReady?: (e: NotesEditor | null) => void }) {
+/** Wartezeit nach der letzten Änderung bis zum Speichern */
+const SAVE_DELAY = 900;
+
+type EditorProps = {
+  page: PageMeta;
+  theme: "light" | "dark";
+  onEditorReady?: (e: NotesEditor | null) => void;
+  /** Ziel für die Kommentar-Leiste (rechts neben der Seite) */
+  commentsTarget?: HTMLElement | null;
+};
+
+export function PageEditor(props: EditorProps) {
   const notes = useNotes();
-  const [initial, setInitial] = useState<Blocks | null>(null);
+  const [session, setSession] = useState<CollabSession | null>(null);
   const [error, setError] = useState<string>();
-  const { loadContent } = notes;
+  const { loadDoc, store } = notes;
   const id = props.page.id;
+  // Änderungen vor dem Einhängen des Editors (z. B. Aufbau aus gespeichertem Inhalt) merken
+  const dirty = useRef(false);
+  const save = useRef<() => void>(() => (dirty.current = true));
 
   useEffect(() => {
     let cancelled = false;
-    setInitial(null);
-    loadContent(id)
-      .then((b) => !cancelled && setInitial(b))
-      .catch((e: Error) => !cancelled && setError(e.message));
+    let s: CollabSession | null = null;
+    setSession(null);
+    setError(undefined);
+    (async () => {
+      const doc = await loadDoc(id);
+      if (cancelled) return;
+      s = new CollabSession(store, id, () => save.current());
+      s.start(doc.ydoc);
+      // Ohne Live-Stand (neue oder ältere Seite): kurz auf andere offene Editoren warten, dann aus dem Inhalt aufbauen
+      if (!doc.ydoc) {
+        await s.waitForPeer(600);
+        if (cancelled) return;
+        if (s.fragment.length === 0 && doc.content.length) {
+          blocksToYXmlFragment(BlockNoteEditor.create({ schema }), doc.content as never, s.fragment);
+        }
+      }
+      if (!cancelled) setSession(s);
+    })().catch((e: Error) => !cancelled && setError(e.message));
     return () => {
       cancelled = true;
+      // Erst nach dem letzten Speichern des Editors abbauen
+      const done = s;
+      setTimeout(() => done?.destroy(), 0);
     };
-  }, [id, loadContent]);
+  }, [id, loadDoc, store]);
 
   if (error) return <div className="nk-error">Inhalt konnte nicht geladen werden: {error}</div>;
-  if (!initial) return <div className="nk-skeleton" aria-label="Lädt" />;
-  return <EditorInner key={id} page={props.page} initial={initial} theme={props.theme} onEditorReady={props.onEditorReady} />;
+  if (!session) return <div className="nk-skeleton" aria-label="Lädt" />;
+  return <EditorInner key={id} {...props} session={session} dirty={dirty} save={save} />;
 }
 
-function EditorInner(props: { page: PageMeta; initial: Blocks; theme: "light" | "dark"; onEditorReady?: (e: NotesEditor | null) => void }) {
+function linkedIds(blocks: Blocks, out = new Set<string>()): Set<string> {
+  for (const b of blocks as { type?: string; props?: Record<string, unknown>; children?: Blocks }[]) {
+    if (b.type === "pageLink" && typeof b.props?.pageId === "string") out.add(b.props.pageId);
+    if (b.type === "database" && typeof b.props?.dbId === "string") out.add(b.props.dbId);
+    if (b.children?.length) linkedIds(b.children, out);
+  }
+  return out;
+}
+
+function EditorInner(
+  props: EditorProps & { session: CollabSession; dirty: MutableRefObject<boolean>; save: MutableRefObject<() => void> },
+) {
   const notes = useNotes();
-  const { page } = props;
-  const applyingRemote = useRef(false);
+  const { page, session } = props;
+  const { me, store, registerEditor, saveDoc, setPresence } = notes;
+  const membersRef = useRef(notes.members);
+  membersRef.current = notes.members;
+  const [linked, setLinked] = useState<Set<string>>(new Set());
+  const [commentFilter, setCommentFilter] = useState<"open" | "resolved">("open");
+
+  const threadStore = useMemo(
+    () => new YjsThreadStore(me.id, session.threads as never, new DefaultThreadStoreAuth(me.id, "editor")),
+    [me.id, session],
+  );
 
   const editor = useCreateBlockNote(
-    {
+    withCollaboration({
       schema,
-      initialContent: props.initial.length ? (props.initial as never) : undefined,
       dictionary,
-      uploadFile: (file: File) => notes.store.upload(file),
-      resolveFileUrl: (url: string) => notes.store.resolveUrl(url),
+      uploadFile: (file: File) => store.upload(file),
+      resolveFileUrl: (url: string) => store.resolveUrl(url),
       tables: { splitCells: true, cellBackgroundColor: true, cellTextColor: true, headers: true },
-    },
-    [page.id],
+      extensions: [
+        CommentsExtension({
+          threadStore,
+          resolveUsers: async (ids: string[]) =>
+            ids.map((id) => ({ id, username: membersRef.current.find((m) => m.id === id)?.name ?? "Unbekannt", avatarUrl: "" })),
+        }),
+      ],
+      collaboration: {
+        fragment: session.fragment,
+        user: { name: me.name || "Unbekannt", color: COLOR_HEX[me.color] },
+        provider: { awareness: session.awareness },
+        showCursorLabels: "activity",
+      },
+    }),
+    [session],
   ) as NotesEditor;
 
-  const { registerEditor, saveContent } = notes;
+  // Speichern: gebündelt, vorher den Stand aus der Datenbank einmischen (falls Live-Nachrichten fehlten)
+  const { dirty, save } = props;
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let busy = false;
+    let again = false;
+    const run = async (merge: boolean) => {
+      if (busy) return void (again = true);
+      busy = true;
+      try {
+        if (merge) {
+          const remote = await store.getDoc(page.id).catch(() => null);
+          if (remote?.ydoc) session.merge(remote.ydoc);
+        }
+        saveDoc(page.id, editor.document as Blocks, session.encode());
+      } finally {
+        busy = false;
+        if (again) {
+          again = false;
+          schedule();
+        }
+      }
+    };
+    const schedule = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = undefined;
+        void run(true);
+      }, SAVE_DELAY);
+    };
+    save.current = schedule;
+    if (dirty.current) {
+      dirty.current = false;
+      schedule();
+    }
+    return () => {
+      save.current = () => (dirty.current = true);
+      if (timer) {
+        clearTimeout(timer);
+        void run(false);
+      }
+    };
+  }, [dirty, editor, page.id, save, saveDoc, session, store]);
+
   const { onEditorReady } = props;
   useEffect(() => {
     registerEditor(page.id, {
@@ -65,22 +181,19 @@ function EditorInner(props: { page: PageMeta; initial: Blocks; theme: "light" | 
         const last = editor.document[editor.document.length - 1];
         editor.insertBlocks([{ type: "pageLink", props: { pageId } }], last, "after");
       },
-      replaceContent: (blocks) => {
-        applyingRemote.current = true;
-        try {
-          editor.replaceBlocks(editor.document, (blocks.length ? blocks : [{ type: "paragraph" }]) as never);
-        } finally {
-          applyingRemote.current = false;
-        }
-      },
-      isBusy: () => editor.isFocused(),
+      replaceContent: (blocks) => editor.replaceBlocks(editor.document, (blocks.length ? blocks : [{ type: "paragraph" }]) as never),
+      applyRemote: (ydoc) => session.merge(ydoc),
     });
     onEditorReady?.(editor);
+    setLinked(linkedIds(editor.document as Blocks));
+    const off = session.onPeers((peers) => setPresence(page.id, peers));
     return () => {
+      off();
+      setPresence(page.id, []);
       registerEditor(page.id, null);
       onEditorReady?.(null);
     };
-  }, [editor, onEditorReady, page.id, registerEditor]);
+  }, [editor, onEditorReady, page.id, registerEditor, session, setPresence]);
 
   const slashItems = (query: string): DefaultReactSuggestionItem[] => {
     const own: DefaultReactSuggestionItem[] = [
@@ -213,19 +326,55 @@ function EditorInner(props: { page: PageMeta; initial: Blocks; theme: "light" | 
 
   const locked = Boolean(page.options.locked);
 
+  // Unterseiten, die im Inhalt nicht verlinkt sind, erscheinen unter dem Text
+  const unlinked = notes.childrenOf(page.id).filter((c) => !linked.has(c.id));
+
   return (
-    <BlockNoteView
-      editor={editor}
-      theme={props.theme}
-      editable={!locked}
-      slashMenu={false}
-      onChange={() => {
-        if (!applyingRemote.current) saveContent(page.id, editor.document as Blocks);
-      }}
-      className="nk-editor"
-    >
-      <SuggestionMenuController triggerCharacter="/" getItems={async (q) => slashItems(q)} />
-      <SuggestionMenuController triggerCharacter="@" getItems={async (q) => mentionItems(q)} />
-    </BlockNoteView>
+    <>
+      <BlockNoteView
+        editor={editor}
+        theme={props.theme}
+        editable={!locked}
+        slashMenu={false}
+        onChange={() => setLinked(linkedIds(editor.document as Blocks))}
+        className="nk-editor"
+      >
+        <SuggestionMenuController triggerCharacter="/" getItems={async (q) => slashItems(q)} />
+        <SuggestionMenuController triggerCharacter="@" getItems={async (q) => mentionItems(q)} />
+        {props.commentsTarget &&
+          createPortal(
+            // BlockNote/Mantine-Stile gelten nur innerhalb dieser Hülle
+            <div className="nk-comments bn-container bn-mantine" data-color-scheme={props.theme} data-mantine-color-scheme={props.theme}>
+              <div className="nk-comments-head">
+                <b>Kommentare</b>
+                <span className="nk-spacer" />
+                <div className="nk-segmented">
+                  {(["open", "resolved"] as const).map((f) => (
+                    <button key={f} type="button" aria-pressed={commentFilter === f} onClick={() => setCommentFilter(f)}>
+                      {f === "open" ? "Offen" : "Erledigt"}
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="nk-icon-btn" aria-label="Kommentare schließen" onClick={() => notes.setCommentsOpen(false)}>
+                  <Icon name="close" />
+                </button>
+              </div>
+              <p className="nk-comments-hint nk-muted">Text markieren und „Kommentieren“ wählen, um einen Kommentar anzulegen.</p>
+              <ThreadsSidebar filter={commentFilter} sort="position" />
+            </div>,
+            props.commentsTarget,
+          )}
+      </BlockNoteView>
+      {unlinked.length > 0 && (
+        <div className="nk-subpages">
+          {unlinked.map((c) => (
+            <button key={c.id} type="button" className="nk-pagelink" onClick={() => notes.navigate(c.id)}>
+              <span className="nk-pagelink-icon">{c.icon ?? <Icon name={c.kind === "database" ? "database" : "page"} size={18} />}</span>
+              <span className="nk-pagelink-title">{untitled(c)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </>
   );
 }

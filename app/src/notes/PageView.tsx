@@ -16,6 +16,7 @@ export function PageView(props: { id: string; theme: "light" | "dark"; peek?: bo
   const notes = useNotes();
   const page = notes.pages.get(props.id);
   const [editor, setEditor] = useState<NotesEditor | null>(null);
+  const [commentsEl, setCommentsEl] = useState<HTMLElement | null>(null);
 
   if (!page) {
     return (
@@ -58,7 +59,8 @@ export function PageView(props: { id: string; theme: "light" | "dark"; peek?: bo
     .filter(Boolean)
     .join(" ");
 
-  return (
+  const showComments = notes.commentsOpen && page.kind === "page" && !props.peek;
+  const body = (
     <div className={cls}>
       {page.cover && <Cover page={page} />}
       <div className={`nk-page-inner${page.cover ? " has-cover" : ""}`}>
@@ -67,9 +69,16 @@ export function PageView(props: { id: string; theme: "light" | "dark"; peek?: bo
         {page.kind === "database" ? (
           <DatabaseView dbId={page.id} />
         ) : (
-          <PageEditor page={page} theme={props.theme} onEditorReady={setEditor} />
+          <PageEditor page={page} theme={props.theme} onEditorReady={setEditor} commentsTarget={showComments ? commentsEl : null} />
         )}
       </div>
+    </div>
+  );
+  if (!showComments) return body;
+  return (
+    <div className="nk-page-row">
+      {body}
+      <aside className="nk-comments-col" ref={setCommentsEl} aria-label="Kommentare" />
     </div>
   );
 }
@@ -296,13 +305,24 @@ function PropertyPanel(props: { db: PageMeta; row: PageMeta; schema: DbSchema })
         </button>
       )}
       {head.anchor && menuProp && <PropertyMenu anchor={head.anchor} onClose={head.close} db={props.db} prop={menuProp} updateSchema={updateSchema} />}
-      {add.anchor && <AddPropertyMenu anchor={add.anchor} onClose={add.close} updateSchema={updateSchema} />}
+      {add.anchor && (
+        <AddPropertyMenu
+          anchor={add.anchor}
+          onClose={add.close}
+          updateSchema={updateSchema}
+          onNeedsSetup={(prop) => {
+            const anchor = add.anchor;
+            setMenuProp(prop);
+            if (anchor) setTimeout(() => head.open(anchor));
+          }}
+        />
+      )}
     </div>
   );
 }
 
 /** "…"-Menü einer Seite: Darstellung, Favorit, Duplizieren, Verschieben, Export, Papierkorb */
-export function PageMenu(props: { anchor: Anchor; page: PageMeta; onClose: () => void; onMove: () => void }) {
+export function PageMenu(props: { anchor: Anchor; page: PageMeta; onClose: () => void; onMove: () => void; onHistory?: () => void }) {
   const notes = useNotes();
   const { page } = props;
   const o = page.options;
@@ -355,6 +375,7 @@ export function PageMenu(props: { anchor: Anchor; page: PageMeta; onClose: () =>
       />
       <MenuItem icon="duplicate" label="Duplizieren" onClick={() => (void notes.duplicate(page.id).then((c) => c && notes.navigate(c.id)), props.onClose())} />
       <MenuItem icon="move" label="Verschieben nach …" onClick={() => (props.onClose(), props.onMove())} />
+      {page.kind === "page" && props.onHistory && <MenuItem icon="history" label="Versionsverlauf" onClick={() => (props.onClose(), props.onHistory!())} />}
       <MenuDivider />
       {page.kind === "page" && <MenuItem icon="download" label="Als Markdown exportieren" onClick={() => void exportMarkdown()} />}
       <MenuItem icon="upload" label="Markdown importieren" onClick={() => editor.current?.click()} />

@@ -62,6 +62,11 @@ const PATHS = {
   check: "m5 12 4.5 4.5L19 7",
   edit: "M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4",
   sparkle: "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6",
+  formula: "M15 4h-1.5A3.5 3.5 0 0 0 10 7.5V20M6.5 10.5H14M15 13l5 5M20 13l-5 5",
+  relation: "M7 17 17 7M9 7h8v8",
+  rollup: "M4 6h11M4 12h7M4 18h11M17 9l3 3-3 3",
+  history: "M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 4v4.6h4.6M12 8v4l3 2",
+  comment: "M5 5h14v10H9l-4 4z",
 } as const;
 
 export type IconName = keyof typeof PATHS;

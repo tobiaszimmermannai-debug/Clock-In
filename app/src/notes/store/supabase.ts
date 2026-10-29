@@ -1,6 +1,6 @@
 // Supabase-Speicher: dieselbe Datenbank wie Clock-In (Tabellen note_pages / note_favorites, Bucket "notes")
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
-import type { Blocks, Color, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent } from "../types";
+import type { Blocks, CollabMessage, Color, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Version } from "../types";
 import { COLORS } from "../util";
 
 type DbRow = {
@@ -22,7 +22,10 @@ type DbRow = {
   updated_at: string;
   updated_by: string | null;
   content?: Blocks;
+  ydoc?: string | null;
 };
+
+const MAX_VERSIONS = 100;
 
 const META_COLUMNS =
   "id, parent_id, space, owner_id, kind, title, icon, cover, props, schema, options, position, archived_at, created_at, created_by, updated_at, updated_by";
@@ -65,6 +68,7 @@ function toRow(p: PagePatch): Record<string, unknown> {
     archivedAt: "archived_at",
     content: "content",
     plain: "plain",
+    ydoc: "ydoc",
   };
   const row: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(p)) if (k in map && v !== undefined) row[map[k]] = v;
@@ -129,6 +133,60 @@ export class SupabaseStore implements NotesStore {
     const { data, error } = await this.db.from("note_pages").select("content").eq("id", id).maybeSingle();
     if (error) throw error;
     return (data?.content as Blocks | undefined) ?? [];
+  }
+
+  async getDoc(id: string): Promise<{ content: Blocks; ydoc: string | null }> {
+    const { data, error } = await this.db.from("note_pages").select("content, ydoc").eq("id", id).maybeSingle();
+    if (error) throw error;
+    return { content: (data?.content as Blocks | undefined) ?? [], ydoc: (data?.ydoc as string | null | undefined) ?? null };
+  }
+
+  collab(pageId: string, onMessage: (m: CollabMessage) => void) {
+    // Privater Kanal: Zugriff prüft die Datenbank (Policy auf realtime.messages)
+    const channel = this.db.channel(`note:${pageId}`, { config: { private: true, broadcast: { self: false } } });
+    channel.on("broadcast", { event: "y" }, ({ payload }) => onMessage(payload as CollabMessage));
+    let closed = false;
+    void this.db.realtime.setAuth().then(() => !closed && channel.subscribe());
+    return {
+      send: (message: CollabMessage) => {
+        if (!closed) void channel.send({ type: "broadcast", event: "y", payload: message });
+      },
+      close: () => {
+        closed = true;
+        void this.db.removeChannel(channel);
+      },
+    };
+  }
+
+  async listVersions(pageId: string): Promise<Version[]> {
+    const { data, error } = await this.db
+      .from("note_versions")
+      .select("id, page_id, created_at, created_by, title")
+      .eq("page_id", pageId)
+      .order("created_at", { ascending: false })
+      .limit(MAX_VERSIONS);
+    if (error) throw error;
+    return (data ?? []).map((v) => ({ id: v.id, pageId: v.page_id, createdAt: v.created_at, createdBy: v.created_by, title: v.title ?? "" }));
+  }
+
+  async getVersion(id: string): Promise<Version | null> {
+    const { data, error } = await this.db.from("note_versions").select("id, page_id, created_at, created_by, title, content").eq("id", id).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return { id: data.id, pageId: data.page_id, createdAt: data.created_at, createdBy: data.created_by, title: data.title ?? "", content: (data.content as Blocks) ?? [] };
+  }
+
+  async saveVersion(v: { pageId: string; title: string; content: Blocks }): Promise<void> {
+    const { error } = await this.db.from("note_versions").insert({ page_id: v.pageId, title: v.title, content: v.content });
+    if (error) throw error;
+    // Ältere Stände über dem Limit entfernen
+    const { data } = await this.db
+      .from("note_versions")
+      .select("id")
+      .eq("page_id", v.pageId)
+      .order("created_at", { ascending: false })
+      .range(MAX_VERSIONS, MAX_VERSIONS + 50);
+    if (data?.length) await this.db.from("note_versions").delete().in("id", data.map((r) => r.id as string));
   }
 
   async create(page: NewPage): Promise<void> {
@@ -202,7 +260,7 @@ export class SupabaseStore implements NotesStore {
           return;
         }
         const row = payload.new as DbRow;
-        onEvent({ type: "upsert", page: toMeta(row), content: row.content });
+        onEvent({ type: "upsert", page: toMeta(row), content: row.content, ydoc: row.ydoc });
       })
       .subscribe();
     return () => {
