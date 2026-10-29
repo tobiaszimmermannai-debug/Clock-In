@@ -105,7 +105,7 @@ const ABSENCE: Record<string, { type: string; label: string }> = {
 };
 
 async function handleNotify(
-  body: { type?: string; id?: unknown; date?: unknown; from?: unknown; to?: unknown; month?: unknown },
+  body: { type?: string; id?: unknown; date?: unknown; from?: unknown; to?: unknown; month?: unknown; user_id?: unknown },
 ): Promise<Response> {
   if (body.type === "terminal_request" && typeof body.id === "string") return await terminalRequest(body.id);
   if (body.type === "terminal_create" && typeof body.id === "string") {
@@ -123,6 +123,7 @@ async function handleNotify(
     return new Response(result.text, { status: result.ok ? 200 : 500 });
   }
   if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
+  if (body.type === "school_reminder") return await schoolReminder(typeof body.user_id === "string" ? body.user_id : undefined);
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
   if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
   if (body.type === "not_checked_in") return await notCheckedIn(body as NotCheckedIn);
@@ -1127,10 +1128,21 @@ async function alreadyDone(cq: CallbackQuery, text: string) {
 async function adminChats() {
   const { data } = await supabase
     .from("telegram_links")
-    .select("chat_id, notify_bookings, notify_studio_status, user:users!inner(role, is_active)")
+    .select("user_id, chat_id, notify_bookings, notify_studio_status, user:users!inner(role, is_active)")
     .eq("user.role", "admin")
     .eq("user.is_active", true);
-  return (data ?? []) as { chat_id: number; notify_bookings: boolean; notify_studio_status: boolean }[];
+  return (data ?? []) as { user_id: string; chat_id: number; notify_bookings: boolean; notify_studio_status: boolean }[];
+}
+
+// Erste Woche im Monat: Erinnerung, die Schultermine (IST) einzutragen – an Tobias, sonst an alle Admins
+async function schoolReminder(userId?: string): Promise<Response> {
+  const admins = await adminChats();
+  const mine = admins.filter((a) => a.user_id === userId);
+  const recipients = mine.length > 0 ? mine : admins;
+  for (const a of recipients) {
+    await sendMessage(a.chat_id, "📚 <b>Tobi: Bitte Schule aktualisieren</b>\nIST-Termine: Verwaltung → Team → Schule");
+  }
+  return new Response(`sent ${recipients.length}`);
 }
 
 async function ruleSettings(): Promise<Settings> {
