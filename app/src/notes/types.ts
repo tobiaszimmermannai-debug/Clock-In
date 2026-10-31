@@ -152,6 +152,9 @@ export type CollabMessage =
 
 export type CollabChannel = { send(message: CollabMessage): void; close(): void };
 
+/** Gespeicherter Inhalt einer Seite inkl. Live-Stand und der darin enthaltenen Änderungsschritte */
+export type DocState = { content: Blocks; ydoc: string | null; updateIds: number[] };
+
 export type Version = { id: string; pageId: string; createdAt: string; createdBy: string | null; title: string; content?: Blocks };
 
 /** Speicher-Schnittstelle: lokal (Browser) oder Supabase (gemeinsam mit Clock-In) */
@@ -161,8 +164,17 @@ export interface NotesStore {
   members(): Promise<Member[]>;
   listPages(): Promise<PageMeta[]>;
   getContent(id: string): Promise<Blocks>;
-  /** Inhalt und Yjs-Dokument einer Seite */
-  getDoc(id: string): Promise<{ content: Blocks; ydoc: string | null }>;
+  /** Inhalt und Yjs-Stand einer Seite (zusammengefasster Stand + alle seither gespeicherten Änderungen) */
+  getDoc(id: string): Promise<DocState>;
+  /** Kleine Yjs-Änderung speichern (beim Tippen); liefert die ID des Schritts, falls der Speicher sie kennt */
+  appendDocUpdate(pageId: string, data: string): Promise<number | null>;
+  /** Neue Änderungsschritte seit afterId (falls Live-Nachrichten fehlten) */
+  pullDocUpdates(pageId: string, afterId: number): Promise<{ id: number; data: string }[]>;
+  /**
+   * Stand zusammenfassen: gespeicherten Stand an build übergeben (wird dort eingemischt), Ergebnis samt
+   * Inhalt schreiben – nur wenn niemand zwischendurch geschrieben hat – und eingearbeitete Schritte löschen.
+   */
+  compactDoc(pageId: string, build: (stored: string | null) => { ydoc: string; content: Blocks }, includedIds: number[]): Promise<Blocks>;
   /** Kanal für Live-Bearbeitung einer Seite */
   collab(pageId: string, onMessage: (message: CollabMessage) => void): CollabChannel;
   listVersions(pageId: string): Promise<Version[]>;
@@ -176,7 +188,7 @@ export interface NotesStore {
   favorites(): Promise<string[]>;
   setFavorite(id: string, on: boolean): Promise<void>;
   /** Datei hochladen → im Dokument gespeicherte Adresse */
-  upload(file: File): Promise<string>;
+  upload(file: File, pageId: string): Promise<string>;
   /** Gespeicherte Adresse → anzeigbare Adresse (z. B. signierte URL) */
   resolveUrl(url: string): Promise<string>;
   subscribe(onEvent: (event: StoreEvent) => void): () => void;

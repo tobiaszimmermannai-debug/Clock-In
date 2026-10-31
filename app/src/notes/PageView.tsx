@@ -74,11 +74,11 @@ export function PageView(props: { id: string; theme: "light" | "dark"; peek?: bo
       </div>
     </div>
   );
-  if (!showComments) return body;
+  // Gleicher Aufbau mit und ohne Kommentar-Spalte – sonst würde der Editor beim Umschalten neu aufgebaut
   return (
     <div className="nk-page-row">
       {body}
-      <aside className="nk-comments-col" ref={setCommentsEl} aria-label="Kommentare" />
+      {showComments && <aside className="nk-comments-col" ref={setCommentsEl} aria-label="Kommentare" />}
     </div>
   );
 }
@@ -249,7 +249,7 @@ function CoverPicker(props: { anchor: Anchor; page: PageMeta; onClose: () => voi
               if (!file) return;
               setBusy(true);
               try {
-                set(await notes.store.upload(file));
+                set(await notes.store.upload(file, props.page.id));
               } catch (err) {
                 notes.toast(`Hochladen fehlgeschlagen: ${(err as Error).message}`);
               } finally {

@@ -2,7 +2,7 @@
 import { BlockNoteEditor, filterSuggestionItems, insertOrUpdateBlockForSlashMenu } from "@blocknote/core";
 import { CommentsExtension, DefaultThreadStoreAuth } from "@blocknote/core/comments";
 import { de } from "@blocknote/core/locales";
-import { blocksToYXmlFragment, withCollaboration, YjsThreadStore } from "@blocknote/core/yjs";
+import { blocksToYXmlFragment, withCollaboration, yXmlFragmentToBlocks, YjsThreadStore } from "@blocknote/core/yjs";
 import { BlockNoteView } from "@blocknote/mantine";
 import {
   type DefaultReactSuggestionItem,
@@ -11,7 +11,7 @@ import {
   ThreadsSidebar,
   useCreateBlockNote,
 } from "@blocknote/react";
-import { type MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { newDatabaseSchema } from "../database/logic";
 import { useNotes } from "../state";
@@ -27,9 +27,6 @@ const dictionary = {
   placeholders: { ...de.placeholders, default: "Tippe „/“ für Befehle, „@“ für Erwähnungen", emptyDocument: "Tippe „/“ für Befehle" },
 };
 
-/** Wartezeit nach der letzten Änderung bis zum Speichern */
-const SAVE_DELAY = 900;
-
 type EditorProps = {
   page: PageMeta;
   theme: "light" | "dark";
@@ -42,11 +39,8 @@ export function PageEditor(props: EditorProps) {
   const notes = useNotes();
   const [session, setSession] = useState<CollabSession | null>(null);
   const [error, setError] = useState<string>();
-  const { loadDoc, store } = notes;
+  const { loadDoc, store, onDocSaved, toast } = notes;
   const id = props.page.id;
-  // Änderungen vor dem Einhängen des Editors (z. B. Aufbau aus gespeichertem Inhalt) merken
-  const dirty = useRef(false);
-  const save = useRef<() => void>(() => (dirty.current = true));
 
   useEffect(() => {
     let cancelled = false;
@@ -56,29 +50,34 @@ export function PageEditor(props: EditorProps) {
     (async () => {
       const doc = await loadDoc(id);
       if (cancelled) return;
-      s = new CollabSession(store, id, () => save.current());
-      s.start(doc.ydoc);
+      // Ohne sichtbaren Editor: Inhalt für Suche/Export direkt aus dem Yjs-Dokument lesen
+      const headless = BlockNoteEditor.create({ schema });
+      s = new CollabSession(store, id, {
+        toContent: (fragment) => yXmlFragmentToBlocks(headless, fragment as never) as Blocks,
+        onSaved: (content) => onDocSaved(id, content),
+        onError: (message) => toast(`Speichern fehlgeschlagen: ${message}`),
+      });
+      s.start(doc);
       // Ohne Live-Stand (neue oder ältere Seite): kurz auf andere offene Editoren warten, dann aus dem Inhalt aufbauen
       if (!doc.ydoc) {
         await s.waitForPeer(600);
         if (cancelled) return;
         if (s.fragment.length === 0 && doc.content.length) {
-          blocksToYXmlFragment(BlockNoteEditor.create({ schema }), doc.content as never, s.fragment);
+          blocksToYXmlFragment(headless, doc.content as never, s.fragment);
         }
       }
       if (!cancelled) setSession(s);
     })().catch((e: Error) => !cancelled && setError(e.message));
     return () => {
       cancelled = true;
-      // Erst nach dem letzten Speichern des Editors abbauen
-      const done = s;
-      setTimeout(() => done?.destroy(), 0);
+      // Speichert noch offene Änderungen und baut danach ab
+      void s?.close();
     };
-  }, [id, loadDoc, store]);
+  }, [id, loadDoc, onDocSaved, store, toast]);
 
   if (error) return <div className="nk-error">Inhalt konnte nicht geladen werden: {error}</div>;
   if (!session) return <div className="nk-skeleton" aria-label="Lädt" />;
-  return <EditorInner key={id} {...props} session={session} dirty={dirty} save={save} />;
+  return <EditorInner key={id} {...props} session={session} />;
 }
 
 function linkedIds(blocks: Blocks, out = new Set<string>()): Set<string> {
@@ -90,12 +89,10 @@ function linkedIds(blocks: Blocks, out = new Set<string>()): Set<string> {
   return out;
 }
 
-function EditorInner(
-  props: EditorProps & { session: CollabSession; dirty: MutableRefObject<boolean>; save: MutableRefObject<() => void> },
-) {
+function EditorInner(props: EditorProps & { session: CollabSession }) {
   const notes = useNotes();
   const { page, session } = props;
-  const { me, store, registerEditor, saveDoc, setPresence } = notes;
+  const { me, store, registerEditor, setPresence } = notes;
   const membersRef = useRef(notes.members);
   membersRef.current = notes.members;
   const [linked, setLinked] = useState<Set<string>>(new Set());
@@ -110,7 +107,7 @@ function EditorInner(
     withCollaboration({
       schema,
       dictionary,
-      uploadFile: (file: File) => store.upload(file),
+      uploadFile: (file: File) => store.upload(file, page.id),
       resolveFileUrl: (url: string) => store.resolveUrl(url),
       tables: { splitCells: true, cellBackgroundColor: true, cellTextColor: true, headers: true },
       extensions: [
@@ -130,50 +127,6 @@ function EditorInner(
     [session],
   ) as NotesEditor;
 
-  // Speichern: gebündelt, vorher den Stand aus der Datenbank einmischen (falls Live-Nachrichten fehlten)
-  const { dirty, save } = props;
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let busy = false;
-    let again = false;
-    const run = async (merge: boolean) => {
-      if (busy) return void (again = true);
-      busy = true;
-      try {
-        if (merge) {
-          const remote = await store.getDoc(page.id).catch(() => null);
-          if (remote?.ydoc) session.merge(remote.ydoc);
-        }
-        saveDoc(page.id, editor.document as Blocks, session.encode());
-      } finally {
-        busy = false;
-        if (again) {
-          again = false;
-          schedule();
-        }
-      }
-    };
-    const schedule = () => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = undefined;
-        void run(true);
-      }, SAVE_DELAY);
-    };
-    save.current = schedule;
-    if (dirty.current) {
-      dirty.current = false;
-      schedule();
-    }
-    return () => {
-      save.current = () => (dirty.current = true);
-      if (timer) {
-        clearTimeout(timer);
-        void run(false);
-      }
-    };
-  }, [dirty, editor, page.id, save, saveDoc, session, store]);
-
   const { onEditorReady } = props;
   useEffect(() => {
     registerEditor(page.id, {
@@ -183,6 +136,7 @@ function EditorInner(
       },
       replaceContent: (blocks) => editor.replaceBlocks(editor.document, (blocks.length ? blocks : [{ type: "paragraph" }]) as never),
       applyRemote: (ydoc) => session.merge(ydoc),
+      content: () => editor.document as Blocks,
     });
     onEditorReady?.(editor);
     setLinked(linkedIds(editor.document as Blocks));

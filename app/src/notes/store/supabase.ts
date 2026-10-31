@@ -1,7 +1,10 @@
-// Supabase-Speicher: dieselbe Datenbank wie Clock-In (Tabellen note_pages / note_favorites, Bucket "notes")
+// Supabase-Speicher: dieselbe Datenbank wie Clock-In
+// note_pages (Metadaten, live an alle) · note_docs (Inhalt + Yjs-Stand) · note_doc_updates (Änderungsschritte)
+// note_favorites · note_versions · Bucket "notes" (Dateien unter <Seiten-ID>/…)
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
-import type { Blocks, CollabMessage, Color, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Version } from "../types";
-import { COLORS } from "../util";
+import { mergeUpdates } from "yjs";
+import type { Blocks, CollabMessage, Color, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Version } from "../types";
+import { COLORS, fromBase64, plainText, toBase64 } from "../util";
 
 type DbRow = {
   id: string;
@@ -21,11 +24,11 @@ type DbRow = {
   created_by: string | null;
   updated_at: string;
   updated_by: string | null;
-  content?: Blocks;
-  ydoc?: string | null;
 };
 
 const MAX_VERSIONS = 100;
+/** Höchstens so oft "zuletzt bearbeitet" an der Seite aktualisieren, während jemand tippt */
+const TOUCH_INTERVAL = 30_000;
 
 const META_COLUMNS =
   "id, parent_id, space, owner_id, kind, title, icon, cover, props, schema, options, position, archived_at, created_at, created_by, updated_at, updated_by";
@@ -66,9 +69,6 @@ function toRow(p: PagePatch): Record<string, unknown> {
     options: "options",
     position: "position",
     archivedAt: "archived_at",
-    content: "content",
-    plain: "plain",
-    ydoc: "ydoc",
   };
   const row: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(p)) if (k in map && v !== undefined) row[map[k]] = v;
@@ -85,6 +85,7 @@ export class SupabaseStore implements NotesStore {
   readonly kind = "supabase" as const;
   private userId?: string;
   private signed = new Map<string, { url: string; until: number }>();
+  private touched = new Map<string, number>();
 
   constructor(private db: SupabaseClient) {}
 
@@ -130,15 +131,83 @@ export class SupabaseStore implements NotesStore {
   }
 
   async getContent(id: string): Promise<Blocks> {
-    const { data, error } = await this.db.from("note_pages").select("content").eq("id", id).maybeSingle();
+    const { data, error } = await this.db.from("note_docs").select("content").eq("page_id", id).maybeSingle();
     if (error) throw error;
     return (data?.content as Blocks | undefined) ?? [];
   }
 
-  async getDoc(id: string): Promise<{ content: Blocks; ydoc: string | null }> {
-    const { data, error } = await this.db.from("note_pages").select("content, ydoc").eq("id", id).maybeSingle();
+  async getDoc(id: string): Promise<DocState> {
+    const [doc, steps] = await Promise.all([
+      this.db.from("note_docs").select("content, ydoc").eq("page_id", id).maybeSingle(),
+      this.db.from("note_doc_updates").select("id, data").eq("page_id", id).order("id"),
+    ]);
+    if (doc.error) throw doc.error;
+    if (steps.error) throw steps.error;
+    const rows = (steps.data ?? []) as { id: number; data: string }[];
+    const stored = (doc.data?.ydoc as string | null | undefined) ?? null;
+    const parts = [...(stored ? [stored] : []), ...rows.map((r) => r.data)];
+    return {
+      content: (doc.data?.content as Blocks | undefined) ?? [],
+      ydoc: parts.length > 1 ? toBase64(mergeUpdates(parts.map(fromBase64))) : (parts[0] ?? null),
+      updateIds: rows.map((r) => r.id),
+    };
+  }
+
+  async appendDocUpdate(pageId: string, data: string): Promise<number | null> {
+    const { data: row, error } = await this.db.from("note_doc_updates").insert({ page_id: pageId, data }).select("id").single();
     if (error) throw error;
-    return { content: (data?.content as Blocks | undefined) ?? [], ydoc: (data?.ydoc as string | null | undefined) ?? null };
+    void this.touch(pageId);
+    return (row?.id as number | undefined) ?? null;
+  }
+
+  async pullDocUpdates(pageId: string, afterId: number): Promise<{ id: number; data: string }[]> {
+    const { data, error } = await this.db
+      .from("note_doc_updates")
+      .select("id, data")
+      .eq("page_id", pageId)
+      .gt("id", afterId)
+      .order("id")
+      .limit(500);
+    if (error) throw error;
+    return (data ?? []) as { id: number; data: string }[];
+  }
+
+  async compactDoc(pageId: string, build: (stored: string | null) => { ydoc: string; content: Blocks }, includedIds: number[]): Promise<Blocks> {
+    // Optimistisch: nur schreiben, wenn rev unverändert ist – sonst neu lesen, einmischen, nochmal
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: cur, error } = await this.db.from("note_docs").select("ydoc, rev").eq("page_id", pageId).maybeSingle();
+      if (error) throw error;
+      const { ydoc, content } = build((cur?.ydoc as string | null | undefined) ?? null);
+      const fields = { ydoc, content, plain: plainText(content) };
+      if (!cur) {
+        const { error: e } = await this.db.from("note_docs").insert({ page_id: pageId, ...fields, rev: 1 });
+        if (e?.code === "23505") continue;
+        if (e) throw e;
+      } else {
+        const { data: done, error: e } = await this.db
+          .from("note_docs")
+          .update({ ...fields, rev: (cur.rev as number) + 1 })
+          .eq("page_id", pageId)
+          .eq("rev", cur.rev)
+          .select("page_id");
+        if (e) throw e;
+        if (!done?.length) continue;
+      }
+      for (let i = 0; i < includedIds.length; i += 500) {
+        await this.db.from("note_doc_updates").delete().in("id", includedIds.slice(i, i + 500));
+      }
+      return content;
+    }
+    throw new Error("Speichern kollidierte mehrmals mit anderen – wird gleich erneut versucht.");
+  }
+
+  /** "Zuletzt bearbeitet" an der Seite setzen (gedrosselt; die Seite wird live an alle verteilt) */
+  private async touch(pageId: string, force = false) {
+    const now = Date.now();
+    if (!force && now - (this.touched.get(pageId) ?? 0) < TOUCH_INTERVAL) return;
+    this.touched.set(pageId, now);
+    const { error } = await this.db.from("note_pages").update({ updated_by: await this.uid() }).eq("id", pageId);
+    if (error) this.touched.delete(pageId);
   }
 
   collab(pageId: string, onMessage: (m: CollabMessage) => void) {
@@ -190,16 +259,33 @@ export class SupabaseStore implements NotesStore {
   }
 
   async create(page: NewPage): Promise<void> {
-    const { createdAt: _c, updatedAt: _u, createdBy: _cb, updatedBy: _ub, ...rest } = page;
+    const { createdAt: _c, updatedAt: _u, createdBy: _cb, updatedBy: _ub, content, plain, ...rest } = page;
     const { error } = await this.db.from("note_pages").insert({ id: page.id, ...toRow(rest) });
     if (error) throw error;
+    // Inhalts-Datensatz legt ein Trigger an; nur befüllen, wenn es schon Inhalt gibt (Vorlagen, Kopien, Import)
+    if (content.length) {
+      const { error: e } = await this.db.from("note_docs").upsert({ page_id: page.id, content, plain });
+      if (e) throw e;
+    }
   }
 
   async update(id: string, patch: PagePatch): Promise<void> {
-    const row = toRow(patch);
-    if (!Object.keys(row).length) return;
-    const { error } = await this.db.from("note_pages").update(row).eq("id", id);
+    const { content, plain, ydoc, ...metaPatch } = patch;
+    const row = toRow(metaPatch);
+    if (Object.keys(row).length) {
+      const { error } = await this.db.from("note_pages").update(row).eq("id", id);
+      if (error) throw error;
+    }
+    if (content === undefined && plain === undefined && ydoc === undefined) return;
+    const doc: Record<string, unknown> = { page_id: id };
+    if (content !== undefined) doc.content = content;
+    if (plain !== undefined) doc.plain = plain;
+    if (ydoc !== undefined) doc.ydoc = ydoc;
+    const { error } = await this.db.from("note_docs").upsert(doc);
     if (error) throw error;
+    // Live-Stand verworfen (z. B. Version ohne offenen Editor wiederhergestellt): alte Schritte gehören nicht mehr dazu
+    if (ydoc === null) await this.db.from("note_doc_updates").delete().eq("page_id", id);
+    if (!Object.keys(row).length) await this.touch(id, true);
   }
 
   async remove(ids: string[]): Promise<void> {
@@ -211,9 +297,9 @@ export class SupabaseStore implements NotesStore {
   async search(query: string): Promise<string[]> {
     const q = query.replace(/[%_,()]/g, " ").trim();
     if (!q) return [];
-    const { data, error } = await this.db.from("note_pages").select("id").ilike("plain", `%${q}%`).limit(50);
+    const { data, error } = await this.db.from("note_docs").select("page_id").ilike("plain", `%${q}%`).limit(50);
     if (error) throw error;
-    return (data ?? []).map((r) => r.id as string);
+    return (data ?? []).map((r) => r.page_id as string);
   }
 
   async favorites(): Promise<string[]> {
@@ -230,10 +316,10 @@ export class SupabaseStore implements NotesStore {
     if (error) throw error;
   }
 
-  async upload(file: File): Promise<string> {
-    const userId = await this.uid();
+  async upload(file: File, pageId: string): Promise<string> {
+    // Ablage pro Seite: wer die Seite sehen darf, darf die Datei sehen (Policy in der Datenbank)
     const clean = file.name.normalize("NFKD").replace(/[^\w.-]+/g, "_").slice(-80) || "datei";
-    const path = `${userId}/${crypto.randomUUID()}-${clean}`;
+    const path = `${pageId}/${crypto.randomUUID()}-${clean}`;
     const { error } = await this.db.storage.from("notes").upload(path, file, { contentType: file.type || undefined });
     if (error) throw error;
     return FILE_PREFIX + path;
@@ -259,8 +345,7 @@ export class SupabaseStore implements NotesStore {
           if (id) onEvent({ type: "delete", id });
           return;
         }
-        const row = payload.new as DbRow;
-        onEvent({ type: "upsert", page: toMeta(row), content: row.content, ydoc: row.ydoc });
+        onEvent({ type: "upsert", page: toMeta(payload.new as DbRow) });
       })
       .subscribe();
     return () => {

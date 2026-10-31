@@ -1,7 +1,7 @@
 // Arbeitsbereich: Seitenleiste + Seite + Seitenvorschau (Peek), Tastenkürzel, Design, Meldungen
 import "@blocknote/mantine/style.css";
 import "./notes.css";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { VersionHistory } from "./History";
 import { Home } from "./Home";
 import { MovePicker, PageMenu, PageView } from "./PageView";
@@ -11,6 +11,7 @@ import { NotesProvider, useNotes } from "./state";
 import type { NotesStore, PageMeta, Space } from "./types";
 import { Icon } from "./ui/Icon";
 import { MenuItem, MenuLabel, Popover, usePopover } from "./ui/Popover";
+import { installTouchDrag } from "./ui/touchDrag";
 import { ancestors, relativeTime, storageGet, storageSet, untitled } from "./util";
 
 type Theme = "light" | "dark" | "system";
@@ -58,6 +59,10 @@ function Layout(props: NotesWorkspaceProps) {
   const [searching, setSearching] = useState(false);
   const [templates, setTemplates] = useState(false);
   const showSidebar = mobile ? drawer : sidebar;
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Ziehen & Ablegen auch per Finger (langes Drücken)
+  useEffect(() => (rootRef.current ? installTouchDrag(rootRef.current) : undefined), [notes.error]);
 
   const toggleSidebar = useCallback(() => {
     if (mobile) return setDrawer((d) => !d);
@@ -129,7 +134,7 @@ function Layout(props: NotesWorkspaceProps) {
   const page = notes.current ? notes.pages.get(notes.current) : undefined;
 
   return (
-    <div className={cls} style={{ ["--nk-sidebar" as string]: `${width}px` }}>
+    <div ref={rootRef} className={cls} style={{ ["--nk-sidebar" as string]: `${width}px` }}>
       {showSidebar && (
         <>
           {mobile && <div className="nk-scrim" onClick={() => setDrawer(false)} />}

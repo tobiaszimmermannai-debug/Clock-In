@@ -620,6 +620,15 @@ select.nk-input { padding-right: 4px; }
 .nk-history-title { margin: 0 0 8px; font-size: 32px; font-weight: 700; }
 .nk-history-doc .nk-editor { margin: 0 -54px; }
 
+/* ---------------- Ziehen per Touch ---------------- */
+.nk [draggable="true"] { -webkit-touch-callout: none; }
+.nk.nk-touch-dragging, .nk.nk-touch-dragging * { -webkit-user-select: none; user-select: none; }
+.nk-touch-ghost {
+  position: fixed !important; z-index: 2000; margin: 0 !important; pointer-events: none; opacity: .9;
+  transform: scale(1.03) rotate(-1deg); box-shadow: var(--nk-shadow); background: var(--nk-bg); border-radius: 6px;
+}
+.nk.is-mobile .nk-row-handle { opacity: .55; left: -20px; }
+
 /* ---------------- Handy ---------------- */
 @media (max-width: 760px) {
   .nk-page-inner, .nk-page.is-full .nk-page-inner, .nk-page.is-peek .nk-page-inner { padding: 0 16px; }

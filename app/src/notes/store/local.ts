@@ -1,6 +1,7 @@
 // Lokaler Speicher (nur dieses Gerät): Demo-Modus und Betrieb ohne Supabase
-import type { Blocks, CollabMessage, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Version } from "../types";
-import { storageGet, storageSet, uid } from "../util";
+import { mergeUpdates } from "yjs";
+import type { Blocks, CollabMessage, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Version } from "../types";
+import { fromBase64, plainText, storageGet, storageSet, toBase64, uid } from "../util";
 
 type Row = PageMeta & { content: Blocks; plain: string; ydoc?: string | null };
 
@@ -50,10 +51,39 @@ export class LocalStore implements NotesStore {
     return this.rows.get(id)?.content ?? [];
   }
 
-  async getDoc(id: string) {
+  async getDoc(id: string): Promise<DocState> {
     // Frisch lesen: andere Tabs können gespeichert haben
     const row = this.read().get(id) ?? this.rows.get(id);
-    return { content: row?.content ?? [], ydoc: row?.ydoc ?? null };
+    return { content: row?.content ?? [], ydoc: row?.ydoc ?? null, updateIds: [] };
+  }
+
+  /** Lokal gibt es keine Einzelschritte: direkt in den Stand einmischen */
+  private mergeInto(pageId: string, data: string) {
+    this.rows = this.read();
+    const row = this.rows.get(pageId);
+    if (!row) return null;
+    row.ydoc = row.ydoc ? toBase64(mergeUpdates([fromBase64(row.ydoc), fromBase64(data)])) : data;
+    return row;
+  }
+
+  async appendDocUpdate(pageId: string, data: string) {
+    if (this.mergeInto(pageId, data)) this.write();
+    return null;
+  }
+
+  async pullDocUpdates() {
+    return [];
+  }
+
+  async compactDoc(pageId: string, build: (stored: string | null) => { ydoc: string; content: Blocks }) {
+    this.rows = this.read();
+    const row = this.rows.get(pageId);
+    const { ydoc, content } = build(row?.ydoc ?? null);
+    if (row) {
+      this.rows.set(pageId, { ...row, ydoc, content, plain: plainText(content), updatedAt: new Date().toISOString(), updatedBy: this.user.id });
+      this.write();
+    }
+    return content;
   }
 
   collab(pageId: string, onMessage: (m: CollabMessage) => void) {
@@ -129,7 +159,7 @@ export class LocalStore implements NotesStore {
     storageSet(`${this.key}-favorites`, on ? [...list, id] : list);
   }
 
-  upload(file: File) {
+  upload(file: File, _pageId: string) {
     // Ohne Server: als Data-URL im Dokument (groß, aber offline verfügbar)
     return new Promise<string>((resolve, reject) => {
       if (file.size > 3 * 1024 * 1024) return reject(new Error("Im lokalen Modus sind Dateien bis 3 MB möglich."));

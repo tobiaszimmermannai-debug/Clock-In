@@ -1,7 +1,7 @@
 // Zentraler Zustand: Seitenliste im Speicher, gebündeltes Speichern, Navigation, Live-Updates
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { taskSchema, welcomeContent } from "./templates";
-import type { Blocks, DbSchema, Member, NewPage, NotesStore, PageKind, PageMeta, PagePatch, PropValue, Space, Version } from "./types";
+import type { Blocks, DbSchema, DocState, Member, NewPage, NotesStore, PageKind, PageMeta, PagePatch, PropValue, Space, Version } from "./types";
 import { between, bySort, descendants, plainText, storageGet, storageSet, uid } from "./util";
 
 /** Schnittstelle zum gerade offenen Editor einer Seite (für Live-Updates und Unterseiten-Links) */
@@ -11,6 +11,8 @@ export type EditorHandle = {
   replaceContent(blocks: Blocks): void;
   /** Gespeicherten Yjs-Stand eines anderen Geräts einmischen */
   applyRemote(ydoc: string): void;
+  /** Aktueller Inhalt (aktueller als der gespeicherte, der höchstens alle 30 s geschrieben wird) */
+  content(): Blocks;
 };
 
 /** Wer gerade auf einer Seite ist (aus den Live-Cursorn) */
@@ -54,9 +56,9 @@ type Ctx = {
   createPage: (opts?: CreateOptions) => Promise<PageMeta>;
   updatePage: (id: string, patch: PagePatch, opts?: { delay?: number }) => void;
   saveContent: (id: string, blocks: Blocks) => void;
-  /** Inhalt + Yjs-Stand speichern (Live-Editor) */
-  saveDoc: (id: string, blocks: Blocks, ydoc: string) => void;
-  loadDoc: (id: string) => Promise<{ content: Blocks; ydoc: string | null }>;
+  /** Live-Editor hat Inhalt und Stand gespeichert (für Versionen und "zuletzt bearbeitet") */
+  onDocSaved: (id: string, blocks: Blocks) => void;
+  loadDoc: (id: string) => Promise<DocState>;
   /** Aktuellen Stand sofort als Version sichern */
   saveVersionNow: (id: string, blocks: Blocks) => Promise<void>;
   /** Version wiederherstellen (vorher wird der aktuelle Stand gesichert) */
@@ -93,6 +95,9 @@ export const useNotesOptional = () => useContext(NotesContext);
 const CONTENT_DELAY = 700;
 const META_DELAY = 400;
 const VERSION_GAP = 10 * 60 * 1000;
+
+/** Leere Seite (nur ein leerer Absatz) – lohnt keine Version */
+const isBlank = (blocks: Blocks) => !plainText(blocks).trim() && blocks.length <= 1;
 
 export function NotesProvider(props: {
   store: NotesStore;
@@ -144,9 +149,10 @@ export function NotesProvider(props: {
     return next;
   }, []);
 
-  // Automatischer Versionsverlauf: höchstens alle 10 Minuten den Stand vor einer neuen Bearbeitung sichern
+  // Automatischer Versionsverlauf: höchstens alle 10 Minuten den aktuellen Stand sichern (leere Seiten nicht)
   const snapshot = useCallback(
-    async (id: string, prevJson: string) => {
+    async (id: string, blocks: Blocks) => {
+      if (isBlank(blocks)) return;
       const now = Date.now();
       let last = versionAt.current.get(id);
       if (last === undefined) {
@@ -158,7 +164,7 @@ export function NotesProvider(props: {
       if (now - last < VERSION_GAP) return;
       versionAt.current.set(id, now);
       const title = pagesRef.current.get(id)?.title ?? "";
-      await store.saveVersion({ pageId: id, title, content: JSON.parse(prevJson) as Blocks }).catch(() => versionAt.current.delete(id));
+      await store.saveVersion({ pageId: id, title, content: blocks }).catch(() => versionAt.current.delete(id));
     },
     [store],
   );
@@ -173,10 +179,7 @@ export function NotesProvider(props: {
       pending.current.delete(id);
       if (patch.content) {
         patch.plain = plainText(patch.content);
-        const json = JSON.stringify(patch.content);
-        const prev = lastSaved.current.get(id);
-        lastSaved.current.set(id, json);
-        if (prev && prev !== json) void snapshot(id, prev);
+        lastSaved.current.set(id, JSON.stringify(patch.content));
       }
       return enqueue(id, async () => {
         try {
@@ -192,7 +195,7 @@ export function NotesProvider(props: {
         }
       });
     },
-    [enqueue, snapshot, store, toast],
+    [enqueue, store, toast],
   );
 
   const flush = useCallback(async () => {
@@ -466,12 +469,15 @@ export function NotesProvider(props: {
     [patchLocal, schedule],
   );
 
-  const saveDoc = useCallback(
-    (id: string, blocks: Blocks, ydoc: string) => {
+  const onDocSaved = useCallback(
+    (id: string, blocks: Blocks) => {
+      const json = JSON.stringify(blocks);
+      if (lastSaved.current.get(id) === json) return;
+      lastSaved.current.set(id, json);
       patchLocal(id, {});
-      schedule(id, { content: blocks, ydoc }, 0);
+      void snapshot(id, blocks);
     },
-    [patchLocal, schedule],
+    [patchLocal, snapshot],
   );
 
   const loadDoc = useCallback(
@@ -495,9 +501,11 @@ export function NotesProvider(props: {
   const restoreVersion = useCallback(
     async (id: string, version: Version) => {
       const blocks = version.content ?? [];
-      const current = lastSaved.current.get(id);
-      if (current) await saveVersionNow(id, JSON.parse(current) as Blocks);
       const editor = editors.current.get(id);
+      // Aktuellen Stand sichern, damit das Wiederherstellen rückgängig gemacht werden kann
+      const saved = lastSaved.current.get(id);
+      const current = editor ? editor.content() : saved ? (JSON.parse(saved) as Blocks) : [];
+      if (!isBlank(current)) await saveVersionNow(id, current);
       // Offener Editor: Änderung läuft über Yjs zu allen Mitbearbeitenden; sonst Inhalt neu aufbauen lassen
       if (editor) editor.replaceContent(blocks);
       else schedule(id, { content: blocks, ydoc: null }, 0);
@@ -522,6 +530,9 @@ export function NotesProvider(props: {
 
   const loadContent = useCallback(
     async (id: string) => {
+      // Offener Editor kennt den neuesten Stand
+      const open = editors.current.get(id);
+      if (open) return open.content();
       await flushOne(id);
       const blocks = await store.getContent(id);
       lastSaved.current.set(id, JSON.stringify(blocks));
@@ -612,7 +623,8 @@ export function NotesProvider(props: {
       const after = siblings[siblings.findIndex((s) => s.id === id) + 1];
       let first: PageMeta | undefined;
       for (const p of tree) {
-        const content = remap(await store.getContent(p.id));
+        // Offene Seiten liefern den neuesten Stand aus dem Editor
+        const content = remap(await loadContent(p.id));
         const copy: NewPage = {
           ...p,
           id: ids.get(p.id)!,
@@ -635,7 +647,7 @@ export function NotesProvider(props: {
       toast("Seite dupliziert");
       return first;
     },
-    [flush, setPage, store, toast],
+    [flush, loadContent, setPage, store, toast],
   );
 
   const toggleFavorite = useCallback(
@@ -671,7 +683,7 @@ export function NotesProvider(props: {
       createPage,
       updatePage,
       saveContent,
-      saveDoc,
+      onDocSaved,
       loadDoc,
       saveVersionNow,
       restoreVersion,
@@ -692,7 +704,7 @@ export function NotesProvider(props: {
       dismissToast,
       flush,
     }),
-    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, saveDoc, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush],
+    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush],
   );
 
   return <NotesContext.Provider value={value}>{props.children}</NotesContext.Provider>;
