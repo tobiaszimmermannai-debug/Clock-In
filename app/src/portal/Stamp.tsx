@@ -2,6 +2,7 @@
 // Der Server prüft: eigenes registriertes Handy, frischer QR-Code, gleiches WLAN wie das Tablet.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTIONS, ACTION_ICON, GREETING } from "../components/actions";
+import { TaskReminder } from "../components/TaskReminder";
 import { QrScanner } from "../components/QrScanner";
 import { Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
 import { type Notice as ShiftNote, relevantShift, shiftNotice } from "../lib/shiftInfo";
@@ -57,7 +58,7 @@ function errorPhase(e: unknown): Phase {
 // Nur das eigene Handy stempelt (prüft auch der Server) – nicht Studio-PC oder -Tablet
 const IS_PHONE = typeof navigator === "undefined" || !navigator.userAgent || /mobi|iphone|ipod/i.test(navigator.userAgent);
 
-export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void }) {
+export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void; onOpenTasks?: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [status, setStatus] = useState<{ state: WorkState; since?: string }>();
   const onTokenUsed = useRef(props.onTokenUsed);
@@ -221,6 +222,9 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         )}
         {phase.early && (
           <Notice tone="warn">Früher gegangen – Tobias oder Dominik entscheiden, wie die restliche Zeit zählt. Gute Besserung, falls du krank bist!</Notice>
+        )}
+        {(phase.event === "clock_in" || phase.event === "break_start") && props.onOpenTasks && (
+          <TaskReminder db={portalDb} reason={phase.event === "break_start" ? "break" : "clock_in"} onOpen={props.onOpenTasks} />
         )}
         <button type="button" className="btn btn-primary btn-block" onClick={() => setPhase({ kind: "idle" })}>Fertig</button>
       </div>

@@ -19,7 +19,7 @@ end $$;
 
 -- Reste eines vorherigen Versuchs entfernen (nur Clock-In-Objekte)
 drop table if exists
-  public.vacation_allowances, public.help_requests, public.no_show_alerts, public.kiosk_qr, public.kiosk_networks, public.stamp_phones, public.staffing_alerts, public.rule_settings, public.biometric_consents, public.telegram_links, public.audit_log, public.swap_requests, public.time_logs, public.shifts,
+  public.note_task_events, public.note_doc_updates, public.note_docs, public.note_versions, public.note_favorites, public.note_pages, public.vacation_allowances, public.help_requests, public.no_show_alerts, public.kiosk_qr, public.kiosk_networks, public.stamp_phones, public.staffing_alerts, public.rule_settings, public.biometric_consents, public.telegram_links, public.audit_log, public.swap_requests, public.time_logs, public.shifts,
   public.face_embeddings, public.kiosk_devices, public.location_managers, public.employment_details,
   public.users, public.locations
   cascade;
@@ -5126,6 +5126,531 @@ exception when others then
   raise warning 'Telegram-Benachrichtigung fehlgeschlagen: %', sqlerrm;
   return null;  -- Stempeln darf nie an Telegram scheitern
 end $$;
+
+-- =============================================================================
+-- 20261029090000_notes.sql
+-- Aufgaben und Notizen: Seiten, Datenbanken, Favoriten, Datei-Bucket "notes".
+-- Private Seiten sieht nur der Besitzer, Team-Seiten alle aktiven Mitarbeiter.
+-- =============================================================================
+
+do $$ begin
+  create type public.note_space as enum ('private', 'team');
+exception when duplicate_object then null;
+end $$;
+
+create table if not exists public.note_pages (
+  id          uuid primary key default gen_random_uuid(),
+  parent_id   uuid references public.note_pages (id) on delete cascade,
+  space       public.note_space not null default 'private',
+  owner_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  kind        text not null default 'page' check (kind in ('page', 'database')),
+  title       text not null default '',
+  icon        text,
+  cover       text,
+  content     jsonb not null default '[]'::jsonb,   -- BlockNote-Blöcke
+  plain       text not null default '',             -- Klartext für die Suche
+  props       jsonb not null default '{}'::jsonb,   -- Werte, wenn die Seite eine Datenbank-Zeile ist
+  schema      jsonb,                                -- Eigenschaften + Ansichten, wenn kind = 'database'
+  options     jsonb not null default '{}'::jsonb,   -- volle Breite, kleine Schrift, Schriftart, gesperrt
+  position    double precision not null default 0,
+  archived_at timestamptz,
+  created_at  timestamptz not null default now(),
+  created_by  uuid default auth.uid(),
+  updated_at  timestamptz not null default now(),
+  updated_by  uuid default auth.uid()
+);
+
+create index if not exists note_pages_parent_idx on public.note_pages (parent_id);
+create index if not exists note_pages_owner_idx on public.note_pages (owner_id);
+
+create table if not exists public.note_favorites (
+  user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  page_id    uuid not null references public.note_pages (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, page_id)
+);
+
+-- Unterseiten erben Bereich und Besitzer von der Elternseite; Zeitstempel/Bearbeiter setzt der Server
+create or replace function private.note_pages_inherit() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_parent public.note_pages;
+begin
+  if new.parent_id is not null then
+    select * into v_parent from public.note_pages where id = new.parent_id;
+    if found then
+      new.space := v_parent.space;
+      if v_parent.space = 'private' then new.owner_id := v_parent.owner_id; end if;
+    end if;
+  end if;
+  if tg_op = 'UPDATE' then
+    new.created_at := old.created_at;
+    new.created_by := old.created_by;
+    new.updated_at := now();
+    new.updated_by := coalesce(auth.uid(), new.updated_by);
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists inherit on public.note_pages;
+create trigger inherit before insert or update on public.note_pages
+  for each row execute function private.note_pages_inherit();
+
+-- Bereichswechsel (Privat ↔ Team) gilt für den ganzen Teilbaum
+create or replace function private.note_pages_cascade_space() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.space is distinct from old.space or new.owner_id is distinct from old.owner_id then
+    update public.note_pages
+       set space = new.space, owner_id = new.owner_id
+     where parent_id = new.id
+       and (space is distinct from new.space or owner_id is distinct from new.owner_id);
+  end if;
+  return null;
+end $$;
+
+drop trigger if exists cascade_space on public.note_pages;
+create trigger cascade_space after update of space, owner_id on public.note_pages
+  for each row execute function private.note_pages_cascade_space();
+
+-- Zugriff: eigene Seiten oder Team-Seiten – immer nur für aktive Mitarbeiter (keine Tablets)
+create or replace function private.can_access_note(p_space public.note_space, p_owner uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select private.is_staff() and (p_owner = (select auth.uid()) or p_space = 'team')
+$$;
+
+alter table public.note_pages enable row level security;
+alter table public.note_favorites enable row level security;
+
+drop policy if exists note_pages_select on public.note_pages;
+drop policy if exists note_pages_insert on public.note_pages;
+drop policy if exists note_pages_update on public.note_pages;
+drop policy if exists note_pages_delete on public.note_pages;
+create policy note_pages_select on public.note_pages for select to authenticated
+  using ((select private.can_access_note(space, owner_id)));
+create policy note_pages_insert on public.note_pages for insert to authenticated
+  with check ((select private.can_access_note(space, owner_id)));
+create policy note_pages_update on public.note_pages for update to authenticated
+  using ((select private.can_access_note(space, owner_id)))
+  with check ((select private.can_access_note(space, owner_id)));
+create policy note_pages_delete on public.note_pages for delete to authenticated
+  using ((select private.can_access_note(space, owner_id)));
+
+drop policy if exists note_favorites_all on public.note_favorites;
+create policy note_favorites_all on public.note_favorites for all to authenticated
+  using (user_id = (select auth.uid()) and (select private.is_staff()))
+  with check (user_id = (select auth.uid()) and (select private.is_staff()));
+
+grant select, insert, update, delete on public.note_pages, public.note_favorites to authenticated;
+revoke all on public.note_pages, public.note_favorites from anon;
+revoke execute on function private.note_pages_inherit(), private.note_pages_cascade_space(),
+  private.can_access_note(public.note_space, uuid) from public;
+grant execute on function private.note_pages_inherit(), private.note_pages_cascade_space(),
+  private.can_access_note(public.note_space, uuid) to authenticated, service_role;
+
+-- Live-Aktualisierung (andere Nutzer sehen Änderungen sofort)
+do $$ begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+     and not exists (select 1 from pg_publication_tables
+                     where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'note_pages') then
+    alter publication supabase_realtime add table public.note_pages;
+  end if;
+end $$;
+
+-- Dateien (Bilder, Anhänge): privater Bucket, Ablage unter <auth.uid()>/…
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('notes', 'notes', false, 20971520)
+on conflict (id) do nothing;
+
+drop policy if exists notes_files_read on storage.objects;
+drop policy if exists notes_files_insert on storage.objects;
+drop policy if exists notes_files_delete on storage.objects;
+create policy notes_files_read on storage.objects for select to authenticated
+  using (bucket_id = 'notes' and (select private.is_staff()));
+create policy notes_files_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'notes' and (select private.is_staff())
+              and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy notes_files_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'notes' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- =============================================================================
+-- 20261030090000_notes_collab.sql
+-- Aufgaben: gemeinsames Bearbeiten (Yjs-Stand), Kommentare, Versionsverlauf, Live-Kanal mit Zugriffsprüfung.
+-- =============================================================================
+
+alter table public.note_pages add column if not exists ydoc text;
+
+create table if not exists public.note_versions (
+  id         uuid primary key default gen_random_uuid(),
+  page_id    uuid not null references public.note_pages (id) on delete cascade,
+  title      text not null default '',
+  content    jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  created_by uuid default auth.uid()
+);
+
+create index if not exists note_versions_page_idx on public.note_versions (page_id, created_at desc);
+
+-- Zugriff auf eine Seite per ID (für Versionen und den Live-Kanal)
+create or replace function private.can_access_note_id(p_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.note_pages p
+    where p.id = p_id and private.can_access_note(p.space, p.owner_id)
+  )
+$$;
+
+revoke execute on function private.can_access_note_id(uuid) from public;
+grant execute on function private.can_access_note_id(uuid) to authenticated, service_role;
+
+alter table public.note_versions enable row level security;
+
+drop policy if exists note_versions_select on public.note_versions;
+drop policy if exists note_versions_insert on public.note_versions;
+drop policy if exists note_versions_delete on public.note_versions;
+create policy note_versions_select on public.note_versions for select to authenticated
+  using ((select private.can_access_note_id(page_id)));
+create policy note_versions_insert on public.note_versions for insert to authenticated
+  with check (created_by = (select auth.uid()) and (select private.can_access_note_id(page_id)));
+create policy note_versions_delete on public.note_versions for delete to authenticated
+  using ((select private.can_access_note_id(page_id)));
+
+grant select, insert, delete on public.note_versions to authenticated;
+revoke all on public.note_versions from anon;
+
+-- Live-Kanal: Lesen und Senden nur mit Zugriff auf die Seite (Supabase Realtime Authorization)
+do $$ begin
+  if to_regclass('realtime.messages') is not null then
+    execute 'drop policy if exists notes_collab_read on realtime.messages';
+    execute 'drop policy if exists notes_collab_write on realtime.messages';
+    execute $p$
+      create policy notes_collab_read on realtime.messages for select to authenticated
+        using (case when realtime.topic() ~ '^note:[0-9a-f-]{36}$'
+                    then private.can_access_note_id(substr(realtime.topic(), 6)::uuid) else false end)
+    $p$;
+    execute $p$
+      create policy notes_collab_write on realtime.messages for insert to authenticated
+        with check (case when realtime.topic() ~ '^note:[0-9a-f-]{36}$'
+                         then private.can_access_note_id(substr(realtime.topic(), 6)::uuid) else false end)
+    $p$;
+  end if;
+end $$;
+
+-- =============================================================================
+-- 20261031090000_notes_hardening.sql
+-- Aufgaben: Inhalt in note_docs/note_doc_updates (weniger Datenverkehr), Dateien pro Seite abgesichert.
+-- =============================================================================
+
+create table if not exists public.note_docs (
+  page_id    uuid primary key references public.note_pages (id) on delete cascade,
+  content    jsonb not null default '[]'::jsonb,   -- BlockNote-Blöcke (Suche, Export, Versionen)
+  plain      text not null default '',             -- Klartext für die Suche
+  ydoc       text,                                 -- zusammengefasster Yjs-Stand (Base64)
+  rev        integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.note_doc_updates (
+  id         bigint generated always as identity primary key,
+  page_id    uuid not null references public.note_pages (id) on delete cascade,
+  data       text not null,                        -- Yjs-Änderung (Base64)
+  created_at timestamptz not null default now(),
+  created_by uuid default auth.uid()
+);
+
+create index if not exists note_doc_updates_page_idx on public.note_doc_updates (page_id, id);
+
+-- Bestehende Inhalte übernehmen und aus note_pages entfernen
+do $$
+declare
+  v_has_ydoc boolean;
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'note_pages' and column_name = 'content') then
+    select exists (select 1 from information_schema.columns
+                   where table_schema = 'public' and table_name = 'note_pages' and column_name = 'ydoc')
+      into v_has_ydoc;
+    execute format(
+      'insert into public.note_docs (page_id, content, plain, ydoc)
+       select id, content, plain, %s from public.note_pages
+       on conflict (page_id) do nothing',
+      case when v_has_ydoc then 'ydoc' else 'null' end);
+    alter table public.note_pages drop column content;
+    alter table public.note_pages drop column if exists plain;
+  end if;
+end $$;
+
+-- Live-Stand liegt jetzt in note_docs (auch falls die vorige Migration erneut ausgeführt wurde)
+alter table public.note_pages drop column if exists ydoc;
+
+-- Jede Seite bekommt sofort ihren Inhalts-Datensatz
+create or replace function private.note_docs_create() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  insert into public.note_docs (page_id) values (new.id) on conflict (page_id) do nothing;
+  return null;
+end $$;
+
+drop trigger if exists create_doc on public.note_pages;
+create trigger create_doc after insert on public.note_pages
+  for each row execute function private.note_docs_create();
+
+create or replace function private.note_docs_touch() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  new.updated_at := now();
+  return new;
+end $$;
+
+drop trigger if exists touch on public.note_docs;
+create trigger touch before update on public.note_docs
+  for each row execute function private.note_docs_touch();
+
+alter table public.note_docs enable row level security;
+alter table public.note_doc_updates enable row level security;
+
+drop policy if exists note_docs_select on public.note_docs;
+drop policy if exists note_docs_insert on public.note_docs;
+drop policy if exists note_docs_update on public.note_docs;
+create policy note_docs_select on public.note_docs for select to authenticated
+  using ((select private.can_access_note_id(page_id)));
+create policy note_docs_insert on public.note_docs for insert to authenticated
+  with check ((select private.can_access_note_id(page_id)));
+create policy note_docs_update on public.note_docs for update to authenticated
+  using ((select private.can_access_note_id(page_id)))
+  with check ((select private.can_access_note_id(page_id)));
+
+drop policy if exists note_doc_updates_select on public.note_doc_updates;
+drop policy if exists note_doc_updates_insert on public.note_doc_updates;
+drop policy if exists note_doc_updates_delete on public.note_doc_updates;
+create policy note_doc_updates_select on public.note_doc_updates for select to authenticated
+  using ((select private.can_access_note_id(page_id)));
+create policy note_doc_updates_insert on public.note_doc_updates for insert to authenticated
+  with check (created_by = (select auth.uid()) and (select private.can_access_note_id(page_id)));
+create policy note_doc_updates_delete on public.note_doc_updates for delete to authenticated
+  using ((select private.can_access_note_id(page_id)));
+
+grant select, insert, update on public.note_docs to authenticated;
+grant select, insert, delete on public.note_doc_updates to authenticated;
+revoke all on public.note_docs, public.note_doc_updates from anon;
+do $$ begin
+  execute format('grant usage, select on sequence %s to authenticated',
+                 pg_get_serial_sequence('public.note_doc_updates', 'id'));
+end $$;
+
+-- ---------------- Dateien: Zugriff über die Seite ----------------
+-- Ordner = Seiten-ID (neu) oder Nutzer-ID (ältere Uploads, nur für den Hochladenden)
+create or replace function private.note_file_readable(p_name text) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select case when (storage.foldername(p_name))[1] ~ '^[0-9a-f-]{36}$'
+    then (storage.foldername(p_name))[1] = (select auth.uid())::text
+         or private.can_access_note_id(((storage.foldername(p_name))[1])::uuid)
+    else false end
+$$;
+
+create or replace function private.note_file_writable(p_name text) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select case when (storage.foldername(p_name))[1] ~ '^[0-9a-f-]{36}$'
+    then private.can_access_note_id(((storage.foldername(p_name))[1])::uuid)
+    else false end
+$$;
+
+revoke execute on function private.note_docs_create(), private.note_docs_touch(),
+  private.note_file_readable(text), private.note_file_writable(text) from public;
+grant execute on function private.note_docs_create(), private.note_docs_touch(),
+  private.note_file_readable(text), private.note_file_writable(text) to authenticated, service_role;
+
+drop policy if exists notes_files_read on storage.objects;
+drop policy if exists notes_files_insert on storage.objects;
+drop policy if exists notes_files_delete on storage.objects;
+create policy notes_files_read on storage.objects for select to authenticated
+  using (bucket_id = 'notes' and (select private.is_staff()) and private.note_file_readable(name));
+create policy notes_files_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'notes' and (select private.is_staff()) and private.note_file_writable(name));
+create policy notes_files_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'notes' and (select private.is_staff()) and private.note_file_readable(name));
+
+-- =============================================================================
+-- 20261101090000_notes_roles_gamification.sql
+-- Aufgaben: Leitung sieht alles (auch Gelöschtes), Studio-PC, Erfolge (Serie, Rangliste).
+-- =============================================================================
+
+alter table public.note_pages add column if not exists deleted_at timestamptz;
+alter table public.note_pages add column if not exists deleted_by uuid;
+
+-- Studio-PC (nicht das Tablet)
+create or replace function private.is_studio_pc() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.kiosk_devices k
+    where k.auth_user_id = (select auth.uid()) and k.is_active and k.kind = 'pc'
+  )
+$$;
+
+create or replace function private.is_manager() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.users u
+    where u.auth_user_id = (select auth.uid()) and u.is_active and u.role = 'manager'
+  )
+$$;
+
+-- Leitung: Admins alles; Studioleitung alle Team-Seiten und die Seiten der Mitarbeiter ihres Studios
+create or replace function private.can_oversee_note(p_space public.note_space, p_owner uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select private.is_admin()
+      or (p_space = 'team' and private.is_manager())
+      or exists (select 1 from public.users u where u.auth_user_id = p_owner and private.manages_user(u.id))
+$$;
+
+-- Zugriff (ohne Rücksicht auf "gelöscht"): eigene + Team-Seiten, Leitung zusätzlich alles Beaufsichtigte,
+-- Studio-PC nur Team-Seiten
+create or replace function private.can_access_note(p_space public.note_space, p_owner uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select (private.is_staff() and (p_owner = (select auth.uid()) or p_space = 'team' or private.can_oversee_note(p_space, p_owner)))
+      or (p_space = 'team' and private.is_studio_pc())
+$$;
+
+-- Sichtbar: wie oben, gelöschte Seiten nur für die Leitung
+create or replace function private.can_see_note(p_space public.note_space, p_owner uuid, p_deleted timestamptz) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select private.can_access_note(p_space, p_owner)
+     and (p_deleted is null or private.can_oversee_note(p_space, p_owner))
+$$;
+
+create or replace function private.can_access_note_id(p_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.note_pages p
+    where p.id = p_id and private.can_see_note(p.space, p.owner_id, p.deleted_at)
+  )
+$$;
+
+create or replace function private.is_note_user() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select private.is_staff() or private.is_studio_pc()
+$$;
+
+drop policy if exists note_pages_select on public.note_pages;
+drop policy if exists note_pages_insert on public.note_pages;
+drop policy if exists note_pages_update on public.note_pages;
+drop policy if exists note_pages_delete on public.note_pages;
+create policy note_pages_select on public.note_pages for select to authenticated
+  using ((select private.can_see_note(space, owner_id, deleted_at)));
+create policy note_pages_insert on public.note_pages for insert to authenticated
+  with check ((select private.can_access_note(space, owner_id)) and deleted_at is null);
+-- Ausblenden läuft über public.note_soft_delete (die Seite wird dabei für Mitarbeiter unsichtbar)
+create policy note_pages_update on public.note_pages for update to authenticated
+  using ((select private.can_see_note(space, owner_id, deleted_at)))
+  with check ((select private.can_access_note(space, owner_id)));
+-- Wirklich löschen nur die Leitung
+create policy note_pages_delete on public.note_pages for delete to authenticated
+  using ((select private.can_oversee_note(space, owner_id)));
+
+drop policy if exists note_favorites_all on public.note_favorites;
+create policy note_favorites_all on public.note_favorites for all to authenticated
+  using (user_id = (select auth.uid()) and (select private.is_note_user()))
+  with check (user_id = (select auth.uid()) and (select private.is_note_user()));
+
+-- Dateien: auch für den Studio-PC (Zugriff weiterhin über die Seite)
+drop policy if exists notes_files_read on storage.objects;
+drop policy if exists notes_files_insert on storage.objects;
+drop policy if exists notes_files_delete on storage.objects;
+create policy notes_files_read on storage.objects for select to authenticated
+  using (bucket_id = 'notes' and (select private.is_note_user()) and private.note_file_readable(name));
+create policy notes_files_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'notes' and (select private.is_note_user()) and private.note_file_writable(name));
+create policy notes_files_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'notes' and (select private.is_note_user()) and private.note_file_readable(name));
+
+-- ---------------- Erfolge ----------------
+-- Gutgeschrieben wird nur aktiven Mitarbeitern (nicht Geräten)
+create or replace function private.is_active_member(p_auth uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (select 1 from public.users u where u.auth_user_id = p_auth and u.is_active)
+$$;
+
+create table if not exists public.note_task_events (
+  id         bigint generated always as identity primary key,
+  page_id    uuid not null references public.note_pages (id) on delete cascade,
+  user_id    uuid not null references auth.users (id) on delete cascade,   -- wem die Aufgabe gutgeschrieben wird
+  points     integer not null default 10 check (points between 0 and 100),
+  done_at    timestamptz not null default now(),
+  created_by uuid default auth.uid(),
+  unique (page_id, user_id)
+);
+
+create index if not exists note_task_events_done_idx on public.note_task_events (done_at);
+
+alter table public.note_task_events enable row level security;
+drop policy if exists note_task_events_select on public.note_task_events;
+drop policy if exists note_task_events_insert on public.note_task_events;
+drop policy if exists note_task_events_delete on public.note_task_events;
+-- Rangliste: alle sehen alle Gutschriften (nur Zahlen, keine Inhalte)
+create policy note_task_events_select on public.note_task_events for select to authenticated
+  using ((select private.is_note_user()));
+create policy note_task_events_insert on public.note_task_events for insert to authenticated
+  with check (
+    created_by = (select auth.uid())
+    and (select private.can_access_note_id(page_id))
+    and (select private.is_active_member(user_id))
+  );
+create policy note_task_events_delete on public.note_task_events for delete to authenticated
+  using ((select private.can_access_note_id(page_id)));
+
+grant select, insert, delete on public.note_task_events to authenticated;
+revoke all on public.note_task_events from anon;
+do $$ begin
+  execute format('grant usage, select on sequence %s to authenticated',
+                 pg_get_serial_sequence('public.note_task_events', 'id'));
+end $$;
+
+-- ---------------- Für die App ----------------
+-- Eigene Rechte (Leitung, Studio-PC) – die App blendet danach Übersicht bzw. Studio-Modus ein
+create or replace function public.note_access() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object(
+    'oversee', private.is_admin() or private.is_manager(),
+    'admin', private.is_admin(),
+    'studio', private.is_studio_pc(),
+    'studio_name', (select k.name from public.kiosk_devices k
+                    where k.auth_user_id = (select auth.uid()) and k.is_active limit 1),
+    'studio_location', (select k.location_id from public.kiosk_devices k
+                        where k.auth_user_id = (select auth.uid()) and k.is_active limit 1)
+  )
+$$;
+
+-- Löschen für alle mit Zugriff = ausblenden (danach sieht die Seite nur noch die Leitung)
+create or replace function public.note_soft_delete(p_ids uuid[]) returns integer
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_count integer;
+begin
+  update public.note_pages p
+     set deleted_at = now(), deleted_by = (select auth.uid())
+   where p.id = any (p_ids)
+     and p.deleted_at is null
+     and private.can_see_note(p.space, p.owner_id, p.deleted_at);
+  get diagnostics v_count = row_count;
+  return v_count;
+end $$;
+
+-- Tage mit "Kommen"-Stempel (freie Tage unterbrechen die Serie nicht)
+create or replace function public.note_work_days(p_since date) returns setof date
+language sql stable security definer set search_path = '' as $$
+  select distinct (t.recorded_at at time zone 'Europe/Berlin')::date
+  from public.time_logs t
+  where t.user_id = private.current_user_id()
+    and t.event_type = 'clock_in'
+    and t.recorded_at >= p_since
+$$;
+
+revoke execute on function private.is_active_member(uuid), private.is_studio_pc(), private.is_manager(), private.can_oversee_note(public.note_space, uuid),
+  private.can_see_note(public.note_space, uuid, timestamptz), private.is_note_user() from public;
+grant execute on function private.is_active_member(uuid), private.is_studio_pc(), private.is_manager(), private.can_oversee_note(public.note_space, uuid),
+  private.can_see_note(public.note_space, uuid, timestamptz), private.is_note_user() to authenticated, service_role;
+revoke execute on function public.note_access(), public.note_work_days(date), public.note_soft_delete(uuid[]) from public, anon;
+grant execute on function public.note_access(), public.note_work_days(date), public.note_soft_delete(uuid[]) to authenticated;
 
 revoke execute on all functions in schema private from public;
 grant execute on all functions in schema private to authenticated, service_role;

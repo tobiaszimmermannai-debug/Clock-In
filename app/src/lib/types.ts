@@ -49,7 +49,7 @@ export const DEFAULT_VACATION_DAYS = 20;
 
 export type Location = { id: string; code: string; name: string };
 
-export type KioskDevice = { id: string; name: string; location_id: string | null };
+export type KioskDevice = { id: string; name: string; location_id: string | null; kind?: "tablet" | "pc" };
 
 export type Shift = {
   id: string;

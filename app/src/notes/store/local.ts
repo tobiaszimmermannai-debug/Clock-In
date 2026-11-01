@@ -1,0 +1,245 @@
+// Lokaler Speicher (nur dieses Gerät): Demo-Modus und Betrieb ohne Supabase
+import { mergeUpdates } from "yjs";
+import type { Access, Blocks, CollabMessage, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Studio, Version } from "../types";
+import { fromBase64, plainText, storageGet, storageSet, toBase64, uid } from "../util";
+
+type Row = PageMeta & { content: Blocks; plain: string; ydoc?: string | null };
+
+const MAX_VERSIONS = 50;
+
+const ME: Member = { id: "local-user", name: "Ich", color: "blue" };
+
+export class LocalStore implements NotesStore {
+  readonly kind = "local" as const;
+  private rows: Map<string, Row>;
+  private listeners = new Set<(e: StoreEvent) => void>();
+  private onStorage = (e: StorageEvent) => {
+    if (e.key !== this.key) return;
+    this.rows = this.read();
+    for (const row of this.rows.values()) this.emit({ type: "upsert", page: strip(row), content: row.content, ydoc: row.ydoc });
+  };
+
+  constructor(
+    private key = "aun-local-pages",
+    private user: Member = ME,
+    /** Lokal: eine Person mit allen Rechten (zum Ausprobieren der Leitungsansicht) */
+    private rights: Access = { oversee: true, admin: true, studio: false },
+  ) {
+    this.rows = this.read();
+  }
+
+  async access() {
+    return this.rights;
+  }
+
+  async locations(): Promise<Studio[]> {
+    return storageGet<Studio[]>(`${this.key}-studios`, [
+      { id: "studio-1", name: "Studio 1" },
+      { id: "studio-2", name: "Studio 2" },
+    ]);
+  }
+
+  private events(): Completion[] {
+    return storageGet<Completion[]>(`${this.key}-events`, []);
+  }
+
+  async completions(sinceIso: string) {
+    return this.events().filter((e) => e.doneAt >= sinceIso);
+  }
+
+  async setCompletion(pageId: string, userIds: string[], points: number, done: boolean) {
+    const rest = this.events().filter((e) => e.pageId !== pageId || (done && !userIds.includes(e.userId)));
+    const now = new Date().toISOString();
+    const keep = this.events().filter((e) => e.pageId === pageId && done && userIds.includes(e.userId));
+    const added = done ? userIds.filter((u) => !keep.some((k) => k.userId === u)).map((userId) => ({ pageId, userId, points, doneAt: now })) : [];
+    storageSet(`${this.key}-events`, [...rest, ...keep, ...added]);
+  }
+
+  async workDays() {
+    return null;
+  }
+
+  private read(): Map<string, Row> {
+    return new Map(storageGet<Row[]>(this.key, []).map((r) => [r.id, r]));
+  }
+
+  private write() {
+    storageSet(this.key, [...this.rows.values()]);
+  }
+
+  private emit(e: StoreEvent) {
+    this.listeners.forEach((l) => l(e));
+  }
+
+  async me() {
+    return this.user;
+  }
+
+  async members() {
+    return [this.user];
+  }
+
+  async listPages() {
+    // Ältere lokale Daten ohne Lösch-Felder
+    return [...this.rows.values()].map((r) => ({ ...strip(r), deletedAt: r.deletedAt ?? null, deletedBy: r.deletedBy ?? null }));
+  }
+
+  async getContent(id: string) {
+    return this.rows.get(id)?.content ?? [];
+  }
+
+  async getDoc(id: string): Promise<DocState> {
+    // Frisch lesen: andere Tabs können gespeichert haben
+    const row = this.read().get(id) ?? this.rows.get(id);
+    return { content: row?.content ?? [], ydoc: row?.ydoc ?? null, updateIds: [] };
+  }
+
+  /** Lokal gibt es keine Einzelschritte: direkt in den Stand einmischen */
+  private mergeInto(pageId: string, data: string) {
+    this.rows = this.read();
+    const row = this.rows.get(pageId);
+    if (!row) return null;
+    row.ydoc = row.ydoc ? toBase64(mergeUpdates([fromBase64(row.ydoc), fromBase64(data)])) : data;
+    return row;
+  }
+
+  async appendDocUpdate(pageId: string, data: string) {
+    if (this.mergeInto(pageId, data)) this.write();
+    return null;
+  }
+
+  async pullDocUpdates() {
+    return [];
+  }
+
+  async compactDoc(pageId: string, build: (stored: string | null) => { ydoc: string; content: Blocks }) {
+    this.rows = this.read();
+    const row = this.rows.get(pageId);
+    const { ydoc, content } = build(row?.ydoc ?? null);
+    if (row) {
+      this.rows.set(pageId, { ...row, ydoc, content, plain: plainText(content), updatedAt: new Date().toISOString(), updatedBy: this.user.id });
+      this.write();
+    }
+    return content;
+  }
+
+  collab(pageId: string, onMessage: (m: CollabMessage) => void) {
+    // Andere Tabs/Fenster desselben Browsers
+    if (typeof BroadcastChannel === "undefined") return { send: () => undefined, close: () => undefined };
+    const channel = new BroadcastChannel(`${this.key}-collab-${pageId}`);
+    channel.onmessage = (e) => onMessage(e.data as CollabMessage);
+    let open = true;
+    return {
+      send: (m: CollabMessage) => open && channel.postMessage(m),
+      close: () => {
+        open = false;
+        channel.close();
+      },
+    };
+  }
+
+  private versions(): (Version & { content: Blocks })[] {
+    return storageGet<(Version & { content: Blocks })[]>(`${this.key}-versions`, []);
+  }
+
+  async listVersions(pageId: string) {
+    return this.versions()
+      .filter((v) => v.pageId === pageId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(({ content: _c, ...v }) => v);
+  }
+
+  async getVersion(id: string) {
+    return this.versions().find((v) => v.id === id) ?? null;
+  }
+
+  async saveVersion(v: { pageId: string; title: string; content: Blocks }) {
+    const all = [{ ...v, id: uid(), createdAt: new Date().toISOString(), createdBy: this.user.id }, ...this.versions()];
+    const kept: typeof all = [];
+    const perPage = new Map<string, number>();
+    for (const x of all) {
+      const n = (perPage.get(x.pageId) ?? 0) + 1;
+      perPage.set(x.pageId, n);
+      if (n <= MAX_VERSIONS) kept.push(x);
+    }
+    storageSet(`${this.key}-versions`, kept);
+  }
+
+  async create(page: NewPage) {
+    this.rows.set(page.id, { ...page });
+    this.write();
+  }
+
+  async update(id: string, patch: PagePatch) {
+    const row = this.rows.get(id);
+    if (!row) return;
+    this.rows.set(id, { ...row, ...patch, updatedAt: new Date().toISOString(), updatedBy: this.user.id });
+    this.write();
+  }
+
+  async remove(ids: string[]) {
+    const now = new Date().toISOString();
+    for (const id of ids) {
+      const row = this.rows.get(id);
+      if (row && !row.deletedAt) this.rows.set(id, { ...row, deletedAt: now, deletedBy: this.user.id });
+    }
+    this.write();
+  }
+
+  async purge(ids: string[]) {
+    for (const id of ids) this.rows.delete(id);
+    this.write();
+  }
+
+  async restoreDeleted(ids: string[]) {
+    for (const id of ids) {
+      const row = this.rows.get(id);
+      if (row) this.rows.set(id, { ...row, deletedAt: null, deletedBy: null });
+    }
+    this.write();
+  }
+
+  async search(query: string) {
+    const q = query.toLowerCase();
+    return [...this.rows.values()].filter((r) => r.plain.toLowerCase().includes(q)).map((r) => r.id);
+  }
+
+  async favorites() {
+    return storageGet<string[]>(`${this.key}-favorites`, []);
+  }
+
+  async setFavorite(id: string, on: boolean) {
+    const list = (await this.favorites()).filter((f) => f !== id);
+    storageSet(`${this.key}-favorites`, on ? [...list, id] : list);
+  }
+
+  upload(file: File, _pageId: string) {
+    // Ohne Server: als Data-URL im Dokument (groß, aber offline verfügbar)
+    return new Promise<string>((resolve, reject) => {
+      if (file.size > 3 * 1024 * 1024) return reject(new Error("Im lokalen Modus sind Dateien bis 3 MB möglich."));
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error ?? new Error("Datei konnte nicht gelesen werden."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async resolveUrl(url: string) {
+    return url;
+  }
+
+  subscribe(onEvent: (e: StoreEvent) => void) {
+    // Andere Tabs desselben Browsers
+    if (this.listeners.size === 0) window.addEventListener("storage", this.onStorage);
+    this.listeners.add(onEvent);
+    return () => {
+      this.listeners.delete(onEvent);
+      if (this.listeners.size === 0) window.removeEventListener("storage", this.onStorage);
+    };
+  }
+}
+
+function strip(row: Row): PageMeta {
+  const { content: _content, plain: _plain, ydoc: _ydoc, ...meta } = row;
+  return meta;
+}

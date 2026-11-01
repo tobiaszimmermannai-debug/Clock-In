@@ -11,6 +11,8 @@ export function Shell<T extends string>(props: {
   current: T;
   onTab: (id: T) => void;
   onLogout?: () => void;
+  /** Inhalt ohne Rand und Maximalbreite (Aufgaben-Bereich mit eigener Seitenleiste) */
+  full?: boolean;
   children: ReactNode;
 }) {
   const brand = (
@@ -23,7 +25,7 @@ export function Shell<T extends string>(props: {
     </span>
   );
   return (
-    <div className="shell">
+    <div className={props.full ? "shell is-full" : "shell"}>
       {/* Viele Bereiche: am Handy kleinere Beschriftung, damit alle in die Leiste passen */}
       <nav className={props.tabs.length > 5 ? "tabbar is-crowded" : "tabbar"} aria-label="Bereiche">
         <div className="tabbar-brand">{brand}</div>

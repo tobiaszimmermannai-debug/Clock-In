@@ -1,6 +1,7 @@
 // Verwaltung (Leitung/Admin): Anmeldung inkl. 2FA, danach Dienstplan, Team, Zeiten, Freigaben, Tablets
 import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from "react";
 import { Shell, type ShellTab } from "../components/Shell";
+import { Tasks } from "../components/Tasks";
 import { BrandMark, Field, Notice, Segmented } from "../components/ui";
 import { staffLoginEmail } from "../lib/config";
 import { adminDb } from "../lib/supabase";
@@ -206,11 +207,11 @@ function CodeForm(props: {
   );
 }
 
-type TabId = "plan" | "team" | "times" | "settings";
+type TabId = "plan" | "team" | "times" | "tasks" | "settings";
 type TeamView = "people" | "vacation" | "sick" | "school";
 type TimesView = "presence" | "approvals" | "times";
 
-// Navigation: 4 Bereiche, zusammengehörige Seiten als Unterauswahl (Team: Personen/Urlaub/Krankheit/Schule,
+// Navigation: 5 Bereiche (inkl. Aufgaben), zusammengehörige Seiten als Unterauswahl (Team: Personen/Urlaub/Krankheit/Schule,
 // Zeiten: Wer ist da (Admin)/Freigaben/Stempelzeiten, Einstellungen: Tablets und Studios – nur Admin)
 function AdminHome(props: { profile: Profile; onLogout: () => void }) {
   const { profile } = props;
@@ -234,6 +235,7 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
     { id: "plan", label: "Dienstplan", icon: "calendar" },
     { id: "team", label: "Team", icon: "users" },
     { id: "times", label: "Zeiten", icon: "clock", badge: open },
+    { id: "tasks", label: "Aufgaben", icon: "tasks" },
     ...(isAdmin ? [{ id: "settings", label: "Einstellungen", icon: "settings" } as const] : []),
   ];
 
@@ -251,6 +253,7 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
       current={tab}
       onTab={openTab}
       onLogout={props.onLogout}
+      full={tab === "tasks"}
     >
       {tab === "plan" && <Plan profile={profile} />}
       {tab === "team" && (
@@ -283,6 +286,7 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
           {timesView === "times" && <Times profile={profile} />}
         </>
       )}
+      {tab === "tasks" && <Tasks db={adminDb} />}
       {tab === "settings" && isAdmin && <Tablets />}
     </Shell>
   );

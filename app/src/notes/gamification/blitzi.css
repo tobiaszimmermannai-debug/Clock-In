@@ -1,0 +1,30 @@
+/* Blitzi – Maskottchen (eigenständig, auch außerhalb des Arbeitsbereichs nutzbar) */
+.blitzi { display: inline-grid; place-items: center; flex: none; padding: 0; border: 0; background: none; border-radius: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.blitzi:focus-visible { outline: 2px solid var(--nk-accent); }
+.blitzi-svg { width: 100%; height: 100%; overflow: visible; animation: blitzi-float 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
+.blitzi-svg.is-jump { animation: blitzi-jump .6s cubic-bezier(.3, 1.6, .5, 1), blitzi-float 3.2s ease-in-out .6s infinite; }
+.blitzi.is-happy .blitzi-svg { animation-duration: 2.2s; }
+.blitzi.is-party .blitzi-svg { animation: blitzi-bounce .9s ease-in-out infinite; }
+.blitzi.is-proud .blitzi-svg { animation: blitzi-bounce 1.4s ease-in-out infinite; }
+.blitzi.is-sad .blitzi-svg { animation: blitzi-sway 4s ease-in-out infinite; }
+.blitzi.is-sleepy .blitzi-svg { animation: blitzi-breathe 4s ease-in-out infinite; }
+.blitzi-eyes { transform-origin: 61px 68px; animation: blitzi-blink 4.6s infinite; }
+.blitzi-sparks path { transform-box: fill-box; transform-origin: center; animation: blitzi-twinkle 1.2s ease-in-out infinite; }
+.blitzi-sparks path:nth-child(2) { animation-delay: .3s; }
+.blitzi-sparks path:nth-child(3) { animation-delay: .6s; }
+.blitzi-sparks path:nth-child(4) { animation-delay: .9s; }
+.blitzi-zzz text { animation: blitzi-zzz 2.4s ease-in-out infinite; }
+.blitzi-zzz text:nth-child(2) { animation-delay: .4s; }
+.blitzi-zzz text:nth-child(3) { animation-delay: .8s; }
+.blitzi-tear { animation: blitzi-tear 2.6s ease-in infinite; }
+@keyframes blitzi-float { 50% { transform: translateY(-4px); } }
+@keyframes blitzi-bounce { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-9px) rotate(-4deg); } 60% { transform: translateY(0) rotate(3deg); } }
+@keyframes blitzi-jump { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-16px) scale(1.06) rotate(-6deg); } 100% { transform: translateY(0) scale(1); } }
+@keyframes blitzi-sway { 50% { transform: rotate(-4deg) translateY(2px); } }
+@keyframes blitzi-breathe { 50% { transform: scaleY(.96) translateY(2px); } }
+@keyframes blitzi-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes blitzi-twinkle { 50% { transform: scale(.5); opacity: .4; } }
+@keyframes blitzi-zzz { 0% { opacity: 0; transform: translate(0, 4px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(4px, -6px); } }
+@keyframes blitzi-tear { 0%, 40% { opacity: 0; transform: translateY(0); } 60% { opacity: 1; } 100% { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .blitzi *, .blitzi-svg { animation: none !important; } }
+

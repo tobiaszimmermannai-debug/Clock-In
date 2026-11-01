@@ -149,8 +149,15 @@ a { color: var(--accent); }
   position: absolute; top: 4px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px;
   border-radius: 9px; background: var(--danger); color: #fff; font-size: .7rem; line-height: 18px; text-align: center;
 }
+/* Aufgaben: Arbeitsbereich füllt die Fläche zwischen Kopfzeile und Tab-Leiste */
+.shell.is-full > div:last-child { height: 100dvh; min-width: 0; display: flex; flex-direction: column; }
+.shell.is-full .content {
+  flex: 1; min-height: 0; max-width: none; display: block;
+  padding: 0 0 calc(var(--tabbar) + env(safe-area-inset-bottom, 0px));
+}
 @media (min-width: 960px) {
   .shell { display: grid; grid-template-columns: var(--sidebar) 1fr; }
+  .shell.is-full .content { padding: 0; }
   .shell .topbar { display: none; }
   .tabbar {
     position: sticky; top: 0; height: 100vh; flex-direction: column; gap: 2px; padding: 20px 12px;
@@ -639,3 +646,12 @@ input.switch:checked { background: var(--accent); }
 .presence-row.is-gone, .presence-row.is-absent, .presence-row.is-later { opacity: .72; }
 .presence-row.is-missing .list-row-sub, .presence-row.is-missed .list-row-sub { color: var(--danger); }
 .presence-late { color: var(--danger); font-weight: 600; }
+
+/* ---------------- Studio-PC: Aufgaben (Tablet bleibt Stempelgerät) ---------------- */
+.studio-pc { height: 100dvh; display: flex; flex-direction: column; }
+.studio-pc-bar {
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px; flex: none;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.studio-pc-bar .segmented { width: auto; }
+.studio-pc-body { flex: 1; min-height: 0; overflow: auto; }
