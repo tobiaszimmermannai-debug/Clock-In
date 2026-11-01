@@ -1,0 +1,9 @@
+fastapi>=0.110
+uvicorn>=0.29
+yt-dlp[default]>=2025.10.22
+faster-whisper>=1.1
+numpy>=1.26
+httpx>=0.27
+python-dotenv>=1.0
+opencv-python-headless>=4.9,<5   # 5.x hat keine Haar-Cascades mehr
+pytest>=8.0

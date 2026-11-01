@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clipper</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>Clipper</h1>
+  <div id="settings" class="chips"></div>
+</header>
+<main>
+  <section class="card">
+    <h2>Links hinzufügen</h2>
+    <form id="add">
+      <textarea id="urls" rows="3" placeholder="Ein Link pro Zeile – YouTube-/Twitch-Video, Stream-Aufzeichnung (VOD) oder laufender Livestream"></textarea>
+      <div class="row">
+        <select id="mode">
+          <option value="auto">Automatisch erkennen</option>
+          <option value="video">Video / VOD</option>
+          <option value="live">Livestream</option>
+        </select>
+        <button type="submit" class="primary">Zur Warteschlange</button>
+        <span id="addmsg" class="muted"></span>
+      </div>
+    </form>
+  </section>
+
+  <nav class="tabs">
+    <button data-tab="queue" class="active">Warteschlange <b id="n-queue"></b></button>
+    <button data-tab="review">Freigabe <b id="n-review"></b></button>
+    <button data-tab="posted">Entwürfe <b id="n-posted"></b></button>
+    <button data-tab="archive">Archiv <b id="n-archive"></b></button>
+  </nav>
+
+  <section id="tab-queue" class="tab"><div id="jobs"></div></section>
+  <section id="tab-review" class="tab hidden"><div id="review" class="grid"></div></section>
+  <section id="tab-posted" class="tab hidden"><div id="posted" class="grid"></div></section>
+  <section id="tab-archive" class="tab hidden"><div id="archive" class="grid"></div></section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

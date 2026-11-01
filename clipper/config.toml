@@ -1,0 +1,66 @@
+# Clipper-Konfiguration (keine Secrets hier! Zugangsdaten gehören in .env)
+
+[server]
+host = "127.0.0.1"
+port = 8000
+
+[paths]
+data_dir = "data"
+
+[whisper]
+model = "small"          # tiny | base | small | medium | large-v3 | Pfad zu einem lokalen Modell
+device = "auto"          # auto | cpu | cuda
+compute_type = "int8"    # int8 ist auf dem Mac (CPU) am schnellsten
+language = ""            # "" = automatisch erkennen, sonst z. B. "de" oder "en"
+beam_size = 5
+
+[chunking]
+chunk_minutes = 12       # Abschnittslänge für Transkription/Analyse
+overlap_seconds = 60     # Überlappung zum vorherigen Abschnitt bei der Analyse
+
+[download]
+strategy = "auto"        # auto | full | sections  (sections = erst nur Audio, Clips einzeln nachladen)
+full_max_minutes = 45    # bei "auto": bis zu dieser Länge das ganze Video laden
+max_height = 1080
+cookies_from_browser = "" # z. B. "safari" oder "chrome" (für altersbeschränkte Videos)
+fetch_chat = true        # Live-Chat-Replay als Beliebtheitssignal, wenn keine Heatmap da ist
+
+[live]
+segment_minutes = 10     # Länge der Live-Segmente, die sofort verarbeitet werden
+from_start = false       # true = --live-from-start (nur wo die Plattform es erlaubt)
+chat = true              # Live-Chat mitschneiden (YouTube über yt-dlp, Twitch über anonymes IRC)
+
+[llm]
+backend = "claude_cli"   # claude_cli | anthropic_api | ollama
+claude_cli_model = "sonnet"
+anthropic_model = "claude-sonnet-5-5"
+ollama_model = "qwen2.5:7b"
+ollama_url = "http://127.0.0.1:11434"
+max_candidates_per_chunk = 5
+timeout_seconds = 600
+output_language = ""     # Sprache für Titel/Beschreibung, z. B. "German"; "" = Sprache des Transkripts
+
+[scoring]
+ai_weight = 0.5          # Anteil KI-Bewertung
+signal_weight = 0.5      # Anteil Beliebtheitssignal (Heatmap, sonst Chat)
+threshold = 80           # nur Clips ab diesem Score (0-100) kommen in die Freigabe
+min_clip_seconds = 20
+max_clip_seconds = 60
+
+[render]
+width = 1080
+height = 1920
+framing = "crop"         # crop = 9:16-Ausschnitt | fit = ganzes Bild + unscharfer Hintergrund
+face_tracking = true     # Ausschnitt auf das größte Gesicht zentrieren (OpenCV)
+video_codec = "libx264"  # auf dem Mac schneller: "h264_videotoolbox"
+crf = 20
+preset = "veryfast"
+font = "Arial Black"
+font_size = 86
+words_per_caption = 3
+highlight_color = "&H0000E5FF"   # ASS-Farbe (&HAABBGGRR) für das aktuell gesprochene Wort
+caption_position = 0.68          # vertikale Position der Untertitel (Anteil der Bildhöhe)
+
+[publish]
+youtube_category_id = "22"
+default_tags = ["shorts", "clips"]
