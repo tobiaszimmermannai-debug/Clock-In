@@ -10,18 +10,47 @@ import numpy as np
 from .config import CFG
 
 _model = None
-_lock = threading.Lock()
+_device = ""          # tatsächlich genutztes Gerät: "cuda" oder "cpu"
+_lock = threading.RLock()
 SR = 16000
 
 
-def get_model():
-    global _model
+def _resolve(force_cpu: bool) -> tuple[str, str]:
+    w = CFG["whisper"]
+    device = "cpu" if force_cpu else w["device"]
+    if device == "auto":
+        try:
+            import ctranslate2
+            device = "cuda" if ctranslate2.get_cuda_device_count() > 0 else "cpu"
+        except Exception:  # noqa: BLE001
+            device = "cpu"
+    compute = w["compute_type"]
+    if compute == "auto" or (device == "cpu" and "float16" in compute):
+        # RTX 50 (Blackwell): int8_float16 -> CUBLAS_STATUS_NOT_SUPPORTED, float16 läuft stabil
+        compute = "float16" if device == "cuda" else "int8"
+    return device, compute
+
+
+def get_model(force_cpu: bool = False):
+    global _model, _device
     with _lock:
-        if _model is None:
+        if _model is None or (force_cpu and _device != "cpu"):
             from faster_whisper import WhisperModel
-            w = CFG["whisper"]
-            _model = WhisperModel(w["model"], device=w["device"], compute_type=w["compute_type"])
+            device, compute = _resolve(force_cpu)
+            try:
+                _model = WhisperModel(CFG["whisper"]["model"], device=device, compute_type=compute)
+            except Exception as e:  # noqa: BLE001
+                if device == "cpu":
+                    raise
+                print(f"[whisper] GPU nicht nutzbar ({e}) – weiter auf CPU", flush=True)
+                return get_model(force_cpu=True)
+            _device = device
+            print(f"[whisper] Modell {CFG['whisper']['model']} auf {device} ({compute})", flush=True)
         return _model
+
+
+def device_label() -> str:
+    return _device or CFG["whisper"]["device"]
 
 
 def load_audio(path: str, start: float = 0.0, duration: float | None = None) -> np.ndarray:
@@ -47,8 +76,18 @@ def transcribe_range(media: str, media_offset: float, start: float, end: float,
     local_end = end - media_offset + pad
     audio = load_audio(media, local_start, local_end - local_start)
     shift = media_offset + local_start
+    try:
+        return _run(get_model(), audio, shift, start, end, progress, should_cancel)
+    except RuntimeError as e:
+        if _device == "cpu" or "abgebrochen" in str(e):
+            raise
+        print(f"[whisper] GPU-Fehler ({e}) – wechsle auf CPU", flush=True)
+        return _run(get_model(force_cpu=True), audio, shift, start, end, progress, should_cancel)
+
+
+def _run(model, audio, shift, start, end, progress, should_cancel) -> dict:
     w = CFG["whisper"]
-    segments, info = get_model().transcribe(
+    segments, info = model.transcribe(
         audio, language=w["language"] or None, beam_size=int(w["beam_size"]),
         word_timestamps=True, vad_filter=True, condition_on_previous_text=False)
     words = []

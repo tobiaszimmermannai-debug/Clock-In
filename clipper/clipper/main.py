@@ -1,19 +1,24 @@
 """FastAPI-App: Weboberfläche unter http://localhost:8000 + JSON-API."""
 from __future__ import annotations
 
+import asyncio
+import hashlib
+import hmac
 import json
+import secrets
 import shutil
 import threading
 import time
+import urllib.parse
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
 from fastapi import Body, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import db, live, publish, worker
+from . import db, live, publish, transcribe, worker
 from .config import CFG, DATA_DIR, secret
 from .download import source_link
 
@@ -38,7 +43,8 @@ def public_clip(clip_id: int):
 
 
 def _run_media_server() -> None:
-    server = uvicorn.Server(uvicorn.Config(media_app, host="127.0.0.1", port=MEDIA_PORT, log_level="warning"))
+    server = uvicorn.Server(uvicorn.Config(media_app, host=CFG["server"]["host"], port=MEDIA_PORT,
+                                           log_level="warning"))
     server.run()
 
 
@@ -54,14 +60,66 @@ app = FastAPI(title="Clipper", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
+# ---------------------------------------------------------------- Zugriffsschutz
+LOCAL_HOSTS = ("localhost", "127.0.0.1", "[::1]", "testserver")
+COOKIE = "clipper_session"
+
+
+def _session_token(password: str) -> str:
+    """Stabiles Sitzungs-Token, abgeleitet aus Passwort + lokalem Zufallsschlüssel."""
+    keyfile = DATA_DIR / "session.key"
+    if not keyfile.exists():
+        keyfile.write_text(secrets.token_hex(32))
+    key = hashlib.sha256((keyfile.read_text() + password).encode()).digest()
+    return hmac.new(key, b"clipper-session", hashlib.sha256).hexdigest()
+
+
+LOGIN_PAGE = """<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Clipper – Anmelden</title>
+<link rel="stylesheet" href="/static/style.css"></head><body><main style="max-width:380px;margin-top:12vh">
+<form class="card" method="post" action="/login"><h2>Clipper</h2>
+<input type="password" name="password" placeholder="Passwort" autofocus required>
+<div class="row"><button class="primary" type="submit">Anmelden</button><span class="err">{err}</span></div>
+</form></main></body></html>"""
+
+
 @app.middleware("http")
-async def local_only(request: Request, call_next):
-    host = (request.headers.get("host") or "").split(":")[0]
-    if host not in ("localhost", "127.0.0.1", "[::1]", "testserver"):
-        return JSONResponse({"detail": "Nur lokal erreichbar."}, status_code=403)
-    if request.method not in ("GET", "HEAD") and request.headers.get("x-clipper") != "1":
+async def access_guard(request: Request, call_next):
+    """Lokal (localhost) ohne Passwort. Von außen (Tailscale, Tunnel, LAN) nur mit CLIPPER_PASSWORD."""
+    raw = request.headers.get("host") or ""
+    host = raw.split("]")[0] + "]" if raw.startswith("[") else raw.split(":")[0]
+    path = request.url.path
+    proxied = any(h in request.headers for h in ("x-forwarded-for", "cf-connecting-ip", "tailscale-user-login"))
+    if host not in LOCAL_HOSTS or proxied:  # über Tunnel/Proxy = immer Fernzugriff
+        password = secret("CLIPPER_PASSWORD")
+        if not password:
+            return JSONResponse({"detail": "Fernzugriff ist gesperrt. Setze CLIPPER_PASSWORD in .env."}, status_code=403)
+        if path not in ("/login", "/static/style.css") and \
+                not hmac.compare_digest(request.cookies.get(COOKIE, ""), _session_token(password)):
+            if path.startswith("/api/"):
+                return JSONResponse({"detail": "Nicht angemeldet."}, status_code=401)
+            return RedirectResponse("/login", status_code=303)
+    if request.method not in ("GET", "HEAD") and path != "/login" and request.headers.get("x-clipper") != "1":
         return JSONResponse({"detail": "Fehlender X-Clipper-Header."}, status_code=403)
     return await call_next(request)
+
+
+@app.get("/login")
+def login_page():
+    return HTMLResponse(LOGIN_PAGE.format(err=""))
+
+
+@app.post("/login")
+async def login(request: Request):
+    password = secret("CLIPPER_PASSWORD")
+    given = urllib.parse.parse_qs((await request.body()).decode()).get("password", [""])[0]
+    if not password or not hmac.compare_digest(given.encode(), password.encode()):
+        await asyncio.sleep(1.5)  # bremst Passwort-Raten
+        return HTMLResponse(LOGIN_PAGE.format(err="Falsches Passwort"), status_code=401)
+    resp = RedirectResponse("/", status_code=303)
+    resp.set_cookie(COOKIE, _session_token(password), max_age=60 * 60 * 24 * 30, httponly=True, samesite="strict",
+                    secure=request.headers.get("x-forwarded-proto") == "https" or request.url.scheme == "https")
+    return resp
 
 
 @app.get("/")
@@ -112,7 +170,7 @@ def state():
         "archive": [c for c in view if c["status"] == "discarded"],
         "platforms": publish.available(),
         "settings": {"threshold": CFG["scoring"]["threshold"], "llm": CFG["llm"]["backend"],
-                     "whisper": CFG["whisper"]["model"], "ai_weight": CFG["scoring"]["ai_weight"],
+                     "whisper": f'{CFG["whisper"]["model"]} · {transcribe.device_label()}', "ai_weight": CFG["scoring"]["ai_weight"],
                      "signal_weight": CFG["scoring"]["signal_weight"]},
     }
 

@@ -62,7 +62,7 @@ def _ollama(prompt: str, model: str, url: str, timeout: float) -> str:
     try:
         r = httpx.post(url.rstrip("/") + "/api/chat", timeout=timeout, json={
             "model": model, "stream": False, "format": "json",
-            "options": {"temperature": 0.3, "num_ctx": 16384},
+            "options": {"temperature": 0.3, "num_ctx": int(CFG["llm"].get("ollama_num_ctx", 8192))},
             "messages": [{"role": "user", "content": prompt}]})
     except httpx.ConnectError as e:
         raise LLMError(f"Ollama nicht erreichbar unter {url} (läuft 'ollama serve'?)") from e

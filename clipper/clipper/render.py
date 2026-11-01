@@ -133,6 +133,36 @@ def video_filter(iw: int, ih: int, cx: float, ass_name: str) -> str:
     return f"[0:v]{crop},scale={W}:{H}:flags=lanczos,setsar=1,ass={ass_name}[v]"
 
 
+_codec: str | None = None
+
+
+def pick_codec() -> str:
+    """'auto': NVIDIA NVENC (RTX) > Apple VideoToolbox > libx264 (CPU). Einmal testen, dann merken."""
+    global _codec
+    want = CFG["render"]["video_codec"]
+    if want != "auto":
+        return want
+    if _codec is None:
+        _codec = "libx264"
+        for c in ("h264_nvenc", "h264_videotoolbox"):
+            r = subprocess.run(["ffmpeg", "-v", "error", "-nostdin", "-f", "lavfi", "-i",
+                                "color=c=black:s=256x256:d=0.2", "-c:v", c, "-f", "null", "-"], capture_output=True)
+            if r.returncode == 0:
+                _codec = c
+                break
+        print(f"[render] Video-Encoder: {_codec}", flush=True)
+    return _codec
+
+
+def encoder_args(codec: str) -> list[str]:
+    r = CFG["render"]
+    if "nvenc" in codec:
+        return ["-c:v", codec, "-preset", "p5", "-rc", "vbr", "-cq", str(int(r["crf"]) + 1), "-b:v", "0"]
+    if "videotoolbox" in codec:
+        return ["-c:v", codec, "-b:v", "8M"]
+    return ["-c:v", codec, "-crf", str(r["crf"]), "-preset", r["preset"]]
+
+
 def render_clip(src: dict, ss: float, dur: float, words: list[dict], clip_start: float, out: Path) -> Path:
     r = CFG["render"]
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -142,14 +172,13 @@ def render_clip(src: dict, ss: float, dur: float, words: list[dict], clip_start:
     cx = 0.5
     if r["framing"] == "crop" and r["face_tracking"] and iw / ih > r["width"] / r["height"]:
         cx = face_center_x(src, ss, dur)
-    codec = r["video_codec"]
-    venc = ["-c:v", codec]
-    venc += ["-b:v", "8M"] if "videotoolbox" in codec else ["-crf", str(r["crf"]), "-preset", r["preset"]]
-    cmd = ["ffmpeg", "-y", "-v", "error", "-nostdin", *input_args(src, ss), "-t", f"{dur:.3f}",
-           "-filter_complex", video_filter(iw, ih, cx, ass.name), "-map", "[v]", "-map", "0:a?",
-           *venc, "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
-           "-movflags", "+faststart", out.name]
-    p = subprocess.run(cmd, cwd=out.parent, capture_output=True, text=True)
-    if p.returncode != 0:
-        raise RuntimeError(f"ffmpeg: {p.stderr.strip()[-500:]}")
-    return out
+    codec = pick_codec()
+    for attempt in ([codec, "libx264"] if codec != "libx264" else ["libx264"]):
+        cmd = ["ffmpeg", "-y", "-v", "error", "-nostdin", *input_args(src, ss), "-t", f"{dur:.3f}",
+               "-filter_complex", video_filter(iw, ih, cx, ass.name), "-map", "[v]", "-map", "0:a?",
+               *encoder_args(attempt), "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
+               "-movflags", "+faststart", out.name]
+        p = subprocess.run(cmd, cwd=out.parent, capture_output=True, text=True)
+        if p.returncode == 0:
+            return out
+    raise RuntimeError(f"ffmpeg: {p.stderr.strip()[-500:]}")

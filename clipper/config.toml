@@ -1,7 +1,7 @@
 # Clipper-Konfiguration (keine Secrets hier! Zugangsdaten gehören in .env)
 
 [server]
-host = "127.0.0.1"
+host = "127.0.0.1"       # 0.0.0.0 nur mit CLIPPER_PASSWORD (siehe README: Fernzugriff)
 port = 8000
 
 [paths]
@@ -9,8 +9,8 @@ data_dir = "data"
 
 [whisper]
 model = "small"          # tiny | base | small | medium | large-v3 | Pfad zu einem lokalen Modell
-device = "auto"          # auto | cpu | cuda
-compute_type = "int8"    # int8 ist auf dem Mac (CPU) am schnellsten
+device = "auto"          # auto (GPU wenn vorhanden) | cpu | cuda
+compute_type = "auto"    # auto = float16 auf NVIDIA-GPU (nötig für RTX 50), int8 auf CPU/Mac
 language = ""            # "" = automatisch erkennen, sonst z. B. "de" oder "en"
 beam_size = 5
 
@@ -36,6 +36,7 @@ claude_cli_model = "sonnet"
 anthropic_model = "claude-sonnet-5-5"
 ollama_model = "qwen2.5:7b"
 ollama_url = "http://127.0.0.1:11434"
+ollama_num_ctx = 8192    # Kontextlänge; 8192 reicht für 12-min-Abschnitte und schont VRAM
 max_candidates_per_chunk = 5
 timeout_seconds = 600
 output_language = ""     # Sprache für Titel/Beschreibung, z. B. "German"; "" = Sprache des Transkripts
@@ -52,7 +53,7 @@ width = 1080
 height = 1920
 framing = "crop"         # crop = 9:16-Ausschnitt | fit = ganzes Bild + unscharfer Hintergrund
 face_tracking = true     # Ausschnitt auf das größte Gesicht zentrieren (OpenCV)
-video_codec = "libx264"  # auf dem Mac schneller: "h264_videotoolbox"
+video_codec = "auto"     # auto = NVENC (NVIDIA) > VideoToolbox (Mac) > libx264
 crf = 20
 preset = "veryfast"
 font = "Arial Black"

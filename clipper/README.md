@@ -1,6 +1,6 @@
 # Clipper – selbstgehostetes Clipping-Tool (Videos & Livestreams)
 
-Clipper läuft lokal auf deinem Mac und macht aus langen Videos, Stream-Aufzeichnungen und **laufenden
+Clipper läuft auf deinem Gaming-PC (Windows + NVIDIA-GPU, über Docker) oder Mac und macht aus langen Videos, Stream-Aufzeichnungen und **laufenden
 Livestreams** automatisch 9:16-Hochkant-Clips mit eingebrannten Untertiteln. Du gibst die Clips vor dem
 Posten frei. Hochgeladen wird **immer nur als Entwurf bzw. privat**.
 
@@ -18,7 +18,7 @@ Link ─► yt-dlp (Infos, Heatmap/Chat, Audio/Video) ─► Abschnitte à 12 mi
 
 | Bereich | Umsetzung |
 |---|---|
-| Oberfläche | `http://localhost:8000`: Warteschlange mit Status (wartet / lädt / transkribiert / analysiert / schneidet / fertig / Fehler) und Fortschrittsbalken; dazu die Tabs Freigabe, Entwürfe und Archiv |
+| Oberfläche | `http://localhost:8000`, von unterwegs per Tailscale oder Cloudflare mit Passwort: Warteschlange mit Status (wartet / lädt / transkribiert / analysiert / schneidet / fertig / Fehler) und Fortschrittsbalken; dazu die Tabs Freigabe, Entwürfe und Archiv |
 | Download | yt-dlp (YouTube, Twitch und alles andere, was yt-dlp kann) |
 | Beliebtheit | YouTube-**Heatmap** („Am häufigsten wiedergegeben“). Fehlt sie, wird die **Chat-Aktivität** aus dem Live-Chat-Replay genutzt: Nachrichten pro Minute, Ausschläge bei Emotes, „LOL“, „KEKW“ oder „!!!“ zählen mehr. Gibt es beides nicht, zählt nur die KI. |
 | Lange VODs (2–8 h+) | Zuerst wird **nur das Audio** geladen. Transkription und Analyse laufen in Abschnitten von 12 min mit 60 s Überlappung. Für jeden Clip wird **nur dieser Zeitabschnitt** des Videos nachgeladen und gerendert. Nach einem Abbruch geht es an der letzten Stelle weiter. |
@@ -27,6 +27,86 @@ Link ─► yt-dlp (Infos, Heatmap/Chat, Audio/Video) ─► Abschnitte à 12 mi
 | KI | `claude_cli` (dein Claude-Login), `anthropic_api` (Key nur aus `.env`) oder `ollama` (komplett lokal). Umschalten in `config.toml`. |
 | Schnitt | 1080×1920, Ausschnitt mittig bzw. auf das Gesicht des Sprechers (OpenCV), gut lesbare Wort-für-Wort-Untertitel |
 | Posten | Nur als Entwurf: YouTube `privacyStatus=private`, Facebook-Reel `video_state=DRAFT`, Buffer `saveToDraft`. Diese Werte sind fest im Code verdrahtet. |
+
+## Installation auf dem Gaming-PC (Windows + NVIDIA RTX, empfohlen)
+
+Auf der RTX 5070 läuft alles auf der Grafikkarte: Whisper `large-v3-turbo` (ein 8-h-VOD ist in etwa
+10–15 Minuten transkribiert), Ollama (lokale KI, kostenlos) und NVENC (schnelles Rendern).
+Alles läuft in Docker, du brauchst also kein Python oder ffmpeg unter Windows.
+
+1. **NVIDIA-Treiber** aktuell halten (GeForce Experience / NVIDIA App, Version 570 oder neuer für RTX 50).
+2. **WSL2** installieren: PowerShell als Administrator öffnen, dann den PC neu starten:
+   ```powershell
+   wsl --install
+   ```
+3. **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** installieren (kostenlos für
+   die private Nutzung). Unter Settings → General muss „Use the WSL 2 based engine“ aktiv sein.
+   GPU-Test:
+   ```powershell
+   docker run --rm --gpus all nvidia/cuda:12.8.1-base-ubuntu24.04 nvidia-smi
+   ```
+   Hier sollte deine RTX 5070 erscheinen.
+4. **Projekt holen** ([Git für Windows](https://git-scm.com/download/win)) und starten:
+   ```powershell
+   git clone <dein-repo>
+   cd <dein-repo>\clipper
+   .\start-windows.bat
+   ```
+   Alternativ geht auch ein Doppelklick auf `start-windows.bat`. Der erste Start baut das Image und
+   lädt Whisper- und Ollama-Modelle (~15 GB), das dauert etwas. Danach öffnet sich
+   **http://localhost:8000**.
+
+Nützliche Befehle im Ordner `clipper`:
+
+```powershell
+docker compose logs -f clipper    # Live-Log (zeigt z. B. "Modell large-v3-turbo auf cuda (float16)")
+docker compose down               # stoppen
+docker compose up -d --build      # nach einem git pull neu bauen und starten
+```
+
+**KI im Docker-Setup:**
+- **Standard ist Ollama** mit `qwen2.5:14b` auf der GPU. Das Modell wird beim ersten Start automatisch geladen.
+- **Wenig VRAM frei** (z. B. beim gleichzeitigen Zocken): in `.env` `CLIPPER_OLLAMA_MODEL=qwen2.5:7b` setzen.
+- **Claude statt Ollama:** in `.env` `CLIPPER_LLM_BACKEND=claude_cli` setzen, dann einmalig einloggen. Der
+  Login bleibt im Docker-Volume gespeichert.
+  ```powershell
+  docker compose up -d
+  docker compose exec -it clipper claude
+  ```
+
+**RTX 50 (Blackwell):** Whisper rechnet auf der GPU automatisch in `float16`. Die Standard-Mischung
+`int8_float16` stürzt auf RTX-50-Karten ab. Sollte die GPU trotzdem scheitern, rechnet Clipper
+automatisch auf der CPU weiter (siehe Log).
+
+Die Daten (Datenbank, Downloads, Clips, Modelle) liegen im Docker-Volume `clipper_clipper-data`.
+Clips kannst du direkt in der Oberfläche im Video-Menü (⋮) herunterladen.
+
+## Fernzugriff: deine eigene „Cloud“ (kostenlos)
+
+Clipper läuft auf deinem PC. Damit du ihn von Handy, Laptop oder unterwegs bedienen kannst:
+
+1. In `.env` ein Passwort setzen und neu starten (`docker compose up -d`):
+   ```
+   CLIPPER_PASSWORD=ein-langes-eigenes-passwort
+   ```
+   Ohne Passwort blockt Clipper jeden Zugriff, der nicht über `localhost` kommt.
+2. **Variante A – Tailscale (empfohlen, privat).** Nur deine eigenen Geräte kommen dran, mit HTTPS.
+   - [Tailscale](https://tailscale.com/download) auf dem Gaming-PC und auf Handy/Laptop installieren,
+     überall mit demselben Konto anmelden (kostenloser Personal-Plan).
+   - Auf dem Gaming-PC in PowerShell:
+     ```powershell
+     tailscale serve --bg 8000
+     ```
+   - Clipper ist dann auf allen deinen Geräten unter `https://<pc-name>.<dein-tailnet>.ts.net` erreichbar.
+3. **Variante B – Cloudflare-Tunnel (öffentliche Adresse).**
+   ```powershell
+   winget install Cloudflare.cloudflared
+   cloudflared tunnel --url http://localhost:8000
+   ```
+   Die angezeigte `https://….trycloudflare.com`-Adresse ist öffentlich, das Passwort schützt sie.
+
+Der PC muss dafür laufen. Ein gemieteter Cloud-Server mit GPU wäre die Alternative, kostet aber
+monatlich Geld.
 
 ## Installation (macOS)
 
@@ -152,7 +232,7 @@ Clipper beenden mit `Ctrl+C`. Beim nächsten Start laufen unterbrochene Jobs aut
 Die wichtigsten Einstellungen:
 
 ```toml
-[whisper]  model = "small"; language = ""          # "" = automatisch, "de" erzwingt Deutsch
+[whisper]  model = "small"; compute_type = "auto"  # Docker/GPU: large-v3-turbo (über .env)
 [chunking] chunk_minutes = 12; overlap_seconds = 60
 [download] strategy = "auto"                        # auto | full | sections
 [live]     segment_minutes = 10; from_start = false
@@ -166,7 +246,7 @@ Die wichtigsten Einstellungen:
   der Mittelwert aus Hook, Spannung und Verständlichkeit ohne Kontext (je 0–100). Das Signal ist
   Heatmap oder Chat, auf 0–1 normalisiert, und wird je zur Hälfte aus Durchschnitt und Spitze im
   Clip-Zeitraum berechnet. Ohne Signal zählt nur die KI.
-- **Schneller rendern auf dem Mac:** `video_codec = "h264_videotoolbox"`.
+- **Encoder:** `video_codec = "auto"` wählt NVENC (NVIDIA), VideoToolbox (Mac) oder libx264 (CPU).
 - **Ganzes Bild statt Ausschnitt:** `framing = "fit"` (mit unscharfem Hintergrund).
 - **Altersbeschränkte Videos:** `cookies_from_browser = "safari"` oder `"chrome"`.
 
@@ -174,7 +254,9 @@ Die wichtigsten Einstellungen:
 
 ```
 clipper/
-├── start.sh              Start mit einem Befehl
+├── start.sh              Start mit einem Befehl (Mac/Linux, ohne Docker)
+├── start-windows.bat     Start auf dem Gaming-PC (Docker + GPU)
+├── Dockerfile, docker-compose.yml   Clipper + Ollama mit NVIDIA-GPU
 ├── config.toml           Einstellungen (keine Secrets)
 ├── .env.example          Vorlage für Zugangsdaten → .env (git-ignoriert)
 ├── clipper/

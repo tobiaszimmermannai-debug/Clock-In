@@ -1,0 +1,54 @@
+# Start:  docker compose up -d --build     (Windows: Doppelklick auf start-windows.bat)
+name: clipper
+
+x-gpu: &gpu
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
+services:
+  clipper:
+    <<: *gpu
+    build: .
+    image: clipper:latest
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      CLIPPER_LLM_BACKEND: ${CLIPPER_LLM_BACKEND:-ollama}
+      CLIPPER_OLLAMA_URL: http://ollama:11434
+      CLIPPER_OLLAMA_MODEL: ${CLIPPER_OLLAMA_MODEL:-qwen2.5:14b}
+      CLIPPER_WHISPER_MODEL: ${CLIPPER_WHISPER_MODEL:-large-v3-turbo}
+      CLIPPER_FONT: DejaVu Sans
+      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility   # "video" = NVENC für schnelles Rendern
+    ports:
+      - "${CLIPPER_BIND:-127.0.0.1}:8000:8000"   # Oberfläche
+      - "${CLIPPER_BIND:-127.0.0.1}:8001:8001"   # nur Clip-Videos für Buffer
+    volumes:
+      - clipper-data:/data
+    depends_on: [ollama]
+
+  ollama:
+    <<: *gpu
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama:/root/.ollama
+
+  # lädt das Ollama-Modell einmalig herunter (danach beendet sich der Dienst)
+  ollama-pull:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_HOST: ollama:11434
+    entrypoint: ["/bin/sh", "-c", "sleep 5 && ollama pull ${CLIPPER_OLLAMA_MODEL:-qwen2.5:14b}"]
+    depends_on: [ollama]
+    restart: "no"
+
+volumes:
+  clipper-data:
+  ollama:
