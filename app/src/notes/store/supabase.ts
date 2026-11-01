@@ -171,10 +171,18 @@ export class SupabaseStore implements NotesStore {
     if (error) throw error;
   }
 
-  async workDays(sinceIso: string): Promise<string[] | null> {
-    const { data, error } = await this.db.rpc("note_work_days", { p_since: sinceIso.slice(0, 10) });
+  async workDays(sinceIso: string): Promise<Record<string, string[]> | null> {
+    const since = sinceIso.slice(0, 10);
+    const team = await this.db.rpc("note_team_work_days", { p_since: since });
+    if (!team.error) {
+      const out: Record<string, string[]> = {};
+      for (const r of (team.data ?? []) as { user_id: string; day: string }[]) (out[r.user_id] ??= []).push(String(r.day).slice(0, 10));
+      return out;
+    }
+    // Ältere Datenbank: nur die eigenen Tage
+    const { data, error } = await this.db.rpc("note_work_days", { p_since: since });
     if (error) return null;
-    return ((data ?? []) as string[]).map((d) => String(d).slice(0, 10));
+    return { [await this.uid()]: ((data ?? []) as string[]).map((d) => String(d).slice(0, 10)) };
   }
 
   async members(): Promise<Member[]> {

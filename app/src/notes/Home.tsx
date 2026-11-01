@@ -53,7 +53,7 @@ export function Home(props: { title: string; onTemplates: () => void }) {
         <FocusSection member={actor} />
 
         <div className="nk-home-game">
-          <BlitziCard member={actor} open={open.length} ownWorkDays={actor.id === notes.me.id} />
+          <BlitziCard member={actor} open={open.length} />
           <Leaderboard highlight={actor.id} />
         </div>
 
