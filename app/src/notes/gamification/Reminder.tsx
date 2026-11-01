@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { NotesStore, PageMeta } from "../types";
 import { today, untitled } from "../util";
 import { Blitzi } from "./Blitzi";
+import { coinsOf, stageOf } from "./evolution";
 import { focusTasks } from "./focus";
 import { Energy } from "./GamePanel";
 import { moodFor, myStats, speech, type MyStats } from "./stats";
@@ -68,7 +69,13 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
   return (
     <div className={`nk-reminder is-${mood}`}>
       <div className="nk-reminder-top">
-        <Blitzi mood={props.reason === "break" && mood === "sad" ? "sleepy" : mood} size={74} onTap={() => setVariant((v) => v + 1)} />
+        <Blitzi
+          mood={props.reason === "break" && mood === "sad" ? "sleepy" : mood}
+          size={92}
+          stage={stageOf(stats.streak)}
+          coins={coinsOf(stats.streak)}
+          onTap={() => setVariant((v) => v + 1)}
+        />
         <div className="nk-reminder-text">
           <b>{title}</b>
           <p>{line}</p>
@@ -76,7 +83,7 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
       </div>
       <div className="nk-reminder-stats">
         <span>
-          <b>⚡ {stats.streak}</b> {stats.streak === 1 ? "Tag" : "Tage"} Serie
+          <b>⚡ {stats.streak}</b> {stats.streak === 1 ? "Tag" : "Tage"} Serie · Stufe {stageOf(stats.streak)}
         </span>
         <span className="nk-reminder-energy">
           <Energy value={Math.min(stats.today, stats.goal)} goal={stats.goal} /> {stats.today}/{stats.goal}

@@ -40,7 +40,15 @@ export type Presence = { clientId: number; name: string; color: string };
 export type Toast = { id: number; text: string; action?: { label: string; run: () => void } };
 
 /** Kurze Feier nach einer erledigten Aufgabe (bzw. vollem Akku) */
-export type Celebration = { id: number; points: number; goal: boolean; streak: number; name: string };
+export type Celebration = {
+  id: number;
+  points: number;
+  goal: boolean;
+  streak: number;
+  name: string;
+  /** Serie ist mit dieser Aufgabe gewachsen: neue Stufe bzw. neue Goldmünze */
+  grew: boolean;
+};
 
 /** Erfolge werden so weit zurück geladen (Serie, Rangliste) */
 const HISTORY_DAYS = 90;
@@ -176,6 +184,8 @@ export function NotesProvider(props: {
   const [locations, setLocations] = useState<Studio[]>([]);
   const [completions, setCompletions] = useState<Completion[]>([]);
   const [workDays, setWorkDays] = useState<string[] | null>(null);
+  const workDaysRef = useRef<string[] | null>(null);
+  workDaysRef.current = workDays;
   const [actorId, setActorId] = useState<string | null>(() => storageGet<string | null>("aun-studio-actor", null));
   const [celebration, setCelebration] = useState<Celebration | null>(null);
   const membersRef = useRef<Member[]>([]);
@@ -566,13 +576,17 @@ export function NotesProvider(props: {
         // Feiern, wenn die handelnde Person etwas gutgeschrieben bekommt
         const mine = actor ? added.find((a) => a.userId === actor) : undefined;
         if (mine) {
-          const stats = myStats(actor!, next, { today: day, workDays: null });
+          const days = actor === meRef.current.id ? workDaysRef.current : null;
+          const stats = myStats(actor!, next, { today: day, workDays: days });
+          const before = myStats(actor!, c, { today: day, workDays: days });
+          const person = people.find((m) => m.id === actor);
           setCelebration({
             id: Date.now(),
             points: mine.points,
             goal: stats.today === stats.goal,
             streak: stats.streak,
-            name: people.find((m) => m.id === actor)?.name.split(" ")[0] ?? "",
+            name: person?.name.split(" ")[0] ?? "",
+            grew: stats.streak > before.streak,
           });
         }
         return next;

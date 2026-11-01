@@ -141,14 +141,21 @@ export class SupabaseStore implements NotesStore {
   }
 
   async completions(sinceIso: string): Promise<Completion[]> {
-    const { data, error } = await this.db
-      .from("note_task_events")
-      .select("page_id, user_id, points, done_at")
-      .gte("done_at", sinceIso)
-      .order("done_at")
-      .limit(5000);
-    if (error) throw error;
-    return (data ?? []).map((r) => ({ pageId: r.page_id, userId: r.user_id, points: r.points, doneAt: r.done_at }));
+    // Seitenweise: PostgREST liefert höchstens 1000 Zeilen je Abfrage – sonst fehlten die neuesten
+    const out: Completion[] = [];
+    for (let from = 0; from < 50_000; from += 1000) {
+      const { data, error } = await this.db
+        .from("note_task_events")
+        .select("page_id, user_id, points, done_at")
+        .gte("done_at", sinceIso)
+        .order("done_at")
+        .order("id")
+        .range(from, from + 999);
+      if (error) throw error;
+      out.push(...(data ?? []).map((r) => ({ pageId: r.page_id, userId: r.user_id, points: r.points, doneAt: r.done_at })));
+      if (!data || data.length < 1000) break;
+    }
+    return out;
   }
 
   async setCompletion(pageId: string, userIds: string[], points: number, done: boolean): Promise<void> {
