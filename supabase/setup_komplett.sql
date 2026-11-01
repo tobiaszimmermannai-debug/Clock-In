@@ -19,7 +19,7 @@ end $$;
 
 -- Reste eines vorherigen Versuchs entfernen (nur Clock-In-Objekte)
 drop table if exists
-  public.note_task_events, public.note_doc_updates, public.note_docs, public.note_versions, public.note_favorites, public.note_pages, public.vacation_allowances, public.help_requests, public.no_show_alerts, public.kiosk_qr, public.kiosk_networks, public.stamp_phones, public.staffing_alerts, public.rule_settings, public.biometric_consents, public.telegram_links, public.audit_log, public.swap_requests, public.time_logs, public.shifts,
+  public.note_profiles, public.note_task_events, public.note_doc_updates, public.note_docs, public.note_versions, public.note_favorites, public.note_pages, public.vacation_allowances, public.help_requests, public.no_show_alerts, public.kiosk_qr, public.kiosk_networks, public.stamp_phones, public.staffing_alerts, public.rule_settings, public.biometric_consents, public.telegram_links, public.audit_log, public.swap_requests, public.time_logs, public.shifts,
   public.face_embeddings, public.kiosk_devices, public.location_managers, public.employment_details,
   public.users, public.locations
   cascade;
@@ -5651,6 +5651,47 @@ grant execute on function private.is_active_member(uuid), private.is_studio_pc()
   private.can_see_note(public.note_space, uuid, timestamptz), private.is_note_user() to authenticated, service_role;
 revoke execute on function public.note_access(), public.note_work_days(date), public.note_soft_delete(uuid[]) from public, anon;
 grant execute on function public.note_access(), public.note_work_days(date), public.note_soft_delete(uuid[]) to authenticated;
+
+-- =============================================================================
+-- 20261102090000_notes_blitzi.sql
+-- Aufgaben: Blitzi männlich/weiblich (note_profiles, note_set_blitzi).
+-- =============================================================================
+create table if not exists public.note_profiles (
+  user_id    uuid primary key references auth.users (id) on delete cascade,
+  blitzi     text check (blitzi in ('m', 'w')),
+  updated_at timestamptz not null default now(),
+  updated_by uuid default auth.uid()
+);
+
+alter table public.note_profiles enable row level security;
+drop policy if exists note_profiles_select on public.note_profiles;
+create policy note_profiles_select on public.note_profiles for select to authenticated
+  using ((select private.is_note_user()));
+
+revoke all on public.note_profiles from anon, authenticated;
+grant select on public.note_profiles to authenticated;
+
+create or replace function public.note_set_blitzi(p_user uuid, p_kind text) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_kind is null or p_kind not in ('m', 'w') then
+    raise exception 'Ungültige Auswahl' using errcode = '22023';
+  end if;
+  if not private.is_active_member(p_user) or not (
+       p_user = (select auth.uid())
+    or private.is_admin()
+    or exists (select 1 from public.users u where u.auth_user_id = p_user and private.manages_user(u.id))
+    or private.is_studio_pc()
+  ) then
+    raise exception 'Keine Berechtigung' using errcode = '42501';
+  end if;
+  insert into public.note_profiles (user_id, blitzi, updated_at, updated_by)
+  values (p_user, p_kind, now(), (select auth.uid()))
+  on conflict (user_id) do update set blitzi = excluded.blitzi, updated_at = excluded.updated_at, updated_by = excluded.updated_by;
+end $$;
+
+revoke execute on function public.note_set_blitzi(uuid, text) from public, anon;
+grant execute on function public.note_set_blitzi(uuid, text) to authenticated;
 
 revoke execute on all functions in schema private from public;
 grant execute on all functions in schema private to authenticated, service_role;

@@ -8,7 +8,12 @@
 .blitzi.is-proud .blitzi-svg { animation: blitzi-bounce 1.4s ease-in-out infinite; }
 .blitzi.is-sad .blitzi-svg { animation: blitzi-sway 4s ease-in-out infinite; }
 .blitzi.is-sleepy .blitzi-svg { animation: blitzi-breathe 4s ease-in-out infinite; }
-.blitzi-eyes { transform-origin: 61px 68px; animation: blitzi-blink 4.6s infinite; }
+.blitzi-eyes { transform-box: fill-box; transform-origin: center; animation: blitzi-blink 4.6s infinite; }
+.blitzi.is-sad .blitzi-svg { filter: saturate(.6); }
+.blitzi.is-locked, .blitzi.is-still { cursor: inherit; }
+.blitzi.is-locked .blitzi-svg { filter: brightness(0) opacity(.18); }
+.blitzi.is-still .blitzi-svg, .blitzi.is-still .blitzi-svg * { animation: none !important; }
+.blitzi-glow { animation: blitzi-glow 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .blitzi-sparks path { transform-box: fill-box; transform-origin: center; animation: blitzi-twinkle 1.2s ease-in-out infinite; }
 .blitzi-sparks path:nth-child(2) { animation-delay: .3s; }
 .blitzi-sparks path:nth-child(3) { animation-delay: .6s; }
@@ -17,6 +22,7 @@
 .blitzi-zzz text:nth-child(2) { animation-delay: .4s; }
 .blitzi-zzz text:nth-child(3) { animation-delay: .8s; }
 .blitzi-tear { animation: blitzi-tear 2.6s ease-in infinite; }
+@keyframes blitzi-glow { 50% { opacity: .55; transform: scale(.94); } }
 @keyframes blitzi-float { 50% { transform: translateY(-4px); } }
 @keyframes blitzi-bounce { 0%, 100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-9px) rotate(-4deg); } 60% { transform: translateY(0) rotate(3deg); } }
 @keyframes blitzi-jump { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-16px) scale(1.06) rotate(-6deg); } 100% { transform: translateY(0) scale(1); } }

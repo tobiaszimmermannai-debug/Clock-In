@@ -1,12 +1,14 @@
 // Team-Übersicht für die Leitung (Admins, Studioleitung): alle Personen, alle Aufgaben, Gelöschtes
 import { useMemo, useState } from "react";
+import { Blitzi } from "./gamification/Blitzi";
+import { stageOf } from "./gamification/evolution";
 import { FocusSection } from "./gamification/Focus";
 import { statsFor } from "./gamification/GamePanel";
 import { allTasks, assigneesOf, byDue, tasksOf, type TaskItem } from "./gamification/tasks";
 import { useNotes } from "./state";
 import type { Member, PageMeta } from "./types";
 import { Icon } from "./ui/Icon";
-import { formatDate, initials, relativeTime, untitled } from "./util";
+import { formatDate, relativeTime, untitled } from "./util";
 
 type Tab = "people" | "tasks" | "deleted";
 
@@ -76,7 +78,7 @@ function People(props: { people: Member[]; items: TaskItem[] }) {
               return (
                 <article key={m.id} className="nk-ov-card">
                   <header>
-                    <span className={`nk-avatar is-${m.color}`}>{initials(m.name)}</span>
+                    <Blitzi mood="happy" size={34} stage={stageOf(stats.streak)} kind={m.blitzi} still title={`Stufe ${stageOf(stats.streak)}`} />
                     <b>{m.name}</b>
                     {m.role === "manager" && <span className="nk-tag is-blue">Studioleitung</span>}
                     {m.role === "admin" && <span className="nk-tag is-purple">Admin</span>}
@@ -95,6 +97,14 @@ function People(props: { people: Member[]; items: TaskItem[] }) {
                       <b>⚡ {stats.streak}</b> Serie
                     </span>
                   </div>
+                  <label className="nk-ov-kind">
+                    Blitzi
+                    <select value={m.blitzi ?? ""} onChange={(e) => e.target.value && notes.setBlitzi(m.id, e.target.value as "m" | "w")}>
+                      {!m.blitzi && <option value="">noch nicht gewählt</option>}
+                      <option value="m">männlich</option>
+                      <option value="w">weiblich</option>
+                    </select>
+                  </label>
                   {focusFor === m.id ? (
                     <FocusSection member={m} compact />
                   ) : (
