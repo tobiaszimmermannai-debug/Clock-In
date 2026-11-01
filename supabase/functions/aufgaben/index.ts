@@ -1289,16 +1289,13 @@ async function focusNew(cfg, db, b) {
 		chatIds,
 		name: actorName
 	}));
-	const keyboard = entry.pending ? cfg.ownBot ? [[{
+	const keyboard = entry.pending ? [[{
 		text: "✅ Freigeben",
 		callback_data: `fa:${shortId(page.id)}:${shortId(b.user_id)}`
 	}, {
 		text: "❌ Ablehnen",
 		callback_data: `fr:${shortId(page.id)}:${shortId(b.user_id)}`
-	}]] : link ? [[{
-		text: "In der App freigeben",
-		url: link
-	}]] : void 0 : void 0;
+	}]] : void 0;
 	return {
 		text,
 		to: to.map((r) => r.name),
@@ -1351,7 +1348,7 @@ async function manualReminder(cfg, db, b) {
 		sent: await sendTo(cfg, cfg.recipients.recipients, r.text)
 	};
 }
-/** Freigeben/Ablehnen per Knopf (nur eigener Bot mit Webhook) */
+/** Freigeben/Ablehnen per Knopf (weitergereicht von der telegram-Function oder eigener Webhook) */
 async function telegramUpdate(cfg, db, update) {
 	const cq = update.callback_query;
 	if (!cq) return { ok: true };
@@ -1410,6 +1407,7 @@ async function handle(req) {
 			case "tick": return json(await tick(cfg, db, typeof body.at === "string" ? body.at : void 0));
 			case "reminder": return json(await manualReminder(cfg, db, body));
 			case "focus_new": return json(await focusNew(cfg, db, body));
+			case "telegram_update": return json(await telegramUpdate(cfg, db, body.update ?? {}));
 			default: return json({ error: "unbekannte Aktion" }, 400);
 		}
 	} catch (e) {

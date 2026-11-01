@@ -173,22 +173,20 @@ Der PC im Studio zeigt die Aufgaben aller Mitarbeiter (das Tablet bleibt reines 
 Neue Tagesaufgaben der Leitung gehen sofort an die anderen Empfänger; Tagesaufgaben, die Mitarbeiter selbst
 eintragen, warten auf Freigabe (Knöpfe in Telegram oder Team-Übersicht). Mo–Fr um 6, 14 und 20 Uhr kommt der
 Tagesreminder; wer laut Dienstplan krank, in der Schule oder im Urlaub ist, steht mit „-“ drin.
-1. **Edge Functions → Deploy a new function → Via Editor**, Name `aufgaben`, Code komplett ersetzen durch
+Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Knöpfe reicht `telegram` weiter).
+1. Function `telegram` mit dem neuen Code neu deployen (Teil D) – sie kennt jetzt die Aufgaben-Knöpfe.
+2. **Edge Functions → Deploy a new function → Via Editor**, Name `aufgaben`, Code komplett ersetzen durch
    `supabase/functions/aufgaben/index.ts` → **Deploy** → **Verify JWT ausschalten** (wie bei `telegram`).
-2. **Eigener Bot (empfohlen, nötig für die Freigabe-Knöpfe):** in Telegram @BotFather → `/newbot` → Token merken.
-   Jeder Empfänger öffnet den neuen Bot einmal und tippt **Start**. Eigene Telegram-ID: @userinfobot.
-3. **Edge Functions → Secrets** (gelten für alle Functions; `NOTIFY_SECRET` gibt es schon):
+3. **Edge Functions → Secrets** (gelten für alle Functions; `NOTIFY_SECRET` und `TELEGRAM_BOT_TOKEN` gibt es schon):
    | Name | Wert |
    | --- | --- |
-   | `AUFGABEN_EMPFAENGER` | `[{"id":123456789,"kz":"TZ","name":"Tobias"},{"id":…,"kz":"DO","name":"Dominik"}]` |
+   | `AUFGABEN_EMPFAENGER` | `[{"id":123456789,"kz":"TZ","name":"Tobias"},{"id":…,"kz":"DO","name":"Dominik"}]` (Telegram-ID über @userinfobot) |
    | `AUFGABEN_APP_URL` | `https://<eure-clockin-adresse>/#/admin/aufgabe/{id}` |
-   | `AUFGABEN_TELEGRAM_TOKEN` | Token des neuen Bots (ohne: ClockIn-Bot sendet nur, Freigabe dann per Link) |
-   | `AUFGABEN_WEBHOOK_SECRET` | beliebige lange Zufallszeichenkette (nur mit eigenem Bot) |
    | `AUFGABEN_TELEGRAM_AUS` | `1` = alle automatischen Nachrichten aus (zum Abschalten; sonst weglassen) |
    | optional `AUFGABEN_STUNDE_FRUEH` / `_MITTAG` / `_ABEND` | Berliner Stunde, Standard 6 / 14 / 20 |
-4. **Nur für den neuen Bot** den Webhook setzen (Browser, Platzhalter ersetzen):
-   `https://api.telegram.org/bot<NEUER-TOKEN>/setWebhook?url=https://<REF>.supabase.co/functions/v1/aufgaben&secret_token=<AUFGABEN_WEBHOOK_SECRET>`
-   **Niemals** setWebhook/deleteWebhook mit dem ClockIn-Token aufrufen – sonst gehen die ClockIn-Freigaben nicht mehr.
+   Jeder Empfänger muss den Stempeluhr-Bot schon einmal gestartet haben (Admins haben das).
+4. Hübscher Name: in Telegram @BotFather → `/setname` (Anzeigename), `/setuserpic` (Bild), `/setdescription`.
+   Token und Webhook bleiben gleich. **Niemals** setWebhook/deleteWebhook mit dem Token aufrufen.
 5. **Trockenlauf** (sendet nichts): Edge Functions → `aufgaben` → **Test** → POST, Header `x-notify-secret` =
    `NOTIFY_SECRET`, Body `{"action":"reminder","kind":"frueh"}` → zeigt den Text. Mit `"dryRun": false` wird wirklich gesendet.
 6. Prüfen: `select jobname from cron.job;` → Zeile `aufgaben-hourly` (stündlich; die Function sendet nur Mo–Fr zur Berliner Stunde).
