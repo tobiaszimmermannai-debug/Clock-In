@@ -228,12 +228,21 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
 
   // Zähler für offene Freigaben in der Navigation
   useEffect(() => {
-    void Promise.all([
-      adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
-      adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("overtime_status", "pending"),
-      adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("early_status", "pending"),
-      adminDb.from("swap_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    ]).then((r) => setOpen(r.reduce((n, x) => n + (x.count ?? 0), 0)));
+    // eine Abfrage statt vier (Nachträge, Überstunden, früher gegangen, Schichttausch)
+    void adminDb.rpc("admin_open_counts").then(async ({ data, error }) => {
+      if (!error) {
+        const c = (data ?? {}) as Record<string, number>;
+        return setOpen(Object.values(c).reduce((n, x) => n + (Number(x) || 0), 0));
+      }
+      // SQL-Update noch nicht eingespielt → wie bisher einzeln zählen
+      const r = await Promise.all([
+        adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("approval_status", "pending"),
+        adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("overtime_status", "pending"),
+        adminDb.from("time_logs").select("id", { count: "exact", head: true }).eq("early_status", "pending"),
+        adminDb.from("swap_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      ]);
+      setOpen(r.reduce((n, x) => n + (x.count ?? 0), 0));
+    });
   }, [tab, timesView]);
 
   const tabs: ShellTab<TabId>[] = [

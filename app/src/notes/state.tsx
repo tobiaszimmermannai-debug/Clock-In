@@ -4,6 +4,7 @@ import { isDone } from "./database/logic";
 import { FOCUS_KEY, focusEntry, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
 import { dailyStatus, type DayPlan, type DayStatus } from "./daily/status";
 import { daysFor, myStats, ON_TIME_BONUS, POINTS } from "./gamification/stats";
+import { everyWhileVisible } from "../lib/visibility";
 import { taskSchema, welcomeContent } from "./templates";
 import type {
   Access,
@@ -382,9 +383,10 @@ export function NotesProvider(props: {
     });
   }, [loaded, setPage, store]);
 
+  // Erledigte Aufgaben / Tagesplan alle 2 Min. auffrischen – nur bei sichtbarem Tab, beim Zurückkehren sofort
   useEffect(() => {
     if (!loaded) return;
-    const t = setInterval(() => {
+    return everyWhileVisible(() => {
       const since = new Date(Date.now() - HISTORY_DAYS * 864e5).toISOString();
       store
         .completions(since)
@@ -395,7 +397,6 @@ export function NotesProvider(props: {
         .then(setDayPlan)
         .catch(() => undefined);
     }, 120_000);
-    return () => clearInterval(t);
   }, [loaded, store]);
 
   // ---------------- Navigation ----------------
