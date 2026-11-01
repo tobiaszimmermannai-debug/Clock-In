@@ -1,0 +1,37 @@
+/* Erinnerung (Clock-In): eigenständig gestaltet, hell und dunkel */
+.nk-reminder {
+  --r-bg: #fff8dc; --r-fg: #37352f; --r-muted: #6f6a5c; --r-line: rgba(230, 138, 0, .3); --r-accent: #2383e2;
+  display: grid; gap: 12px; padding: 14px; border-radius: 16px; background: var(--r-bg); color: var(--r-fg);
+  box-shadow: 0 0 0 1px var(--r-line); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: left;
+}
+.nk-reminder.is-sad, .nk-reminder.is-sleepy { --r-bg: #f3f2ee; --r-line: rgba(0, 0, 0, .1); }
+@media (prefers-color-scheme: dark) {
+  .nk-reminder { --r-bg: #2f2918; --r-fg: rgba(255, 255, 255, .9); --r-muted: rgba(255, 255, 255, .6); --r-line: rgba(255, 201, 40, .3); --r-accent: #5b8def; }
+  .nk-reminder.is-sad, .nk-reminder.is-sleepy { --r-bg: #26262a; --r-line: rgba(255, 255, 255, .1); }
+}
+.nk-reminder-top { display: flex; gap: 12px; align-items: center; }
+.nk-reminder-text { display: grid; gap: 2px; }
+.nk-reminder-text b { font-size: 17px; }
+.nk-reminder-text p { margin: 0; color: var(--r-muted); }
+.nk-reminder-stats { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 14px; }
+.nk-reminder-stats .is-bad b { color: #d44c47; }
+.nk-reminder-energy { display: inline-flex; align-items: center; gap: 8px; }
+.nk-reminder .nk-energy { position: relative; display: inline-flex; align-items: center; height: 22px; }
+.nk-reminder .nk-energy-cells { display: flex; gap: 3px; padding: 3px; border-radius: 6px; border: 2px solid #c98a00; }
+.nk-reminder .nk-energy-cells span { width: 18px; height: 12px; border-radius: 2px; background: rgba(201, 138, 0, .15); }
+.nk-reminder .nk-energy-cells span.is-on { background: linear-gradient(180deg, #ffe36e, #ffb000); }
+.nk-reminder .nk-energy-cap { width: 4px; height: 10px; margin-left: 1px; border-radius: 0 2px 2px 0; background: #c98a00; }
+.nk-reminder .nk-energy-bolt { display: none; }
+.nk-reminder-focus { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.nk-reminder-focus li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .7); font-weight: 600; }
+@media (prefers-color-scheme: dark) { .nk-reminder-focus li { background: rgba(0, 0, 0, .25); } }
+.nk-reminder-focus li.is-done { text-decoration: line-through; opacity: .6; }
+.nk-reminder-rank { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--r-accent); color: #fff; font-size: 12px; font-weight: 800; flex: none; }
+.nk-reminder-hint { margin: 0; color: var(--r-muted); font-size: 14px; }
+.nk-reminder-actions { display: flex; gap: 8px; }
+.nk-reminder-primary, .nk-reminder-secondary {
+  min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0; font: 600 15px/1 inherit; cursor: pointer;
+}
+.nk-reminder-primary { flex: 1; background: var(--r-accent); color: #fff; }
+.nk-reminder-secondary { background: transparent; color: var(--r-fg); box-shadow: inset 0 0 0 1px var(--r-line); }
+.nk-reminder .blitzi-eyes { transform-origin: 61px 68px; }

@@ -8,6 +8,7 @@ import { Field, Notice } from "../components/ui";
 import { kioskDb } from "../lib/supabase";
 import { type KioskDevice, type Location, studioShort } from "../lib/types";
 import { Kiosk, type KioskSession } from "./Kiosk";
+import { StudioPc } from "./StudioPc";
 import { type StoredRequest, TerminalRequest, TerminalWait, storedRequest } from "./TerminalRequest";
 
 type Phase =
@@ -34,7 +35,7 @@ export function KioskApp() {
     let locations = (await getCache<Location[]>("locations")) ?? [];
     const remote = await kioskDb
       .from("kiosk_devices")
-      .select("id, name, location_id")
+      .select("id, name, location_id, kind")
       .eq("auth_user_id", data.session.user.id)
       .maybeSingle();
     if (!remote.error) {
@@ -97,15 +98,13 @@ export function KioskApp() {
       </div>
     );
   }
-  return (
-    <Kiosk
-      session={phase.session}
-      onReset={async () => {
-        await setCache("locationId", undefined);
-        void resolve();
-      }}
-    />
-  );
+  const onReset = async () => {
+    await setCache("locationId", undefined);
+    void resolve();
+  };
+  // Studio-PC: Aufgaben für alle Mitarbeiter – das Tablet bleibt reines Stempelgerät
+  if (phase.session.device.kind === "pc") return <StudioPc session={phase.session} onReset={onReset} />;
+  return <Kiosk session={phase.session} onReset={onReset} />;
 }
 
 function KioskLogin(props: { error?: string; onDone: () => void; onTerminal: () => void }) {

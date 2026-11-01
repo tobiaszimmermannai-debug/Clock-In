@@ -1,8 +1,27 @@
 // Zentraler Zustand: Seitenliste im Speicher, gebündeltes Speichern, Navigation, Live-Updates
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { isDone } from "./database/logic";
+import { focusRank, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
+import { myStats, ON_TIME_BONUS, POINTS } from "./gamification/stats";
 import { taskSchema, welcomeContent } from "./templates";
-import type { Blocks, DbSchema, DocState, Member, NewPage, NotesStore, PageKind, PageMeta, PagePatch, PropValue, Space, Version } from "./types";
-import { between, bySort, descendants, plainText, storageGet, storageSet, uid } from "./util";
+import type {
+  Access,
+  Blocks,
+  Completion,
+  DbSchema,
+  DocState,
+  Member,
+  NewPage,
+  NotesStore,
+  PageKind,
+  PageMeta,
+  PagePatch,
+  PropValue,
+  Space,
+  Studio,
+  Version,
+} from "./types";
+import { between, bySort, descendants, plainText, storageGet, storageSet, today, uid } from "./util";
 
 /** Schnittstelle zum gerade offenen Editor einer Seite (für Live-Updates und Unterseiten-Links) */
 export type EditorHandle = {
@@ -19,6 +38,12 @@ export type EditorHandle = {
 export type Presence = { clientId: number; name: string; color: string };
 
 export type Toast = { id: number; text: string; action?: { label: string; run: () => void } };
+
+/** Kurze Feier nach einer erledigten Aufgabe (bzw. vollem Akku) */
+export type Celebration = { id: number; points: number; goal: boolean; streak: number; name: string };
+
+/** Erfolge werden so weit zurück geladen (Serie, Rangliste) */
+const HISTORY_DAYS = 90;
 
 export type CreateOptions = {
   /** Vorab vergebene ID (z. B. wenn der Link-Block schon eingefügt ist) */
@@ -79,6 +104,24 @@ type Ctx = {
   toasts: Toast[];
   dismissToast: (id: number) => void;
   flush: () => Promise<void>;
+  // ---- Rechte, Studio-PC ----
+  access: Access;
+  locations: Studio[];
+  /** Wer gerade handelt: man selbst bzw. am Studio-PC die gewählte Person (null = noch niemand gewählt) */
+  actor: Member | null;
+  setActor: (id: string | null) => void;
+  /** Gehört in die normale Ansicht (Team oder eigene Seite) – Fremdes nur in der Leitungsübersicht */
+  inMyView: (p: PageMeta) => boolean;
+  /** Gelöschtes wirklich löschen bzw. zurückholen (nur Leitung) */
+  purge: (id: string) => Promise<void>;
+  restoreDeleted: (id: string) => void;
+  // ---- Erfolge ----
+  completions: Completion[];
+  workDays: string[] | null;
+  celebration: Celebration | null;
+  dismissCelebration: () => void;
+  /** Tagesfokus: Aufgabe für eine Person heute auf Rang 1–3 setzen (null = entfernen) */
+  setFocus: (rowId: string, userId: string, rank: number | null) => void;
 };
 
 const NotesContext = createContext<Ctx | null>(null);
@@ -129,6 +172,16 @@ export function NotesProvider(props: {
   const editors = useRef(new Map<string, EditorHandle>());
   const versionAt = useRef(new Map<string, number>());
   const [presence, setPresenceState] = useState<Record<string, Presence[]>>({});
+  const [access, setAccess] = useState<Access>({ oversee: false, admin: false, studio: false });
+  const [locations, setLocations] = useState<Studio[]>([]);
+  const [completions, setCompletions] = useState<Completion[]>([]);
+  const [workDays, setWorkDays] = useState<string[] | null>(null);
+  const [actorId, setActorId] = useState<string | null>(() => storageGet<string | null>("aun-studio-actor", null));
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const membersRef = useRef<Member[]>([]);
+  const accessRef = useRef(access);
+  accessRef.current = access;
+  const actorRef = useRef<string | null>(null);
   const [commentsOpen, setCommentsOpenState] = useState(() => storageGet<boolean>("aun-comments", false));
   const toastSeq = useRef(0);
 
@@ -246,19 +299,32 @@ export function NotesProvider(props: {
     let cancelled = false;
     (async () => {
       try {
-        const [who, list, favs] = await Promise.all([store.me(), store.listPages(), store.favorites()]);
-        const people = await store.members().catch(() => [who]);
+        const since = new Date(Date.now() - HISTORY_DAYS * 864e5).toISOString();
+        const [who, list, favs, rights] = await Promise.all([store.me(), store.listPages(), store.favorites(), store.access()]);
+        const [people, studios, events, days] = await Promise.all([
+          store.members().catch(() => [who]),
+          store.locations().catch(() => []),
+          store.completions(since).catch(() => []),
+          store.workDays(since).catch(() => null),
+        ]);
         if (cancelled) return;
         setMe(who);
         meRef.current = who;
-        setMembers(people.some((m) => m.id === who.id) ? people : [who, ...people]);
+        setAccess(rights);
+        accessRef.current = rights;
+        setLocations(studios);
+        setCompletions(events);
+        setWorkDays(days);
+        const everyone = people.some((m) => m.id === who.id) ? people : [who, ...people];
+        setMembers(everyone);
+        membersRef.current = everyone;
         const map = new Map(list.map((p) => [p.id, p]));
         setPages(map);
         pagesRef.current = map;
         setFavorites(favs);
         setRecent(storageGet<string[]>(`aun-recent-${store.kind}-${who.id}`, []));
-        // Erster Start: Willkommensseite und eigene Aufgabenliste anlegen
-        if (!list.some((p) => p.ownerId === who.id && p.space === "private")) await seed(who);
+        // Erster Start: Willkommensseite und eigene Aufgabenliste anlegen (nicht am Studio-PC)
+        if (!rights.studio && !list.some((p) => p.ownerId === who.id && p.space === "private")) await seed(who);
         setLoaded(true);
       } catch (e) {
         if (!cancelled) setError((e as Error).message || "Laden fehlgeschlagen.");
@@ -291,6 +357,18 @@ export function NotesProvider(props: {
       setPage(ev.page);
     });
   }, [loaded, setPage, store]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    const t = setInterval(() => {
+      const since = new Date(Date.now() - HISTORY_DAYS * 864e5).toISOString();
+      store
+        .completions(since)
+        .then(setCompletions)
+        .catch(() => undefined);
+    }, 120_000);
+    return () => clearInterval(t);
+  }, [loaded, store]);
 
   // ---------------- Navigation ----------------
   // Eingebettet: zuletzt geöffnete Seite pro Nutzer merken (Geräte werden geteilt)
@@ -342,7 +420,7 @@ export function NotesProvider(props: {
     const seen = new Set<string>();
     let p = pagesRef.current.get(id);
     while (p) {
-      if (p.archivedAt || seen.has(p.id)) return false;
+      if (p.archivedAt || p.deletedAt || seen.has(p.id)) return false;
       seen.add(p.id);
       if (!p.parentId) return true;
       p = pagesRef.current.get(p.parentId);
@@ -353,7 +431,7 @@ export function NotesProvider(props: {
   const childrenOf = useCallback(
     (parentId: string | null, space?: Space) =>
       [...pages.values()]
-        .filter((p) => p.parentId === parentId && !p.archivedAt && (parentId !== null || p.space === space))
+        .filter((p) => p.parentId === parentId && !p.archivedAt && !p.deletedAt && (parentId !== null || p.space === space))
         .sort(bySort),
     [pages],
   );
@@ -384,6 +462,8 @@ export function NotesProvider(props: {
         options: {},
         position: opts.position ?? nextPosition(parent?.id ?? null, space),
         archivedAt: null,
+        deletedAt: null,
+        deletedBy: null,
         createdAt: now,
         createdBy: who.id,
         updatedAt: now,
@@ -439,6 +519,8 @@ export function NotesProvider(props: {
       options: {},
       position: opts.position ?? 1,
       archivedAt: null,
+      deletedAt: null,
+      deletedBy: null,
       createdAt: now,
       createdBy: who.id,
       updatedAt: now,
@@ -452,13 +534,69 @@ export function NotesProvider(props: {
     return meta;
   }
 
+  // Gutschrift: an die Zuständigen, sonst an die handelnde Person; Bonus für pünktlich und Tagesfokus
+  const recordCompletion = useCallback(
+    (row: PageMeta, schema: DbSchema, done: boolean) => {
+      if (!done) {
+        setCompletions((c) => c.filter((x) => x.pageId !== row.id));
+        store.setCompletion(row.id, [], 0, false).catch(() => undefined);
+        return;
+      }
+      const people = membersRef.current.filter((m) => !m.device);
+      const assigned = schema.properties
+        .filter((p) => p.type === "person")
+        .flatMap((p) => (Array.isArray(row.props[p.id]) ? (row.props[p.id] as string[]) : []))
+        .filter((id, i, all) => all.indexOf(id) === i && people.some((m) => m.id === id));
+      const actor = actorRef.current;
+      const credited = assigned.length ? assigned : actor ? [actor] : [];
+      if (!credited.length) return;
+      const day = today();
+      const dueProp = schema.properties.find((p) => p.type === "date");
+      const due = dueProp ? String(row.props[dueProp.id] ?? "").slice(0, 10) : "";
+      const onTime = Boolean(due) && day <= due;
+      const now = new Date().toISOString();
+      const added = credited.map((userId) => ({
+        pageId: row.id,
+        userId,
+        points: POINTS + (onTime ? ON_TIME_BONUS : 0) + (focusRank(row, userId, day) ? ON_TIME_BONUS : 0),
+        doneAt: now,
+      }));
+      setCompletions((c) => {
+        const next = [...c.filter((x) => x.pageId !== row.id), ...added];
+        // Feiern, wenn die handelnde Person etwas gutgeschrieben bekommt
+        const mine = actor ? added.find((a) => a.userId === actor) : undefined;
+        if (mine) {
+          const stats = myStats(actor!, next, { today: day, workDays: null });
+          setCelebration({
+            id: Date.now(),
+            points: mine.points,
+            goal: stats.today === stats.goal,
+            streak: stats.streak,
+            name: people.find((m) => m.id === actor)?.name.split(" ")[0] ?? "",
+          });
+        }
+        return next;
+      });
+      for (const a of added) store.setCompletion(row.id, [a.userId], a.points, true).catch(() => undefined);
+    },
+    [store],
+  );
+
   const updatePage = useCallback(
     (id: string, patch: PagePatch, opts: { delay?: number } = {}) => {
       const { content: _content, plain: _plain, ...meta } = patch;
+      const page = pagesRef.current.get(id);
+      const db = page?.parentId ? pagesRef.current.get(page.parentId) : undefined;
+      if (page && meta.props && db?.kind === "database" && db.schema) {
+        const before = isDone(page, db.schema);
+        const after = isDone({ ...page, props: meta.props }, db.schema);
+        if (before !== after) recordCompletion({ ...page, props: meta.props }, db.schema, after);
+      }
       patchLocal(id, meta);
+      if (page) pagesRef.current = new Map(pagesRef.current).set(id, { ...page, ...meta });
       schedule(id, patch, opts.delay ?? META_DELAY);
     },
-    [patchLocal, schedule],
+    [patchLocal, recordCompletion, schedule],
   );
 
   const saveContent = useCallback(
@@ -574,9 +712,14 @@ export function NotesProvider(props: {
         const t = timers.current.get(x);
         if (t) clearTimeout(t);
       }
+      const now = new Date().toISOString();
       setPages((m) => {
         const next = new Map(m);
-        ids.forEach((x) => next.delete(x));
+        ids.forEach((x) => {
+          const p = next.get(x);
+          if (p && !p.deletedAt) next.set(x, { ...p, deletedAt: now, deletedBy: meRef.current.id });
+        });
+        pagesRef.current = next;
         return next;
       });
       setFavorites((f) => f.filter((x) => !ids.includes(x)));
@@ -587,6 +730,57 @@ export function NotesProvider(props: {
       }
     },
     [store, toast],
+  );
+
+  const purge = useCallback(
+    async (id: string) => {
+      const ids = [id, ...descendants(id, [...pagesRef.current.values()]).map((d) => d.id)];
+      setPages((m) => {
+        const next = new Map(m);
+        ids.forEach((x) => next.delete(x));
+        pagesRef.current = next;
+        return next;
+      });
+      try {
+        await store.purge(ids);
+      } catch (e) {
+        toast(`Endgültig löschen fehlgeschlagen: ${(e as Error).message}`);
+      }
+    },
+    [store, toast],
+  );
+
+  const restoreDeleted = useCallback(
+    (id: string) => {
+      const ids = [id, ...descendants(id, [...pagesRef.current.values()]).map((d) => d.id)].filter((x) => pagesRef.current.get(x)?.deletedAt);
+      setPages((m) => {
+        const next = new Map(m);
+        ids.forEach((x) => {
+          const p = next.get(x);
+          if (p) next.set(x, { ...p, deletedAt: null, deletedBy: null, archivedAt: x === id ? null : p.archivedAt });
+        });
+        pagesRef.current = next;
+        return next;
+      });
+      store
+        .restoreDeleted(ids)
+        .then(() => store.update(id, { archivedAt: null }))
+        .catch((e: Error) => toast(`Wiederherstellen fehlgeschlagen: ${e.message}`));
+    },
+    [store, toast],
+  );
+
+  const setFocus = useCallback(
+    (rowId: string, userId: string, rank: number | null) => {
+      const day = today();
+      const rows = [...pagesRef.current.values()].filter((p) => !p.deletedAt);
+      const current = focusTasks(rows, userId, day).map((x) => ({ id: x.row.id, rank: x.rank }));
+      for (const [id, r] of reorderFocus(current, rowId, rank)) {
+        const row = pagesRef.current.get(id);
+        if (row) updatePage(id, { props: withFocus(row.props, userId, day, r) }, { delay: 0 });
+      }
+    },
+    [updatePage],
   );
 
   const move = useCallback(
@@ -664,6 +858,17 @@ export function NotesProvider(props: {
     else editors.current.delete(id);
   }, []);
 
+  const actor = access.studio ? (members.find((m) => m.id === actorId && !m.device) ?? null) : me;
+  actorRef.current = actor ? actor.id : null;
+
+  const setActor = useCallback((id: string | null) => {
+    setActorId(id);
+    storageSet("aun-studio-actor", id);
+  }, []);
+
+  const inMyView = useCallback((p: PageMeta) => p.space === "team" || p.ownerId === meRef.current.id, []);
+  const dismissCelebration = useCallback(() => setCelebration(null), []);
+
   const value = useMemo<Ctx>(
     () => ({
       store,
@@ -703,8 +908,20 @@ export function NotesProvider(props: {
       toasts,
       dismissToast,
       flush,
+      access,
+      locations,
+      actor,
+      setActor,
+      inMyView,
+      purge,
+      restoreDeleted,
+      completions,
+      workDays,
+      celebration,
+      dismissCelebration,
+      setFocus,
     }),
-    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush],
+    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, workDays, celebration, dismissCelebration, setFocus],
   );
 
   return <NotesContext.Provider value={value}>{props.children}</NotesContext.Provider>;

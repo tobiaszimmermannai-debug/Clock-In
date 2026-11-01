@@ -2,8 +2,12 @@
 import "@blocknote/mantine/style.css";
 import "./notes.css";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Celebration } from "./gamification/GamePanel";
 import { VersionHistory } from "./History";
 import { Home } from "./Home";
+import { Oversight } from "./Oversight";
+import { OVERVIEW, STUDIO_TASKS } from "./routes";
+import { StudioTasks } from "./studio/StudioTasks";
 import { MovePicker, PageMenu, PageView } from "./PageView";
 import { Search } from "./Search";
 import { Sidebar, TemplatePicker } from "./Sidebar";
@@ -15,6 +19,8 @@ import { installTouchDrag } from "./ui/touchDrag";
 import { ancestors, relativeTime, storageGet, storageSet, untitled } from "./util";
 
 type Theme = "light" | "dark" | "system";
+
+const IDLE_LOGOUT = 10 * 60 * 1000;
 
 export type NotesWorkspaceProps = {
   store: NotesStore;
@@ -63,6 +69,22 @@ function Layout(props: NotesWorkspaceProps) {
 
   // Ziehen & Ablegen auch per Finger (langes Drücken)
   useEffect(() => (rootRef.current ? installTouchDrag(rootRef.current) : undefined), [notes.error]);
+
+  // Studio-PC: nach 10 Minuten ohne Eingabe wieder "Wer bist du?"
+  const { access, actor, setActor } = notes;
+  useEffect(() => {
+    if (!access.studio || !actor) return;
+    let timer = setTimeout(() => setActor(null), IDLE_LOGOUT);
+    const reset = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setActor(null), IDLE_LOGOUT);
+    };
+    for (const type of ["pointerdown", "keydown", "wheel"]) window.addEventListener(type, reset, true);
+    return () => {
+      clearTimeout(timer);
+      for (const type of ["pointerdown", "keydown", "wheel"]) window.removeEventListener(type, reset, true);
+    };
+  }, [access.studio, actor, setActor]);
 
   const toggleSidebar = useCallback(() => {
     if (mobile) return setDrawer((d) => !d);
@@ -166,7 +188,13 @@ function Layout(props: NotesWorkspaceProps) {
               </div>
             </div>
           ) : notes.current ? (
-            <PageView key={notes.current} id={notes.current} theme={resolved} />
+            notes.current === OVERVIEW && notes.access.oversee ? (
+              <Oversight />
+            ) : notes.current === STUDIO_TASKS ? (
+              <StudioTasks />
+            ) : (
+              <PageView key={notes.current} id={notes.current} theme={resolved} />
+            )
           ) : (
             <Home title={title} onTemplates={() => setTemplates(true)} />
           )}
@@ -175,6 +203,7 @@ function Layout(props: NotesWorkspaceProps) {
       {notes.peek && <Peek id={notes.peek} theme={resolved} mobile={mobile} />}
       {searching && <Search onClose={() => setSearching(false)} />}
       {templates && <TemplatePicker space="private" onClose={() => setTemplates(false)} onCreated={(id) => notes.navigate(id)} />}
+      <Celebration />
       <Toasts />
     </div>
   );
@@ -198,7 +227,11 @@ function Topbar(props: { page?: PageMeta; sidebarOpen: boolean; onToggleSidebar:
         </button>
       )}
       <nav className="nk-crumbs" aria-label="Pfad">
-        {!page && <span className="nk-crumb is-current">Startseite</span>}
+        {!page && (
+          <span className="nk-crumb is-current">
+            {notes.current === OVERVIEW ? "Team-Übersicht" : notes.current === STUDIO_TASKS ? "Wochen- & Monatsaufgaben" : "Startseite"}
+          </span>
+        )}
         {trail.map((p, i) => (
           <span key={p.id} className="nk-crumb-wrap">
             {i > 0 && <span className="nk-crumb-sep">/</span>}
@@ -210,6 +243,12 @@ function Topbar(props: { page?: PageMeta; sidebarOpen: boolean; onToggleSidebar:
         ))}
       </nav>
       <span className="nk-spacer" />
+      {notes.access.studio && notes.actor && (
+        <button type="button" className="nk-btn is-ghost nk-actor" onClick={() => notes.setActor(null)} title="Andere Person wählen">
+          <span className={`nk-avatar is-${notes.actor.color}`}>{notes.actor.name[0]}</span>
+          <span className="nk-hide-sm">{notes.actor.name.split(" ")[0]}</span> · Wechseln
+        </button>
+      )}
       {page && (
         <>
           <Facepile peers={notes.presence[page.id] ?? []} />

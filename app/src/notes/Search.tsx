@@ -29,10 +29,12 @@ export function Search(props: { onClose: () => void }) {
   }, [q, notes.store]);
 
   const results = useMemo(() => {
-    const live = [...notes.pages.values()].filter((p) => notes.isLive(p.id));
+    const live = [...notes.pages.values()].filter((p) => notes.isLive(p.id) && notes.inMyView(p));
     if (!q) return notes.recent.map((id) => notes.pages.get(id)).filter((p): p is PageMeta => Boolean(p && notes.isLive(p.id))).slice(0, 8);
     const byTitle = live.filter((p) => untitled(p).toLowerCase().includes(q));
-    const byContent = contentHits.map((id) => notes.pages.get(id)).filter((p): p is PageMeta => Boolean(p && notes.isLive(p.id) && !byTitle.includes(p)));
+    const byContent = contentHits
+      .map((id) => notes.pages.get(id))
+      .filter((p): p is PageMeta => Boolean(p && notes.isLive(p.id) && notes.inMyView(p) && !byTitle.includes(p)));
     return [...byTitle.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)), ...byContent].slice(0, 30);
   }, [q, contentHits, notes]);
 

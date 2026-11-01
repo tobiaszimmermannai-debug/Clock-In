@@ -1,44 +1,46 @@
-// Startseite: Begrüßung, zuletzt besucht, meine offenen Aufgaben aus allen Datenbanken
-import { useMemo } from "react";
-import { getValue, isDone } from "./database/logic";
+// Startseite: Tagesfokus (angepinnt), Blitzi mit Serie/Akku, Rangliste, zuletzt besucht, meine Aufgaben.
+// Am Studio-PC zuerst "Wer bist du?".
+import { useMemo, useState } from "react";
+import { FocusSection } from "./gamification/Focus";
+import { BlitziCard, Leaderboard } from "./gamification/GamePanel";
+import { allTasks, byDue, doneProps, tasksOf } from "./gamification/tasks";
 import { useNotes } from "./state";
-import type { PageMeta } from "./types";
+import type { Member, PageMeta } from "./types";
 import { Icon } from "./ui/Icon";
-import { formatDate, relativeTime, today, untitled } from "./util";
+import { formatDate, initials, relativeTime, today, untitled } from "./util";
 
 export function Home(props: { title: string; onTemplates: () => void }) {
   const notes = useNotes();
+  const actor = notes.actor;
   const hour = new Date().getHours();
   const greeting = hour < 11 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
-  const first = notes.me.name === "Ich" ? "" : notes.me.name.split(" ")[0];
+  const { pages, isLive, inMyView } = notes;
+  const items = useMemo(() => allTasks(pages, isLive, inMyView), [pages, isLive, inMyView]);
 
+  if (!actor) {
+    return (
+      <div className="nk-page is-full">
+        <div className="nk-page-inner nk-home">
+          <StudioWho />
+          <Leaderboard limit={8} />
+        </div>
+      </div>
+    );
+  }
+
+  const first = actor.name === "Ich" ? "" : actor.name.split(" ")[0];
+  const mine = tasksOf(items, actor.id);
+  const open = mine.filter((t) => !t.done).sort(byDue);
   const recent = notes.recent
     .map((id) => notes.pages.get(id))
-    .filter((p): p is PageMeta => Boolean(p && notes.isLive(p.id)))
+    .filter((p): p is PageMeta => Boolean(p && notes.isLive(p.id) && notes.inMyView(p)))
     .slice(0, 8);
 
-  // Alle Zeilen, in denen ich in einer Personen-Eigenschaft stehe und die nicht erledigt sind
-  const tasks = useMemo(() => {
-    const out: { row: PageMeta; db: PageMeta; due: string | null }[] = [];
-    for (const db of notes.pages.values()) {
-      if (db.kind !== "database" || !db.schema || !notes.isLive(db.id)) continue;
-      const people = db.schema.properties.filter((p) => p.type === "person");
-      if (!people.length) continue;
-      const date = db.schema.properties.find((p) => p.type === "date");
-      const mine = db.space === "private" && db.ownerId === notes.me.id;
-      for (const row of notes.childrenOf(db.id)) {
-        const assigned = people.some((p) => {
-          const v = getValue(row, p);
-          return Array.isArray(v) && v.includes(notes.me.id);
-        });
-        // In der eigenen privaten Aufgabenliste zählt auch, was niemandem zugewiesen ist
-        const unassigned = mine && people.every((p) => !(getValue(row, p) as string[] | null)?.length);
-        if ((!assigned && !unassigned) || isDone(row, db.schema)) continue;
-        out.push({ row, db, due: date ? ((row.props[date.id] as string | null) ?? null) : null });
-      }
-    }
-    return out.sort((a, b) => (a.due ?? "￿").localeCompare(b.due ?? "￿")).slice(0, 30);
-  }, [notes]);
+  const toggle = (id: string, done: boolean) => {
+    const t = items.find((x) => x.row.id === id);
+    const next = t && doneProps(t.row, t.db.schema!, done);
+    if (next) notes.updatePage(id, { props: next }, { delay: 0 });
+  };
 
   return (
     <div className="nk-page is-full">
@@ -48,59 +50,105 @@ export function Home(props: { title: string; onTemplates: () => void }) {
           {first ? `, ${first}` : ""}
         </h1>
 
-        <section>
-          <div className="nk-home-heading">
-            <Icon name="clock" /> Zuletzt besucht
-          </div>
-          <div className="nk-home-cards">
-            {recent.map((p) => (
-              <button key={p.id} type="button" className="nk-home-card" onClick={() => notes.navigate(p.id)}>
-                <span className="nk-home-card-icon">{p.icon ?? <Icon name={p.kind === "database" ? "database" : "page"} size={22} />}</span>
-                <b>{untitled(p)}</b>
-                <small className="nk-muted">{relativeTime(p.updatedAt)}</small>
+        <FocusSection member={actor} />
+
+        <div className="nk-home-game">
+          <BlitziCard member={actor} open={open.length} ownWorkDays={actor.id === notes.me.id} />
+          <Leaderboard highlight={actor.id} />
+        </div>
+
+        {!notes.access.studio && (
+          <section>
+            <div className="nk-home-heading">
+              <Icon name="clock" /> Zuletzt besucht
+            </div>
+            <div className="nk-home-cards">
+              {recent.map((p) => (
+                <button key={p.id} type="button" className="nk-home-card" onClick={() => notes.navigate(p.id)}>
+                  <span className="nk-home-card-icon">{p.icon ?? <Icon name={p.kind === "database" ? "database" : "page"} size={22} />}</span>
+                  <b>{untitled(p)}</b>
+                  <small className="nk-muted">{relativeTime(p.updatedAt)}</small>
+                </button>
+              ))}
+              <button
+                type="button"
+                className="nk-home-card is-new"
+                onClick={async () => {
+                  const p = await notes.createPage({ space: "private" });
+                  notes.navigate(p.id);
+                }}
+              >
+                <span className="nk-home-card-icon">
+                  <Icon name="plus" size={22} />
+                </span>
+                <b>Neue Seite</b>
               </button>
-            ))}
-            <button
-              type="button"
-              className="nk-home-card is-new"
-              onClick={async () => {
-                const p = await notes.createPage({ space: "private" });
-                notes.navigate(p.id);
-              }}
-            >
-              <span className="nk-home-card-icon">
-                <Icon name="plus" size={22} />
-              </span>
-              <b>Neue Seite</b>
-            </button>
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         <section>
           <div className="nk-home-heading">
-            <Icon name="checkbox" /> Meine Aufgaben
+            <Icon name="checkbox" /> {notes.access.studio ? `Aufgaben von ${first}` : "Meine Aufgaben"}
+            <span className="nk-muted"> · {open.length} offen</span>
           </div>
-          {tasks.length ? (
+          {open.length ? (
             <div className="nk-home-tasks">
-              {tasks.map(({ row, db, due }) => (
-                <button key={row.id} type="button" className="nk-home-task" onClick={() => (notes.navigate(db.id), setTimeout(() => notes.openPeek(row.id)))}>
-                  <span className="nk-row-icon">{row.icon ?? "☐"}</span>
-                  <span className="nk-home-task-title">{untitled(row)}</span>
+              {open.slice(0, 40).map(({ row, db, due, overdue }) => (
+                <div key={row.id} className="nk-home-task">
+                  <button type="button" className="nk-check" aria-label="Erledigt" onClick={() => toggle(row.id, true)} />
+                  <button type="button" className="nk-home-task-title" onClick={() => (notes.navigate(db.id), setTimeout(() => notes.openPeek(row.id)))}>
+                    {row.icon && <span>{row.icon} </span>}
+                    {untitled(row)}
+                  </button>
                   <span className="nk-muted nk-home-task-db">{untitled(db)}</span>
-                  {due && <span className={`nk-date${due.slice(0, 10) < today() ? " is-past" : due.slice(0, 10) === today() ? " is-today" : ""}`}>{formatDate(due)}</span>}
-                </button>
+                  {due && <span className={`nk-date${overdue ? " is-past" : due.slice(0, 10) === today() ? " is-today" : ""}`}>{formatDate(due)}</span>}
+                </div>
               ))}
             </div>
           ) : (
             <div className="nk-home-empty">
-              <p className="nk-muted">Keine offenen Aufgaben. Aufgaben, bei denen du zuständig bist, erscheinen hier automatisch.</p>
-              <button type="button" className="nk-btn" onClick={props.onTemplates}>
-                <Icon name="template" /> Aufgabenliste aus Vorlage
-              </button>
+              <p className="nk-muted">Keine offenen Aufgaben. Aufgaben, bei denen {notes.access.studio ? "du" : "du"} zuständig bist, erscheinen hier automatisch.</p>
+              {!notes.access.studio && (
+                <button type="button" className="nk-btn" onClick={props.onTemplates}>
+                  <Icon name="template" /> Aufgabenliste aus Vorlage
+                </button>
+              )}
             </div>
           )}
         </section>
       </div>
     </div>
+  );
+}
+
+/** Studio-PC: Person auswählen – eigenes Studio zuerst */
+export function StudioWho() {
+  const notes = useNotes();
+  const [others, setOthers] = useState(false);
+  const people = notes.members.filter((m) => !m.device);
+  const studio = notes.access.studioLocationId;
+  const here = people.filter((m) => !studio || m.studioId === studio);
+  const rest = people.filter((m) => studio && m.studioId !== studio);
+  const tile = (m: Member) => (
+    <button key={m.id} type="button" className="nk-who-tile" onClick={() => notes.setActor(m.id)}>
+      <span className={`nk-avatar is-${m.color}`}>{initials(m.name)}</span>
+      <span>{m.name}</span>
+    </button>
+  );
+  return (
+    <section className="nk-who">
+      <h1 className="nk-home-title">Wer bist du?</h1>
+      <p className="nk-muted">Tippe auf deinen Namen – dann siehst du deinen Tagesfokus und deine Aufgaben. Nach 10 Minuten ohne Eingabe meldet sich der PC wieder ab.</p>
+      <div className="nk-who-grid">{here.map(tile)}</div>
+      {rest.length > 0 && (
+        <>
+          <button type="button" className="nk-btn is-ghost" onClick={() => setOthers(!others)}>
+            {others ? "Andere Studios ausblenden" : `Andere Studios (${rest.length})`}
+          </button>
+          {others && <div className="nk-who-grid">{rest.map(tile)}</div>}
+        </>
+      )}
+    </section>
   );
 }

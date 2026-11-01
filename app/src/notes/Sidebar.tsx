@@ -1,6 +1,7 @@
 // Seitenleiste: Suche, Startseite, Favoriten, Team, Privat, Vorlagen, Papierkorb – mit Ziehen & Ablegen
 import { type DragEvent, useState } from "react";
 import { MovePicker } from "./PageView";
+import { OVERVIEW, STUDIO_TASKS } from "./routes";
 import { useNotes } from "./state";
 import { TEMPLATES } from "./templates";
 import type { PageMeta, Space } from "./types";
@@ -102,6 +103,7 @@ export function Sidebar(props: {
     />
   );
 
+  const studio = notes.access.studio;
   const favs = notes.favorites.map((id) => notes.pages.get(id)).filter((p): p is PageMeta => Boolean(p && notes.isLive(p.id)));
   const team = notes.childrenOf(null, "team");
   const mine = notes.childrenOf(null, "private").filter((p) => p.ownerId === notes.me.id);
@@ -164,7 +166,29 @@ export function Sidebar(props: {
         >
           <Icon name="home" /> Startseite
         </button>
-        <button type="button" className="nk-side-item" onClick={() => void newPage("private")}>
+        <button
+          type="button"
+          className={`nk-side-item${notes.current === STUDIO_TASKS ? " is-active" : ""}`}
+          onClick={() => {
+            notes.navigate(STUDIO_TASKS);
+            props.onClose?.();
+          }}
+        >
+          <Icon name="calendar" /> Wochen & Monat
+        </button>
+        {notes.access.oversee && (
+          <button
+            type="button"
+            className={`nk-side-item${notes.current === OVERVIEW ? " is-active" : ""}`}
+            onClick={() => {
+              notes.navigate(OVERVIEW);
+              props.onClose?.();
+            }}
+          >
+            <Icon name="users" /> Team-Übersicht
+          </button>
+        )}
+        <button type="button" className="nk-side-item" onClick={() => void newPage(studio ? "team" : "private")}>
           <Icon name="edit" /> Neue Seite
         </button>
       </nav>
@@ -172,11 +196,11 @@ export function Sidebar(props: {
       <div className="nk-side-scroll">
         {favs.length > 0 && section("favorites", "Favoriten", favs)}
         {section("team", "Team", team, "team")}
-        {section("private", "Privat", mine, "private")}
+        {!studio && section("private", "Privat", mine, "private")}
       </div>
 
       <div className="nk-side-foot">
-        <button type="button" className="nk-side-item" onClick={() => setTemplatesFor("private")}>
+        <button type="button" className="nk-side-item" onClick={() => setTemplatesFor(studio ? "team" : "private")}>
           <Icon name="template" /> Vorlagen
         </button>
         <button type="button" className="nk-side-item" onClick={(e) => trash.open(e.currentTarget)}>
@@ -372,7 +396,7 @@ function TrashPanel(props: { anchor: HTMLElement | DOMRect | { x: number; y: num
   const [query, setQuery] = useState("");
   const [confirm, setConfirm] = useState<string | null>(null);
   const items = [...notes.pages.values()]
-    .filter((p) => p.archivedAt && (p.space === "team" || p.ownerId === notes.me.id) && untitled(p).toLowerCase().includes(query.toLowerCase()))
+    .filter((p) => p.archivedAt && !p.deletedAt && notes.inMyView(p) && untitled(p).toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => (b.archivedAt ?? "").localeCompare(a.archivedAt ?? ""));
   return (
     <Popover anchor={props.anchor} onClose={props.onClose} width={380} placement="right-start">
@@ -438,7 +462,7 @@ export function TemplatePicker(props: { space: Space; onClose: () => void; onCre
       <div className="nk-modal-head">
         <b>Vorlagen</b>
         <span className="nk-spacer" />
-        {!props.parentId && (
+        {!props.parentId && !notes.access.studio && (
           <div className="nk-segmented">
             {(["team", "private"] as const).map((s) => (
               <button key={s} type="button" aria-pressed={space === s} onClick={() => setSpace(s)}>

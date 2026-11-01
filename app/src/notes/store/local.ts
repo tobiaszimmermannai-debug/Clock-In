@@ -1,6 +1,6 @@
 // Lokaler Speicher (nur dieses Gerät): Demo-Modus und Betrieb ohne Supabase
 import { mergeUpdates } from "yjs";
-import type { Blocks, CollabMessage, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Version } from "../types";
+import type { Access, Blocks, CollabMessage, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Studio, Version } from "../types";
 import { fromBase64, plainText, storageGet, storageSet, toBase64, uid } from "../util";
 
 type Row = PageMeta & { content: Blocks; plain: string; ydoc?: string | null };
@@ -19,8 +19,44 @@ export class LocalStore implements NotesStore {
     for (const row of this.rows.values()) this.emit({ type: "upsert", page: strip(row), content: row.content, ydoc: row.ydoc });
   };
 
-  constructor(private key = "aun-local-pages", private user: Member = ME) {
+  constructor(
+    private key = "aun-local-pages",
+    private user: Member = ME,
+    /** Lokal: eine Person mit allen Rechten (zum Ausprobieren der Leitungsansicht) */
+    private rights: Access = { oversee: true, admin: true, studio: false },
+  ) {
     this.rows = this.read();
+  }
+
+  async access() {
+    return this.rights;
+  }
+
+  async locations(): Promise<Studio[]> {
+    return storageGet<Studio[]>(`${this.key}-studios`, [
+      { id: "studio-1", name: "Studio 1" },
+      { id: "studio-2", name: "Studio 2" },
+    ]);
+  }
+
+  private events(): Completion[] {
+    return storageGet<Completion[]>(`${this.key}-events`, []);
+  }
+
+  async completions(sinceIso: string) {
+    return this.events().filter((e) => e.doneAt >= sinceIso);
+  }
+
+  async setCompletion(pageId: string, userIds: string[], points: number, done: boolean) {
+    const rest = this.events().filter((e) => e.pageId !== pageId || (done && !userIds.includes(e.userId)));
+    const now = new Date().toISOString();
+    const keep = this.events().filter((e) => e.pageId === pageId && done && userIds.includes(e.userId));
+    const added = done ? userIds.filter((u) => !keep.some((k) => k.userId === u)).map((userId) => ({ pageId, userId, points, doneAt: now })) : [];
+    storageSet(`${this.key}-events`, [...rest, ...keep, ...added]);
+  }
+
+  async workDays() {
+    return null;
   }
 
   private read(): Map<string, Row> {
@@ -44,7 +80,8 @@ export class LocalStore implements NotesStore {
   }
 
   async listPages() {
-    return [...this.rows.values()].map(strip);
+    // Ältere lokale Daten ohne Lösch-Felder
+    return [...this.rows.values()].map((r) => ({ ...strip(r), deletedAt: r.deletedAt ?? null, deletedBy: r.deletedBy ?? null }));
   }
 
   async getContent(id: string) {
@@ -141,7 +178,24 @@ export class LocalStore implements NotesStore {
   }
 
   async remove(ids: string[]) {
+    const now = new Date().toISOString();
+    for (const id of ids) {
+      const row = this.rows.get(id);
+      if (row && !row.deletedAt) this.rows.set(id, { ...row, deletedAt: now, deletedBy: this.user.id });
+    }
+    this.write();
+  }
+
+  async purge(ids: string[]) {
     for (const id of ids) this.rows.delete(id);
+    this.write();
+  }
+
+  async restoreDeleted(ids: string[]) {
+    for (const id of ids) {
+      const row = this.rows.get(id);
+      if (row) this.rows.set(id, { ...row, deletedAt: null, deletedBy: null });
+    }
     this.write();
   }
 

@@ -3,9 +3,10 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { AuthLayout } from "../admin/AdminApp";
 import { Shell, type ShellTab } from "../components/Shell";
 import { StudioCalendar } from "../components/StudioCalendar";
+import { TaskReminder } from "../components/TaskReminder";
 import { Tasks } from "../components/Tasks";
 import { WeekPlan, useWeekShifts } from "../components/WeekPlan";
-import { Field, Notice, PageHeader, Segmented, StudioFilter, WeekNav } from "../components/ui";
+import { Field, Notice, PageHeader, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
 import { staffLoginEmail } from "../lib/config";
 import { berlinDate, weekStart } from "../lib/dates";
 import { registerStudios } from "../lib/studios";
@@ -43,6 +44,22 @@ export function PortalApp(props: { stampToken?: string }) {
   const [locations, setLocations] = useState<Location[]>([]);
   const [tab, setTab] = useState<Tab>("stamp");
   const [token, setToken] = useState(props.stampToken);
+  const [reminderDay, setReminderDay] = useState(() => {
+    try {
+      return localStorage.getItem("clockin-task-reminder") ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const closeReminder = () => {
+    const day = berlinDate();
+    setReminderDay(day);
+    try {
+      localStorage.setItem("clockin-task-reminder", day);
+    } catch {
+      /* egal */
+    }
+  };
 
   useEffect(() => {
     if (!props.stampToken) return;
@@ -78,6 +95,9 @@ export function PortalApp(props: { stampToken?: string }) {
     void load();
   }, [load]);
 
+  // Erinnerung an offene Aufgaben: einmal am Tag beim Öffnen (nicht mitten im Stempeln per QR)
+  const showReminder = Boolean(me) && !props.stampToken && reminderDay !== berlinDate();
+
   if (me === undefined) return <div className="screen center muted">Lädt …</div>;
   if (me === null) return <PortalLogin error={error} onDone={load} />;
 
@@ -93,6 +113,7 @@ export function PortalApp(props: { stampToken?: string }) {
           me={me}
           token={token}
           onOpenVacation={() => setTab("account")}
+          onOpenTasks={() => setTab("tasks")}
           onTokenUsed={() => {
             setToken(undefined);
             location.replace("#/portal"); // Code nicht erneut verwenden (Neuladen, Zurück-Taste)
@@ -104,6 +125,19 @@ export function PortalApp(props: { stampToken?: string }) {
       {tab === "swap" && <Swap me={me} colleagues={colleagues} locations={locations} />}
       {tab === "tasks" && <Tasks db={portalDb} />}
       {tab === "account" && <Account me={me} onLogout={logout} />}
+      {showReminder && tab !== "tasks" && (
+        <Sheet title="Deine Aufgaben heute" onClose={closeReminder}>
+          <TaskReminder
+            db={portalDb}
+            reason="login"
+            onOpen={() => {
+              closeReminder();
+              setTab("tasks");
+            }}
+            onClose={closeReminder}
+          />
+        </Sheet>
+      )}
     </Shell>
   );
 }

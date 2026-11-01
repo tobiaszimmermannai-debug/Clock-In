@@ -3,7 +3,7 @@
 // note_favorites · note_versions · Bucket "notes" (Dateien unter <Seiten-ID>/…)
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { mergeUpdates } from "yjs";
-import type { Blocks, CollabMessage, Color, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Version } from "../types";
+import type { Access, Blocks, CollabMessage, Color, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Studio, Version } from "../types";
 import { COLORS, fromBase64, plainText, toBase64 } from "../util";
 
 type DbRow = {
@@ -24,6 +24,8 @@ type DbRow = {
   created_by: string | null;
   updated_at: string;
   updated_by: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
 };
 
 const MAX_VERSIONS = 100;
@@ -31,7 +33,7 @@ const MAX_VERSIONS = 100;
 const TOUCH_INTERVAL = 30_000;
 
 const META_COLUMNS =
-  "id, parent_id, space, owner_id, kind, title, icon, cover, props, schema, options, position, archived_at, created_at, created_by, updated_at, updated_by";
+  "id, parent_id, space, owner_id, kind, title, icon, cover, props, schema, options, position, archived_at, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by";
 
 const FILE_PREFIX = "sb-notes://";
 
@@ -53,6 +55,8 @@ const toMeta = (r: DbRow): PageMeta => ({
   createdBy: r.created_by,
   updatedAt: r.updated_at,
   updatedBy: r.updated_by,
+  deletedAt: r.deleted_at ?? null,
+  deletedBy: r.deleted_by ?? null,
 });
 
 function toRow(p: PagePatch): Record<string, unknown> {
@@ -69,6 +73,8 @@ function toRow(p: PagePatch): Record<string, unknown> {
     options: "options",
     position: "position",
     archivedAt: "archived_at",
+    deletedAt: "deleted_at",
+    deletedBy: "deleted_by",
   };
   const row: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(p)) if (k in map && v !== undefined) row[map[k]] = v;
@@ -99,15 +105,75 @@ export class SupabaseStore implements NotesStore {
 
   async me(): Promise<Member> {
     const id = await this.uid();
-    const { data } = await this.db.from("users").select("first_name, last_name").eq("auth_user_id", id).maybeSingle();
+    const { data } = await this.db.from("users").select("first_name, last_name, role").eq("auth_user_id", id).maybeSingle();
+    if (!data) {
+      // Studio-PC: Gerätekonto statt Person
+      const access = await this.access();
+      if (access.studio) return { id, name: access.studioName || "Studio-PC", color: "gray", device: true };
+    }
     const name = data ? `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim() : "Ich";
-    return { id, name: name || "Ich", color: colorFor(id) };
+    return { id, name: name || "Ich", color: colorFor(id), role: (data?.role as string | undefined) ?? undefined };
+  }
+
+  private accessCache?: Promise<Access>;
+
+  access(): Promise<Access> {
+    this.accessCache ??= (async () => {
+      const { data, error } = await this.db.rpc("note_access");
+      // Ältere Datenbank ohne die Funktion: keine Sonderrechte
+      if (error || !data) return { oversee: false, admin: false, studio: false };
+      const a = data as { oversee?: boolean; admin?: boolean; studio?: boolean; studio_name?: string | null; studio_location?: string | null };
+      return {
+        oversee: Boolean(a.oversee),
+        admin: Boolean(a.admin),
+        studio: Boolean(a.studio),
+        studioName: a.studio_name ?? undefined,
+        studioLocationId: a.studio_location ?? null,
+      };
+    })();
+    return this.accessCache;
+  }
+
+  async locations(): Promise<Studio[]> {
+    const { data, error } = await this.db.from("locations").select("id, name").eq("is_active", true).order("name");
+    if (error) return [];
+    return (data ?? []) as Studio[];
+  }
+
+  async completions(sinceIso: string): Promise<Completion[]> {
+    const { data, error } = await this.db
+      .from("note_task_events")
+      .select("page_id, user_id, points, done_at")
+      .gte("done_at", sinceIso)
+      .order("done_at")
+      .limit(5000);
+    if (error) throw error;
+    return (data ?? []).map((r) => ({ pageId: r.page_id, userId: r.user_id, points: r.points, doneAt: r.done_at }));
+  }
+
+  async setCompletion(pageId: string, userIds: string[], points: number, done: boolean): Promise<void> {
+    if (!done) {
+      const { error } = await this.db.from("note_task_events").delete().eq("page_id", pageId);
+      if (error) throw error;
+      return;
+    }
+    if (!userIds.length) return;
+    const { error } = await this.db
+      .from("note_task_events")
+      .upsert(userIds.map((user_id) => ({ page_id: pageId, user_id, points })), { onConflict: "page_id,user_id", ignoreDuplicates: true });
+    if (error) throw error;
+  }
+
+  async workDays(sinceIso: string): Promise<string[] | null> {
+    const { data, error } = await this.db.rpc("note_work_days", { p_since: sinceIso.slice(0, 10) });
+    if (error) return null;
+    return ((data ?? []) as string[]).map((d) => String(d).slice(0, 10));
   }
 
   async members(): Promise<Member[]> {
     const { data, error } = await this.db
       .from("users")
-      .select("auth_user_id, first_name, last_name")
+      .select("auth_user_id, first_name, last_name, role, home_location_id")
       .eq("is_active", true)
       .not("auth_user_id", "is", null)
       .order("first_name");
@@ -116,6 +182,8 @@ export class SupabaseStore implements NotesStore {
       id: u.auth_user_id as string,
       name: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || "Unbekannt",
       color: colorFor(u.auth_user_id as string),
+      role: (u.role as string | null) ?? undefined,
+      studioId: (u.home_location_id as string | null) ?? null,
     }));
   }
 
@@ -290,7 +358,19 @@ export class SupabaseStore implements NotesStore {
 
   async remove(ids: string[]): Promise<void> {
     if (!ids.length) return;
+    const { error } = await this.db.rpc("note_soft_delete", { p_ids: ids });
+    if (error) throw error;
+  }
+
+  async purge(ids: string[]): Promise<void> {
+    if (!ids.length) return;
     const { error } = await this.db.from("note_pages").delete().in("id", ids);
+    if (error) throw error;
+  }
+
+  async restoreDeleted(ids: string[]): Promise<void> {
+    if (!ids.length) return;
+    const { error } = await this.db.from("note_pages").update({ deleted_at: null, deleted_by: null }).in("id", ids);
     if (error) throw error;
   }
 

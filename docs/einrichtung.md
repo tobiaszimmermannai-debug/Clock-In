@@ -116,6 +116,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 27. `supabase/migrations/20261029090000_notes.sql` (Bereich „Aufgaben“: Seiten, Notizen, Aufgaben-Datenbanken, Datei-Speicher)
 28. `supabase/migrations/20261030090000_notes_collab.sql` (Aufgaben: gleichzeitig bearbeiten, Kommentare, Versionsverlauf)
 29. `supabase/migrations/20261031090000_notes_hardening.sql` (Aufgaben: Dateien nur für Berechtigte, weniger Datenverkehr beim Tippen)
+30. `supabase/migrations/20261101090000_notes_roles_gamification.sql` (Aufgaben: Leitung sieht alles, Studio-PC, Blitzi/Serie/Rangliste)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -157,6 +158,13 @@ Die Funktion `telegram` mit dem neuen Code neu deployen (Teil D).
 4. Im Portal außerdem: Stunden (Soll/Ist), Dienstplan aller Studios, Schichttausch, Passwort ändern.
 
 ---
+
+## Teil N – Aufgaben am Studio-PC
+Der PC im Studio zeigt die Aufgaben aller Mitarbeiter (das Tablet bleibt reines Stempelgerät):
+1. Am PC die App öffnen → **„PC im Studio als Terminal“** → mit dem eigenen Zugang anmelden, Studio wählen → anfragen.
+2. Tobias oder Dominik geben frei (Telegram oder Einstellungen).
+3. Der PC zeigt danach **Aufgaben** (und bei Bedarf den Stempel-QR). Jeder tippt auf seinen Namen („Wer bist du?“);
+   nach 10 Minuten ohne Eingabe fragt der PC wieder. Private Seiten erscheinen am PC nie.
 
 ## Gut zu wissen
 - **2FA:** Admin-Rechte in der App gelten nur mit zweitem Faktor (Authenticator-App).

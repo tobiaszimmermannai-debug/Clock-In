@@ -407,7 +407,7 @@ export function MovePicker(props: { pageId: string; onClose: () => void }) {
     }
   }
   const targets = [...notes.pages.values()]
-    .filter((p) => !blocked.has(p.id) && notes.isLive(p.id) && notes.pages.get(p.parentId ?? "")?.kind !== "database" && untitled(p).toLowerCase().includes(q))
+    .filter((p) => !blocked.has(p.id) && notes.isLive(p.id) && notes.inMyView(p) && notes.pages.get(p.parentId ?? "")?.kind !== "database" && untitled(p).toLowerCase().includes(q))
     .slice(0, 30);
   const go = (parentId: string | null, space?: "private" | "team") => {
     notes.move(page.id, { parentId, space });

@@ -233,7 +233,7 @@ function EditorInner(props: EditorProps & { session: CollabSession }) {
     const insert = (kind: string, refId: string, label: string) => () =>
       editor.insertInlineContent([{ type: "mention", props: { kind, refId, label } }, " "]);
     const people = notes.members
-      .filter((m) => m.name.toLowerCase().includes(q))
+      .filter((m) => !m.device && m.name.toLowerCase().includes(q))
       .slice(0, 5)
       .map(
         (m): DefaultReactSuggestionItem => ({
@@ -244,7 +244,7 @@ function EditorInner(props: EditorProps & { session: CollabSession }) {
         }),
       );
     const pages = [...notes.pages.values()]
-      .filter((p) => notes.isLive(p.id) && p.id !== page.id && p.title.trim() && p.title.toLowerCase().includes(q))
+      .filter((p) => notes.isLive(p.id) && notes.inMyView(p) && p.id !== page.id && p.title.trim() && p.title.toLowerCase().includes(q))
       .slice(0, 6)
       .map(
         (p): DefaultReactSuggestionItem => ({

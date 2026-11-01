@@ -73,8 +73,8 @@ export function DatabaseView(props: { dbId: string; inline?: boolean }) {
   const view = schema?.views.find((v) => v.id === viewId) ?? schema?.views[0];
   const allRows = useMemo(() => (db ? notes.childrenOf(db.id) : []), [db, notes]);
   const rows = useMemo(
-    () => (schema && view ? viewRows(allRows, view, schema, { pages: notes.pages, meId: notes.me.id, members: notes.members, query }) : []),
-    [allRows, schema, view, notes.pages, notes.me.id, notes.members, query],
+    () => (schema && view ? viewRows(allRows, view, schema, { pages: notes.pages, meId: notes.actor?.id ?? notes.me.id, members: notes.members, query }) : []),
+    [allRows, schema, view, notes.pages, notes.actor, notes.me.id, notes.members, query],
   );
 
   if (!db) return null;
@@ -100,7 +100,7 @@ export function DatabaseView(props: { dbId: string; inline?: boolean }) {
 
   const addRow = async (values: Record<string, PropValue> = {}, opts: { open?: boolean; position?: number } = {}) => {
     const page = await notes
-      .createPage({ parentId: db.id, props: { ...defaultsFromView(view, schema, notes.me.id), ...values }, position: opts.position })
+      .createPage({ parentId: db.id, props: { ...defaultsFromView(view, schema, notes.actor?.id ?? notes.me.id), ...values }, position: opts.position })
       .catch(() => undefined);
     if (page && opts.open !== false && view.type !== "table") notes.openPeek(page.id);
     // Tabelle: Titel der neuen Zeile direkt bearbeiten

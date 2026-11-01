@@ -94,7 +94,12 @@ export type ViewDef = {
   dateProp?: string;
 };
 
-export type DbSchema = { properties: PropDef[]; views: ViewDef[] };
+export type DbSchema = {
+  properties: PropDef[];
+  views: ViewDef[];
+  /** Systemdatenbank, z. B. "studio_tasks" für Wochen- & Monatsaufgaben */
+  role?: string;
+};
 
 export type PropValue = string | number | boolean | string[] | null;
 
@@ -123,6 +128,9 @@ export type PageMeta = {
   createdBy: string | null;
   updatedAt: string;
   updatedBy: string | null;
+  /** Gelöscht (ausgeblendet) – sieht nur noch die Leitung */
+  deletedAt: string | null;
+  deletedBy: string | null;
 };
 
 /** BlockNote-Dokument (JSON) */
@@ -137,7 +145,24 @@ export type PagePatch = Partial<Omit<PageMeta, "id" | "createdAt" | "createdBy">
 
 export type NewPage = PageMeta & { content: Blocks; plain: string };
 
-export type Member = { id: string; name: string; color: Color };
+export type Member = {
+  id: string;
+  name: string;
+  color: Color;
+  role?: string;
+  /** Heimatstudio (Clock-In) */
+  studioId?: string | null;
+  /** Studio-PC statt Person */
+  device?: boolean;
+};
+
+export type Studio = { id: string; name: string };
+
+/** Eigene Rechte: Leitung (Admin/Studioleitung) bzw. Studio-PC */
+export type Access = { oversee: boolean; admin: boolean; studio: boolean; studioName?: string; studioLocationId?: string | null };
+
+/** Erledigte Aufgabe, einer Person gutgeschrieben */
+export type Completion = { pageId: string; userId: string; points: number; doneAt: string };
 
 export type StoreEvent =
   | { type: "upsert"; page: PageMeta; content?: Blocks; ydoc?: string | null }
@@ -182,7 +207,21 @@ export interface NotesStore {
   saveVersion(version: { pageId: string; title: string; content: Blocks }): Promise<void>;
   create(page: NewPage): Promise<void>;
   update(id: string, patch: PagePatch): Promise<void>;
+  /** Löschen = ausblenden (danach sieht die Seiten nur noch die Leitung) */
   remove(ids: string[]): Promise<void>;
+  /** Wirklich löschen (nur Leitung) */
+  purge(ids: string[]): Promise<void>;
+  /** Ausgeblendete Seiten zurückholen (nur Leitung) */
+  restoreDeleted(ids: string[]): Promise<void>;
+  access(): Promise<Access>;
+  /** Studios (Clock-In-Standorte) */
+  locations(): Promise<Studio[]>;
+  /** Erledigte Aufgaben seit einem Zeitpunkt (für Serie, Tagesziel, Rangliste) */
+  completions(sinceIso: string): Promise<Completion[]>;
+  /** Gutschrift setzen (erledigt) oder zurücknehmen (wieder offen) */
+  setCompletion(pageId: string, userIds: string[], points: number, done: boolean): Promise<void>;
+  /** Tage mit Arbeitsbeginn laut Stempeluhr (YYYY-MM-DD); null = unbekannt */
+  workDays(sinceIso: string): Promise<string[] | null>;
   /** IDs der Seiten, deren Inhalt den Suchbegriff enthält */
   search(query: string): Promise<string[]>;
   favorites(): Promise<string[]>;
