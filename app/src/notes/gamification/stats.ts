@@ -17,10 +17,16 @@ export function weekStart(day: string): string {
   return addDays(day, -wd);
 }
 
-const isSunday = (day: string) => {
+const weekday = (day: string) => {
   const [y, m, d] = day.split("-").map(Number);
-  return new Date(y, m - 1, d).getDay() === 0;
+  return new Date(y, m - 1, d).getDay();
 };
+
+/** Arbeitstage einer Person aus der Liste aller (leer = unbekannt, z. B. wer nie stempelt) */
+export function daysFor(all: Record<string, string[]> | null, userId: string): string[] | null {
+  const days = all?.[userId];
+  return days && days.length ? days : null;
+}
 
 /**
  * Serie: Tage mit mindestens einer erledigten Aufgabe, rückwärts ab heute.
@@ -48,8 +54,8 @@ export type MyStats = {
 };
 
 /**
- * Werte einer Person. workDays (Tage mit "Kommen"-Stempel) machen freie Tage neutral;
- * ohne Stempeldaten gilt nur der Sonntag als frei.
+ * Werte einer Person. workDays = Tage, an denen sie gearbeitet hat (eingestempelt, ohne Schule/Urlaub/Krank/frei);
+ * nur diese können die Serie unterbrechen. Ohne Stempeldaten sind Samstag und Sonntag neutral.
  */
 export function myStats(userId: string, completions: Completion[], opts: { today: string; workDays: string[] | null; goal?: number }): MyStats {
   const mine = completions.filter((c) => c.userId === userId);
@@ -57,7 +63,11 @@ export function myStats(userId: string, completions: Completion[], opts: { today
   const todays = mine.filter((c) => dayOf(c.doneAt) === opts.today);
   const weeks = mine.filter((c) => dayOf(c.doneAt) >= week);
   const worked = opts.workDays ? new Set(opts.workDays) : null;
-  const neutral = (day: string) => isSunday(day) || (worked !== null && !worked.has(day));
+  const neutral = (day: string) => {
+    const wd = weekday(day);
+    if (wd === 0) return true;
+    return worked ? !worked.has(day) : wd === 6;
+  };
   const goal = opts.goal ?? DAILY_GOAL;
   return {
     today: todays.length,

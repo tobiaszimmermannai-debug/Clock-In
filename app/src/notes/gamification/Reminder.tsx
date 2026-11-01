@@ -8,7 +8,7 @@ import { Blitzi } from "./Blitzi";
 import { coinsOf, stageOf } from "./evolution";
 import { focusTasks } from "./focus";
 import { Energy } from "./GamePanel";
-import { moodFor, myStats, speech, type MyStats } from "./stats";
+import { daysFor, moodFor, myStats, speech, type MyStats } from "./stats";
 import { allTasks, byDue, tasksOf, type TaskItem } from "./tasks";
 
 export type ReminderReason = "login" | "clock_in" | "break";
@@ -46,7 +46,7 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
         me.id,
         today(),
       ).map((f) => ({ item: byId.get(f.row.id)!, rank: f.rank }));
-      if (!cancelled) setData({ name: me.name.split(" ")[0], open, focus, stats: myStats(me.id, events, { today: today(), workDays: days }) });
+      if (!cancelled) setData({ name: me.name.split(" ")[0], open, focus, stats: myStats(me.id, events, { today: today(), workDays: daysFor(days, me.id) }) });
     })().catch(() => undefined);
     return () => {
       cancelled = true;

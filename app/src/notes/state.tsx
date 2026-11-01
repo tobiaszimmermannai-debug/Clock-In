@@ -2,7 +2,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { isDone } from "./database/logic";
 import { focusRank, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
-import { myStats, ON_TIME_BONUS, POINTS } from "./gamification/stats";
+import { daysFor, myStats, ON_TIME_BONUS, POINTS } from "./gamification/stats";
 import { taskSchema, welcomeContent } from "./templates";
 import type {
   Access,
@@ -125,7 +125,8 @@ type Ctx = {
   restoreDeleted: (id: string) => void;
   // ---- Erfolge ----
   completions: Completion[];
-  workDays: string[] | null;
+  /** Arbeitstage je Person (für die Serie) */
+  workDays: Record<string, string[]> | null;
   celebration: Celebration | null;
   dismissCelebration: () => void;
   /** Tagesfokus: Aufgabe für eine Person heute auf Rang 1–3 setzen (null = entfernen) */
@@ -183,8 +184,8 @@ export function NotesProvider(props: {
   const [access, setAccess] = useState<Access>({ oversee: false, admin: false, studio: false });
   const [locations, setLocations] = useState<Studio[]>([]);
   const [completions, setCompletions] = useState<Completion[]>([]);
-  const [workDays, setWorkDays] = useState<string[] | null>(null);
-  const workDaysRef = useRef<string[] | null>(null);
+  const [workDays, setWorkDays] = useState<Record<string, string[]> | null>(null);
+  const workDaysRef = useRef<Record<string, string[]> | null>(null);
   workDaysRef.current = workDays;
   const [actorId, setActorId] = useState<string | null>(() => storageGet<string | null>("aun-studio-actor", null));
   const [celebration, setCelebration] = useState<Celebration | null>(null);
@@ -576,7 +577,7 @@ export function NotesProvider(props: {
         // Feiern, wenn die handelnde Person etwas gutgeschrieben bekommt
         const mine = actor ? added.find((a) => a.userId === actor) : undefined;
         if (mine) {
-          const days = actor === meRef.current.id ? workDaysRef.current : null;
+          const days = daysFor(workDaysRef.current, actor!);
           const stats = myStats(actor!, next, { today: day, workDays: days });
           const before = myStats(actor!, c, { today: day, workDays: days });
           const person = people.find((m) => m.id === actor);

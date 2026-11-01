@@ -221,7 +221,8 @@ export interface NotesStore {
   /** Gutschrift setzen (erledigt) oder zurücknehmen (wieder offen) */
   setCompletion(pageId: string, userIds: string[], points: number, done: boolean): Promise<void>;
   /** Tage mit Arbeitsbeginn laut Stempeluhr (YYYY-MM-DD); null = unbekannt */
-  workDays(sinceIso: string): Promise<string[] | null>;
+  /** Arbeitstage je Person (eigene und die betreuter Personen); null = unbekannt */
+  workDays(sinceIso: string): Promise<Record<string, string[]> | null>;
   /** IDs der Seiten, deren Inhalt den Suchbegriff enthält */
   search(query: string): Promise<string[]>;
   favorites(): Promise<string[]>;

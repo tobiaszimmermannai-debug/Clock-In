@@ -4,6 +4,7 @@ import { Blitzi } from "./gamification/Blitzi";
 import { stageOf } from "./gamification/evolution";
 import { FocusSection } from "./gamification/Focus";
 import { statsFor } from "./gamification/GamePanel";
+import { daysFor } from "./gamification/stats";
 import { allTasks, assigneesOf, byDue, tasksOf, type TaskItem } from "./gamification/tasks";
 import { useNotes } from "./state";
 import type { Member, PageMeta } from "./types";
@@ -71,7 +72,7 @@ function People(props: { people: Member[]; items: TaskItem[] }) {
               const mine = tasksOf(props.items, m.id);
               const open = mine.filter((t) => !t.done);
               const overdue = open.filter((t) => t.overdue);
-              const stats = statsFor(m.id, notes.completions, null);
+              const stats = statsFor(m.id, notes.completions, daysFor(notes.workDays, m.id));
               const privatePages = [...notes.pages.values()].filter(
                 (p) => p.space === "private" && p.ownerId === m.id && !p.parentId && !p.deletedAt && !p.archivedAt,
               );

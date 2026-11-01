@@ -118,6 +118,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 29. `supabase/migrations/20261030090000_notes_collab.sql` (Aufgaben: gleichzeitig bearbeiten, Kommentare, Versionsverlauf)
 30. `supabase/migrations/20261031090000_notes_hardening.sql` (Aufgaben: Dateien nur für Berechtigte, weniger Datenverkehr beim Tippen)
 31. `supabase/migrations/20261101090000_notes_roles_gamification.sql` (Aufgaben: Leitung sieht alles, Studio-PC, Blitzi/Serie/Rangliste)
+32. `supabase/migrations/20261102090000_notes_streak_days.sql` (Aufgaben: Serie zählt nur echte Arbeitstage – Samstag ohne Schicht, Schule, Urlaub, Krank unterbrechen nie)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und

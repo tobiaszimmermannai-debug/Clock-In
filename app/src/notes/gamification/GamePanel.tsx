@@ -6,7 +6,7 @@ import { Modal } from "../ui/Popover";
 import { today } from "../util";
 import { Blitzi } from "./Blitzi";
 import { coinsOf, MAX_STAGE, stageName, stageOf, UNLOCKS } from "./evolution";
-import { leaderboard, moodFor, myStats, speech, weekStart, type MyStats } from "./stats";
+import { daysFor, leaderboard, moodFor, myStats, speech, weekStart, type MyStats } from "./stats";
 
 /** Akku: füllt sich mit jeder erledigten Aufgabe bis zum Tagesziel */
 export function Energy(props: { value: number; goal: number }) {
@@ -66,18 +66,19 @@ export function EvolutionModal(props: { streak: number; onClose: () => void }) {
         </ol>
         <p className="nk-muted nk-evo-help">
           Jeder Tag deiner Serie schaltet eine Stufe frei – vom gemütlichen Sofa-Blitzi bis zum Muskelpaket. Reißt die Serie,
-          fängt Blitzi wieder bei Stufe 1 an. Ab Stufe {MAX_STAGE} sitzt Blitzi für jeden weiteren Tag auf einer Goldmünze mehr.
+          fängt Blitzi wieder bei Stufe 1 an. Nur Arbeitstage zählen – freie Tage, Samstage ohne Schicht, Schule, Urlaub
+          und Krank unterbrechen die Serie nie. Ab Stufe {MAX_STAGE} sitzt Blitzi für jeden weiteren Tag auf einer Goldmünze mehr.
         </p>
       </div>
     </Modal>
   );
 }
 
-export function BlitziCard(props: { member: Member; open: number; ownWorkDays?: boolean }) {
+export function BlitziCard(props: { member: Member; open: number }) {
   const notes = useNotes();
   const [variant, setVariant] = useState(0);
   const [evolution, setEvolution] = useState(false);
-  const stats = statsFor(props.member.id, notes.completions, props.ownWorkDays ? notes.workDays : null);
+  const stats = statsFor(props.member.id, notes.completions, daysFor(notes.workDays, props.member.id));
   const mood = moodFor(stats, props.open, new Date().getHours());
   const first = props.member.name === "Ich" ? "" : props.member.name.split(" ")[0];
   const stage = stageOf(stats.streak);
