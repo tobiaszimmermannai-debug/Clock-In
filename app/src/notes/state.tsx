@@ -1,7 +1,8 @@
 // Zentraler Zustand: Seitenliste im Speicher, gebündeltes Speichern, Navigation, Live-Updates
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { isDone } from "./database/logic";
-import { focusRank, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
+import { FOCUS_KEY, focusEntry, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
+import { dailyStatus, type DayPlan, type DayStatus } from "./daily/status";
 import { daysFor, myStats, ON_TIME_BONUS, POINTS } from "./gamification/stats";
 import { taskSchema, welcomeContent } from "./templates";
 import type {
@@ -131,6 +132,10 @@ type Ctx = {
   dismissCelebration: () => void;
   /** Tagesfokus: Aufgabe für eine Person heute auf Rang 1–3 setzen (null = entfernen) */
   setFocus: (rowId: string, userId: string, rank: number | null) => void;
+  /** Tagesstand (wer offen, wer abwesend, was fällig) – dieselbe Berechnung wie der Telegram-Reminder */
+  dayStatus: DayStatus;
+  /** Tagesaufgabe freigeben oder ablehnen (Leitung) */
+  decideFocus: (pageId: string, userId: string, ok: boolean) => void;
 };
 
 const NotesContext = createContext<Ctx | null>(null);
@@ -154,9 +159,12 @@ const isBlank = (blocks: Blocks) => !plainText(blocks).trim() && blocks.length <
 export function NotesProvider(props: {
   store: NotesStore;
   routing: "hash" | "memory";
+  /** Eingebettet: diese Seite zuerst öffnen (z. B. Link aus Telegram) */
+  initialPage?: string | null;
   children: ReactNode;
 }) {
   const { store, routing } = props;
+  const initialPageRef = useRef(props.initialPage ?? null);
   const [me, setMe] = useState<Member>({ id: "", name: "", color: "blue" });
   const [members, setMembers] = useState<Member[]>([]);
   const [pages, setPages] = useState<Map<string, PageMeta>>(new Map());
@@ -185,6 +193,7 @@ export function NotesProvider(props: {
   const [locations, setLocations] = useState<Studio[]>([]);
   const [completions, setCompletions] = useState<Completion[]>([]);
   const [workDays, setWorkDays] = useState<Record<string, string[]> | null>(null);
+  const [dayPlan, setDayPlan] = useState<DayPlan | null>(null);
   const workDaysRef = useRef<Record<string, string[]> | null>(null);
   workDaysRef.current = workDays;
   const [actorId, setActorId] = useState<string | null>(() => storageGet<string | null>("aun-studio-actor", null));
@@ -318,6 +327,10 @@ export function NotesProvider(props: {
           store.completions(since).catch(() => []),
           store.workDays(since).catch(() => null),
         ]);
+        store
+          .dayPlan(today())
+          .then((plan) => !cancelled && setDayPlan(plan))
+          .catch(() => undefined);
         if (cancelled) return;
         setMe(who);
         meRef.current = who;
@@ -377,6 +390,10 @@ export function NotesProvider(props: {
         .completions(since)
         .then(setCompletions)
         .catch(() => undefined);
+      store
+        .dayPlan(today())
+        .then(setDayPlan)
+        .catch(() => undefined);
     }, 120_000);
     return () => clearInterval(t);
   }, [loaded, store]);
@@ -389,7 +406,10 @@ export function NotesProvider(props: {
 
   useEffect(() => {
     if (routing !== "hash") {
-      if (lastKey) setCurrent(storageGet<string | null>(lastKey, null));
+      if (lastKey) {
+        setCurrent(initialPageRef.current ?? storageGet<string | null>(lastKey, null));
+        initialPageRef.current = null;
+      }
       return;
     }
     const read = () => {
@@ -569,7 +589,7 @@ export function NotesProvider(props: {
       const added = credited.map((userId) => ({
         pageId: row.id,
         userId,
-        points: POINTS + (onTime ? ON_TIME_BONUS : 0) + (focusRank(row, userId, day) ? ON_TIME_BONUS : 0),
+        points: POINTS + (onTime ? ON_TIME_BONUS : 0) + (focusEntry(row, userId, day)?.pending === false ? ON_TIME_BONUS : 0),
         doneAt: now,
       }));
       setCompletions((c) => {
@@ -789,13 +809,44 @@ export function NotesProvider(props: {
     (rowId: string, userId: string, rank: number | null) => {
       const day = today();
       const rows = [...pagesRef.current.values()].filter((p) => !p.deletedAt);
-      const current = focusTasks(rows, userId, day).map((x) => ({ id: x.row.id, rank: x.rank }));
-      for (const [id, r] of reorderFocus(current, rowId, rank)) {
+      const current = focusTasks(rows, userId, day);
+      // Leitung trägt direkt ein; Mitarbeiter (und der Studio-PC) warten auf Freigabe – die Datenbank prüft das ebenso
+      const pendingNew = !accessRef.current.oversee;
+      for (const [id, r] of reorderFocus(
+        current.map((x) => ({ id: x.row.id, rank: x.rank })),
+        rowId,
+        rank,
+      )) {
         const row = pagesRef.current.get(id);
-        if (row) updatePage(id, { props: withFocus(row.props, userId, day, r) }, { delay: 0 });
+        const pending = current.find((x) => x.row.id === id)?.pending ?? pendingNew;
+        if (row) updatePage(id, { props: withFocus(row.props, userId, day, r, pending) }, { delay: 0 });
       }
     },
     [updatePage],
+  );
+
+  const studioName = useCallback((id: string | null | undefined) => locations.find((l) => l.id === id)?.name ?? "Ohne Studio", [locations]);
+  const dayStatus = useMemo(
+    () => dailyStatus({ day: today(), pages, members, plan: dayPlan, isLive, studioName }),
+    [pages, members, dayPlan, isLive, studioName],
+  );
+
+  const decideFocus = useCallback(
+    (pageId: string, userId: string, ok: boolean) => {
+      const row = pagesRef.current.get(pageId);
+      const entry = row?.props[FOCUS_KEY] as Record<string, string> | undefined;
+      if (row && entry?.[userId]) {
+        const next = { ...entry };
+        if (ok) next[userId] = next[userId].replace(/:\?$/, "");
+        else delete next[userId];
+        patchLocal(pageId, { props: { ...row.props, [FOCUS_KEY]: next as unknown as PropValue } });
+      }
+      store
+        .decideFocus(pageId, userId, ok)
+        .then((r) => r === "gone" && toast("Diese Tagesaufgabe gibt es nicht mehr."))
+        .catch((e: Error) => toast(`Freigabe fehlgeschlagen: ${e.message}`));
+    },
+    [patchLocal, store, toast],
   );
 
   const move = useCallback(
@@ -935,8 +986,10 @@ export function NotesProvider(props: {
       celebration,
       dismissCelebration,
       setFocus,
+      dayStatus,
+      decideFocus,
     }),
-    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, workDays, celebration, dismissCelebration, setFocus],
+    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, workDays, celebration, dismissCelebration, setFocus, dayStatus, decideFocus],
   );
 
   return <NotesContext.Provider value={value}>{props.children}</NotesContext.Provider>;

@@ -30,12 +30,14 @@ export type NotesWorkspaceProps = {
   routing?: "hash" | "memory";
   /** Füllt den Container statt des ganzen Fensters */
   embedded?: boolean;
+  /** Eingebettet: diese Seite zuerst öffnen (Link aus Telegram) */
+  initialPage?: string | null;
   onLogout?: () => void;
 };
 
 export function NotesWorkspace(props: NotesWorkspaceProps) {
   return (
-    <NotesProvider store={props.store} routing={props.routing ?? "hash"}>
+    <NotesProvider store={props.store} routing={props.routing ?? "hash"} initialPage={props.initialPage}>
       <Layout {...props} />
     </NotesProvider>
   );

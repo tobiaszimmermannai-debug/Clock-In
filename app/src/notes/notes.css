@@ -718,6 +718,11 @@ select.nk-input { padding-right: 4px; }
 .nk-focus-list li:hover .nk-focus-actions, .nk.is-mobile .nk-focus-actions { opacity: 1; }
 .nk-focus-actions .nk-icon-btn { width: 24px; height: 24px; }
 .nk-focus-empty { margin: 2px 0 0; font-size: 13px; }
+.nk-focus-absent { margin: 2px 0 0; font-size: 14px; color: var(--nk-muted); }
+.nk-focus-absent b { display: inline-block; width: 22px; text-align: center; font-size: 18px; color: var(--nk-fg); }
+.nk-focus-list li.is-pending { box-shadow: inset 3px 0 0 var(--c-orange, #e67700), 0 1px 2px rgba(0, 0, 0, .06); }
+.nk-focus-approve { display: flex; gap: 4px; flex: none; }
+.nk-btn.is-small { padding: 2px 8px; font-size: 12px; }
 .nk-home-task button.nk-home-task-title { text-align: left; }
 
 /* Wochen- & Monatsaufgaben */
@@ -760,6 +765,8 @@ select.nk-input { padding-right: 4px; }
 .nk-ov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .nk-ov-card { display: grid; gap: 8px; align-content: start; padding: 12px; border-radius: 12px; box-shadow: 0 0 0 1px var(--nk-line); }
 .nk-ov-card header { display: flex; align-items: center; gap: 8px; }
+.nk-ov-approvals { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.nk-ov-approvals li { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; box-shadow: inset 3px 0 0 var(--c-orange), 0 0 0 1px var(--nk-line); font-size: 14px; }
 .nk-ov-stats { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--nk-muted); }
 .nk-ov-stats b { color: var(--nk-fg); }
 .nk-ov-stats .is-bad b { color: var(--c-red); }

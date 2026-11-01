@@ -1,6 +1,6 @@
 // Lokaler Speicher (nur dieses Gerät): Demo-Modus und Betrieb ohne Supabase
 import { mergeUpdates } from "yjs";
-import type { Access, Blocks, CollabMessage, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Studio, Version } from "../types";
+import type { Access, Blocks, CollabMessage, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, PropValue, StoreEvent, Studio, Version } from "../types";
 import { fromBase64, plainText, storageGet, storageSet, toBase64, uid } from "../util";
 
 type Row = PageMeta & { content: Blocks; plain: string; ydoc?: string | null };
@@ -57,6 +57,24 @@ export class LocalStore implements NotesStore {
 
   async workDays() {
     return null;
+  }
+
+  /** Lokal gibt es keinen Dienstplan */
+  async dayPlan() {
+    return null;
+  }
+
+  /** Lokal: Freigabe direkt an der Aufgabe */
+  async decideFocus(pageId: string, userId: string, ok: boolean) {
+    this.rows = this.read();
+    const row = this.rows.get(pageId);
+    const focus = { ...((row?.props.__focus as Record<string, string> | undefined) ?? {}) };
+    const v = focus[userId];
+    if (!row || !v) return "gone";
+    if (ok) focus[userId] = v.replace(/:\?$/, "");
+    else delete focus[userId];
+    await this.update(pageId, { props: { ...row.props, __focus: focus as unknown as PropValue } });
+    return ok ? "approved" : "rejected";
   }
 
   private read(): Map<string, Row> {

@@ -216,7 +216,12 @@ type TimesView = "presence" | "approvals" | "times";
 function AdminHome(props: { profile: Profile; onLogout: () => void }) {
   const { profile } = props;
   const isAdmin = profile.role === "admin";
-  const [tab, setTab] = useState<TabId>("plan");
+  // Link aus Telegram: #/admin/aufgabe/<id> öffnet die Aufgabe im Bereich „Aufgaben“
+  const [taskLink] = useState(() => /^#\/admin\/aufgabe\/([\w-]+)/.exec(location.hash)?.[1] ?? null);
+  const [tab, setTab] = useState<TabId>(taskLink ? "tasks" : "plan");
+  useEffect(() => {
+    if (taskLink) history.replaceState(null, "", "#/admin");
+  }, [taskLink]);
   const [teamView, setTeamView] = useState<TeamView>("people");
   const [timesView, setTimesView] = useState<TimesView>(isAdmin ? "presence" : "times");
   const [open, setOpen] = useState(0);
@@ -286,7 +291,7 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
           {timesView === "times" && <Times profile={profile} />}
         </>
       )}
-      {tab === "tasks" && <Tasks db={adminDb} />}
+      {tab === "tasks" && <Tasks db={adminDb} initialPage={taskLink} />}
       {tab === "settings" && isAdmin && <Tablets />}
     </Shell>
   );

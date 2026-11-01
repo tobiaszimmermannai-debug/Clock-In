@@ -4,8 +4,9 @@ import { useNotes } from "../state";
 import type { Member } from "../types";
 import { Icon } from "../ui/Icon";
 import { MenuItem, MenuLabel, Popover, usePopover } from "../ui/Popover";
+import { personDay } from "../daily/status";
 import { formatDate, today, untitled } from "../util";
-import { focusTasks, MAX_FOCUS } from "./focus";
+import { MAX_FOCUS } from "./focus";
 import { allTasks, byDue, doneProps, tasksOf } from "./tasks";
 
 export function FocusSection(props: { member: Member; compact?: boolean }) {
@@ -20,11 +21,11 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
     [pages, isLive, inMyView, userId, notes.me.id],
   );
   const byId = new Map(items.map((t) => [t.row.id, t]));
-  const focus = focusTasks(
-    items.map((t) => t.row),
-    userId,
-    day,
-  ).map((f) => ({ ...f, task: byId.get(f.row.id)! }));
+  // Tagesstand aus der gemeinsamen Berechnung (wie der Telegram-Reminder)
+  const today_ = personDay(notes.dayStatus, userId);
+  const absent = today_?.absent ?? false;
+  const focus = (today_?.focus ?? []).map((f) => ({ row: f.row, rank: f.rank, pending: f.pending, task: f }));
+  const lead = notes.access.oversee;
   const candidates = tasksOf(items, userId)
     .filter((t) => !t.done && !focus.some((f) => f.row.id === t.row.id))
     .sort(byDue)
@@ -42,9 +43,7 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
     <section className={`nk-focus${props.compact ? " is-compact" : ""}`}>
       <div className="nk-focus-head">
         <span className="nk-focus-title">📌 Heute im Fokus{userId !== notes.actor?.id ? ` · ${first}` : ""}</span>
-        <span className="nk-muted nk-focus-count">
-          {focus.filter((f) => f.task.done).length}/{focus.length || MAX_FOCUS}
-        </span>
+        <span className="nk-muted nk-focus-count">{absent ? "–" : `${focus.filter((f) => f.task.done).length}/${focus.length || MAX_FOCUS}`}</span>
         <span className="nk-spacer" />
         {focus.length < MAX_FOCUS && (
           <button type="button" className="nk-btn is-ghost" onClick={(e) => pick.open(e.currentTarget)}>
@@ -52,10 +51,14 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
           </button>
         )}
       </div>
-      {focus.length ? (
+      {absent ? (
+        <p className="nk-focus-absent" title="Laut Dienstplan heute krank, in der Schule oder im Urlaub">
+          <b>-</b> heute abwesend – zählt nicht als offen
+        </p>
+      ) : focus.length ? (
         <ol className="nk-focus-list">
-          {focus.map(({ row, rank, task }) => (
-            <li key={row.id} className={task.done ? "is-done" : task.overdue ? "is-overdue" : ""}>
+          {focus.map(({ row, rank, pending, task }) => (
+            <li key={row.id} className={`${task.done ? "is-done" : task.overdue ? "is-overdue" : ""}${pending ? " is-pending" : ""}`}>
               <span className={`nk-focus-rank is-${rank}`}>{rank}</span>
               <button
                 type="button"
@@ -69,7 +72,24 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
                 {row.icon && <span>{row.icon} </span>}
                 {untitled(row)}
               </button>
-              <span className="nk-muted nk-focus-db">{untitled(task.db)}</span>
+              {pending ? (
+                lead ? (
+                  <span className="nk-focus-approve">
+                    <button type="button" className="nk-btn is-small" onClick={() => notes.decideFocus(row.id, userId, true)}>
+                      ✓ Freigeben
+                    </button>
+                    <button type="button" className="nk-btn is-small is-ghost" onClick={() => notes.decideFocus(row.id, userId, false)}>
+                      Ablehnen
+                    </button>
+                  </span>
+                ) : (
+                  <span className="nk-tag is-orange" title="Die Leitung wurde per Telegram gefragt">
+                    ⏳ wartet auf Freigabe
+                  </span>
+                )
+              ) : (
+                <span className="nk-muted nk-focus-db">{untitled(task.db)}</span>
+              )}
               {task.due && <span className={`nk-date${task.overdue ? " is-past" : task.due.slice(0, 10) === day ? " is-today" : ""}`}>{formatDate(task.due)}</span>}
               <span className="nk-focus-actions">
                 {rank > 1 && (

@@ -119,6 +119,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 30. `supabase/migrations/20261031090000_notes_hardening.sql` (Aufgaben: Dateien nur für Berechtigte, weniger Datenverkehr beim Tippen)
 31. `supabase/migrations/20261101090000_notes_roles_gamification.sql` (Aufgaben: Leitung sieht alles, Studio-PC, Blitzi/Serie/Rangliste)
 32. `supabase/migrations/20261102090000_notes_streak_days.sql` (Aufgaben: Serie zählt nur echte Arbeitstage – Samstag ohne Schicht, Schule, Urlaub, Krank unterbrechen nie)
+33. `supabase/migrations/20261103090000_notes_daily_telegram.sql` (Aufgaben: Tagesaufgaben mit Freigabe, Abwesenheiten aus dem Dienstplan, Telegram-Benachrichtigungen – danach Teil O)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -167,6 +168,30 @@ Der PC im Studio zeigt die Aufgaben aller Mitarbeiter (das Tablet bleibt reines 
 2. Tobias oder Dominik geben frei (Telegram oder Einstellungen).
 3. Der PC zeigt danach **Aufgaben** (und bei Bedarf den Stempel-QR). Jeder tippt auf seinen Namen („Wer bist du?“);
    nach 10 Minuten ohne Eingabe fragt der PC wieder. Private Seiten erscheinen am PC nie.
+
+## Teil O – Aufgaben per Telegram (Tagesaufgaben, Freigaben, Tagesreminder)
+Neue Tagesaufgaben der Leitung gehen sofort an die anderen Empfänger; Tagesaufgaben, die Mitarbeiter selbst
+eintragen, warten auf Freigabe (Knöpfe in Telegram oder Team-Übersicht). Mo–Fr um 6, 14 und 20 Uhr kommt der
+Tagesreminder; wer laut Dienstplan krank, in der Schule oder im Urlaub ist, steht mit „-“ drin.
+1. **Edge Functions → Deploy a new function → Via Editor**, Name `aufgaben`, Code komplett ersetzen durch
+   `supabase/functions/aufgaben/index.ts` → **Deploy** → **Verify JWT ausschalten** (wie bei `telegram`).
+2. **Eigener Bot (empfohlen, nötig für die Freigabe-Knöpfe):** in Telegram @BotFather → `/newbot` → Token merken.
+   Jeder Empfänger öffnet den neuen Bot einmal und tippt **Start**. Eigene Telegram-ID: @userinfobot.
+3. **Edge Functions → Secrets** (gelten für alle Functions; `NOTIFY_SECRET` gibt es schon):
+   | Name | Wert |
+   | --- | --- |
+   | `AUFGABEN_EMPFAENGER` | `[{"id":123456789,"kz":"TZ","name":"Tobias"},{"id":…,"kz":"DO","name":"Dominik"}]` |
+   | `AUFGABEN_APP_URL` | `https://<eure-clockin-adresse>/#/admin/aufgabe/{id}` |
+   | `AUFGABEN_TELEGRAM_TOKEN` | Token des neuen Bots (ohne: ClockIn-Bot sendet nur, Freigabe dann per Link) |
+   | `AUFGABEN_WEBHOOK_SECRET` | beliebige lange Zufallszeichenkette (nur mit eigenem Bot) |
+   | `AUFGABEN_TELEGRAM_AUS` | `1` = alle automatischen Nachrichten aus (zum Abschalten; sonst weglassen) |
+   | optional `AUFGABEN_STUNDE_FRUEH` / `_MITTAG` / `_ABEND` | Berliner Stunde, Standard 6 / 14 / 20 |
+4. **Nur für den neuen Bot** den Webhook setzen (Browser, Platzhalter ersetzen):
+   `https://api.telegram.org/bot<NEUER-TOKEN>/setWebhook?url=https://<REF>.supabase.co/functions/v1/aufgaben&secret_token=<AUFGABEN_WEBHOOK_SECRET>`
+   **Niemals** setWebhook/deleteWebhook mit dem ClockIn-Token aufrufen – sonst gehen die ClockIn-Freigaben nicht mehr.
+5. **Trockenlauf** (sendet nichts): Edge Functions → `aufgaben` → **Test** → POST, Header `x-notify-secret` =
+   `NOTIFY_SECRET`, Body `{"action":"reminder","kind":"frueh"}` → zeigt den Text. Mit `"dryRun": false` wird wirklich gesendet.
+6. Prüfen: `select jobname from cron.job;` → Zeile `aufgaben-hourly` (stündlich; die Function sendet nur Mo–Fr zur Berliner Stunde).
 
 ## Gut zu wissen
 - **2FA:** Admin-Rechte in der App gelten nur mit zweitem Faktor (Authenticator-App).

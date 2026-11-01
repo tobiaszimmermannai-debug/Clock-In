@@ -221,6 +221,10 @@ export interface NotesStore {
   /** Gutschrift setzen (erledigt) oder zurücknehmen (wieder offen) */
   setCompletion(pageId: string, userIds: string[], points: number, done: boolean): Promise<void>;
   /** Tage mit Arbeitsbeginn laut Stempeluhr (YYYY-MM-DD); null = unbekannt */
+  /** Dienstplan eines Tages aus ClockIn: eingeplant und abwesend (Krank, Schule, Urlaub); null = unbekannt */
+  dayPlan(day: string): Promise<{ planned: string[]; absent: string[] } | null>;
+  /** Tagesaufgabe freigeben (true) oder ablehnen (false) – nur Leitung */
+  decideFocus(pageId: string, userId: string, ok: boolean): Promise<string>;
   /** Arbeitstage je Person (eigene und die betreuter Personen); null = unbekannt */
   workDays(sinceIso: string): Promise<Record<string, string[]> | null>;
   /** IDs der Seiten, deren Inhalt den Suchbegriff enthält */

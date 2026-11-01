@@ -1,5 +1,7 @@
-// Tagesfokus: pro Person und Tag bis zu drei angepinnte Aufgaben (Rang 1–3)
+// Tagesfokus ("Tagesaufgaben"): pro Person und Tag bis zu drei angepinnte Aufgaben (Rang 1–3)
 // Gespeichert an der Aufgabe selbst (props.__focus = { <Person>: "<Tag>:<Rang>" }); alte Tage verfallen von allein.
+// Selbst eingetragene Aufgaben von Mitarbeitern warten auf Freigabe der Leitung: "<Tag>:<Rang>:?"
+// (die Datenbank erzwingt das, siehe note_pages_focus_guard).
 import type { PageMeta, PropValue } from "../types";
 
 export const FOCUS_KEY = "__focus";
@@ -12,25 +14,40 @@ const mapOf = (props: Record<string, PropValue>): FocusMap => {
   return raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as FocusMap) : {};
 };
 
-export function focusRank(row: PageMeta, userId: string, day: string): number | null {
+export type FocusEntry = { rank: number; pending: boolean };
+
+/** Eintrag einer Person für einen Tag (null = nicht angepinnt) */
+export function focusEntry(row: PageMeta, userId: string, day: string): FocusEntry | null {
   const v = mapOf(row.props)[userId];
-  if (!v) return null;
-  const [d, r] = v.split(":");
-  return d === day ? Number(r) || null : null;
+  if (typeof v !== "string") return null;
+  const [d, r, flag] = v.split(":");
+  const rank = Number(r);
+  return d === day && rank >= 1 ? { rank, pending: flag === "?" } : null;
 }
 
-export function withFocus(props: Record<string, PropValue>, userId: string, day: string, rank: number | null): Record<string, PropValue> {
+export function focusRank(row: PageMeta, userId: string, day: string): number | null {
+  return focusEntry(row, userId, day)?.rank ?? null;
+}
+
+export function withFocus(
+  props: Record<string, PropValue>,
+  userId: string,
+  day: string,
+  rank: number | null,
+  pending = false,
+): Record<string, PropValue> {
   const next: FocusMap = { ...mapOf(props) };
   if (rank === null) delete next[userId];
-  else next[userId] = `${day}:${rank}`;
+  else next[userId] = `${day}:${rank}${pending ? ":?" : ""}`;
   return { ...props, [FOCUS_KEY]: next as unknown as PropValue };
 }
 
 /** Fokus-Aufgaben einer Person für einen Tag, nach Rang */
-export function focusTasks(rows: PageMeta[], userId: string, day: string): { row: PageMeta; rank: number }[] {
+export function focusTasks(rows: PageMeta[], userId: string, day: string): { row: PageMeta; rank: number; pending: boolean }[] {
   return rows
-    .map((row) => ({ row, rank: focusRank(row, userId, day) }))
-    .filter((x): x is { row: PageMeta; rank: number } => x.rank !== null)
+    .map((row) => ({ row, entry: focusEntry(row, userId, day) }))
+    .filter((x): x is { row: PageMeta; entry: FocusEntry } => x.entry !== null)
+    .map(({ row, entry }) => ({ row, ...entry }))
     .sort((a, b) => a.rank - b.rank)
     .slice(0, MAX_FOCUS);
 }
