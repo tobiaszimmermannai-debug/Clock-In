@@ -13,7 +13,7 @@ import { allTasks, byDue, tasksOf, type TaskItem } from "./tasks";
 
 export type ReminderReason = "login" | "clock_in" | "break";
 
-type Data = { name: string; kind: "m" | "w" | null; open: TaskItem[]; focus: { item: TaskItem; rank: number }[]; stats: MyStats };
+type Data = { name: string; open: TaskItem[]; focus: { item: TaskItem; rank: number }[]; stats: MyStats };
 
 export function TaskReminder(props: { store: NotesStore; reason: ReminderReason; onOpen: () => void; onClose?: () => void }) {
   const { store } = props;
@@ -46,7 +46,7 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
         me.id,
         today(),
       ).map((f) => ({ item: byId.get(f.row.id)!, rank: f.rank }));
-      if (!cancelled) setData({ name: me.name.split(" ")[0], kind: me.blitzi ?? null, open, focus, stats: myStats(me.id, events, { today: today(), workDays: days }) });
+      if (!cancelled) setData({ name: me.name.split(" ")[0], open, focus, stats: myStats(me.id, events, { today: today(), workDays: days }) });
     })().catch(() => undefined);
     return () => {
       cancelled = true;
@@ -71,10 +71,9 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
       <div className="nk-reminder-top">
         <Blitzi
           mood={props.reason === "break" && mood === "sad" ? "sleepy" : mood}
-          size={78}
+          size={92}
           stage={stageOf(stats.streak)}
           coins={coinsOf(stats.streak)}
-          kind={data.kind}
           onTap={() => setVariant((v) => v + 1)}
         />
         <div className="nk-reminder-text">

@@ -154,8 +154,6 @@ export type Member = {
   studioId?: string | null;
   /** Studio-PC statt Person */
   device?: boolean;
-  /** Blitzi-Variante: männlich/weiblich (noch nicht gewählt: null) */
-  blitzi?: "m" | "w" | null;
 };
 
 export type Studio = { id: string; name: string };
@@ -228,8 +226,6 @@ export interface NotesStore {
   search(query: string): Promise<string[]>;
   favorites(): Promise<string[]>;
   setFavorite(id: string, on: boolean): Promise<void>;
-  /** Blitzi-Variante einer Person setzen (selbst, Leitung oder Studio-PC) */
-  setBlitzi(userId: string, kind: "m" | "w"): Promise<void>;
   /** Datei hochladen → im Dokument gespeicherte Adresse */
   upload(file: File, pageId: string): Promise<string>;
   /** Gespeicherte Adresse → anzeigbare Adresse (z. B. signierte URL) */

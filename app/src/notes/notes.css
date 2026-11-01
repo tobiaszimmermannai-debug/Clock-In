@@ -644,23 +644,16 @@ select.nk-input { padding-right: 4px; }
 .nk-stage .nk-stage-coins { opacity: 1; font-weight: 700; color: #b9861a; }
 .nk-bubble-next { display: block; margin-top: 4px; font-size: 12px; font-weight: 600; color: #c26a00; }
 .nk.nk-dark .nk-bubble-next { color: #ffc94d; }
-.nk-kind { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.nk-kind-label { font-size: 13px; font-weight: 600; }
-.nk-kind-option { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 4px; border-radius: 10px; border: 1px solid var(--nk-line); background: var(--nk-bg); color: var(--nk-fg); font-size: 13px; cursor: pointer; }
-.nk-kind-option[aria-pressed="true"] { border-color: #e67700; box-shadow: 0 0 0 2px rgba(230, 119, 0, .25); }
-.nk-kind-option .blitzi { pointer-events: none; }
 .nk-evo-modal { width: min(760px, 100%); max-height: 84vh; }
 .nk-evo-close { margin-left: auto; }
 .nk-evo-body { overflow: auto; padding: 12px; }
-.nk-evo-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.nk-evo-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .nk-evo-grid li { display: grid; justify-items: center; align-content: end; gap: 2px; padding: 6px 4px; border-radius: 10px; background: var(--nk-hover); text-align: center; }
 .nk-evo-grid li.is-current { background: linear-gradient(135deg, #fff8dc, #ffe9a3); box-shadow: 0 0 0 2px #e67700; color: #37352f; }
 .nk-evo-grid li b { font-size: 12px; }
 .nk-evo-grid li small { font-size: 10px; line-height: 1.2; opacity: .7; }
 .nk-evo-grid li.is-locked b, .nk-evo-grid li.is-locked small { opacity: .45; }
 .nk-evo-help { margin: 12px 2px 0; font-size: 13px; }
-.nk-ov-kind { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--nk-muted); }
-.nk-ov-kind select { font: inherit; padding: 2px 4px; border-radius: 6px; border: 1px solid var(--nk-line); background: var(--nk-bg); color: var(--nk-fg); }
 .nk-bubble { position: relative; padding: 10px 12px; border-radius: 12px; background: var(--nk-bg); color: var(--nk-fg); font-size: 14px; font-weight: 500; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
 .nk-bubble::before { content: ""; position: absolute; left: -7px; top: 16px; border: 7px solid transparent; border-left: 0; border-right-color: var(--nk-bg); }
 .nk-game-stats { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; }

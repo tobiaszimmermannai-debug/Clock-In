@@ -112,22 +112,7 @@ export class SupabaseStore implements NotesStore {
       if (access.studio) return { id, name: access.studioName || "Studio-PC", color: "gray", device: true };
     }
     const name = data ? `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim() : "Ich";
-    const kinds = await this.blitzis([id]);
-    return { id, name: name || "Ich", color: colorFor(id), role: (data?.role as string | undefined) ?? undefined, blitzi: kinds.get(id) ?? null };
-  }
-
-  /** Blitzi-Varianten (ältere Datenbank ohne Tabelle: keine) */
-  private async blitzis(ids?: string[]): Promise<Map<string, "m" | "w">> {
-    let q = this.db.from("note_profiles").select("user_id, blitzi");
-    if (ids) q = q.in("user_id", ids);
-    const { data, error } = await q;
-    if (error) return new Map();
-    return new Map((data ?? []).filter((r) => r.blitzi === "m" || r.blitzi === "w").map((r) => [r.user_id as string, r.blitzi as "m" | "w"]));
-  }
-
-  async setBlitzi(userId: string, kind: "m" | "w"): Promise<void> {
-    const { error } = await this.db.rpc("note_set_blitzi", { p_user: userId, p_kind: kind });
-    if (error) throw error;
+    return { id, name: name || "Ich", color: colorFor(id), role: (data?.role as string | undefined) ?? undefined };
   }
 
   private accessCache?: Promise<Access>;
@@ -200,14 +185,12 @@ export class SupabaseStore implements NotesStore {
       .not("auth_user_id", "is", null)
       .order("first_name");
     if (error) throw error;
-    const kinds = await this.blitzis();
     return (data ?? []).map((u) => ({
       id: u.auth_user_id as string,
       name: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || "Unbekannt",
       color: colorFor(u.auth_user_id as string),
       role: (u.role as string | null) ?? undefined,
       studioId: (u.home_location_id as string | null) ?? null,
-      blitzi: kinds.get(u.auth_user_id as string) ?? null,
     }));
   }
 

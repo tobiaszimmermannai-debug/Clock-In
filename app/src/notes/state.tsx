@@ -46,7 +46,6 @@ export type Celebration = {
   goal: boolean;
   streak: number;
   name: string;
-  kind: "m" | "w" | null;
   /** Serie ist mit dieser Aufgabe gewachsen: neue Stufe bzw. neue Goldmünze */
   grew: boolean;
 };
@@ -131,8 +130,6 @@ type Ctx = {
   dismissCelebration: () => void;
   /** Tagesfokus: Aufgabe für eine Person heute auf Rang 1–3 setzen (null = entfernen) */
   setFocus: (rowId: string, userId: string, rank: number | null) => void;
-  /** Blitzi männlich/weiblich für eine Person festlegen */
-  setBlitzi: (userId: string, kind: "m" | "w") => void;
 };
 
 const NotesContext = createContext<Ctx | null>(null);
@@ -589,7 +586,6 @@ export function NotesProvider(props: {
             goal: stats.today === stats.goal,
             streak: stats.streak,
             name: person?.name.split(" ")[0] ?? "",
-            kind: person?.blitzi ?? null,
             grew: stats.streak > before.streak,
           });
         }
@@ -801,20 +797,6 @@ export function NotesProvider(props: {
     [updatePage],
   );
 
-  const setBlitzi = useCallback(
-    (userId: string, kind: "m" | "w") => {
-      const apply = (m: Member) => (m.id === userId ? { ...m, blitzi: kind } : m);
-      membersRef.current = membersRef.current.map(apply);
-      setMembers(membersRef.current);
-      if (meRef.current.id === userId) {
-        meRef.current = apply(meRef.current);
-        setMe(meRef.current);
-      }
-      store.setBlitzi(userId, kind).catch((e: Error) => toast(`Blitzi speichern fehlgeschlagen: ${e.message}`));
-    },
-    [store, toast],
-  );
-
   const move = useCallback(
     (id: string, target: { parentId: string | null; space?: Space; position?: number }) => {
       const all = [...pagesRef.current.values()];
@@ -952,9 +934,8 @@ export function NotesProvider(props: {
       celebration,
       dismissCelebration,
       setFocus,
-      setBlitzi,
     }),
-    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, workDays, celebration, dismissCelebration, setFocus, setBlitzi],
+    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, workDays, celebration, dismissCelebration, setFocus],
   );
 
   return <NotesContext.Provider value={value}>{props.children}</NotesContext.Provider>;

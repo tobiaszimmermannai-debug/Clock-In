@@ -5,7 +5,7 @@ import type { Completion, Member } from "../types";
 import { Modal } from "../ui/Popover";
 import { today } from "../util";
 import { Blitzi } from "./Blitzi";
-import { coinsOf, MAX_STAGE, stageName, stageOf, UNLOCKS, type BlitziKind } from "./evolution";
+import { coinsOf, MAX_STAGE, stageName, stageOf, UNLOCKS } from "./evolution";
 import { leaderboard, moodFor, myStats, speech, weekStart, type MyStats } from "./stats";
 
 /** Akku: füllt sich mit jeder erledigten Aufgabe bis zum Tagesziel */
@@ -35,27 +35,10 @@ export function nextStep(stats: MyStats): string {
   return maxed ? "1 Aufgabe heute = 1 Goldmünze" : `1 Aufgabe heute → Stufe ${stageOf(stats.streak + 1)}`;
 }
 
-/** Auswahl männlich/weiblich */
-export function KindPicker(props: { stage: number; value?: BlitziKind | null; onPick: (kind: BlitziKind) => void; label?: string }) {
-  return (
-    <div className="nk-kind">
-      {props.label && <span className="nk-kind-label">{props.label}</span>}
-      {(["m", "w"] as const).map((k) => (
-        <button key={k} type="button" className="nk-kind-option" aria-pressed={props.value === k} onClick={() => props.onPick(k)}>
-          <Blitzi mood="happy" stage={props.stage} kind={k} size={40} still title={k === "m" ? "Männlich" : "Weiblich"} />
-          <span>{k === "m" ? "Männlich" : "Weiblich"}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
 /** Alle 30 Stufen: freigeschaltete farbig, kommende als Schatten */
-export function EvolutionModal(props: { member: Member; streak: number; onClose: () => void }) {
-  const notes = useNotes();
+export function EvolutionModal(props: { streak: number; onClose: () => void }) {
   const stage = stageOf(props.streak);
   const coins = coinsOf(props.streak);
-  const kind = props.member.blitzi ?? null;
   return (
     <Modal label="Blitzis Entwicklung" onClose={props.onClose} className="nk-evo-modal">
       <div className="nk-modal-head">
@@ -74,7 +57,7 @@ export function EvolutionModal(props: { member: Member; streak: number; onClose:
             const open = n <= stage;
             return (
               <li key={n} className={`${open ? "is-open" : "is-locked"}${n === stage ? " is-current" : ""}`}>
-                <Blitzi mood={open ? "happy" : "neutral"} stage={n} kind={kind} size={58} still locked={!open} title={open ? stageName(n, kind) : `Stufe ${n} – noch gesperrt`} />
+                <Blitzi mood={open ? "happy" : "neutral"} stage={n} size={74} still locked={!open} title={open ? stageName(n) : `Stufe ${n} – noch gesperrt`} />
                 <b>{n}</b>
                 {UNLOCKS[n] && <small>{UNLOCKS[n]}</small>}
               </li>
@@ -85,9 +68,6 @@ export function EvolutionModal(props: { member: Member; streak: number; onClose:
           Jeder Tag deiner Serie schaltet eine Stufe frei – vom gemütlichen Sofa-Blitzi bis zum Muskelpaket. Reißt die Serie,
           fängt Blitzi wieder bei Stufe 1 an. Ab Stufe {MAX_STAGE} sitzt Blitzi für jeden weiteren Tag auf einer Goldmünze mehr.
         </p>
-      </div>
-      <div className="nk-modal-foot">
-        <KindPicker label="Blitzi:" stage={stage} value={kind} onPick={(k) => notes.setBlitzi(props.member.id, k)} />
       </div>
     </Modal>
   );
@@ -102,16 +82,15 @@ export function BlitziCard(props: { member: Member; open: number; ownWorkDays?: 
   const first = props.member.name === "Ich" ? "" : props.member.name.split(" ")[0];
   const stage = stageOf(stats.streak);
   const coins = coinsOf(stats.streak);
-  const kind = props.member.blitzi ?? null;
   return (
     <div className={`nk-game is-${mood}`}>
       <div className="nk-game-hero">
-        <Blitzi mood={mood} size={104} stage={stage} coins={coins} kind={kind} onTap={() => setVariant((v) => v + 1)} />
+        <Blitzi mood={mood} size={128} stage={stage} coins={coins} onTap={() => setVariant((v) => v + 1)} />
         <button type="button" className="nk-stage" onClick={() => setEvolution(true)} title="Alle Stufen ansehen">
           <b>
             Stufe {stage}/{MAX_STAGE}
           </b>
-          <span>{stageName(stage, kind)}</span>
+          <span>{stageName(stage)}</span>
           {coins > 0 && <span className="nk-stage-coins">🪙 {coins}</span>}
         </button>
       </div>
@@ -121,9 +100,6 @@ export function BlitziCard(props: { member: Member; open: number; ownWorkDays?: 
           {speech(mood, stats, props.open, variant)}
           <span className="nk-bubble-next">{nextStep(stats)}</span>
         </div>
-        {!kind && !props.member.device && (
-          <KindPicker label="Welcher Blitzi gehört zu dir?" stage={stage} onPick={(k) => notes.setBlitzi(props.member.id, k)} />
-        )}
         <div className="nk-game-stats">
           <div className="nk-stat">
             <span className="nk-stat-value">⚡ {stats.streak}</span>
@@ -141,7 +117,7 @@ export function BlitziCard(props: { member: Member; open: number; ownWorkDays?: 
           </div>
         </div>
       </div>
-      {evolution && <EvolutionModal member={props.member} streak={stats.streak} onClose={() => setEvolution(false)} />}
+      {evolution && <EvolutionModal streak={stats.streak} onClose={() => setEvolution(false)} />}
     </div>
   );
 }
@@ -200,10 +176,9 @@ export function Celebration() {
       </div>
       <Blitzi
         mood={c.goal || c.grew ? "party" : "proud"}
-        size={c.goal || c.grew ? 84 : 54}
+        size={c.goal || c.grew ? 104 : 68}
         stage={stageOf(c.streak)}
         coins={coinsOf(c.streak)}
-        kind={c.kind}
       />
       <div>
         <b>
@@ -216,7 +191,7 @@ export function Celebration() {
               : "Erledigt!"}
         </b>
         <div className="nk-celebrate-points">+{c.points} ⚡</div>
-        {c.grew && coinsOf(c.streak) === 0 && <div className="nk-muted">{stageName(stageOf(c.streak), c.kind)}</div>}
+        {c.grew && coinsOf(c.streak) === 0 && <div className="nk-muted">{stageName(stageOf(c.streak))}</div>}
         {!c.grew && c.goal && c.streak > 1 && <div className="nk-muted">{c.streak} Tage Serie{c.name ? `, ${c.name}` : ""}!</div>}
       </div>
     </div>

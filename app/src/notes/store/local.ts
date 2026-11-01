@@ -71,20 +71,12 @@ export class LocalStore implements NotesStore {
     this.listeners.forEach((l) => l(e));
   }
 
-  private withBlitzi(m: Member): Member {
-    return { ...m, blitzi: storageGet<Record<string, "m" | "w">>(`${this.key}-blitzi`, {})[m.id] ?? null };
-  }
-
   async me() {
-    return this.withBlitzi(this.user);
+    return this.user;
   }
 
   async members() {
-    return [this.withBlitzi(this.user)];
-  }
-
-  async setBlitzi(userId: string, kind: "m" | "w") {
-    storageSet(`${this.key}-blitzi`, { ...storageGet<Record<string, "m" | "w">>(`${this.key}-blitzi`, {}), [userId]: kind });
+    return [this.user];
   }
 
   async listPages() {
