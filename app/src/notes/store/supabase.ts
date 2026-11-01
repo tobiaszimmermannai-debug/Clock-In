@@ -3,61 +3,15 @@
 // note_favorites · note_versions · Bucket "notes" (Dateien unter <Seiten-ID>/…)
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { mergeUpdates } from "yjs";
-import type { Access, Blocks, CollabMessage, Color, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Studio, Version } from "../types";
-import { COLORS, fromBase64, plainText, toBase64 } from "../util";
-
-type DbRow = {
-  id: string;
-  parent_id: string | null;
-  space: PageMeta["space"];
-  owner_id: string;
-  kind: PageMeta["kind"];
-  title: string;
-  icon: string | null;
-  cover: string | null;
-  props: PageMeta["props"] | null;
-  schema: PageMeta["schema"];
-  options: PageMeta["options"] | null;
-  position: number;
-  archived_at: string | null;
-  created_at: string;
-  created_by: string | null;
-  updated_at: string;
-  updated_by: string | null;
-  deleted_at: string | null;
-  deleted_by: string | null;
-};
+import type { Access, Blocks, CollabMessage, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Studio, Version } from "../types";
+import { fromBase64, plainText, toBase64 } from "../util";
+import { colorFor, type DbRow, memberFromUser, META_COLUMNS, toMeta, type UserRow } from "./rows";
 
 const MAX_VERSIONS = 100;
 /** Höchstens so oft "zuletzt bearbeitet" an der Seite aktualisieren, während jemand tippt */
 const TOUCH_INTERVAL = 30_000;
 
-const META_COLUMNS =
-  "id, parent_id, space, owner_id, kind, title, icon, cover, props, schema, options, position, archived_at, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by";
-
 const FILE_PREFIX = "sb-notes://";
-
-const toMeta = (r: DbRow): PageMeta => ({
-  id: r.id,
-  parentId: r.parent_id,
-  space: r.space,
-  ownerId: r.owner_id,
-  kind: r.kind,
-  title: r.title ?? "",
-  icon: r.icon,
-  cover: r.cover,
-  props: r.props ?? {},
-  schema: r.schema,
-  options: r.options ?? {},
-  position: r.position,
-  archivedAt: r.archived_at,
-  createdAt: r.created_at,
-  createdBy: r.created_by,
-  updatedAt: r.updated_at,
-  updatedBy: r.updated_by,
-  deletedAt: r.deleted_at ?? null,
-  deletedBy: r.deleted_by ?? null,
-});
 
 function toRow(p: PagePatch): Record<string, unknown> {
   const map: Record<string, string> = {
@@ -80,12 +34,6 @@ function toRow(p: PagePatch): Record<string, unknown> {
   for (const [k, v] of Object.entries(p)) if (k in map && v !== undefined) row[map[k]] = v;
   return row;
 }
-
-const colorFor = (id: string): Color => {
-  let h = 0;
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return COLORS[1 + (h % (COLORS.length - 1))];
-};
 
 export class SupabaseStore implements NotesStore {
   readonly kind = "supabase" as const;
@@ -171,6 +119,19 @@ export class SupabaseStore implements NotesStore {
     if (error) throw error;
   }
 
+  async dayPlan(day: string): Promise<{ planned: string[]; absent: string[] } | null> {
+    const { data, error } = await this.db.rpc("note_day_plan", { p_day: day });
+    if (error) return null; // ältere Datenbank
+    const rows = (data ?? []) as { user_id: string; planned: boolean; absent: boolean }[];
+    return { planned: rows.filter((r) => r.planned).map((r) => r.user_id), absent: rows.filter((r) => r.absent).map((r) => r.user_id) };
+  }
+
+  async decideFocus(pageId: string, userId: string, ok: boolean): Promise<string> {
+    const { data, error } = await this.db.rpc("note_focus_decide", { p_page: pageId, p_user: userId, p_ok: ok });
+    if (error) throw error;
+    return String(data);
+  }
+
   async workDays(sinceIso: string): Promise<Record<string, string[]> | null> {
     const since = sinceIso.slice(0, 10);
     const team = await this.db.rpc("note_team_work_days", { p_since: since });
@@ -193,13 +154,7 @@ export class SupabaseStore implements NotesStore {
       .not("auth_user_id", "is", null)
       .order("first_name");
     if (error) throw error;
-    return (data ?? []).map((u) => ({
-      id: u.auth_user_id as string,
-      name: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || "Unbekannt",
-      color: colorFor(u.auth_user_id as string),
-      role: (u.role as string | null) ?? undefined,
-      studioId: (u.home_location_id as string | null) ?? null,
-    }));
+    return (data ?? []).map((u) => memberFromUser(u as UserRow));
   }
 
   async listPages(): Promise<PageMeta[]> {

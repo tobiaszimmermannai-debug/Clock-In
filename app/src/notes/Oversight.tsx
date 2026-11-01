@@ -4,6 +4,7 @@ import { Blitzi } from "./gamification/Blitzi";
 import { stageOf } from "./gamification/evolution";
 import { FocusSection } from "./gamification/Focus";
 import { statsFor } from "./gamification/GamePanel";
+import { personDay } from "./daily/status";
 import { daysFor } from "./gamification/stats";
 import { allTasks, assigneesOf, byDue, tasksOf, type TaskItem } from "./gamification/tasks";
 import { useNotes } from "./state";
@@ -60,8 +61,31 @@ function People(props: { people: Member[]; items: TaskItem[] }) {
   const byStudio = new Map<string, Member[]>();
   for (const m of props.people) byStudio.set(studioName(m.studioId), [...(byStudio.get(studioName(m.studioId)) ?? []), m]);
 
+  const pending = notes.dayStatus.pending;
   return (
     <>
+      {pending.length > 0 && (
+        <section className="nk-ov-studio">
+          <div className="nk-home-heading">⏳ Tagesaufgaben warten auf Freigabe</div>
+          <ul className="nk-ov-approvals">
+            {pending.map(({ person, item }) => (
+              <li key={`${item.row.id}-${person.member.id}`}>
+                <b>{person.member.name}</b>
+                <button type="button" className="nk-ov-page" onClick={() => notes.openPeek(item.row.id)}>
+                  {item.rank}. {untitled(item.row)}
+                </button>
+                <span className="nk-spacer" />
+                <button type="button" className="nk-btn is-small" onClick={() => notes.decideFocus(item.row.id, person.member.id, true)}>
+                  ✓ Freigeben
+                </button>
+                <button type="button" className="nk-btn is-small is-ghost" onClick={() => notes.decideFocus(item.row.id, person.member.id, false)}>
+                  Ablehnen
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {[...byStudio.entries()].map(([studio, members]) => (
         <section key={studio} className="nk-ov-studio">
           <div className="nk-home-heading">
@@ -73,6 +97,7 @@ function People(props: { people: Member[]; items: TaskItem[] }) {
               const open = mine.filter((t) => !t.done);
               const overdue = open.filter((t) => t.overdue);
               const stats = statsFor(m.id, notes.completions, daysFor(notes.workDays, m.id));
+              const day = personDay(notes.dayStatus, m.id);
               const privatePages = [...notes.pages.values()].filter(
                 (p) => p.space === "private" && p.ownerId === m.id && !p.parentId && !p.deletedAt && !p.archivedAt,
               );
@@ -96,6 +121,9 @@ function People(props: { people: Member[]; items: TaskItem[] }) {
                     </span>
                     <span>
                       <b>⚡ {stats.streak}</b> Serie
+                    </span>
+                    <span title="Tagesaufgaben heute">
+                      📌 <b>{day?.absent ? "-" : day?.focus.length ? `${day.done}/${day.focus.length}` : "0"}</b> {day?.absent ? "abwesend" : "heute"}
                     </span>
                   </div>
                   {focusFor === m.id ? (

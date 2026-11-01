@@ -6,8 +6,12 @@ import { today } from "../util";
 export type TaskItem = { row: PageMeta; db: PageMeta; due: string | null; done: boolean; overdue: boolean };
 
 /** Alle Einträge aller Datenbanken (nur lebende); filter grenzt die Datenbanken ein */
-export function allTasks(pages: Map<string, PageMeta>, isLive: (id: string) => boolean, filter: (db: PageMeta) => boolean = () => true): TaskItem[] {
-  const day = today();
+export function allTasks(
+  pages: Map<string, PageMeta>,
+  isLive: (id: string) => boolean,
+  filter: (db: PageMeta) => boolean = () => true,
+  day = today(),
+): TaskItem[] {
   const dbs = new Map<string, PageMeta>();
   for (const p of pages.values()) if (p.kind === "database" && p.schema && isLive(p.id) && filter(p)) dbs.set(p.id, p);
   const out: TaskItem[] = [];

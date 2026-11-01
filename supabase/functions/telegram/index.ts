@@ -958,6 +958,9 @@ async function handleMessage(msg: Message) {
 }
 
 async function handleCallback(cq: CallbackQuery) {
+  // Tagesaufgaben (Bereich „Aufgaben“) freigeben/ablehnen: an die Function "aufgaben" weiterreichen –
+  // sie prüft selbst, wer freigeben darf (Empfängerliste). Alle anderen Knöpfe bleiben unverändert.
+  if (/^f[ar]:/.test(cq.data ?? "")) return await forwardToAufgaben(cq);
   const parts = (cq.data ?? "").split(":");
   const admin = await findAdminByTelegramId(cq.from.id);
   if (!admin) {
@@ -981,6 +984,21 @@ async function handleCallback(cq: CallbackQuery) {
     default:
       await tg("answerCallbackQuery", { callback_query_id: cq.id });
   }
+}
+
+async function forwardToAufgaben(cq: CallbackQuery) {
+  try {
+    const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/aufgaben`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-notify-secret": NOTIFY_SECRET },
+      body: JSON.stringify({ action: "telegram_update", update: { callback_query: cq } }),
+    });
+    if (res.ok) return;
+    console.error(`Aufgaben-Freigabe nicht weitergeleitet: ${res.status} ${(await res.text()).slice(0, 200)}`);
+  } catch (e) {
+    console.error("Aufgaben-Freigabe nicht weitergeleitet:", (e as Error).message);
+  }
+  await tg("answerCallbackQuery", { callback_query_id: cq.id, text: "Gerade nicht möglich – bitte in der App freigeben.", show_alert: true });
 }
 
 // Nachtrag freigeben/ablehnen – nur offene (verhindert Doppel-Entscheidung durch zweiten Admin)
