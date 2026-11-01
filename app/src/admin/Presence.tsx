@@ -6,6 +6,7 @@ import { berlinTime } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
+import { everyWhileVisible } from "../lib/visibility";
 import { type Location, studioShort } from "../lib/types";
 
 type State = "in" | "break" | "missing" | "later" | "gone" | "missed" | "absent";
@@ -63,13 +64,8 @@ export function Presence() {
       setLocations(list);
     })();
     void load();
-    const timer = window.setInterval(() => void load(), REFRESH_MS);
-    const onVisible = () => document.visibilityState === "visible" && void load();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
+    // nur bei sichtbarem Tab, beim Zurückkehren sofort
+    return everyWhileVisible(() => void load(), REFRESH_MS);
   }, [load]);
 
   const count = (s: State) => rows.filter((r) => r.state === s).length;

@@ -10,7 +10,8 @@ import { kioskDb, tempClient } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
 
 const STORE = "clockin-terminal-request";
-const POLL_MS = 5000;
+const POLL_MS = 10_000;
+const POLL_HIDDEN_MS = 60_000; // Tab versteckt: seltener fragen, beim Zurückkehren sofort
 export type StoredRequest = { id: string; secret: string; studio: string };
 
 export function storedRequest(): StoredRequest | null {
@@ -131,9 +132,14 @@ export function TerminalWait(props: { request: StoredRequest; onReady: () => voi
 
   useEffect(() => {
     let stop = false;
-    let timer: ReturnType<typeof setTimeout>;
+    let busy = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const tick = async () => {
+      clearTimeout(timer);
+      if (busy) return;
+      busy = true;
       const { data, error } = await kioskDb.rpc("terminal_request_status", { p_id: id, p_secret: secret });
+      busy = false;
       if (stop) return;
       const r = data as { status: string; username: string | null } | null;
       if (error) setError("Keine Verbindung – versuche es weiter …");
@@ -152,12 +158,17 @@ export function TerminalWait(props: { request: StoredRequest; onReady: () => voi
         }
         if (r.status === "rejected") return;
       }
-      timer = setTimeout(tick, POLL_MS);
+      timer = setTimeout(tick, document.visibilityState === "visible" ? POLL_MS : POLL_HIDDEN_MS);
     };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     void tick();
     return () => {
       stop = true;
       clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [id, secret]);
 
