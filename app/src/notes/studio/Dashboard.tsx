@@ -15,6 +15,7 @@ import type { Member } from "../types";
 import { addDays, storageGet, storageSet, today } from "../util";
 import { isoWeek, periodLabel, periodOf } from "./period";
 import { findStudioDb, STUDIO_PROPS } from "./StudioTasks";
+import { QuickAdd } from "./QuickAdd";
 import { useStudioRecurrence } from "./recurrence";
 import { TaskLines } from "./TaskList";
 import { sceneOfWeek, TeamScene } from "./TeamScene";
@@ -232,6 +233,7 @@ function PersonTab(props: { member: Member; items: TaskItem[] }) {
         <h2 className="nk-home-heading">
           ☑️ Offene Aufgaben <span className="nk-muted">{open.length}</span>
         </h2>
+        <QuickAdd member={props.member} />
         <TaskLines items={open} empty="Keine offenen Aufgaben 🎉" />
       </section>
       <section>

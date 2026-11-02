@@ -7,6 +7,7 @@ import { MenuItem, MenuLabel, Popover, usePopover } from "../ui/Popover";
 import { personDay } from "../daily/status";
 import { TaskStamp } from "../studio/TaskList";
 import { ProofBadge } from "./TaskExtras";
+import { QuickAdd } from "../studio/QuickAdd";
 import { formatDate, today, untitled } from "../util";
 import { MAX_FOCUS } from "./focus";
 import { allTasks, byDue, doneProps, tasksOf } from "./tasks";
@@ -128,6 +129,12 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
             Bis zu {MAX_FOCUS - focus.length} {MAX_FOCUS - focus.length === 1 ? "Aufgabe" : "Aufgaben"} auswählen
             {userId !== notes.actor?.id ? ` · ${first}` : ""}
           </MenuLabel>
+          <QuickAdd
+            member={props.member}
+            placeholder="Neue Aufgabe eintippen …"
+            autoFocus
+            onCreated={(row) => setChosen((c) => (c.length < MAX_FOCUS - focus.length ? [...c, row.id] : c))}
+          />
           <div className="nk-menu-scroll">
             {candidates.map((t) => {
               const index = chosen.indexOf(t.row.id);
@@ -144,9 +151,9 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
                 />
               );
             })}
-            {!candidates.length && <div className="nk-empty-hint">Keine offenen Aufgaben mit Zuständigkeit – in einer Aufgabenliste unter „Zuständig“ eintragen.</div>}
+            {!candidates.length && <div className="nk-empty-hint">Noch keine offenen Aufgaben – oben eine neue eintippen.</div>}
           </div>
-          {candidates.length > 0 && (
+          {(candidates.length > 0 || chosen.length > 0) && (
             <div className="nk-pick-foot">
               <button
                 type="button"

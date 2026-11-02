@@ -820,7 +820,7 @@ function liveCheck(pages) {
 		const known = cache.get(id);
 		if (known !== void 0) return known;
 		const p = pages.get(id);
-		const ok = Boolean(p && !p.archivedAt && !p.deletedAt && (!p.parentId || depth < 50 && check(p.parentId, depth + 1)));
+		const ok = Boolean(p && !p.archivedAt && !p.deletedAt && (!p.parentId || !pages.has(p.parentId) || depth < 50 && check(p.parentId, depth + 1)));
 		cache.set(id, ok);
 		return ok;
 	};
