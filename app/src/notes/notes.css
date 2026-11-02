@@ -952,3 +952,17 @@ select.nk-input { padding-right: 4px; }
 .nk-photo-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .nk-distribute-flags { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
 .nk-distribute-flags label { display: flex; align-items: center; gap: 6px; }
+
+/* Team-Übersicht: Karten dürfen schmaler werden als ihr Inhalt (sonst ragt der Tagesfokus in die Nachbarkarte) */
+.nk-ov-grid > * { min-width: 0; }
+.nk-ov-card { min-width: 0; overflow: hidden; }
+.nk-focus, .nk-focus-list li, .nk-focus-head { min-width: 0; }
+.nk-focus-head { flex-wrap: wrap; }
+.nk-focus.is-compact .nk-focus-list li { flex-wrap: wrap; gap: 4px 8px; padding: 6px 8px; }
+.nk-focus.is-compact .nk-focus-list li .nk-task-main { flex: 1 1 140px; }
+.nk-focus.is-compact .nk-focus-db { display: none; }
+.nk-focus.is-compact .nk-focus-actions { opacity: 1; margin-left: auto; }
+/* Mehrfachauswahl beim Anpinnen */
+.nk-pick-box { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--nk-faint); font-size: 11px; font-weight: 800; color: #fff; }
+.nk-pick-box.is-on { background: var(--nk-accent); box-shadow: none; }
+.nk-pick-foot { display: flex; justify-content: flex-end; padding: 8px 8px 4px; border-top: 1px solid var(--nk-line); margin-top: 4px; }

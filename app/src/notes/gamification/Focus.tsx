@@ -1,5 +1,5 @@
 // "Heute im Fokus": bis zu drei angepinnte Aufgaben pro Person und Tag
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNotes } from "../state";
 import type { Member } from "../types";
 import { Icon } from "../ui/Icon";
@@ -14,6 +14,8 @@ import { allTasks, byDue, doneProps, tasksOf } from "./tasks";
 export function FocusSection(props: { member: Member; compact?: boolean }) {
   const notes = useNotes();
   const pick = usePopover();
+  // Mehrere Aufgaben in einem Rutsch anpinnen (bis die drei Plätze voll sind)
+  const [chosen, setChosen] = useState<string[]>([]);
   const day = today();
   const userId = props.member.id;
   const { pages, isLive, inMyView } = notes;
@@ -114,23 +116,53 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
         <p className="nk-muted nk-focus-empty">Wähle bis zu drei Aufgaben, die heute zuerst drankommen – sie bleiben hier oben angepinnt.</p>
       )}
       {pick.anchor && (
-        <Popover anchor={pick.anchor} onClose={pick.close} width={340}>
-          <MenuLabel>Offene Aufgaben{userId !== notes.actor?.id ? ` von ${first}` : ""}</MenuLabel>
+        <Popover
+          anchor={pick.anchor}
+          onClose={() => {
+            setChosen([]);
+            pick.close();
+          }}
+          width={360}
+        >
+          <MenuLabel>
+            Bis zu {MAX_FOCUS - focus.length} {MAX_FOCUS - focus.length === 1 ? "Aufgabe" : "Aufgaben"} auswählen
+            {userId !== notes.actor?.id ? ` · ${first}` : ""}
+          </MenuLabel>
           <div className="nk-menu-scroll">
-            {candidates.map((t) => (
-              <MenuItem
-                key={t.row.id}
-                icon={<span>{t.row.icon ?? "☐"}</span>}
-                label={untitled(t.row)}
-                hint={t.due ? formatDate(t.due) : untitled(t.db)}
-                onClick={() => {
-                  notes.setFocus(t.row.id, userId, focus.length + 1);
-                  pick.close();
-                }}
-              />
-            ))}
+            {candidates.map((t) => {
+              const index = chosen.indexOf(t.row.id);
+              const full = chosen.length >= MAX_FOCUS - focus.length;
+              return (
+                <MenuItem
+                  key={t.row.id}
+                  icon={<span className={`nk-pick-box${index >= 0 ? " is-on" : ""}`}>{index >= 0 ? focus.length + index + 1 : ""}</span>}
+                  label={untitled(t.row)}
+                  hint={t.due ? formatDate(t.due) : untitled(t.db)}
+                  active={index >= 0}
+                  disabled={index < 0 && full}
+                  onClick={() => setChosen((c) => (index >= 0 ? c.filter((id) => id !== t.row.id) : full ? c : [...c, t.row.id]))}
+                />
+              );
+            })}
             {!candidates.length && <div className="nk-empty-hint">Keine offenen Aufgaben mit Zuständigkeit – in einer Aufgabenliste unter „Zuständig“ eintragen.</div>}
           </div>
+          {candidates.length > 0 && (
+            <div className="nk-pick-foot">
+              <button
+                type="button"
+                className="nk-btn is-primary"
+                disabled={!chosen.length}
+                onClick={() => {
+                  // In der gewählten Reihenfolge anpinnen
+                  chosen.forEach((id, i) => notes.setFocus(id, userId, focus.length + i + 1));
+                  setChosen([]);
+                  pick.close();
+                }}
+              >
+                📌 {chosen.length ? `${chosen.length} ${chosen.length === 1 ? "Aufgabe" : "Aufgaben"} anpinnen` : "Aufgaben auswählen"}
+              </button>
+            </div>
+          )}
         </Popover>
       )}
     </section>
