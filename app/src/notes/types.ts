@@ -174,7 +174,9 @@ export type Completion = { pageId: string; userId: string; points: number; doneA
 
 export type StoreEvent =
   | { type: "upsert"; page: PageMeta; content?: Blocks; ydoc?: string | null }
-  | { type: "delete"; id: string };
+  | { type: "delete"; id: string }
+  /** Live-Verbindung (neu) steht – einmal mit dem Server abgleichen, falls zwischendurch etwas verpasst wurde */
+  | { type: "resync" };
 
 /** Nachrichten zwischen Editoren derselben Seite (Yjs-Änderungen, Cursor/Anwesenheit) */
 export type CollabMessage =

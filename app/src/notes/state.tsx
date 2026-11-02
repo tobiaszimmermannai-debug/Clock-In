@@ -382,6 +382,10 @@ export function NotesProvider(props: {
   useEffect(() => {
     if (!loaded) return;
     return store.subscribe((ev) => {
+      if (ev.type === "resync") {
+        void syncPagesRef.current?.();
+        return;
+      }
       if (ev.type === "delete") {
         setPages((m) => {
           if (!m.has(ev.id)) return m;
@@ -400,6 +404,42 @@ export function NotesProvider(props: {
       setPage(ev.page);
     });
   }, [loaded, setPage, store]);
+
+  // Abgleich mit dem Server: neue/geänderte Seiten übernehmen, verschwundene entfernen – eigene, noch nicht
+  // gespeicherte Änderungen haben Vorrang. Rückfallebene, falls Live-Nachrichten fehlen.
+  const syncPagesRef = useRef<(() => Promise<void>) | null>(null);
+  syncPagesRef.current = async () => {
+    const list = await store.listPages().catch(() => null);
+    if (!list) return;
+    const server = new Map(list.map((p) => [p.id, p]));
+    setPages((m) => {
+      let changed = false;
+      const next = new Map(m);
+      for (const p of list) {
+        if (pending.current.has(p.id) || chains.current.has(p.id)) continue;
+        const cur = m.get(p.id);
+        if (!cur || cur.updatedAt !== p.updatedAt || JSON.stringify(cur.props) !== JSON.stringify(p.props) || cur.deletedAt !== p.deletedAt) {
+          next.set(p.id, p);
+          changed = true;
+        }
+      }
+      for (const id of m.keys()) {
+        if (!server.has(id) && !pending.current.has(id) && !chains.current.has(id)) {
+          next.delete(id);
+          changed = true;
+        }
+      }
+      if (!changed) return m;
+      pagesRef.current = next;
+      return next;
+    });
+  };
+
+  // Jede Minute (nur bei sichtbarem Tab) und beim Zurückkehren sofort abgleichen
+  useEffect(() => {
+    if (!loaded) return;
+    return everyWhileVisible(() => void syncPagesRef.current?.(), 60_000);
+  }, [loaded]);
 
   // Erledigte Aufgaben / Tagesplan alle 2 Min. auffrischen – nur bei sichtbarem Tab, beim Zurückkehren sofort
   useEffect(() => {
@@ -477,7 +517,10 @@ export function NotesProvider(props: {
       if (p.archivedAt || p.deletedAt || seen.has(p.id)) return false;
       seen.add(p.id);
       if (!p.parentId) return true;
-      p = pagesRef.current.get(p.parentId);
+      const parent = pagesRef.current.get(p.parentId);
+      // Elternseite für mich nicht sichtbar (z. B. zugewiesene Aufgabe aus einer fremden Liste): gilt als lebend
+      if (!parent) return true;
+      p = parent;
     }
     return false;
   }, []);

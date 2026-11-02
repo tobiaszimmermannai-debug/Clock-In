@@ -124,6 +124,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 35. `supabase/migrations/20261104100000_time_tracking.sql` (Personen ohne Zeiterfassung, z. B. Praktikanten – danach Teil P)
 36. `supabase/migrations/20261104110000_notes_checkin_gate.sql` (Aufgaben: Mitarbeiter sehen sie nur eingecheckt)
 37. `supabase/migrations/20261105090000_notes_task_rules.sql` (Aufgaben: Fotonachweis und Verschieben)
+38. `supabase/migrations/20261106090000_notes_assigned_visible.sql` (Aufgaben: Zugewiesenes – auch aus privaten Listen der Leitung – ist für die Person sichtbar)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
