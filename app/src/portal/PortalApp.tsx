@@ -24,6 +24,8 @@ export type Me = {
   role: Role;
   home_location_id: string | null;
   employment_details: { weekly_target_minutes: number; work_days_per_week: number } | null;
+  /** false = ohne Zeiterfassung (z. B. Praktikum): nur Dienstplan, Aufgaben, Konto */
+  time_tracking?: boolean;
 };
 export type Colleague = { id: string; first_name: string; last_name: string; home_location_id: string | null };
 
@@ -74,7 +76,8 @@ export function PortalApp(props: { stampToken?: string }) {
     const [profile, people, locs] = await Promise.all([
       portalDb
         .from("users")
-        .select("id, first_name, last_name, role, home_location_id, employment_details(weekly_target_minutes, work_days_per_week)")
+        // * statt Spaltenliste: neue Spalten (time_tracking) brechen das Laden nicht, falls das SQL noch fehlt
+        .select("*, employment_details(weekly_target_minutes, work_days_per_week)")
         .eq("auth_user_id", data.session.user.id)
         .maybeSingle(),
       portalDb.from("users").select("id, first_name, last_name, home_location_id").eq("is_active", true).order("first_name"),
@@ -85,7 +88,10 @@ export function PortalApp(props: { stampToken?: string }) {
       setError("Für dieses Konto ist kein Mitarbeiter hinterlegt.");
       return setMe(null);
     }
-    setMe(profile.data as unknown as Me);
+    const meData = profile.data as unknown as Me;
+    setMe(meData);
+    // Ohne Zeiterfassung: kein Stempeln/Stunden/Tausch – direkt zu den Aufgaben
+    if (meData.time_tracking === false) setTab((t) => (t === "stamp" || t === "hours" || t === "swap" ? "tasks" : t));
     setColleagues((people.data ?? []) as Colleague[]);
     setLocations((locs.data ?? []) as Location[]);
     registerStudios((locs.data ?? []) as Location[]);
@@ -107,7 +113,14 @@ export function PortalApp(props: { stampToken?: string }) {
   };
 
   return (
-    <Shell title="Clock-In" subtitle={`${me.first_name} ${me.last_name}`} tabs={TABS} current={tab} onTab={setTab} full={tab === "tasks"}>
+    <Shell
+      title="Clock-In"
+      subtitle={`${me.first_name} ${me.last_name}`}
+      tabs={me.time_tracking === false ? TABS.filter((t) => t.id === "plan" || t.id === "tasks" || t.id === "account") : TABS}
+      current={tab}
+      onTab={setTab}
+      full={tab === "tasks"}
+    >
       {tab === "stamp" && (
         <Stamp
           me={me}

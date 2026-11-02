@@ -2,6 +2,7 @@
 // Benutzt von supabase/functions/aufgaben (Server). Texte bauen immer auf dailyStatus auf.
 import { displayValue } from "../database/logic";
 import type { Member, PageMeta } from "../types";
+import type { LeaderRow } from "../gamification/stats";
 import type { DayStatus, FocusItem, PersonDay } from "./status";
 
 // ---------------- Zeit (Berlin) ----------------
@@ -190,4 +191,26 @@ export function reminderText(kind: ReminderKind, s: DayStatus, studioName: (id: 
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+/** Wochenranking (montags): Treppchen, Plätze 4–10, Punkte je Studio */
+export function rankingText(rows: LeaderRow[], info: { label: string; range: string }, studioName: (id: string | null | undefined) => string): string {
+  const lines = [`🏆 Wochenranking ${info.label} (${info.range})`];
+  if (!rows.length) return [...lines, "", "Letzte Woche wurde keine Aufgabe erledigt."].join("\n");
+  const medal = ["🥇", "🥈", "🥉"];
+  lines.push("");
+  for (const r of rows.slice(0, 10)) {
+    lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} Punkte (${r.count} ${r.count === 1 ? "Aufgabe" : "Aufgaben"})`);
+  }
+  const studios = new Map<string, number>();
+  for (const r of rows) studios.set(studioName(r.member.studioId), (studios.get(studioName(r.member.studioId)) ?? 0) + r.points);
+  if (studios.size > 1)
+    lines.push(
+      "",
+      `Studios: ${[...studios]
+        .sort((a, b) => b[1] - a[1])
+        .map(([s, p]) => `${s} ${p}`)
+        .join(" · ")}`,
+    );
+  return lines.join("\n");
 }

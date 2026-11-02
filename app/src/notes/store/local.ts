@@ -59,6 +59,11 @@ export class LocalStore implements NotesStore {
     return null;
   }
 
+  /** Lokal gibt es kein Einchecken */
+  async unlocked() {
+    return null;
+  }
+
   /** Lokal gibt es keinen Dienstplan */
   async dayPlan() {
     return null;

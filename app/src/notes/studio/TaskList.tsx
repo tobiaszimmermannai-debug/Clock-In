@@ -1,6 +1,7 @@
 // Aufgabenzeilen mit Zeitstempel: „eingetragen am …“ und – sobald erledigt – „erledigt am …“
 import { assigneesOf, doneAtOf, doneProps, type TaskItem } from "../gamification/tasks";
 import { useNotes } from "../state";
+import { ProofBadge } from "../gamification/TaskExtras";
 import { Icon } from "../ui/Icon";
 import type { PageMeta } from "../types";
 import { formatDate, pad, today, untitled } from "../util";
@@ -54,6 +55,7 @@ export function TaskLines(props: { items: TaskItem[]; empty?: string; showWho?: 
               </button>
               <TaskStamp row={t.row} done={t.done} />
             </div>
+            <ProofBadge row={t.row} done={t.done} />
             {who && <span className="nk-task-who">{who}</span>}
             {props.showDb !== false && <span className="nk-muted nk-task-db">{untitled(t.db)}</span>}
             {t.due && (

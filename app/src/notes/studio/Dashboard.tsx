@@ -6,14 +6,16 @@ import { Blitzi } from "../gamification/Blitzi";
 import { coinsOf, stageOf } from "../gamification/evolution";
 import { FocusSection } from "../gamification/Focus";
 import { BlitziCard, statsFor } from "../gamification/GamePanel";
-import { daysFor } from "../gamification/stats";
+import { lastWeek, Podium } from "../gamification/Podium";
+import { daysFor, leaderboard } from "../gamification/stats";
 import { allTasks, byDue, doneAtOf, tasksOf, type TaskItem } from "../gamification/tasks";
 import { STUDIO_TASKS } from "../routes";
 import { useNotes } from "../state";
 import type { Member } from "../types";
-import { addDays, today } from "../util";
+import { addDays, storageGet, storageSet, today } from "../util";
 import { isoWeek, periodLabel, periodOf } from "./period";
 import { findStudioDb, STUDIO_PROPS } from "./StudioTasks";
+import { useStudioRecurrence } from "./recurrence";
 import { TaskLines } from "./TaskList";
 import { sceneOfWeek, TeamScene } from "./TeamScene";
 
@@ -25,7 +27,18 @@ export function StudioDashboard() {
   const pcStudio = notes.access.studio ? (notes.access.studioLocationId ?? null) : null;
   const [studioId, setStudioId] = useState<string | null>(pcStudio ?? notes.me.studioId ?? notes.locations[0]?.id ?? null);
   const [tab, setTab] = useState("team");
+  const ranking = lastWeek(today());
+  const [podium, setPodium] = useState(() => {
+    // Studio-PC: montags einmal am Tag automatisch
+    const monday = new Date().getDay() === 1;
+    return monday && notes.access.studio && !storageGet<boolean>(`aun-podium-pc-${today()}`, false);
+  });
+  const closePodium = () => {
+    storageSet(`aun-podium-pc-${today()}`, true);
+    setPodium(false);
+  };
   const items = useMemo(() => allTasks(notes.pages, notes.isLive), [notes.pages, notes.isLive]);
+  useStudioRecurrence();
 
   // Am Studio-PC: nach der automatischen Abmeldung zurück zum Team-Reiter
   useEffect(() => {
@@ -41,13 +54,17 @@ export function StudioDashboard() {
 
   const open = (m: Member | null) => {
     setTab(m ? m.id : "team");
-    // Am Studio-PC handelt, wessen Reiter offen ist (Gutschriften, Tagesaufgaben)
-    if (m && notes.access.studio) notes.setActor(m.id);
+    // Am Studio-PC handelt, wessen Reiter offen ist (Gutschriften, Tagesaufgaben) – nur eingecheckt
+    if (m && notes.access.studio && !lockedHere(m)) notes.setActor(m.id);
   };
+
+  // Am Studio-PC: Aufgaben einer Person erst nach ihrem Einchecken (Praktikanten ohne Zeiterfassung immer)
+  const lockedHere = (m: Member) => notes.access.studio && notes.unlocked !== null && !notes.unlocked.has(m.id);
 
   const tabButton = (m: Member, lead: boolean) => {
     const day = personDay(notes.dayStatus, m.id);
     const n = openOf(m);
+    const locked = lockedHere(m);
     return (
       <button key={m.id} type="button" role="tab" aria-selected={tab === m.id} className="nk-dash-tab" onClick={() => open(m)}>
         <span className="nk-dash-tab-blitzi">
@@ -57,7 +74,15 @@ export function StudioDashboard() {
           {lead && <small>Studioleitung</small>}
           {m.name.split(" ")[0]}
         </span>
-        {day?.absent ? <span className="nk-dash-badge is-absent">-</span> : n > 0 && <span className="nk-dash-badge">{n}</span>}
+        {day?.absent ? (
+          <span className="nk-dash-badge is-absent">-</span>
+        ) : locked ? (
+          <span className="nk-dash-badge is-absent" title="Noch nicht eingecheckt">
+            🔒
+          </span>
+        ) : (
+          n > 0 && <span className="nk-dash-badge">{n}</span>
+        )}
       </button>
     );
   };
@@ -68,6 +93,9 @@ export function StudioDashboard() {
         <h1>
           {studioName} <span className="nk-muted">· Aufgaben</span>
         </h1>
+        <button type="button" className="nk-btn is-ghost nk-dash-podium" onClick={() => setPodium(true)}>
+          🏆 Siegerehrung {ranking.label}
+        </button>
         {!pcStudio && notes.locations.length > 1 && (
           <select className="nk-dash-studio" value={studioId ?? ""} onChange={(e) => (setStudioId(e.target.value), setTab("team"))} aria-label="Studio">
             {notes.locations.map((l) => (
@@ -89,8 +117,29 @@ export function StudioDashboard() {
         {leads.map((m) => tabButton(m, true))}
         {staff.map((m) => tabButton(m, false))}
       </nav>
+      {podium && (
+        <Podium
+          rows={leaderboard(notes.completions, notes.members, ranking.from, ranking.to)}
+          info={ranking}
+          me={notes.actor?.id}
+          stageOf={(m) => stageOf(statsFor(m.id, notes.completions, daysFor(notes.workDays, m.id)).streak)}
+          onClose={closePodium}
+        />
+      )}
       <div className="nk-dash-body">
-        {current ? <PersonTab key={current.id} member={current} items={items} /> : <TeamTab studioId={studioId} people={people} items={items} />}
+        {current ? (
+          lockedHere(current) ? (
+            <div className="nk-locked is-inline">
+              <Blitzi mood="sleepy" stage={stageOf(statsFor(current.id, notes.completions, daysFor(notes.workDays, current.id)).streak)} size={110} still />
+              <h2>{current.name.split(" ")[0]} ist noch nicht eingecheckt</h2>
+              <p>Die Aufgaben erscheinen hier, sobald {current.name.split(" ")[0]} am Tablet eingecheckt hat.</p>
+            </div>
+          ) : (
+            <PersonTab key={current.id} member={current} items={items} />
+          )
+        ) : (
+          <TeamTab studioId={studioId} people={people} items={items} />
+        )}
       </div>
     </div>
   );

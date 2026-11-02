@@ -6,6 +6,7 @@ import { Icon } from "../ui/Icon";
 import { MenuItem, MenuLabel, Popover, usePopover } from "../ui/Popover";
 import { personDay } from "../daily/status";
 import { TaskStamp } from "../studio/TaskList";
+import { ProofBadge } from "./TaskExtras";
 import { formatDate, today, untitled } from "../util";
 import { MAX_FOCUS } from "./focus";
 import { allTasks, byDue, doneProps, tasksOf } from "./tasks";
@@ -76,6 +77,7 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
                 </button>
                 <TaskStamp row={row} done={task.done} />
               </div>
+              <ProofBadge row={row} done={task.done} />
               {pending ? (
                 lead ? (
                   <span className="nk-focus-approve">

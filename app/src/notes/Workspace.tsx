@@ -8,6 +8,8 @@ import { Home } from "./Home";
 import { Oversight } from "./Oversight";
 import { OVERVIEW, STUDIO_BOARD, STUDIO_TASKS } from "./routes";
 import { StudioDashboard } from "./studio/Dashboard";
+import { Blitzi } from "./gamification/Blitzi";
+import { PhotoProofModal } from "./gamification/TaskExtras";
 import { StudioTasks } from "./studio/StudioTasks";
 import { MovePicker, PageMenu, PageView } from "./PageView";
 import { Search } from "./Search";
@@ -158,6 +160,22 @@ function Layout(props: NotesWorkspaceProps) {
 
   const page = notes.current ? notes.pages.get(notes.current) : undefined;
 
+  // Mitarbeiter, nicht eingecheckt: Aufgaben erst nach dem Einchecken im Studio
+  if (notes.loaded && notes.access.locked) {
+    return (
+      <div ref={rootRef} className={cls}>
+        <div className="nk-locked">
+          <Blitzi mood="sleepy" stage={12} size={130} still />
+          <h1>Erst einchecken, dann loslegen</h1>
+          <p>Deine Aufgaben siehst du, sobald du im Studio eingecheckt bist – QR-Code am Tablet scannen und „Kommen“ tippen.</p>
+          <button type="button" className="nk-btn" onClick={() => location.reload()}>
+            Ich bin eingecheckt – neu laden
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div ref={rootRef} className={cls} style={{ ["--nk-sidebar" as string]: `${width}px` }}>
       {showSidebar && (
@@ -209,6 +227,7 @@ function Layout(props: NotesWorkspaceProps) {
         </div>
       </div>
       {notes.peek && <Peek id={notes.peek} theme={resolved} mobile={mobile} />}
+      <PhotoProofModal />
       {searching && <Search onClose={() => setSearching(false)} />}
       {templates && <TemplatePicker space="private" onClose={() => setTemplates(false)} onCreated={(id) => notes.navigate(id)} />}
       <Celebration />

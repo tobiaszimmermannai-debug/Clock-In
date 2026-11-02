@@ -4,6 +4,7 @@ import { isDone } from "./database/logic";
 import { FOCUS_KEY, focusEntry, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
 import { dailyStatus, type DayPlan, type DayStatus } from "./daily/status";
 import { DONE_AT_KEY } from "./gamification/tasks";
+import { dueProp, MOVES_KEY, movesOf, needsPhoto, nextOccurrence, postponed, PROOF_KEY, proofOf } from "./gamification/recur";
 import { daysFor, myStats, ON_TIME_BONUS, POINTS } from "./gamification/stats";
 import { taskSchema, welcomeContent } from "./templates";
 import type {
@@ -70,7 +71,12 @@ export type CreateOptions = {
   position?: number;
   /** Link-Block in der Elternseite anhängen (wie beim Anlegen über die Seitenleiste) */
   linkInParent?: boolean;
+  /** Nur anlegen, wenn es die ID noch nicht gibt (wiederkehrende Aufgaben; Doppel von anderen Geräten still ignorieren) */
+  ifMissing?: boolean;
 };
+
+/** Abhaken wartet auf einen Fotonachweis */
+export type PhotoRequest = { rowId: string; title: string; reason: "lead" | "moved"; props: Record<string, PropValue> };
 
 type Ctx = {
   store: NotesStore;
@@ -137,6 +143,11 @@ type Ctx = {
   dayStatus: DayStatus;
   /** Tagesaufgabe freigeben oder ablehnen (Leitung) */
   decideFocus: (pageId: string, userId: string, ok: boolean) => void;
+  /** Wer gerade an seine Aufgaben darf (eingecheckt oder ohne Zeiterfassung); null = keine Sperre bekannt */
+  unlocked: Set<string> | null;
+  /** Fotonachweis fürs Abhaken: offene Anfrage und Abschluss (Datei hochladen oder abbrechen) */
+  photoRequest: PhotoRequest | null;
+  resolvePhoto: (file: File | null) => Promise<void>;
 };
 
 const NotesContext = createContext<Ctx | null>(null);
@@ -195,6 +206,8 @@ export function NotesProvider(props: {
   const [completions, setCompletions] = useState<Completion[]>([]);
   const [workDays, setWorkDays] = useState<Record<string, string[]> | null>(null);
   const [dayPlan, setDayPlan] = useState<DayPlan | null>(null);
+  const [unlocked, setUnlocked] = useState<Set<string> | null>(null);
+  const [photoRequest, setPhotoRequest] = useState<PhotoRequest | null>(null);
   const workDaysRef = useRef<Record<string, string[]> | null>(null);
   workDaysRef.current = workDays;
   const [actorId, setActorId] = useState<string | null>(() => storageGet<string | null>("aun-studio-actor", null));
@@ -332,6 +345,10 @@ export function NotesProvider(props: {
           .dayPlan(today())
           .then((plan) => !cancelled && setDayPlan(plan))
           .catch(() => undefined);
+        store
+          .unlocked()
+          .then((ids) => !cancelled && setUnlocked(ids ? new Set(ids) : null))
+          .catch(() => undefined);
         if (cancelled) return;
         setMe(who);
         meRef.current = who;
@@ -349,7 +366,7 @@ export function NotesProvider(props: {
         setFavorites(favs);
         setRecent(storageGet<string[]>(`aun-recent-${store.kind}-${who.id}`, []));
         // Erster Start: Willkommensseite und eigene Aufgabenliste anlegen (nicht am Studio-PC)
-        if (!rights.studio && !list.some((p) => p.ownerId === who.id && p.space === "private")) await seed(who);
+        if (!rights.studio && !rights.locked && !list.some((p) => p.ownerId === who.id && p.space === "private")) await seed(who);
         setLoaded(true);
       } catch (e) {
         if (!cancelled) setError((e as Error).message || "Laden fehlgeschlagen.");
@@ -394,6 +411,10 @@ export function NotesProvider(props: {
       store
         .dayPlan(today())
         .then(setDayPlan)
+        .catch(() => undefined);
+      store
+        .unlocked()
+        .then((ids) => setUnlocked(ids ? new Set(ids) : null))
         .catch(() => undefined);
     }, 120_000);
     return () => clearInterval(t);
@@ -476,6 +497,8 @@ export function NotesProvider(props: {
 
   const createPage = useCallback(
     async (opts: CreateOptions = {}): Promise<PageMeta> => {
+      const existing = opts.ifMissing && opts.id ? pagesRef.current.get(opts.id) : undefined;
+      if (existing) return existing;
       const parent = opts.parentId ? pagesRef.current.get(opts.parentId) : undefined;
       const space: Space = parent?.space ?? opts.space ?? "private";
       const now = new Date().toISOString();
@@ -516,6 +539,8 @@ export function NotesProvider(props: {
             next.delete(page.id);
             return next;
           });
+          // Gleiche feste ID schon von einem anderen Gerät angelegt: kein Fehler (kommt per Live-Update)
+          if (opts.ifMissing && /duplicate|23505|409/i.test(`${(e as { code?: string }).code ?? ""} ${(e as Error).message}`)) return;
           toast(`Anlegen fehlgeschlagen: ${(e as Error).message}`);
           throw e;
         }
@@ -624,8 +649,25 @@ export function NotesProvider(props: {
       const page = pagesRef.current.get(id);
       const db = page?.parentId ? pagesRef.current.get(page.parentId) : undefined;
       if (page && patch.props && db?.kind === "database" && db.schema) {
+        // Fälligkeit nach hinten verschoben → mitzählen (ab dem 2. Mal Fotonachweis)
+        const due = dueProp(db.schema);
+        let incoming = patch.props;
+        if (due && postponed(page.props[due.id], incoming[due.id])) {
+          incoming = { ...incoming, [MOVES_KEY]: movesOf(page) + 1 };
+          patch = { ...patch, props: incoming };
+        }
         const before = isDone(page, db.schema);
-        const after = isDone({ ...page, props: patch.props }, db.schema);
+        const after = isDone({ ...page, props: incoming }, db.schema);
+        if (!before && after) {
+          const need = needsPhoto({ ...page, props: incoming });
+          if (need.required && !proofOf({ ...page, props: incoming })) {
+            // Erst Foto, dann erledigt
+            setPhotoRequest({ rowId: id, title: page.title, reason: need.reason!, props: incoming });
+            return;
+          }
+          const next = nextOccurrence({ ...page, props: incoming }, db.schema, today());
+          if (next) void createPageRef.current?.({ ...next, parentId: db.id, ifMissing: true }).catch(() => undefined);
+        }
         if (before !== after) {
           // "erledigt am …" an der Aufgabe festhalten (wieder geöffnet: entfernen)
           const props = { ...patch.props };
@@ -858,6 +900,25 @@ export function NotesProvider(props: {
     [patchLocal, store, toast],
   );
 
+  const createPageRef = useRef<((opts: CreateOptions) => Promise<PageMeta>) | null>(null);
+  createPageRef.current = createPage;
+
+  const resolvePhoto = useCallback(
+    async (file: File | null) => {
+      const req = photoRequest;
+      setPhotoRequest(null);
+      if (!req || !file) return;
+      try {
+        const url = await store.upload(file, req.rowId);
+        const proof = { url, at: new Date().toISOString(), by: actorRef.current ?? meRef.current.id };
+        updatePage(req.rowId, { props: { ...req.props, [PROOF_KEY]: proof as unknown as PropValue } }, { delay: 0 });
+      } catch (e) {
+        toast(`Foto hochladen fehlgeschlagen: ${(e as Error).message}`);
+      }
+    },
+    [photoRequest, store, toast, updatePage],
+  );
+
   const move = useCallback(
     (id: string, target: { parentId: string | null; space?: Space; position?: number }) => {
       const all = [...pagesRef.current.values()];
@@ -997,8 +1058,11 @@ export function NotesProvider(props: {
       setFocus,
       dayStatus,
       decideFocus,
+      unlocked,
+      photoRequest,
+      resolvePhoto,
     }),
-    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, workDays, celebration, dismissCelebration, setFocus, dayStatus, decideFocus],
+    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, workDays, celebration, dismissCelebration, setFocus, dayStatus, decideFocus, unlocked, photoRequest, resolvePhoto],
   );
 
   return <NotesContext.Provider value={value}>{props.children}</NotesContext.Provider>;

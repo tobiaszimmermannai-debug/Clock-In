@@ -1,0 +1,39 @@
+/* Siegerehrung (eigenständig, auch außerhalb des Arbeitsbereichs nutzbar) */
+.nk-podium-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 16px; background: rgba(10, 12, 30, .72); animation: nk-pod-fade .4s ease-out; font-family: inherit; }
+.nk-podium { position: relative; width: min(640px, 100%); max-height: 92vh; overflow: auto; padding: 22px 18px 18px; border-radius: 22px; color: #fff; text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, #3b2f8f 0%, #1c1745 55%, #120f2e 100%); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+.nk-podium header { position: relative; z-index: 2; display: grid; gap: 2px; }
+.nk-podium header small { letter-spacing: .12em; text-transform: uppercase; opacity: .7; font-size: 12px; }
+.nk-podium h2 { margin: 0; font-size: 26px; }
+.nk-podium-range { opacity: .7; font-size: 13px; }
+.nk-podium-lights span { position: absolute; top: -40px; width: 220px; height: 520px; background: linear-gradient(180deg, rgba(255, 240, 160, .35), rgba(255, 240, 160, 0)); filter: blur(4px); transform-origin: 50% 0; z-index: 0; pointer-events: none; }
+.nk-podium-lights span:first-child { left: 8%; animation: nk-pod-sweep 4s ease-in-out infinite; }
+.nk-podium-lights span:last-child { right: 8%; animation: nk-pod-sweep 4s ease-in-out infinite reverse; }
+.nk-podium-stage { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 8px; margin: 18px 0 6px; min-height: 290px; }
+.nk-podium-slot { display: grid; justify-items: center; }
+.nk-podium-hero { position: relative; display: grid; justify-items: center; opacity: 0; animation: nk-pod-drop .7s cubic-bezier(.3, 1.6, .5, 1) forwards; animation-delay: calc(var(--d) + .6s); }
+.nk-podium-hero .blitzi { filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .35)); }
+.nk-podium-medal { position: absolute; top: -8px; right: -6px; font-size: 30px; z-index: 2; animation: nk-pod-swing 1.6s ease-in-out infinite; transform-origin: 50% 0; }
+.nk-podium-block { display: grid; gap: 2px; width: 100%; padding: 10px 6px 12px; border-radius: 12px 12px 4px 4px; color: #3a2914; transform-origin: 50% 100%; transform: scaleY(0); animation: nk-pod-rise .6s ease-out forwards; animation-delay: var(--d); box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .12); }
+.nk-podium-block b { font-size: 34px; line-height: 1; }
+.nk-podium-name { font-weight: 800; font-size: 15px; }
+.nk-podium-points { font-size: 13px; font-weight: 700; opacity: .8; }
+.nk-podium-slot.is-1 .nk-podium-block { min-height: 130px; background: linear-gradient(180deg, #ffe680, #ffc928); }
+.nk-podium-slot.is-2 .nk-podium-block { min-height: 96px; background: linear-gradient(180deg, #eef1f6, #c3cad6); }
+.nk-podium-slot.is-3 .nk-podium-block { min-height: 70px; background: linear-gradient(180deg, #f2c49b, #d9905a); }
+.nk-podium-empty { position: relative; z-index: 1; margin: 30px 0; font-size: 16px; }
+.nk-podium-rest { position: relative; z-index: 1; list-style: none; margin: 10px auto 0; padding: 0; max-width: 360px; display: grid; gap: 4px; text-align: left; }
+.nk-podium-rest li { display: flex; gap: 8px; padding: 5px 10px; border-radius: 8px; background: rgba(255, 255, 255, .08); font-size: 14px; }
+.nk-podium-rest li b { margin-left: auto; }
+.nk-podium-rest li.is-me { background: rgba(255, 201, 40, .25); }
+.nk-podium-mine { position: relative; z-index: 1; margin: 10px 0 0; font-weight: 700; color: #ffe680; }
+.nk-podium-close { position: relative; z-index: 1; margin-top: 16px; padding: 10px 20px; border: 0; border-radius: 999px; background: linear-gradient(90deg, #ffd23f, #ff9f1c); color: #3a2914; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(255, 159, 28, .4); }
+.nk-podium-confetti { position: absolute; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
+.nk-podium-confetti span { position: absolute; top: -14px; left: calc(var(--i) * 4.2%); width: 8px; height: 14px; border-radius: 2px; background: hsl(calc(var(--i) * 37), 90%, 62%); animation: nk-pod-confetti 3.4s linear infinite; animation-delay: calc(var(--i) * -.17s + 1.8s); opacity: 0; }
+@keyframes nk-pod-fade { from { opacity: 0; } }
+@keyframes nk-pod-rise { to { transform: scaleY(1); } }
+@keyframes nk-pod-drop { 0% { opacity: 0; transform: translateY(-160px) scale(.6); } 100% { opacity: 1; transform: none; } }
+@keyframes nk-pod-swing { 50% { transform: rotate(12deg); } }
+@keyframes nk-pod-sweep { 0%, 100% { transform: rotate(18deg); } 50% { transform: rotate(-18deg); } }
+@keyframes nk-pod-confetti { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 1; transform: translateY(720px) rotate(720deg); } }
+@media (prefers-reduced-motion: reduce) { .nk-podium * { animation-duration: 0s !important; animation-delay: 0s !important; } .nk-podium-confetti { display: none; } }

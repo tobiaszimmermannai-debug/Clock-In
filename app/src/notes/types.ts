@@ -159,7 +159,15 @@ export type Member = {
 export type Studio = { id: string; name: string };
 
 /** Eigene Rechte: Leitung (Admin/Studioleitung) bzw. Studio-PC */
-export type Access = { oversee: boolean; admin: boolean; studio: boolean; studioName?: string; studioLocationId?: string | null };
+export type Access = {
+  oversee: boolean;
+  admin: boolean;
+  studio: boolean;
+  studioName?: string;
+  studioLocationId?: string | null;
+  /** Mitarbeiter, gerade nicht eingecheckt: Aufgaben gesperrt */
+  locked?: boolean;
+};
 
 /** Erledigte Aufgabe, einer Person gutgeschrieben */
 export type Completion = { pageId: string; userId: string; points: number; doneAt: string };
@@ -223,6 +231,8 @@ export interface NotesStore {
   /** Tage mit Arbeitsbeginn laut Stempeluhr (YYYY-MM-DD); null = unbekannt */
   /** Dienstplan eines Tages aus ClockIn: eingeplant und abwesend (Krank, Schule, Urlaub); null = unbekannt */
   dayPlan(day: string): Promise<{ planned: string[]; absent: string[] } | null>;
+  /** Wer darf gerade an seine Aufgaben (eingecheckt oder ohne Zeiterfassung)? null = unbekannt */
+  unlocked(): Promise<string[] | null>;
   /** Tagesaufgabe freigeben (true) oder ablehnen (false) – nur Leitung */
   decideFocus(pageId: string, userId: string, ok: boolean): Promise<string>;
   /** Arbeitstage je Person (eigene und die betreuter Personen); null = unbekannt */

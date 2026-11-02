@@ -120,6 +120,9 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 31. `supabase/migrations/20261101090000_notes_roles_gamification.sql` (Aufgaben: Leitung sieht alles, Studio-PC, Blitzi/Serie/Rangliste)
 32. `supabase/migrations/20261102090000_notes_streak_days.sql` (Aufgaben: Serie zählt nur echte Arbeitstage – Samstag ohne Schicht, Schule, Urlaub, Krank unterbrechen nie)
 33. `supabase/migrations/20261103090000_notes_daily_telegram.sql` (Aufgaben: Tagesaufgaben mit Freigabe, Abwesenheiten aus dem Dienstplan, Telegram-Benachrichtigungen – danach Teil O)
+34. `supabase/migrations/20261104080000_time_tracking.sql` (Personen ohne Zeiterfassung, z. B. Praktikanten – danach Teil P)
+35. `supabase/migrations/20261104090000_notes_checkin_gate.sql` (Aufgaben: Mitarbeiter sehen sie nur eingecheckt)
+36. `supabase/migrations/20261105090000_notes_task_rules.sql` (Aufgaben: Fotonachweis und Verschieben)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -190,6 +193,21 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
 5. **Trockenlauf** (sendet nichts): Edge Functions → `aufgaben` → **Test** → POST, Header `x-notify-secret` =
    `NOTIFY_SECRET`, Body `{"action":"reminder","kind":"frueh"}` → zeigt den Text. Mit `"dryRun": false` wird wirklich gesendet.
 6. Prüfen: `select jobname from cron.job;` → Zeile `aufgaben-hourly` (stündlich; die Function sendet nur Mo–Fr zur Berliner Stunde).
+
+## Teil P – Praktikanten ohne Stempeln (z. B. Dolly)
+1. Verwaltung → Team → Personen → **Neue Person** (Vorname, Nachname, Studio) anlegen.
+2. Person öffnen → **Zeiterfassung (Stempeln)** ausschalten → sie kann nicht stempeln, bekommt keine
+   „nicht eingestempelt“-Meldung, keine 18-Uhr-Abfrage und erscheint nicht im Wochenbericht.
+3. **Zugang anlegen** → Benutzername/Passwort weitergeben. Im Portal sieht sie nur Dienstplan, Aufgaben und Konto –
+   ihre Aufgaben immer (auch ohne Einchecken).
+
+## Teil Q – Studio-Dashboard (Aufgaben am PC im Studio)
+- **PC im Studio:** `https://<eure-clockin-adresse>/#/kiosk/pc` öffnen → mit eigenem Zugang anmelden, Studio wählen →
+  anfragen → Tobias/Dominik geben frei. Danach zeigt der PC dauerhaft das Studio-Dashboard (Reiter Team,
+  Studioleitung, je Mitarbeiter). Am besten im Vollbild (F11) und ohne Bildschirmsperre.
+- **Leitung am eigenen Rechner:** `https://<eure-clockin-adresse>/#/admin/aufgabe/studio` (Admin mit 2FA bzw. Studioleitung).
+- Mitarbeiter sehen ihre Aufgaben nach dem Einchecken (QR-Code am Tablet) im Portal unter „Aufgaben“; am PC
+  öffnet sich ihr Reiter, sobald sie eingecheckt sind.
 
 ## Gut zu wissen
 - **2FA:** Admin-Rechte in der App gelten nur mit zweitem Faktor (Authenticator-App).
