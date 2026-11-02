@@ -210,6 +210,9 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
 - **Leitung am eigenen Rechner:** `https://<eure-clockin-adresse>/#/admin/aufgabe/studio` (Admin mit 2FA bzw. Studioleitung).
 - Mitarbeiter sehen ihre Aufgaben nach dem Einchecken (QR-Code am Tablet) im Portal unter „Aufgaben“; am PC
   öffnet sich ihr Reiter, sobald sie eingecheckt sind.
+- **Am PC anlegen/anpinnen:** im Reiter der Person „＋ Neue Aufgabe …“ oder bei „Aufgabe anpinnen“ direkt eintippen
+  (bis zu 3 auf einmal). Die Aufgaben landen in der Team-Liste „Aufgaben <Studio>“ (legt die App selbst an);
+  vom PC/Mitarbeitern angepinnte Tagesaufgaben warten wie gewohnt auf Freigabe.
 
 ## Gut zu wissen
 - **2FA:** Admin-Rechte in der App gelten nur mit zweitem Faktor (Authenticator-App).
