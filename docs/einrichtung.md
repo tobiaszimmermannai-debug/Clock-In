@@ -120,9 +120,10 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 31. `supabase/migrations/20261101090000_notes_roles_gamification.sql` (Aufgaben: Leitung sieht alles, Studio-PC, Blitzi/Serie/Rangliste)
 32. `supabase/migrations/20261102090000_notes_streak_days.sql` (Aufgaben: Serie zählt nur echte Arbeitstage – Samstag ohne Schicht, Schule, Urlaub, Krank unterbrechen nie)
 33. `supabase/migrations/20261103090000_notes_daily_telegram.sql` (Aufgaben: Tagesaufgaben mit Freigabe, Abwesenheiten aus dem Dienstplan, Telegram-Benachrichtigungen – danach Teil O)
-34. `supabase/migrations/20261104080000_time_tracking.sql` (Personen ohne Zeiterfassung, z. B. Praktikanten – danach Teil P)
-35. `supabase/migrations/20261104090000_notes_checkin_gate.sql` (Aufgaben: Mitarbeiter sehen sie nur eingecheckt)
-36. `supabase/migrations/20261105090000_notes_task_rules.sql` (Aufgaben: Fotonachweis und Verschieben)
+34. `supabase/migrations/20261104090000_less_logs.sql` (weniger Logs: Cron alle 5 Min. 6–22 Uhr, Tablet-Scan, ein Zähler)
+35. `supabase/migrations/20261104100000_time_tracking.sql` (Personen ohne Zeiterfassung, z. B. Praktikanten – danach Teil P)
+36. `supabase/migrations/20261104110000_notes_checkin_gate.sql` (Aufgaben: Mitarbeiter sehen sie nur eingecheckt)
+37. `supabase/migrations/20261105090000_notes_task_rules.sql` (Aufgaben: Fotonachweis und Verschieben)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -278,6 +279,9 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
   Wochenenden dazwischen zählen als durchgehend. Tagesansicht und Listen zeigen den Zeitraum ebenfalls.
 - **Erinnerung Schule:** am ersten Montag jedes Monats um 9 Uhr per Telegram „Tobi: Bitte Schule aktualisieren“
   (an Tobias; gibt es keinen Admin mit Vorname „Tobi…“, an alle Admins). Eintragen: Team → Schule → IST-Termine.
+- **Weniger Datenverkehr (Free Plan):** Tablets pingen alle 15 Sek. (nachts und bei ausgeschaltetem Bildschirm
+  jede Minute, nach einem Scan kurz alle 2 Sek. für die Begrüßung). Besetzungs-/No-Show-Prüfung alle 5 Min.,
+  nur 6–22 Uhr. Seiten wie „Wer ist da?“ und Aufgaben laden nur nach, solange der Tab sichtbar ist.
 - **Wer ist da? (nur Admins):** Zeiten → „Wer ist da“, alle Studios auf einer Seite. Je Studio: arbeitet (seit wann), Pause (seit
   wann, wie lange), fehlt (Schicht begonnen, nicht eingestempelt), kommt noch, gegangen, nicht gekommen, abwesend
   (krank/Urlaub/Schule/frei). Aktualisiert sich alle 30 Sek.

@@ -8,7 +8,7 @@
 -- (Mehrfach ausführbar.) Voraussetzung: 20261103090000_notes_daily_telegram.sql
 -- =============================================================================
 
--- Zeiterfassung pro Person (auch in ClockIns Migration 20261104080000_time_tracking.sql)
+-- Zeiterfassung pro Person (auch in ClockIns Migration 20261104100000_time_tracking.sql)
 alter table public.users add column if not exists time_tracking boolean not null default true;
 
 -- Gerade eingecheckt? Letzte gültige Buchung der letzten 16 Stunden ist nicht „Gehen“

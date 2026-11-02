@@ -8,18 +8,20 @@
 // (appendDocUpdate). Etwa alle 30 Sekunden – und beim Schließen – fasst der Editor alles zu einem Stand
 // zusammen (compactDoc). Dabei wird der gespeicherte Stand vorher eingemischt und nur geschrieben, wenn
 // niemand zwischendurch geschrieben hat; so geht nichts verloren, auch wenn Live-Nachrichten ausfallen.
-// Als Rückfallebene holt der Editor alle 20 Sekunden neue Schritte anderer nach.
+// Als Rückfallebene holt der Editor jede Minute neue Schritte anderer nach – nur bei sichtbarem Tab,
+// beim Zurückkehren sofort (Live-Nachrichten laufen ohnehin über Realtime).
 import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate, removeAwarenessStates } from "y-protocols/awareness";
 import * as Y from "yjs";
 import type { Blocks, CollabChannel, CollabMessage, DocState, NotesStore } from "../types";
 import { fromBase64, toBase64 } from "../util";
+import { everyWhileVisible } from "../visibility";
 
 export { fromBase64, toBase64 };
 
 const REMOTE = "remote";
 const PERSIST_DELAY = 900;
 const COMPACT_DELAY = 30_000;
-const PULL_INTERVAL = 20_000;
+const PULL_INTERVAL = 60_000;
 const RETRY_DELAY = 5_000;
 
 export type Peer = { clientId: number; name: string; color: string };
@@ -54,7 +56,7 @@ export class CollabSession {
   private queue: Promise<unknown> = Promise.resolve();
   private persistTimer?: ReturnType<typeof setTimeout>;
   private compactTimer?: ReturnType<typeof setTimeout>;
-  private pullTimer?: ReturnType<typeof setInterval>;
+  private stopPull?: () => void;
   private failing = false;
   private onHide = () => {
     if (document.visibilityState === "hidden") void this.flush();
@@ -93,7 +95,7 @@ export class CollabSession {
     });
 
     this.send({ type: "hello", from: this.id, sv: toBase64(Y.encodeStateVector(this.doc)) });
-    this.pullTimer = setInterval(() => void this.pull(), PULL_INTERVAL);
+    this.stopPull = everyWhileVisible(() => void this.pull(), PULL_INTERVAL);
     if (typeof document !== "undefined") document.addEventListener("visibilitychange", this.onHide);
     // Liegen beim Öffnen noch einzelne Schritte vor, bald zusammenfassen (hält die Tabelle klein)
     if (saved.updateIds?.length) this.scheduleCompact(5_000);
@@ -293,7 +295,7 @@ export class CollabSession {
     if (this.closing) return;
     this.closing = true;
     if (typeof document !== "undefined") document.removeEventListener("visibilitychange", this.onHide);
-    if (this.pullTimer) clearInterval(this.pullTimer);
+    this.stopPull?.();
     removeAwarenessStates(this.awareness, [this.doc.clientID], "local");
     try {
       await this.flush();

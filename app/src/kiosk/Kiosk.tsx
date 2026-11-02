@@ -1,12 +1,18 @@
-// Tablet im Studio: Uhr + QR-Code (wechselt alle 30 Sek.). Mitarbeiter scannen ihn mit dem
+// Tablet im Studio: Uhr + QR-Code (wechselt alle 30–45 Sek.). Mitarbeiter scannen ihn mit dem
 // eigenen Handy und stempeln dort; das Tablet zeigt danach die Begrüßung –
 // beim pünktlichen Gehen (spätestens zum Schichtende) 3 Sekunden das „Good Job“-Bild.
+//
+// Takt (weniger Abfragen/Logs): offen alle 15 Sek., nachts und bei verstecktem Bildschirm alle 60 Sek.
+// Nach einem Scan (meldet der Server) kurz alle 2 Sek., damit die Begrüßung sofort erscheint.
+// Der QR-Code bleibt dabei gültig: er wechselt beim ersten Ping nach 30 Sek., gilt 90 Sek. und
+// danach noch 30 Sek. als „vorheriger Code“ – bei 15 bzw. 60 Sek. Takt bleibt nach dem Scan immer ≥ 30 Sek. Zeit.
 import { useEffect, useRef, useState } from "react";
 import { ACTION_ICON, GREETING } from "../components/actions";
 import { QrCode } from "../components/QrCode";
 import { Icon } from "../components/ui";
 import { stampUrl } from "../lib/stamp";
 import { kioskDb } from "../lib/supabase";
+import { berlinHour } from "../lib/visibility";
 import { fmtClock, fmtClockSec, fmtDate } from "../lib/time";
 import { EVENT_LABEL, type EventType, type KioskDevice, type Location, studioShort } from "../lib/types";
 
@@ -16,10 +22,16 @@ type Ping = {
   token: string;
   now: string;
   recent: { first_name: string; event_type: EventType; recorded_at: string; on_time?: boolean }[];
+  scanned_at?: string | null; // letzter Scan dieses Tablet-Codes (Handy)
 };
 type Greeting = Ping["recent"][number];
 
-const PING_MS = 4000;
+const PING_MS = 15_000;
+const IDLE_MS = 60_000; // nachts und bei verstecktem Bildschirm
+const BURST_MS = 2_000; // kurz nach einem Scan – Begrüßung ohne Verzögerung
+const BURST_FOR_MS = 60_000;
+const OPEN_FROM = 5; // Berliner Stunde, ab der im normalen Takt gepingt wird
+const OPEN_TO = 23; // … bis vor dieser Stunde
 const GOOD_JOB_MS = 3000;
 const GOOD_JOB_SRC = `${import.meta.env.BASE_URL}good-job.webp`;
 
@@ -32,12 +44,24 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
   const locationId = props.session.location.id;
   useWakeLock();
 
-  // Alle paar Sekunden beim Server melden: QR-Code holen, Netz bestätigen, neue Buchungen anzeigen
+  // Regelmäßig beim Server melden: QR-Code holen, Netz bestätigen, neue Buchungen anzeigen
   useEffect(() => {
     let stop = false;
-    let timer: ReturnType<typeof setTimeout>;
+    let busy = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let burstUntil = 0;
+    let lastScan: string | null = null;
+    const delay = () => {
+      const hour = berlinHour();
+      if (document.visibilityState !== "visible" || hour < OPEN_FROM || hour >= OPEN_TO) return IDLE_MS;
+      return Date.now() < burstUntil ? BURST_MS : PING_MS;
+    };
     const tick = async () => {
+      clearTimeout(timer);
+      if (busy) return; // Antwort steht noch aus – die plant den nächsten Ping
+      busy = true;
       const { data, error } = await kioskDb.rpc("kiosk_ping", { p_location_id: locationId, p_since: since.current });
+      busy = false;
       if (stop) return;
       if (error || !data) {
         setProblem(error?.message && !/fetch|network/i.test(error.message) ? error.message : "Keine Internetverbindung.");
@@ -45,15 +69,35 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
         const ping = data as Ping;
         setProblem(null);
         setToken(ping.token);
-        if (since.current && ping.recent.length) setGreeting(ping.recent[ping.recent.length - 1]);
+        const last = ping.recent[ping.recent.length - 1];
+        if (since.current && last) {
+          setGreeting(last);
+          burstUntil = 0;
+        }
+        // Neuer Scan, der noch zu keiner Buchung geführt hat → kurz schneller nachfragen
+        const scan = ping.scanned_at ?? null;
+        if (scan && scan !== lastScan && Date.parse(ping.now) - Date.parse(scan) < BURST_FOR_MS
+            && (!last || scan > last.recorded_at)) {
+          burstUntil = Date.now() + BURST_FOR_MS;
+        }
+        lastScan = scan;
         since.current = ping.now;
       }
-      timer = setTimeout(tick, PING_MS);
+      timer = setTimeout(tick, delay());
     };
+    // Bildschirm wieder an → sofort aktualisieren (neuer QR-Code); aus → nächsten Ping in den langsamen Takt
+    const onVisible = () => {
+      if (document.visibilityState === "visible") return void tick();
+      if (busy) return;
+      clearTimeout(timer);
+      timer = setTimeout(tick, IDLE_MS);
+    };
+    document.addEventListener("visibilitychange", onVisible);
     void tick();
     return () => {
       stop = true;
       clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [locationId]);
 

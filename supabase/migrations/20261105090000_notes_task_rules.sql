@@ -4,7 +4,7 @@
 -- * props.__photo (Fotonachweis verlangt): setzen dürfen alle (z. B. Kopie einer Serie), zurücknehmen nur
 --   Studioleitung/Geschäftsführung.
 -- * props.__moves (wie oft verschoben): zählt nur hoch – ab 2× verlangt die App einen Fotonachweis.
--- (Mehrfach ausführbar.) Voraussetzung: 20261104090000_notes_checkin_gate.sql
+-- (Mehrfach ausführbar.) Voraussetzung: 20261104110000_notes_checkin_gate.sql
 -- =============================================================================
 
 create or replace function private.note_pages_task_guard() returns trigger
