@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNotes } from "../state";
 import type { PageMeta, PropValue } from "../types";
 import { Modal } from "../ui/Popover";
+import { PinButton } from "./PinTask";
 import { movesOf, needsPhoto, PHOTO_AFTER_MOVES, PHOTO_KEY, proofOf, REPEAT_KEY, REPEAT_LABELS, repeatOf } from "./recur";
 
 /** Erscheint, wenn eine Aufgabe mit Fotonachweis abgehakt wird */
@@ -106,6 +107,10 @@ export function TaskOptions(props: { row: PageMeta; studioTask?: boolean }) {
   };
   return (
     <div className="nk-task-options">
+      <div className="nk-task-option-row">
+        <span>📌 Tagesaufgabe</span>
+        <PinButton row={row} full />
+      </div>
       <label>
         <span>🔁 Wiederholen</span>
         {props.studioTask ? (
