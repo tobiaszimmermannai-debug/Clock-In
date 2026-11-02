@@ -1,5 +1,6 @@
 // Erfolge: Serie (Tage am Stück), Tagesziel ("Akku"), Wochenpunkte, Rangliste, Blitzis Stimmung
 import type { Completion, Member } from "../types";
+import { isoWeek } from "../studio/period";
 import { addDays, isoDay } from "../util";
 
 /** Aufgaben pro Tag für einen vollen Akku */
@@ -82,11 +83,11 @@ export function myStats(userId: string, completions: Completion[], opts: { today
 
 export type LeaderRow = { member: Member; points: number; count: number; rank: number };
 
-/** Rangliste ab einem Tag (Standard: Wochenbeginn); Geräte zählen nicht */
-export function leaderboard(completions: Completion[], members: Member[], fromDay: string): LeaderRow[] {
+/** Rangliste ab einem Tag (Standard: Wochenbeginn), optional bis vor toDay; Geräte zählen nicht */
+export function leaderboard(completions: Completion[], members: Member[], fromDay: string, toDay?: string): LeaderRow[] {
   const sums = new Map<string, { points: number; count: number }>();
   for (const c of completions) {
-    if (dayOf(c.doneAt) < fromDay) continue;
+    if (dayOf(c.doneAt) < fromDay || (toDay && dayOf(c.doneAt) >= toDay)) continue;
     const s = sums.get(c.userId) ?? { points: 0, count: 0 };
     s.points += c.points;
     s.count++;
@@ -136,4 +137,17 @@ export function speech(mood: Mood, s: MyStats, open: number, variant = 0): strin
     .replace("{streak}", String(s.streak))
     .replace("{rest}", String(Math.max(0, s.goal - s.today)))
     .replace("{open}", String(open));
+}
+
+/** Zeitraum des Wochenrankings */
+export type RankingInfo = { label: string; from: string; to: string; range: string };
+
+/** Vorwoche (Montag–Sonntag) zu einem Tag */
+export function lastWeek(day: string): RankingInfo {
+  const thisMonday = weekStart(day);
+  const from = addDays(thisMonday, -7);
+  const [, m1, d1] = from.split("-").map(Number);
+  const [, m2, d2] = addDays(thisMonday, -1).split("-").map(Number);
+  const week = isoWeek(from).week;
+  return { label: `KW ${week}`, from, to: thisMonday, range: `${d1}.${m1}.–${d2}.${m2}.` };
 }

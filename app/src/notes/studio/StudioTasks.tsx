@@ -7,12 +7,15 @@ import type { Color, DbSchema, PageMeta, PropDef, Studio } from "../types";
 import { Icon } from "../ui/Icon";
 import { Modal } from "../ui/Popover";
 import { COLORS, formatDate, shortId, today, untitled } from "../util";
+import { PHOTO_KEY, REPEAT_KEY } from "../gamification/recur";
+import { useStudioRecurrence } from "./recurrence";
 import { periodLabel, periodOf, periodRange, type Rhythm, shiftPeriod } from "./period";
 
 export const STUDIO_DB_ROLE = "studio_tasks";
 
 // Feste Eigenschafts-IDs, damit die Übersicht die Spalten findet
-const P = { studio: "studio", rhythm: "rhythm", period: "period", status: "status", assignee: "assignee", due: "due", group: "group" } as const;
+export const STUDIO_PROPS = { studio: "studio", rhythm: "rhythm", period: "period", status: "status", assignee: "assignee", due: "due", group: "group" } as const;
+const P = STUDIO_PROPS;
 
 function studioOptions(locations: Studio[]) {
   return locations.map((l, i) => ({ id: l.id, name: l.name, color: COLORS[1 + (i % (COLORS.length - 1))] as Color }));
@@ -57,6 +60,7 @@ export function findStudioDb(pages: Map<string, PageMeta>, isLive: (id: string) 
 
 export function StudioTasks() {
   const notes = useNotes();
+  useStudioRecurrence();
   const [rhythm, setRhythm] = useState<Rhythm>("week");
   const [period, setPeriod] = useState(() => periodOf("week", today()));
   const [distribute, setDistribute] = useState(false);
@@ -102,12 +106,24 @@ export function StudioTasks() {
     notes.toast(n ? `${n} Aufgaben übernommen` : "Nichts zu übernehmen – alles schon da.");
   };
 
-  const createRow = (target: PageMeta, v: { title: string; studio: string; rhythm: Rhythm; period: string; group: string; due: string; content?: unknown[] }) => {
+  const createRow = (
+    target: PageMeta,
+    v: { title: string; studio: string; rhythm: Rhythm; period: string; group: string; due: string; content?: unknown[]; repeat?: boolean; photo?: boolean },
+  ) => {
     const todo = target.schema?.properties.find((p) => p.id === P.status)?.options?.find((o) => (o.group ?? "todo") === "todo");
     return notes.createPage({
       parentId: target.id,
       title: v.title,
-      props: { [P.studio]: v.studio, [P.rhythm]: v.rhythm, [P.period]: v.period, [P.status]: todo?.id ?? null, [P.due]: v.due, [P.group]: v.group },
+      props: {
+        [P.studio]: v.studio,
+        [P.rhythm]: v.rhythm,
+        [P.period]: v.period,
+        [P.status]: todo?.id ?? null,
+        [P.due]: v.due,
+        [P.group]: v.group,
+        ...(v.repeat ? { [REPEAT_KEY]: "period" } : {}),
+        ...(v.photo ? { [PHOTO_KEY]: true } : {}),
+      },
       content: v.content,
     });
   };
@@ -267,6 +283,7 @@ export function StudioTasks() {
       </div>
       {distribute && (
         <DistributeModal
+          lead={notes.access.oversee}
           rhythm={rhythm}
           period={period}
           studios={notes.locations}
@@ -291,8 +308,11 @@ function DistributeModal(props: {
   period: string;
   studios: Studio[];
   onClose: () => void;
-  onSubmit: (v: { title: string; description: string; rhythm: Rhythm; period: string; due: string; studios: string[] }) => Promise<void>;
+  onSubmit: (v: { title: string; description: string; rhythm: Rhythm; period: string; due: string; studios: string[]; repeat: boolean; photo: boolean }) => Promise<void>;
+  lead: boolean;
 }) {
+  const [repeat, setRepeat] = useState(false);
+  const [photo, setPhoto] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [rhythm, setRhythm] = useState<Rhythm>(props.rhythm);
@@ -313,7 +333,7 @@ function DistributeModal(props: {
           if (!title.trim() || !selected.length) return;
           setBusy(true);
           try {
-            await props.onSubmit({ title: title.trim(), description, rhythm, period, due: effectiveDue, studios: selected });
+            await props.onSubmit({ title: title.trim(), description, rhythm, period, due: effectiveDue, studios: selected, repeat, photo });
             props.onClose();
           } finally {
             setBusy(false);
@@ -369,6 +389,16 @@ function DistributeModal(props: {
               <span>Fällig</span>
               <input type="date" className="nk-input" value={effectiveDue} onChange={(e) => setDue(e.target.value)} />
             </label>
+          </div>
+          <div className="nk-distribute-flags">
+            <label>
+              <input type="checkbox" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} /> 🔁 {rhythm === "week" ? "jede Woche" : "jeden Monat"} neu anlegen
+            </label>
+            {props.lead && (
+              <label>
+                <input type="checkbox" checked={photo} onChange={(e) => setPhoto(e.target.checked)} /> 📷 Fotonachweis verlangen
+              </label>
+            )}
           </div>
           <fieldset className="nk-distribute-studios">
             <legend>

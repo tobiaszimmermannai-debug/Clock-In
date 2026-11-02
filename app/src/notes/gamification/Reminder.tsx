@@ -24,6 +24,8 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
     let cancelled = false;
     (async () => {
       const since = new Date(Date.now() - 90 * 864e5).toISOString();
+      // Nicht eingecheckt: Aufgaben gesperrt – dann keine Erinnerung
+      if ((await store.access()).locked) return;
       const [me, list, events, days] = await Promise.all([store.me(), store.listPages(), store.completions(since), store.workDays(since)]);
       if (me.device) return;
       const pages = new Map(list.map((p) => [p.id, p]));

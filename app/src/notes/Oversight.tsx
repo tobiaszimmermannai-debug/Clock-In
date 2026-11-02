@@ -127,7 +127,12 @@ function People(props: { people: Member[]; items: TaskItem[] }) {
                     </span>
                   </div>
                   {focusFor === m.id ? (
-                    <FocusSection member={m} compact />
+                    <>
+                      <FocusSection member={m} compact />
+                      <button type="button" className="nk-btn is-ghost" onClick={() => setFocusFor(null)}>
+                        ▲ Tagesfokus zuklappen
+                      </button>
+                    </>
                   ) : (
                     <button type="button" className="nk-btn is-ghost" onClick={() => setFocusFor(m.id)}>
                       📌 Tagesfokus ansehen/setzen

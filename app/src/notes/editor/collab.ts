@@ -13,8 +13,8 @@
 import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate, removeAwarenessStates } from "y-protocols/awareness";
 import * as Y from "yjs";
 import type { Blocks, CollabChannel, CollabMessage, DocState, NotesStore } from "../types";
-import { everyWhileVisible } from "../../lib/visibility";
 import { fromBase64, toBase64 } from "../util";
+import { everyWhileVisible } from "../visibility";
 
 export { fromBase64, toBase64 };
 

@@ -17,6 +17,7 @@ export type Person = {
   username: string | null;
   auth_user_id: string | null;
   any_phone?: boolean; // darf mit verschiedenen Handys/Browsern stempeln (ohne Freigabe)
+  time_tracking?: boolean; // false = ohne Zeiterfassung (Praktikum): kein Stempeln, keine Meldungen
   employment_details: { weekly_target_minutes: number; work_days_per_week: number } | null;
 };
 
@@ -162,6 +163,7 @@ function vacationShort(v: VacationInfo | undefined) {
 
 // Bereit zum Stempeln = Login vorhanden + Handy registriert
 function ReadyPill(props: { person: Person; hasPhone: boolean }) {
+  if (props.person.time_tracking === false) return <Pill>ohne Stempeln</Pill>;
   if (!props.person.username && !props.person.auth_user_id) return <Pill tone="warn">kein Login</Pill>;
   if (!props.hasPhone) return <Pill>Handy fehlt</Pill>;
   return <Pill tone="ok">bereit</Pill>;
@@ -189,6 +191,15 @@ function PersonDetail(props: {
     setConfirmReset(false);
     if (error) return setMessage({ tone: "error", text: error.message });
     setMessage({ tone: "ok", text: `Stempel-Handy zurückgesetzt. Das nächste Handy, mit dem ${person.first_name} stempelt, wird registriert.` });
+    await props.onChanged();
+  }
+
+  async function toggleTimeTracking(on: boolean) {
+    const { error } = await adminDb.from("users").update({ time_tracking: on }).eq("id", person.id);
+    if (error) return setMessage({ tone: "error", text: error.message });
+    setMessage({ tone: "ok", text: on
+      ? `${person.first_name} stempelt wieder (Zeiterfassung an).`
+      : `${person.first_name} stempelt nicht (z. B. Praktikum): nur Dienstplan und Aufgaben, keine Meldungen, nicht im Wochenbericht.` });
     await props.onChanged();
   }
 
@@ -271,6 +282,16 @@ function PersonDetail(props: {
             />
           ) : (
             <Row leading={<LeadingIcon name="phone" />} title="Noch nicht registriert" subtitle="Wird beim ersten Stempeln automatisch registriert" />
+          )}
+          {isAdmin && (
+            <label className="list-row">
+              <span className="list-row-main">
+                <span className="list-row-title">Zeiterfassung (Stempeln)</span>
+                <span className="list-row-sub">Aus für Praktikanten: kein Stempeln, keine Meldungen – nur Dienstplan und Aufgaben (immer sichtbar)</span>
+              </span>
+              <input id="time-tracking" type="checkbox" role="switch" className="switch" checked={person.time_tracking !== false}
+                onChange={(e) => void toggleTimeTracking(e.target.checked)} />
+            </label>
           )}
           {isAdmin && (
             <label className="list-row">

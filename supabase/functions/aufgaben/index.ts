@@ -47,6 +47,10 @@ const untitled = (p) => p?.title.trim() || "Ohne Titel";
 const pad$1 = (n) => String(n).padStart(2, "0");
 const isoDay = (d) => `${d.getFullYear()}-${pad$1(d.getMonth() + 1)}-${pad$1(d.getDate())}`;
 const today = () => isoDay(/* @__PURE__ */ new Date());
+function addDays(day, n) {
+	const [y, m, d] = day.split("-").map(Number);
+	return isoDay(new Date(y, m - 1, d + n));
+}
 const WEEKDAYS = [
 	"So",
 	"Mo",
@@ -1059,6 +1063,83 @@ function reminderText(kind, s, studioName) {
 	if (absent) lines.push(absent);
 	return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
+/** Wochenranking (montags): Treppchen, Plätze 4–10, Punkte je Studio */
+function rankingText(rows, info, studioName) {
+	const lines = [`🏆 Wochenranking ${info.label} (${info.range})`];
+	if (!rows.length) return [
+		...lines,
+		"",
+		"Letzte Woche wurde keine Aufgabe erledigt."
+	].join("\n");
+	const medal = [
+		"🥇",
+		"🥈",
+		"🥉"
+	];
+	lines.push("");
+	for (const r of rows.slice(0, 10)) lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} Punkte (${r.count} ${r.count === 1 ? "Aufgabe" : "Aufgaben"})`);
+	const studios = /* @__PURE__ */ new Map();
+	for (const r of rows) studios.set(studioName(r.member.studioId), (studios.get(studioName(r.member.studioId)) ?? 0) + r.points);
+	if (studios.size > 1) lines.push("", `Studios: ${[...studios].sort((a, b) => b[1] - a[1]).map(([s, p]) => `${s} ${p}`).join(" · ")}`);
+	return lines.join("\n");
+}
+
+// src/notes/studio/period.ts
+/** ISO-Kalenderwoche (Montag–Sonntag) */
+function isoWeek(day) {
+	const [y, m, d] = day.split("-").map(Number);
+	const date = new Date(Date.UTC(y, m - 1, d));
+	const wd = date.getUTCDay() || 7;
+	date.setUTCDate(date.getUTCDate() + 4 - wd);
+	const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+	return {
+		year: date.getUTCFullYear(),
+		week: Math.ceil(((date.getTime() - yearStart.getTime()) / 864e5 + 1) / 7)
+	};
+}
+
+// src/notes/gamification/stats.ts
+const dayOf = (iso) => isoDay(new Date(iso));
+/** Montag der Woche */
+function weekStart(day) {
+	const [y, m, d] = day.split("-").map(Number);
+	const wd = (new Date(y, m - 1, d).getDay() + 6) % 7;
+	return addDays(day, -wd);
+}
+/** Rangliste ab einem Tag (Standard: Wochenbeginn), optional bis vor toDay; Geräte zählen nicht */
+function leaderboard(completions, members, fromDay, toDay) {
+	const sums = /* @__PURE__ */ new Map();
+	for (const c of completions) {
+		if (dayOf(c.doneAt) < fromDay || toDay && dayOf(c.doneAt) >= toDay) continue;
+		const s = sums.get(c.userId) ?? {
+			points: 0,
+			count: 0
+		};
+		s.points += c.points;
+		s.count++;
+		sums.set(c.userId, s);
+	}
+	const rows = members.filter((m) => !m.device && sums.has(m.id)).map((m) => ({
+		member: m,
+		...sums.get(m.id),
+		rank: 0
+	})).sort((a, b) => b.points - a.points || b.count - a.count || a.member.name.localeCompare(b.member.name, "de"));
+	rows.forEach((r, i) => r.rank = i > 0 && rows[i - 1].points === r.points ? rows[i - 1].rank : i + 1);
+	return rows;
+}
+/** Vorwoche (Montag–Sonntag) zu einem Tag */
+function lastWeek(day) {
+	const thisMonday = weekStart(day);
+	const from = addDays(thisMonday, -7);
+	const [, m1, d1] = from.split("-").map(Number);
+	const [, m2, d2] = addDays(thisMonday, -1).split("-").map(Number);
+	return {
+		label: `KW ${isoWeek(from).week}`,
+		from,
+		to: thisMonday,
+		range: `${d1}.${m1}.–${d2}.${m2}.`
+	};
+}
 
 // src/notes/store/rows.ts
 const META_COLUMNS = "id, parent_id, space, owner_id, kind, title, icon, cover, props, schema, options, position, archived_at, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by";
@@ -1312,16 +1393,60 @@ async function tick(cfg, db, at) {
 		day: now.day
 	}) === "exists") return { skipped: `${kind} am ${now.day} schon gesendet` };
 	const r = await buildReminder(db, kind, now.day);
+	const sent = await sendTo(cfg, cfg.recipients.recipients, r.text);
+	let ranking;
+	if (kind === "frueh" && now.weekday === 1 && await db.insert("note_notify_log", {
+		kind: "ranking",
+		day: now.day
+	}) === "ok") {
+		ranking = await buildRanking(db, now.day);
+		await sendTo(cfg, cfg.recipients.recipients, ranking);
+	}
 	return {
 		kind,
 		day: now.day,
 		text: r.text,
-		sent: await sendTo(cfg, cfg.recipients.recipients, r.text)
+		ranking,
+		sent
 	};
 }
+/** Wochenranking (Vorwoche) als Text */
+async function buildRanking(db, day) {
+	const info = lastWeek(day);
+	const [members, studios] = await Promise.all([loadMembers(db), db.get("locations?select=id,name")]);
+	const events = [];
+	for (let offset = 0; offset < 5e4; offset += 1e3) {
+		const rows = await db.get(`note_task_events?select=page_id,user_id,points,done_at&done_at=gte.${info.from}&done_at=lt.${info.to}&order=id&limit=1000&offset=${offset}`);
+		events.push(...rows.map((r) => ({
+			pageId: r.page_id,
+			userId: r.user_id,
+			points: r.points,
+			doneAt: r.done_at
+		})));
+		if (rows.length < 1e3) break;
+	}
+	const studioName = (id) => studios.find((s) => s.id === id)?.name ?? "Ohne Studio";
+	return rankingText(leaderboard(events, members, info.from, info.to), info, studioName);
+}
 async function manualReminder(cfg, db, b) {
-	const kind = b.kind === "mittag" || b.kind === "abend" ? b.kind : "frueh";
 	const day = /^\d{4}-\d{2}-\d{2}$/.test(b.day ?? "") ? b.day : berlinNow().day;
+	if (b.kind === "ranking") {
+		const text = await buildRanking(db, day);
+		if (b.dryRun !== false) return {
+			kind: "ranking",
+			day,
+			dryRun: true,
+			text
+		};
+		return {
+			kind: "ranking",
+			day,
+			dryRun: false,
+			text,
+			sent: await sendTo(cfg, cfg.recipients.recipients, text)
+		};
+	}
+	const kind = b.kind === "mittag" || b.kind === "abend" ? b.kind : "frueh";
 	const r = await buildReminder(db, kind, day);
 	const dryRun = b.dryRun !== false;
 	const notes = [

@@ -70,13 +70,14 @@ export class SupabaseStore implements NotesStore {
       const { data, error } = await this.db.rpc("note_access");
       // Ältere Datenbank ohne die Funktion: keine Sonderrechte
       if (error || !data) return { oversee: false, admin: false, studio: false };
-      const a = data as { oversee?: boolean; admin?: boolean; studio?: boolean; studio_name?: string | null; studio_location?: string | null };
+      const a = data as { oversee?: boolean; admin?: boolean; studio?: boolean; studio_name?: string | null; studio_location?: string | null; locked?: boolean };
       return {
         oversee: Boolean(a.oversee),
         admin: Boolean(a.admin),
         studio: Boolean(a.studio),
         studioName: a.studio_name ?? undefined,
         studioLocationId: a.studio_location ?? null,
+        locked: Boolean(a.locked),
       };
     })();
     return this.accessCache;
@@ -124,6 +125,12 @@ export class SupabaseStore implements NotesStore {
     if (error) return null; // ältere Datenbank
     const rows = (data ?? []) as { user_id: string; planned: boolean; absent: boolean }[];
     return { planned: rows.filter((r) => r.planned).map((r) => r.user_id), absent: rows.filter((r) => r.absent).map((r) => r.user_id) };
+  }
+
+  async unlocked(): Promise<string[] | null> {
+    const { data, error } = await this.db.rpc("note_unlocked");
+    if (error) return null; // ältere Datenbank: keine Sperre
+    return ((data ?? []) as { user_id: string; unlocked: boolean }[]).filter((r) => r.unlocked).map((r) => r.user_id);
   }
 
   async decideFocus(pageId: string, userId: string, ok: boolean): Promise<string> {
@@ -387,18 +394,41 @@ export class SupabaseStore implements NotesStore {
   }
 
   subscribe(onEvent: (e: StoreEvent) => void): () => void {
-    let channel: RealtimeChannel | undefined = this.db
-      .channel(`note_pages_${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "note_pages" }, (payload) => {
-        if (payload.eventType === "DELETE") {
-          const id = (payload.old as { id?: string }).id;
-          if (id) onEvent({ type: "delete", id });
-          return;
-        }
-        onEvent({ type: "upsert", page: toMeta(payload.new as DbRow) });
-      })
-      .subscribe();
+    let closed = false;
+    let channel: RealtimeChannel | undefined;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const open = async () => {
+      // Erst die Anmeldung an die Live-Verbindung geben – sonst gilt sie als „nicht angemeldet“ und
+      // die Zugriffsregeln lassen keine einzige Änderung durch
+      await this.db.realtime.setAuth().catch(() => undefined);
+      if (closed) return;
+      channel = this.db
+        .channel(`note_pages_${Math.random().toString(36).slice(2)}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "note_pages" }, (payload) => {
+          if (payload.eventType === "DELETE") {
+            const id = (payload.old as { id?: string }).id;
+            if (id) onEvent({ type: "delete", id });
+            return;
+          }
+          onEvent({ type: "upsert", page: toMeta(payload.new as DbRow) });
+        })
+        .subscribe((status) => {
+          if (closed) return;
+          // Verbunden (auch nach einem Abbruch): einmal abgleichen, falls zwischendurch etwas verpasst wurde
+          if (status === "SUBSCRIBED") onEvent({ type: "resync" });
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            const old = channel;
+            channel = undefined;
+            if (old) void this.db.removeChannel(old);
+            clearTimeout(retry);
+            retry = setTimeout(() => void open(), 5_000);
+          }
+        });
+    };
+    void open();
     return () => {
+      closed = true;
+      clearTimeout(retry);
       if (channel) void this.db.removeChannel(channel);
       channel = undefined;
     };

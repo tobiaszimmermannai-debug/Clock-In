@@ -6,7 +6,10 @@ import { Celebration } from "./gamification/GamePanel";
 import { VersionHistory } from "./History";
 import { Home } from "./Home";
 import { Oversight } from "./Oversight";
-import { OVERVIEW, STUDIO_TASKS } from "./routes";
+import { OVERVIEW, STUDIO_BOARD, STUDIO_TASKS } from "./routes";
+import { StudioDashboard } from "./studio/Dashboard";
+import { Blitzi } from "./gamification/Blitzi";
+import { PhotoProofModal } from "./gamification/TaskExtras";
 import { StudioTasks } from "./studio/StudioTasks";
 import { MovePicker, PageMenu, PageView } from "./PageView";
 import { Search } from "./Search";
@@ -157,6 +160,22 @@ function Layout(props: NotesWorkspaceProps) {
 
   const page = notes.current ? notes.pages.get(notes.current) : undefined;
 
+  // Mitarbeiter, nicht eingecheckt: Aufgaben erst nach dem Einchecken im Studio
+  if (notes.loaded && notes.access.locked) {
+    return (
+      <div ref={rootRef} className={cls}>
+        <div className="nk-locked">
+          <Blitzi mood="sleepy" stage={12} size={130} still />
+          <h1>Erst einchecken, dann loslegen</h1>
+          <p>Deine Aufgaben siehst du, sobald du im Studio eingecheckt bist – QR-Code am Tablet scannen und „Kommen“ tippen.</p>
+          <button type="button" className="nk-btn" onClick={() => location.reload()}>
+            Ich bin eingecheckt – neu laden
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div ref={rootRef} className={cls} style={{ ["--nk-sidebar" as string]: `${width}px` }}>
       {showSidebar && (
@@ -194,15 +213,21 @@ function Layout(props: NotesWorkspaceProps) {
               <Oversight />
             ) : notes.current === STUDIO_TASKS ? (
               <StudioTasks />
+            ) : notes.current === STUDIO_BOARD ? (
+              <StudioDashboard />
             ) : (
               <PageView key={notes.current} id={notes.current} theme={resolved} />
             )
+          ) : notes.access.studio ? (
+            // Studio-PC: das Dashboard ist die Startseite (bleibt immer offen)
+            <StudioDashboard />
           ) : (
             <Home title={title} onTemplates={() => setTemplates(true)} />
           )}
         </div>
       </div>
       {notes.peek && <Peek id={notes.peek} theme={resolved} mobile={mobile} />}
+      <PhotoProofModal />
       {searching && <Search onClose={() => setSearching(false)} />}
       {templates && <TemplatePicker space="private" onClose={() => setTemplates(false)} onCreated={(id) => notes.navigate(id)} />}
       <Celebration />
@@ -231,7 +256,13 @@ function Topbar(props: { page?: PageMeta; sidebarOpen: boolean; onToggleSidebar:
       <nav className="nk-crumbs" aria-label="Pfad">
         {!page && (
           <span className="nk-crumb is-current">
-            {notes.current === OVERVIEW ? "Team-Übersicht" : notes.current === STUDIO_TASKS ? "Wochen- & Monatsaufgaben" : "Startseite"}
+            {notes.current === OVERVIEW
+              ? "Team-Übersicht"
+              : notes.current === STUDIO_TASKS
+                ? "Wochen- & Monatsaufgaben"
+                : notes.current === STUDIO_BOARD || (!notes.current && notes.access.studio)
+                  ? "Studio-Dashboard"
+                  : "Startseite"}
           </span>
         )}
         {trail.map((p, i) => (

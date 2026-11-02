@@ -1,4 +1,6 @@
 // Eine Seite: Titelbild, Symbol, Titel, Eigenschaften (bei Datenbank-Zeilen), Inhalt oder Datenbank
+import { TaskOptions } from "./gamification/TaskExtras";
+import { STUDIO_DB_ROLE } from "./studio/StudioTasks";
 import { BlockNoteEditor } from "@blocknote/core";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TYPE_ICONS, ValueCell } from "./database/cells";
@@ -299,6 +301,9 @@ function PropertyPanel(props: { db: PageMeta; row: PageMeta; schema: DbSchema })
             <ValueCell db={props.db} row={props.row} prop={p} placeholder="Leer" className="is-prop" />
           </div>
         ))}
+      {props.schema.properties.some((p) => p.type === "status" || p.type === "checkbox") && (
+        <TaskOptions row={props.row} studioTask={props.schema.role === STUDIO_DB_ROLE} />
+      )}
       {!locked && (
         <button type="button" className="nk-btn is-ghost nk-prop-add" onClick={(e) => add.open(e.currentTarget)}>
           <Icon name="plus" /> Eigenschaft hinzufügen

@@ -7,7 +7,7 @@ type Row = PageMeta & { content: Blocks; plain: string; ydoc?: string | null };
 
 const MAX_VERSIONS = 50;
 
-const ME: Member = { id: "local-user", name: "Ich", color: "blue" };
+const ME: Member = { id: "local-user", name: "Ich", color: "blue", studioId: "studio-1" };
 
 export class LocalStore implements NotesStore {
   readonly kind = "local" as const;
@@ -56,6 +56,11 @@ export class LocalStore implements NotesStore {
   }
 
   async workDays() {
+    return null;
+  }
+
+  /** Lokal gibt es kein Einchecken */
+  async unlocked() {
     return null;
   }
 

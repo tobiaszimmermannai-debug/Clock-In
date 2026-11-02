@@ -53,7 +53,10 @@ export function liveCheck(pages: Map<string, PageMeta>): (id: string) => boolean
     const known = cache.get(id);
     if (known !== undefined) return known;
     const p = pages.get(id);
-    const ok = Boolean(p && !p.archivedAt && !p.deletedAt && (!p.parentId || (depth < 50 && check(p.parentId, depth + 1))));
+    // Unsichtbare Elternseite (fremde Liste einer zugewiesenen Aufgabe) gilt als lebend
+    const ok = Boolean(
+      p && !p.archivedAt && !p.deletedAt && (!p.parentId || !pages.has(p.parentId) || (depth < 50 && check(p.parentId, depth + 1))),
+    );
     cache.set(id, ok);
     return ok;
   };

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTIONS, ACTION_ICON, GREETING } from "../components/actions";
 import { TaskReminder } from "../components/TaskReminder";
+import { WeeklyPodium } from "../components/WeeklyPodium";
 import { QrScanner } from "../components/QrScanner";
 import { Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
 import { type Notice as ShiftNote, relevantShift, shiftNotice } from "../lib/shiftInfo";
@@ -223,6 +224,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         {phase.early && (
           <Notice tone="warn">Früher gegangen – Tobias oder Dominik entscheiden, wie die restliche Zeit zählt. Gute Besserung, falls du krank bist!</Notice>
         )}
+        {phase.event === "clock_in" && <WeeklyPodium db={portalDb} userKey={props.me.id} />}
         {(phase.event === "clock_in" || phase.event === "break_start") && props.onOpenTasks && (
           <TaskReminder db={portalDb} reason={phase.event === "break_start" ? "break" : "clock_in"} onOpen={props.onOpenTasks} />
         )}

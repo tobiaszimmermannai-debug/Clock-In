@@ -5890,6 +5890,325 @@ begin
   end if;
 end $$;
 
+-- =============================================================================
+-- 20261104100000_time_tracking.sql
+-- Personen ohne Zeiterfassung (z. B. Praktikanten).
+-- =============================================================================
+alter table public.users add column if not exists time_tracking boolean not null default true;
+
+-- Stempeln für Personen ohne Zeiterfassung verhindern (alle Wege: Handy, Tablet, Nachtrag)
+create or replace function private.time_logs_require_tracking() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if exists (select 1 from public.users u where u.id = new.user_id and not u.time_tracking) then
+    raise exception 'Für diese Person ist keine Zeiterfassung vorgesehen.' using errcode = 'P0001';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists time_logs_require_tracking on public.time_logs;
+create trigger time_logs_require_tracking before insert on public.time_logs
+  for each row execute function private.time_logs_require_tracking();
+
+-- „Nicht eingestempelt“-Meldung: nur Personen mit Zeiterfassung
+create or replace function private.no_show_check() returns integer
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_settings public.rule_settings;
+  v_shift    record;
+  v_count    integer := 0;
+begin
+  select * into v_settings from public.rule_settings;
+  for v_shift in
+    select s.id, s.user_id, s.starts_at, s.is_acquisition, u.first_name, u.last_name, l.name as location
+    from public.shifts s
+    join public.users u on u.id = s.user_id and u.is_active and u.time_tracking
+    join public.locations l on l.id = s.location_id
+    where s.shift_type = 'work'
+      and s.starts_at <= now() - make_interval(mins => v_settings.late_tolerance_minutes)
+      and s.starts_at > now() - interval '2 hours'
+      and s.ends_at > now()
+      and s.created_at < s.starts_at                                    -- nachträglich geplant → keine Meldung
+      and (s.note is null or s.note not like 'Aushilfsschicht%')        -- entsteht erst beim Einstempeln
+      -- eingestempelt (ab 1 Std. vor Beginn) …
+      and not exists (
+        select 1 from public.time_logs t
+        where t.user_id = s.user_id and t.event_type = 'clock_in' and t.approval_status <> 'rejected'
+          and t.recorded_at >= s.starts_at - interval '1 hour')
+      -- … oder noch von vorher anwesend
+      and coalesce((
+        select t.event_type <> 'clock_out' from public.time_logs t
+        where t.user_id = s.user_id and t.approval_status <> 'rejected' and t.recorded_at > now() - interval '14 hours'
+        order by t.recorded_at desc limit 1), false) = false
+  loop
+    insert into public.no_show_alerts (shift_id) values (v_shift.id) on conflict do nothing;
+    continue when not found;
+    perform private.call_telegram(jsonb_build_object(
+      'type', 'not_checked_in',
+      'name', v_shift.first_name || ' ' || v_shift.last_name,
+      'location', v_shift.location,
+      'start', to_char(v_shift.starts_at at time zone 'Europe/Berlin', 'HH24:MI'),
+      'acquisition', v_shift.is_acquisition));
+    v_count := v_count + 1;
+  end loop;
+  return v_count;
+end $$;
+
+-- 18-Uhr-Abfrage (Krank/Schule/Urlaub?): nur Personen mit Zeiterfassung
+create or replace function public.absence_candidates(p_day date)
+returns table (user_id uuid, first_name text, last_name text)
+language sql stable security definer set search_path = '' as $$
+  select u.id, u.first_name, u.last_name
+  from public.users u
+  left join public.employment_details e on e.user_id = u.id
+  where u.is_active and u.role <> 'admin' and u.time_tracking
+    and extract(isodow from p_day) <> 7  -- Sonntag: niemand eingeplant, keine Nachfrage
+    and (e.employment_start is null or e.employment_start <= p_day)
+    and (e.employment_end is null or e.employment_end >= p_day)
+    and not exists (
+      select 1 from public.shifts s
+      where s.user_id = u.id and s.starts_at >= private.berlin_day_start(p_day) and s.starts_at < private.berlin_day_start(p_day + 1))
+    and not exists (
+      select 1 from public.time_logs t
+      where t.user_id = u.id and t.approval_status <> 'rejected'
+        and t.recorded_at >= private.berlin_day_start(p_day) and t.recorded_at < private.berlin_day_start(p_day + 1))
+    and (
+      select count(distinct s.shift_date) from public.shifts s
+      where s.user_id = u.id
+        and s.shift_date between date_trunc('week', p_day)::date and date_trunc('week', p_day)::date + 6
+    ) < coalesce(e.work_days_per_week, 5)
+    -- Samstag arbeitet meist nur eine Person: alle anderen automatisch frei (keine Frage) –
+    -- außer im eigenen Studio hat an dem Tag niemand eingestempelt
+    and not (
+      extract(isodow from p_day) = 6
+      and exists (
+        select 1 from public.time_logs t
+        where t.location_id = u.home_location_id and t.event_type = 'clock_in' and t.approval_status <> 'rejected'
+          and t.recorded_at >= private.berlin_day_start(p_day) and t.recorded_at < private.berlin_day_start(p_day + 1)))
+  order by u.last_name, u.first_name
+$$;
+revoke execute on function public.absence_candidates(date) from public, anon, authenticated;
+grant execute on function public.absence_candidates(date) to service_role;
+
+-- Wochenbericht: nur Personen mit Zeiterfassung
+create or replace function public.weekly_report(p_from date, p_to date)
+returns table (
+  user_id                   uuid,
+  first_name                text,
+  last_name                 text,
+  role                      public.user_role,
+  target_minutes            integer,
+  worked_minutes            integer,
+  credit_minutes            integer,
+  late_count                integer,
+  late_minutes              integer,
+  overtime_pending_minutes  integer,
+  overtime_approved_minutes integer,
+  open_days                 integer,
+  forgotten_count           integer
+)
+language sql stable security definer set search_path = '' as $$
+  select u.id, u.first_name, u.last_name, u.role,
+         coalesce(e.weekly_target_minutes, 0),
+         coalesce(sum(s.worked_minutes), 0)::integer,
+         coalesce(sum(s.credit_minutes), 0)::integer,
+         (count(*) filter (where s.late_minutes > 0))::integer,
+         coalesce(sum(s.late_minutes), 0)::integer,
+         coalesce(sum(s.overtime_pending_minutes), 0)::integer,
+         coalesce(sum(s.overtime_approved_minutes), 0)::integer,
+         (count(*) filter (where s.open_session))::integer,
+         (select count(*) from public.time_logs t
+          where t.user_id = u.id and t.source = 'auto_checkout'
+            and t.recorded_at >= private.berlin_day_start(p_from)
+            and t.recorded_at < private.berlin_day_start(p_to + 1))::integer
+  from public.users u
+  left join public.employment_details e on e.user_id = u.id
+  cross join lateral public.work_day_summary(u.id, p_from, p_to) s
+  where u.is_active and u.role <> 'admin' and u.time_tracking
+  group by u.id, u.first_name, u.last_name, u.role, e.weekly_target_minutes
+  order by u.last_name, u.first_name
+$$;
+revoke execute on function public.weekly_report(date, date) from public, anon, authenticated;
+grant execute on function public.weekly_report(date, date) to service_role;
+
+revoke execute on function private.time_logs_require_tracking() from public, anon, authenticated;
+
+-- =============================================================================
+-- 20261104110000_notes_checkin_gate.sql
+-- Aufgaben: Mitarbeiter nur eingecheckt.
+-- =============================================================================
+-- Zeiterfassung pro Person (auch in ClockIns Migration 20261104100000_time_tracking.sql)
+alter table public.users add column if not exists time_tracking boolean not null default true;
+
+-- Gerade eingecheckt? Letzte gültige Buchung der letzten 16 Stunden ist nicht „Gehen“
+create or replace function private.is_checked_in(p_user uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select coalesce((
+    select t.event_type <> 'clock_out'
+    from public.time_logs t
+    where t.user_id = p_user
+      and t.approval_status <> 'rejected'
+      and t.recorded_at > now() - interval '16 hours'
+    order by t.recorded_at desc
+    limit 1), false)
+$$;
+
+-- Darf die angemeldete Person gerade an ihre Aufgaben?
+create or replace function private.note_gate_ok() returns boolean
+language sql stable security definer set search_path = '' as $$
+  select private.is_admin() or private.is_manager() or exists (
+    select 1 from public.users u
+    where u.auth_user_id = (select auth.uid())
+      and u.is_active
+      and (not u.time_tracking or private.is_checked_in(u.id))
+  )
+$$;
+
+-- Zugriff: Leitung wie bisher (betreute Seiten), Mitarbeiter nur eingecheckt, Studio-PC Team-Seiten
+create or replace function private.can_access_note(p_space public.note_space, p_owner uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select (private.is_staff() and (
+            private.can_oversee_note(p_space, p_owner)
+            or (private.note_gate_ok() and (p_owner = (select auth.uid()) or p_space = 'team'))))
+      or (p_space = 'team' and private.is_studio_pc())
+$$;
+
+-- Eigene Rechte für die App – zusätzlich: gesperrt (nicht eingecheckt)
+create or replace function public.note_access() returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select jsonb_build_object(
+    'oversee', private.is_admin() or private.is_manager(),
+    'admin', private.is_admin(),
+    'studio', private.is_studio_pc(),
+    'studio_name', (select k.name from public.kiosk_devices k
+                    where k.auth_user_id = (select auth.uid()) and k.is_active limit 1),
+    'studio_location', (select k.location_id from public.kiosk_devices k
+                        where k.auth_user_id = (select auth.uid()) and k.is_active limit 1),
+    'locked', private.is_staff() and not private.note_gate_ok() and not private.is_studio_pc()
+  )
+$$;
+
+-- Wer darf gerade an seine Aufgaben (für die Reiter am Studio-PC und in der Team-Übersicht)?
+-- Sichtbar wie note_day_plan: selbst, betreute Personen, Studio-PC sein Studio, Server alle.
+create or replace function public.note_unlocked() returns table (user_id uuid, unlocked boolean)
+language sql stable security definer set search_path = '' as $$
+  with pc as (
+    select k.location_id from public.kiosk_devices k
+    where k.auth_user_id = (select auth.uid()) and k.is_active and k.kind = 'pc'
+    limit 1
+  )
+  select u.auth_user_id, (not u.time_tracking or private.is_checked_in(u.id))
+  from public.users u
+  where u.is_active
+    and u.auth_user_id is not null
+    and (
+      (select auth.uid()) is null
+      or u.auth_user_id = (select auth.uid())
+      or private.manages_user(u.id)
+      or u.home_location_id = (select pc.location_id from pc)
+    )
+$$;
+
+revoke execute on function private.is_checked_in(uuid), private.note_gate_ok() from public, anon, authenticated;
+revoke execute on function public.note_unlocked() from public, anon;
+grant execute on function public.note_unlocked() to authenticated, service_role;
+
+-- =============================================================================
+-- 20261105090000_notes_task_rules.sql
+-- Aufgaben: Fotonachweis und Verschieben.
+-- =============================================================================
+create or replace function private.note_pages_task_guard() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_old_moves integer := case when (old.props ->> '__moves') ~ '^\d+$' then (old.props ->> '__moves')::integer else 0 end;
+  v_new_moves integer := case when (new.props ->> '__moves') ~ '^\d+$' then (new.props ->> '__moves')::integer else 0 end;
+begin
+  if private.is_note_lead() then
+    return new;
+  end if;
+  if coalesce(old.props ->> '__photo', '') = 'true' and coalesce(new.props ->> '__photo', '') <> 'true' then
+    new.props := jsonb_set(coalesce(new.props, '{}'::jsonb), '{__photo}', 'true'::jsonb);
+  end if;
+  if v_old_moves > v_new_moves then
+    new.props := jsonb_set(coalesce(new.props, '{}'::jsonb), '{__moves}', to_jsonb(v_old_moves));
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists note_pages_task_guard on public.note_pages;
+create trigger note_pages_task_guard before update of props on public.note_pages
+  for each row execute function private.note_pages_task_guard();
+
+revoke execute on function private.note_pages_task_guard() from public, anon, authenticated;
+
+-- =============================================================================
+-- 20261106090000_notes_assigned_visible.sql
+-- Aufgaben: Zugewiesenes ist immer sichtbar.
+-- =============================================================================
+-- Alle Personen, die eine Aufgabe nennt: Personen-Eigenschaften (Listen von IDs) und Tagesfokus (__focus)
+create or replace function private.note_people_of(p_props jsonb) returns setof text
+language sql immutable set search_path = '' as $$
+  select v
+  from jsonb_each(coalesce(p_props, '{}'::jsonb)) e
+  cross join lateral jsonb_array_elements_text(case when jsonb_typeof(e.value) = 'array' then e.value else '[]'::jsonb end) v
+  union
+  select k
+  from jsonb_object_keys(case when jsonb_typeof(p_props -> '__focus') = 'object' then p_props -> '__focus' else '{}'::jsonb end) k
+$$;
+
+-- Darf ich diese (nicht gelöschte) Aufgabe sehen, weil sie mir bzw. meinem Studio (Studio-PC) zugewiesen ist?
+create or replace function private.note_assigned_ok(p_props jsonb, p_deleted timestamptz) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select p_deleted is null and p_props is not null and (
+    (private.is_staff() and private.note_gate_ok()
+      and ((select auth.uid())::text in (select private.note_people_of(p_props))))
+    or (private.is_studio_pc() and exists (
+      select 1
+      from private.note_people_of(p_props) x
+      join public.users u on u.auth_user_id::text = x and u.is_active
+      join public.kiosk_devices k on k.auth_user_id = (select auth.uid()) and k.is_active and k.kind = 'pc'
+      where u.home_location_id = k.location_id))
+  )
+$$;
+
+-- Liste (Datenbank), in der mir etwas zugewiesen ist – nur lesen
+create or replace function private.note_parent_of_assigned(p_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.note_pages c
+    where c.parent_id = p_id and private.note_assigned_ok(c.props, c.deleted_at)
+  )
+$$;
+
+drop policy if exists note_pages_select on public.note_pages;
+create policy note_pages_select on public.note_pages for select to authenticated
+  using (
+    (select private.can_see_note(space, owner_id, deleted_at))
+    or private.note_assigned_ok(props, deleted_at)
+    or (kind = 'database' and deleted_at is null and private.note_parent_of_assigned(id))
+  );
+
+-- Abhaken/Bearbeiten der zugewiesenen Aufgabe (nicht der Liste)
+drop policy if exists note_pages_update on public.note_pages;
+create policy note_pages_update on public.note_pages for update to authenticated
+  using ((select private.can_see_note(space, owner_id, deleted_at)) or private.note_assigned_ok(props, deleted_at))
+  with check ((select private.can_access_note(space, owner_id)) or private.note_assigned_ok(props, deleted_at));
+
+-- Inhalt, Kommentare, Dateien (z. B. Fotonachweis) und Gutschriften hängen an can_access_note_id
+create or replace function private.can_access_note_id(p_id uuid) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.note_pages p
+    where p.id = p_id
+      and (private.can_see_note(p.space, p.owner_id, p.deleted_at) or private.note_assigned_ok(p.props, p.deleted_at))
+  )
+$$;
+
+revoke execute on function private.note_people_of(jsonb), private.note_assigned_ok(jsonb, timestamptz), private.note_parent_of_assigned(uuid)
+  from public, anon;
+grant execute on function private.note_people_of(jsonb), private.note_assigned_ok(jsonb, timestamptz), private.note_parent_of_assigned(uuid)
+  to authenticated, service_role;
+
 revoke execute on all functions in schema private from public;
 grant execute on all functions in schema private to authenticated, service_role;
 
