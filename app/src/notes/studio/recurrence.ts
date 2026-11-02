@@ -7,7 +7,7 @@ import { useNotes } from "../state";
 import type { PageMeta, PropValue } from "../types";
 import { addDays, today } from "../util";
 import { periodOf, periodRange, type Rhythm } from "./period";
-import { findStudioDb, STUDIO_PROPS as P } from "./StudioTasks";
+import { findStudioDb, STUDIO_PROPS as P } from "./studioDb";
 
 export type Copy = { id: string; title: string; icon: string | null; props: Record<string, PropValue> };
 

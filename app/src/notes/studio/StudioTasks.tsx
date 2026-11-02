@@ -1,62 +1,19 @@
 // Wochen- & Monatsaufgaben: einmal anlegen, an alle oder ausgewählte Studios verteilen, Stand je Studio sehen
 import { useState } from "react";
-import { newView, optionById, STATUS_DEFAULTS } from "../database/logic";
+import { optionById } from "../database/logic";
 import { Tag } from "../database/cells";
 import { useNotes } from "../state";
-import type { Color, DbSchema, PageMeta, PropDef, Studio } from "../types";
+import type { PageMeta, Studio } from "../types";
 import { Icon } from "../ui/Icon";
 import { Modal } from "../ui/Popover";
-import { COLORS, formatDate, shortId, today, untitled } from "../util";
-import { PHOTO_KEY, REPEAT_KEY } from "../gamification/recur";
+import { formatDate, shortId, today, untitled } from "../util";
 import { useStudioRecurrence } from "./recurrence";
 import { periodLabel, periodOf, periodRange, type Rhythm, shiftPeriod } from "./period";
+import { createStudioRow, creatableStudios, ensureStudioDb, findStudioDb, RHYTHM_OWNER, STUDIO_PROPS } from "./studioDb";
 
-export const STUDIO_DB_ROLE = "studio_tasks";
-
-// Feste Eigenschafts-IDs, damit die Übersicht die Spalten findet
-export const STUDIO_PROPS = { studio: "studio", rhythm: "rhythm", period: "period", status: "status", assignee: "assignee", due: "due", group: "group" } as const;
+export { findStudioDb, STUDIO_DB_ROLE, STUDIO_PROPS } from "./studioDb";
 const P = STUDIO_PROPS;
-
-function studioOptions(locations: Studio[]) {
-  return locations.map((l, i) => ({ id: l.id, name: l.name, color: COLORS[1 + (i % (COLORS.length - 1))] as Color }));
-}
-
-function studioSchema(locations: Studio[]): DbSchema {
-  const props: PropDef[] = [
-    { id: "title", name: "Aufgabe", type: "title" },
-    { id: P.studio, name: "Studio", type: "select", options: studioOptions(locations) },
-    {
-      id: P.rhythm,
-      name: "Rhythmus",
-      type: "select",
-      options: [
-        { id: "week", name: "Woche", color: "blue" },
-        { id: "month", name: "Monat", color: "purple" },
-      ],
-    },
-    { id: P.period, name: "Zeitraum", type: "text" },
-    { id: P.status, name: "Status", type: "status", options: STATUS_DEFAULTS() },
-    { id: P.assignee, name: "Zuständig", type: "person" },
-    { id: P.due, name: "Fällig", type: "date" },
-    { id: P.group, name: "Verteilung", type: "text" },
-  ];
-  const schema: DbSchema = { properties: props, views: [], role: STUDIO_DB_ROLE };
-  const all = newView("table", schema, "Alle");
-  all.hidden = [P.group];
-  all.sorts = [{ prop: P.due, dir: "asc" }];
-  const byStudio = newView("board", schema, "Nach Studio");
-  byStudio.groupBy = P.studio;
-  byStudio.hidden = [P.group, P.period];
-  const byStatus = newView("board", schema, "Nach Status");
-  byStatus.groupBy = P.status;
-  byStatus.hidden = [P.group, P.period];
-  schema.views = [all, byStudio, byStatus];
-  return schema;
-}
-
-export function findStudioDb(pages: Map<string, PageMeta>, isLive: (id: string) => boolean): PageMeta | undefined {
-  return [...pages.values()].find((p) => p.kind === "database" && p.schema?.role === STUDIO_DB_ROLE && isLive(p.id));
-}
+const RHYTHM_LABEL: Record<Rhythm, string> = { week: "Woche", month: "Monat" };
 
 export function StudioTasks() {
   const notes = useNotes();
@@ -66,6 +23,10 @@ export function StudioTasks() {
   const [distribute, setDistribute] = useState(false);
   const db = findStudioDb(notes.pages, notes.isLive);
   const admin = notes.access.admin;
+  // Wochenaufgaben: Studioleitung/Studio-PC fürs eigene Studio, Monatsaufgaben: Tobias & Dominik
+  const allowedFor = (r: Rhythm) => creatableStudios(notes.access, notes.me, notes.locations, r);
+  const allowed = allowedFor(rhythm);
+  const canCreate = allowed.length > 0;
   const ownStudio = notes.access.studio ? notes.access.studioLocationId : notes.actor?.studioId;
 
   const rowsOf = (p: string) => (db ? notes.childrenOf(db.id).filter((r) => r.props[P.rhythm] === rhythm && r.props[P.period] === p) : []);
@@ -90,7 +51,7 @@ export function StudioTasks() {
   // Aufgaben des vorigen Zeitraums übernehmen (nur, was hier noch fehlt)
   const copyPrevious = async () => {
     if (!db?.schema) return;
-    const prev = rowsOf(shiftPeriod(period, -1));
+    const prev = rowsOf(shiftPeriod(period, -1)).filter((r) => allowed.includes(String(r.props[P.studio])));
     const existing = new Set(rows.map((r) => `${r.title}|${r.props[P.studio]}`));
     const prevGroups = new Map<string, PageMeta[]>();
     for (const r of prev) prevGroups.set(String(r.props[P.group] ?? r.id), [...(prevGroups.get(String(r.props[P.group] ?? r.id)) ?? []), r]);
@@ -99,49 +60,11 @@ export function StudioTasks() {
       const group = shortId();
       for (const r of list) {
         if (existing.has(`${r.title}|${r.props[P.studio]}`)) continue;
-        await createRow(db, { title: r.title, studio: String(r.props[P.studio]), rhythm, period, group, due: periodRange(period).end, content: await notes.loadContent(r.id) });
+        await createStudioRow(notes, db, { title: r.title, studio: String(r.props[P.studio]), rhythm, period, group, due: periodRange(period).end, content: await notes.loadContent(r.id) });
         n++;
       }
     }
     notes.toast(n ? `${n} Aufgaben übernommen` : "Nichts zu übernehmen – alles schon da.");
-  };
-
-  const createRow = (
-    target: PageMeta,
-    v: { title: string; studio: string; rhythm: Rhythm; period: string; group: string; due: string; content?: unknown[]; repeat?: boolean; photo?: boolean },
-  ) => {
-    const todo = target.schema?.properties.find((p) => p.id === P.status)?.options?.find((o) => (o.group ?? "todo") === "todo");
-    return notes.createPage({
-      parentId: target.id,
-      title: v.title,
-      props: {
-        [P.studio]: v.studio,
-        [P.rhythm]: v.rhythm,
-        [P.period]: v.period,
-        [P.status]: todo?.id ?? null,
-        [P.due]: v.due,
-        [P.group]: v.group,
-        ...(v.repeat ? { [REPEAT_KEY]: "period" } : {}),
-        ...(v.photo ? { [PHOTO_KEY]: true } : {}),
-      },
-      content: v.content,
-    });
-  };
-
-  const ensureDb = async (): Promise<PageMeta> => {
-    const found = findStudioDb(notes.pages, notes.isLive);
-    if (found?.schema) {
-      // Neue Studios als Auswahl ergänzen
-      const studioProp = found.schema.properties.find((p) => p.id === P.studio);
-      const missing = studioOptions(notes.locations).filter((o) => !studioProp?.options?.some((x) => x.id === o.id));
-      if (studioProp && missing.length) {
-        notes.updatePage(found.id, {
-          schema: { ...found.schema, properties: found.schema.properties.map((p) => (p.id === P.studio ? { ...p, options: [...(p.options ?? []), ...missing] } : p)) },
-        });
-      }
-      return found;
-    }
-    return notes.createPage({ space: "team", kind: "database", title: "Wochen- & Monatsaufgaben", icon: "🗓️", schema: studioSchema(notes.locations) });
   };
 
   return (
@@ -150,9 +73,9 @@ export function StudioTasks() {
         <div className="nk-st-head">
           <h1 className="nk-st-title">🗓️ Wochen- & Monatsaufgaben</h1>
           <span className="nk-spacer" />
-          {admin && (
+          {canCreate && (
             <button type="button" className="nk-btn is-primary" onClick={() => setDistribute(true)}>
-              <Icon name="plus" /> Aufgabe verteilen
+              <Icon name="plus" /> {admin ? "Aufgabe verteilen" : "Wochenaufgabe anlegen"}
             </button>
           )}
         </div>
@@ -160,7 +83,7 @@ export function StudioTasks() {
           <div className="nk-segmented">
             {(["week", "month"] as const).map((r) => (
               <button key={r} type="button" aria-pressed={rhythm === r} onClick={() => switchRhythm(r)}>
-                {r === "week" ? "Woche" : "Monat"}
+                {RHYTHM_LABEL[r]} <small className="nk-muted">· {RHYTHM_OWNER[r]}</small>
               </button>
             ))}
           </div>
@@ -186,6 +109,11 @@ export function StudioTasks() {
             </div>
           )}
         </div>
+        <p className="nk-muted nk-st-hint">
+          {rhythm === "week"
+            ? "Wochenaufgaben legt die Studioleitung oder der Studio-PC fürs eigene Studio an – ohne Freigabe."
+            : "Monatsaufgaben verteilen Tobias & Dominik an die Studios."}
+        </p>
 
         {groups.size ? (
           <div className="nk-st-matrix-wrap">
@@ -254,12 +182,18 @@ export function StudioTasks() {
           <div className="nk-home-empty">
             <p className="nk-muted">
               Für {periodLabel(period)} gibt es noch keine {rhythm === "week" ? "Wochen" : "Monats"}aufgaben.
-              {admin ? " Lege eine Aufgabe an und verteile sie an die Studios." : " Sobald Tobias oder Dominik etwas verteilen, erscheint es hier."}
+              {canCreate
+                ? admin
+                  ? " Lege eine Aufgabe an und verteile sie an die Studios."
+                  : " Lege eine Wochenaufgabe für dein Studio an."
+                : rhythm === "month"
+                  ? " Sobald Tobias oder Dominik etwas verteilen, erscheint es hier."
+                  : " Die Studioleitung legt sie an."}
             </p>
-            {admin && (
+            {canCreate && (
               <div className="nk-row-gap">
                 <button type="button" className="nk-btn is-primary" onClick={() => setDistribute(true)}>
-                  <Icon name="plus" /> Aufgabe verteilen
+                  <Icon name="plus" /> {admin ? "Aufgabe verteilen" : "Wochenaufgabe anlegen"}
                 </button>
                 {db && rowsOf(shiftPeriod(period, -1)).length > 0 && (
                   <button type="button" className="nk-btn" onClick={() => void copyPrevious()}>
@@ -270,7 +204,7 @@ export function StudioTasks() {
             )}
           </div>
         )}
-        {admin && groups.size > 0 && db && rowsOf(shiftPeriod(period, -1)).length > 0 && (
+        {canCreate && groups.size > 0 && db && rowsOf(shiftPeriod(period, -1)).length > 0 && (
           <button type="button" className="nk-btn is-ghost nk-st-copy" onClick={() => void copyPrevious()}>
             Fehlende Aufgaben aus {rhythm === "week" ? "Vorwoche" : "Vormonat"} übernehmen
           </button>
@@ -286,16 +220,16 @@ export function StudioTasks() {
           lead={notes.access.oversee}
           rhythm={rhythm}
           period={period}
-          studios={notes.locations}
+          studiosFor={(r) => notes.locations.filter((l) => allowedFor(r).includes(l.id))}
           onClose={() => setDistribute(false)}
           onSubmit={async (v) => {
-            const target = await ensureDb();
+            const target = await ensureStudioDb(notes);
             const group = shortId();
             const content = v.description.trim() ? v.description.split("\n").map((line) => ({ type: "paragraph", content: line })) : undefined;
-            for (const studio of v.studios) await createRow(target, { ...v, studio, group, content });
+            for (const studio of v.studios) await createStudioRow(notes, target, { ...v, studio, group, content });
             setRhythm(v.rhythm);
             setPeriod(v.period);
-            notes.toast(`„${v.title}“ an ${v.studios.length} ${v.studios.length === 1 ? "Studio" : "Studios"} verteilt`);
+            notes.toast(v.studios.length === 1 ? `„${v.title}“ angelegt` : `„${v.title}“ an ${v.studios.length} Studios verteilt`);
           }}
         />
       )}
@@ -306,7 +240,8 @@ export function StudioTasks() {
 function DistributeModal(props: {
   rhythm: Rhythm;
   period: string;
-  studios: Studio[];
+  /** Studios, für die ich Aufgaben dieses Rhythmus anlegen darf (leer = Rhythmus nicht erlaubt) */
+  studiosFor: (rhythm: Rhythm) => Studio[];
   onClose: () => void;
   onSubmit: (v: { title: string; description: string; rhythm: Rhythm; period: string; due: string; studios: string[]; repeat: boolean; photo: boolean }) => Promise<void>;
   lead: boolean;
@@ -315,18 +250,21 @@ function DistributeModal(props: {
   const [photo, setPhoto] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [rhythm, setRhythm] = useState<Rhythm>(props.rhythm);
+  const rhythms = (["week", "month"] as const).filter((r) => props.studiosFor(r).length > 0);
+  const [rhythm, setRhythm] = useState<Rhythm>(rhythms.some((r) => r === props.rhythm) ? props.rhythm : (rhythms[0] ?? "week"));
+  const studios = props.studiosFor(rhythm);
   const current = periodOf(rhythm, today());
   const [period, setPeriod] = useState(props.period >= current ? props.period : current);
   const [due, setDue] = useState("");
-  const [selected, setSelected] = useState<string[]>(props.studios.map((s) => s.id));
+  const [selected, setSelected] = useState<string[]>(studios.map((s) => s.id));
   const [busy, setBusy] = useState(false);
   const choices = [current, shiftPeriod(current, 1), shiftPeriod(current, 2)];
   const effectiveDue = due || periodRange(period).end;
-  const all = selected.length === props.studios.length;
+  const all = selected.length === studios.length;
+  const single = studios.length === 1;
 
   return (
-    <Modal onClose={props.onClose} label="Aufgabe verteilen" className="nk-distribute">
+    <Modal onClose={props.onClose} label={single ? "Aufgabe anlegen" : "Aufgabe verteilen"} className="nk-distribute">
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -341,7 +279,7 @@ function DistributeModal(props: {
         }}
       >
         <div className="nk-modal-head">
-          <b>Aufgabe an Studios verteilen</b>
+          <b>{single ? `${rhythm === "week" ? "Wochenaufgabe" : "Monatsaufgabe"} für ${studios[0].name}` : "Aufgabe an Studios verteilen"}</b>
           <span className="nk-spacer" />
           <button type="button" className="nk-icon-btn" aria-label="Schließen" onClick={props.onClose}>
             <Icon name="close" />
@@ -360,7 +298,7 @@ function DistributeModal(props: {
             <label>
               <span>Rhythmus</span>
               <div className="nk-segmented">
-                {(["week", "month"] as const).map((r) => (
+                {rhythms.map((r) => (
                   <button
                     key={r}
                     type="button"
@@ -368,9 +306,11 @@ function DistributeModal(props: {
                     onClick={() => {
                       setRhythm(r);
                       setPeriod(periodOf(r, today()));
+                      const next = props.studiosFor(r).map((s) => s.id);
+                      setSelected((cur) => cur.filter((id) => next.includes(id)));
                     }}
                   >
-                    {r === "week" ? "Woche" : "Monat"}
+                    {RHYTHM_LABEL[r]}
                   </button>
                 ))}
               </div>
@@ -400,14 +340,15 @@ function DistributeModal(props: {
               </label>
             )}
           </div>
+          {!single && (
           <fieldset className="nk-distribute-studios">
             <legend>
               Studios{" "}
-              <button type="button" className="nk-btn is-ghost" onClick={() => setSelected(all ? [] : props.studios.map((s) => s.id))}>
+              <button type="button" className="nk-btn is-ghost" onClick={() => setSelected(all ? [] : studios.map((s) => s.id))}>
                 {all ? "Keine" : "Alle"}
               </button>
             </legend>
-            {props.studios.map((s) => (
+            {studios.map((s) => (
               <label key={s.id} className="nk-check-label">
                 <input
                   type="checkbox"
@@ -417,17 +358,18 @@ function DistributeModal(props: {
                 {s.name}
               </label>
             ))}
-            {!props.studios.length && <p className="nk-muted">Keine Studios gefunden.</p>}
+            {!studios.length && <p className="nk-muted">Keine Studios gefunden.</p>}
           </fieldset>
+          )}
         </div>
         <div className="nk-modal-foot">
-          <span className="nk-muted">Jedes Studio bekommt einen eigenen Eintrag mit eigenem Status.</span>
+          <span className="nk-muted">{single ? "Gilt sofort – keine Freigabe nötig." : "Jedes Studio bekommt einen eigenen Eintrag mit eigenem Status."}</span>
           <span className="nk-spacer" />
           <button type="button" className="nk-btn" onClick={props.onClose}>
             Abbrechen
           </button>
           <button type="submit" className="nk-btn is-primary" disabled={busy || !title.trim() || !selected.length}>
-            An {selected.length} {selected.length === 1 ? "Studio" : "Studios"} verteilen
+            {single ? "Anlegen" : `An ${selected.length} ${selected.length === 1 ? "Studio" : "Studios"} verteilen`}
           </button>
         </div>
       </form>

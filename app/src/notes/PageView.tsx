@@ -1,6 +1,6 @@
 // Eine Seite: Titelbild, Symbol, Titel, Eigenschaften (bei Datenbank-Zeilen), Inhalt oder Datenbank
 import { TaskOptions } from "./gamification/TaskExtras";
-import { STUDIO_DB_ROLE } from "./studio/StudioTasks";
+import { STUDIO_DB_ROLE } from "./studio/studioDb";
 import { BlockNoteEditor } from "@blocknote/core";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TYPE_ICONS, ValueCell } from "./database/cells";
