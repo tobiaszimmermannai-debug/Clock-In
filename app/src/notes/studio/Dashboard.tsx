@@ -12,9 +12,9 @@ import { allTasks, byDue, doneAtOf, tasksOf, type TaskItem } from "../gamificati
 import { STUDIO_TASKS } from "../routes";
 import { useNotes } from "../state";
 import type { Member } from "../types";
-import { addDays, storageGet, storageSet, today } from "../util";
-import { isoWeek, periodLabel, periodOf } from "./period";
-import { findStudioDb, STUDIO_PROPS } from "./StudioTasks";
+import { addDays, shortId, storageGet, storageSet, today } from "../util";
+import { isoWeek, periodLabel, periodOf, periodRange } from "./period";
+import { createStudioRow, creatableStudios, ensureStudioDb, findStudioDb, RHYTHM_OWNER, STUDIO_PROPS } from "./studioDb";
 import { QuickAdd } from "./QuickAdd";
 import { useStudioRecurrence } from "./recurrence";
 import { TaskLines } from "./TaskList";
@@ -139,15 +139,17 @@ export function StudioDashboard() {
             <PersonTab key={current.id} member={current} items={items} />
           )
         ) : (
-          <TeamTab studioId={studioId} people={people} items={items} />
+          <TeamTab studioId={studioId} studioName={studioName} people={people} items={items} />
         )}
       </div>
     </div>
   );
 }
 
-function TeamTab(props: { studioId: string | null; people: Member[]; items: TaskItem[] }) {
+function TeamTab(props: { studioId: string | null; studioName: string; people: Member[]; items: TaskItem[] }) {
   const notes = useNotes();
+  // Wochenaufgaben legt das Studio selbst an (Studioleitung, Studio-PC) – ohne Freigabe; Monatsaufgaben Tobias & Dominik
+  const canAddWeek = props.studioId !== null && creatableStudios(notes.access, notes.me, notes.locations, "week").includes(props.studioId);
   const day = today();
   const week = periodOf("week", day);
   const month = periodOf("month", day);
@@ -192,18 +194,21 @@ function TeamTab(props: { studioId: string | null; people: Member[]; items: Task
           <h2 className="nk-home-heading">
             🗓️ Wochenaufgaben · {periodLabel(week)} <span className="nk-muted">{weekly.filter((t) => t.done).length}/{weekly.length}</span>
           </h2>
+          <p className="nk-dash-owner">von der {RHYTHM_OWNER.week}</p>
+          {canAddWeek && props.studioId && <WeekAdd studioId={props.studioId} studioName={props.studioName} />}
           <TaskLines items={weekly} showWho showDb={false} empty="Keine Wochenaufgaben." />
         </section>
         <section>
           <h2 className="nk-home-heading">
             📅 Monatsaufgaben · {periodLabel(month)} <span className="nk-muted">{monthly.filter((t) => t.done).length}/{monthly.length}</span>
           </h2>
+          <p className="nk-dash-owner">von {RHYTHM_OWNER.month}</p>
           <TaskLines items={monthly} showWho showDb={false} empty="Keine Monatsaufgaben." />
         </section>
       </div>
-      {notes.access.oversee && (
+      {(notes.access.oversee || canAddWeek) && (
         <button type="button" className="nk-btn is-ghost" onClick={() => notes.navigate(STUDIO_TASKS)}>
-          ＋ Wochen- & Monatsaufgaben anlegen oder verteilen
+          {notes.access.admin ? "＋ Wochen- & Monatsaufgaben anlegen oder verteilen" : "🗓️ Alle Wochen- & Monatsaufgaben ansehen"}
         </button>
       )}
     </>
@@ -243,5 +248,47 @@ function PersonTab(props: { member: Member; items: TaskItem[] }) {
         <TaskLines items={done} empty="Noch nichts erledigt." />
       </section>
     </>
+  );
+}
+
+/** Wochenaufgabe fürs Studio direkt anlegen (diese Woche, fällig Sonntag) */
+function WeekAdd(props: { studioId: string; studioName: string }) {
+  const notes = useNotes();
+  const [text, setText] = useState("");
+  const [repeat, setRepeat] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    const title = text.trim();
+    if (!title || busy) return;
+    setBusy(true);
+    try {
+      const db = await ensureStudioDb(notes);
+      const period = periodOf("week", today());
+      await createStudioRow(notes, db, { title, studio: props.studioId, rhythm: "week", period, group: shortId(), due: periodRange(period).end, repeat });
+      setText("");
+      notes.toast(`Wochenaufgabe „${title}“ angelegt`);
+    } catch {
+      // Fehlermeldung zeigt createPage bereits an
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <form
+      className="nk-quickadd"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void submit();
+      }}
+    >
+      <span aria-hidden>＋</span>
+      <input value={text} onChange={(e) => setText(e.target.value)} placeholder={`Neue Wochenaufgabe für ${props.studioName} …`} aria-label="Neue Wochenaufgabe" />
+      <label className="nk-quickadd-flag" title="Jede Woche automatisch neu anlegen">
+        <input type="checkbox" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} /> 🔁 jede Woche
+      </label>
+      <button type="submit" className="nk-btn is-primary" disabled={!text.trim() || busy}>
+        {busy ? "…" : "Anlegen"}
+      </button>
+    </form>
   );
 }
