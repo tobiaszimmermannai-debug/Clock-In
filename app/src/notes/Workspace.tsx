@@ -6,7 +6,8 @@ import { Celebration } from "./gamification/GamePanel";
 import { VersionHistory } from "./History";
 import { Home } from "./Home";
 import { Oversight } from "./Oversight";
-import { OVERVIEW, STUDIO_TASKS } from "./routes";
+import { OVERVIEW, STUDIO_BOARD, STUDIO_TASKS } from "./routes";
+import { StudioDashboard } from "./studio/Dashboard";
 import { StudioTasks } from "./studio/StudioTasks";
 import { MovePicker, PageMenu, PageView } from "./PageView";
 import { Search } from "./Search";
@@ -194,9 +195,14 @@ function Layout(props: NotesWorkspaceProps) {
               <Oversight />
             ) : notes.current === STUDIO_TASKS ? (
               <StudioTasks />
+            ) : notes.current === STUDIO_BOARD ? (
+              <StudioDashboard />
             ) : (
               <PageView key={notes.current} id={notes.current} theme={resolved} />
             )
+          ) : notes.access.studio ? (
+            // Studio-PC: das Dashboard ist die Startseite (bleibt immer offen)
+            <StudioDashboard />
           ) : (
             <Home title={title} onTemplates={() => setTemplates(true)} />
           )}
@@ -231,7 +237,13 @@ function Topbar(props: { page?: PageMeta; sidebarOpen: boolean; onToggleSidebar:
       <nav className="nk-crumbs" aria-label="Pfad">
         {!page && (
           <span className="nk-crumb is-current">
-            {notes.current === OVERVIEW ? "Team-Übersicht" : notes.current === STUDIO_TASKS ? "Wochen- & Monatsaufgaben" : "Startseite"}
+            {notes.current === OVERVIEW
+              ? "Team-Übersicht"
+              : notes.current === STUDIO_TASKS
+                ? "Wochen- & Monatsaufgaben"
+                : notes.current === STUDIO_BOARD || (!notes.current && notes.access.studio)
+                  ? "Studio-Dashboard"
+                  : "Startseite"}
           </span>
         )}
         {trail.map((p, i) => (

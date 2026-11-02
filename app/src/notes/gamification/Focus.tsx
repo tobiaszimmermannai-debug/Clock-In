@@ -5,6 +5,7 @@ import type { Member } from "../types";
 import { Icon } from "../ui/Icon";
 import { MenuItem, MenuLabel, Popover, usePopover } from "../ui/Popover";
 import { personDay } from "../daily/status";
+import { TaskStamp } from "../studio/TaskList";
 import { formatDate, today, untitled } from "../util";
 import { MAX_FOCUS } from "./focus";
 import { allTasks, byDue, doneProps, tasksOf } from "./tasks";
@@ -68,10 +69,13 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
               >
                 {task.done && <Icon name="check" size={12} />}
               </button>
-              <button type="button" className="nk-focus-name" onClick={() => notes.openPeek(row.id)}>
-                {row.icon && <span>{row.icon} </span>}
-                {untitled(row)}
-              </button>
+              <div className="nk-task-main">
+                <button type="button" className="nk-focus-name" onClick={() => notes.openPeek(row.id)}>
+                  {row.icon && <span>{row.icon} </span>}
+                  {untitled(row)}
+                </button>
+                <TaskStamp row={row} done={task.done} />
+              </div>
               {pending ? (
                 lead ? (
                   <span className="nk-focus-approve">

@@ -127,6 +127,10 @@ export type BlitziProps = {
   locked?: boolean;
   /** Ohne Bewegung und ohne eigenen Knopf (z. B. Übersicht aller Stufen) */
   still?: boolean;
+  /** Breite vom umgebenden Element übernehmen (Team-Szene) */
+  fluid?: boolean;
+  /** Ohne Boden-Schatten (Szenen mit eigenem Boden) */
+  noShadow?: boolean;
 };
 
 export function Blitzi(props: BlitziProps) {
@@ -374,7 +378,7 @@ export function Blitzi(props: BlitziProps) {
       className={`blitzi is-${mood}${props.locked ? " is-locked" : ""}${props.still ? " is-still" : ""}`}
       aria-label={props.title ?? "Blitzi"}
       title={props.title ?? "Blitzi antippen"}
-      style={{ width: size, height: (size * vbHeight) / VB_W }}
+      style={props.fluid ? { width: "100%", aspectRatio: `${VB_W} / ${vbHeight}` } : { width: size, height: (size * vbHeight) / VB_W }}
     >
       <svg key={jump} className={jump ? "blitzi-svg is-jump" : "blitzi-svg"} viewBox={`${-VB_W / 2} ${vbTop} ${VB_W} ${vbHeight}`} aria-hidden>
         <defs>
@@ -394,7 +398,7 @@ export function Blitzi(props: BlitziProps) {
         </defs>
 
         {/* Boden */}
-        <ellipse cx="0" cy={GROUND + 4} rx={at(92, 72, 46, 56, 70, 82, 88) + (pileTop ? 20 : 0)} ry="7" fill="#000" opacity="0.1" />
+        {!props.noShadow && <ellipse cx="0" cy={GROUND + 4} rx={at(92, 72, 46, 56, 70, 82, 88) + (pileTop ? 20 : 0)} ry="7" fill="#000" opacity="0.1" />}
 
         {/* Leuchten ab Stufe 30 */}
         {gold && !props.locked && <ellipse className="blitzi-glow" cx="0" cy={seat - 120} rx="135" ry="140" fill={`url(#${uid}-glow)`} />}

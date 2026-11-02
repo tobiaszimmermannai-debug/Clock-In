@@ -3,6 +3,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { isDone } from "./database/logic";
 import { FOCUS_KEY, focusEntry, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
 import { dailyStatus, type DayPlan, type DayStatus } from "./daily/status";
+import { DONE_AT_KEY } from "./gamification/tasks";
 import { daysFor, myStats, ON_TIME_BONUS, POINTS } from "./gamification/stats";
 import { taskSchema, welcomeContent } from "./templates";
 import type {
@@ -618,15 +619,23 @@ export function NotesProvider(props: {
   );
 
   const updatePage = useCallback(
-    (id: string, patch: PagePatch, opts: { delay?: number } = {}) => {
-      const { content: _content, plain: _plain, ...meta } = patch;
+    (id: string, patchIn: PagePatch, opts: { delay?: number } = {}) => {
+      let patch = patchIn;
       const page = pagesRef.current.get(id);
       const db = page?.parentId ? pagesRef.current.get(page.parentId) : undefined;
-      if (page && meta.props && db?.kind === "database" && db.schema) {
+      if (page && patch.props && db?.kind === "database" && db.schema) {
         const before = isDone(page, db.schema);
-        const after = isDone({ ...page, props: meta.props }, db.schema);
-        if (before !== after) recordCompletion({ ...page, props: meta.props }, db.schema, after);
+        const after = isDone({ ...page, props: patch.props }, db.schema);
+        if (before !== after) {
+          // "erledigt am …" an der Aufgabe festhalten (wieder geöffnet: entfernen)
+          const props = { ...patch.props };
+          if (after) props[DONE_AT_KEY] = new Date().toISOString();
+          else delete props[DONE_AT_KEY];
+          patch = { ...patch, props };
+          recordCompletion({ ...page, props }, db.schema, after);
+        }
       }
+      const { content: _content, plain: _plain, ...meta } = patch;
       patchLocal(id, meta);
       if (page) pagesRef.current = new Map(pagesRef.current).set(id, { ...page, ...meta });
       schedule(id, patch, opts.delay ?? META_DELAY);

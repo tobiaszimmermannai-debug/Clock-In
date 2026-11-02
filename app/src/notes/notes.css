@@ -816,3 +816,70 @@ select.nk-input { padding-right: 4px; }
   .nk-history-preview { padding: 16px; }
   .nk-history-doc .nk-editor { margin: 0 -16px; }
 }
+
+/* ---------------- Zeitstempel und Aufgabenzeilen ---------------- */
+.nk-task-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.nk-task-main > button { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nk-stamp { font-size: 11px; color: var(--nk-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nk-tasks { list-style: none; margin: 0 0 16px; padding: 0; border-radius: 10px; box-shadow: 0 0 0 1px var(--nk-line); overflow: hidden; }
+.nk-tasks li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--nk-line); font-size: 14px; }
+.nk-tasks li:last-child { border-bottom: 0; }
+.nk-tasks li.is-done .nk-task-title { text-decoration: line-through; color: var(--nk-muted); }
+.nk-tasks li.is-overdue { box-shadow: inset 3px 0 0 var(--c-red); }
+.nk-task-title { font-weight: 600; }
+.nk-task-who { font-size: 12px; padding: 1px 8px; border-radius: 10px; background: var(--nk-hover); white-space: nowrap; }
+.nk-task-db { font-size: 12px; white-space: nowrap; }
+.nk-tasks-empty { margin: 4px 0 16px; font-size: 13px; }
+
+/* ---------------- Studio-Dashboard ---------------- */
+.nk-dash .nk-page-inner, .nk-dash { max-width: 1200px; margin: 0 auto; padding: 18px 24px 40px; }
+.nk-dash-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.nk-dash-head h1 { margin: 0; font-size: 26px; }
+.nk-dash-studio { margin-left: auto; font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--nk-line); background: var(--nk-bg); color: var(--nk-fg); }
+.nk-dash-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px 0 10px; margin-bottom: 14px; border-bottom: 1px solid var(--nk-line); scrollbar-width: thin; }
+.nk-dash-tab { position: relative; display: flex; align-items: center; gap: 8px; flex: none; padding: 6px 14px 6px 8px; border-radius: 12px; border: 1px solid var(--nk-line); background: var(--nk-bg); color: var(--nk-fg); cursor: pointer; }
+.nk-dash-tab:hover { background: var(--nk-hover); }
+.nk-dash-tab[aria-selected="true"] { border-color: #e67700; background: linear-gradient(135deg, #fff8dc, #ffe9a3); color: #37352f; box-shadow: 0 2px 8px rgba(230, 119, 0, .2); }
+.nk-dash-tab-text { display: grid; text-align: left; font-weight: 700; font-size: 14px; line-height: 1.15; }
+.nk-dash-tab-text small { font-weight: 500; font-size: 10px; opacity: .7; }
+.nk-dash-tab-emoji { font-size: 22px; padding: 0 2px; }
+.nk-dash-tab-blitzi { display: grid; place-items: center; width: 30px; }
+.nk-dash-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--nk-accent); color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
+.nk-dash-badge.is-absent { background: var(--nk-hover-strong); color: var(--nk-fg); }
+.nk-dash-body { display: grid; gap: 16px; }
+.nk-dash-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.nk-dash-person { display: grid; }
+
+/* ---------------- Team-Szene ---------------- */
+.nk-scene { width: 100%; max-width: 920px; margin: 0 auto; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 1px var(--nk-line), 0 4px 18px rgba(0, 0, 0, .06); background: var(--nk-bg); }
+.nk-scene-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.nk-scene-title { flex: 1; display: grid; text-align: center; }
+.nk-scene-title b { font-size: 17px; }
+.nk-scene-title span { font-size: 13px; color: var(--nk-muted); }
+.nk-scene.is-won .nk-scene-title span { color: #c26a00; font-weight: 700; }
+.nk-scene-stage { position: relative; height: 0; padding-top: 40%; overflow: hidden; } /* 5:2, auch in Grids zuverlässig */
+.nk-scene-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.nk-scene-svg.is-front { z-index: 2; }
+.nk-scene-mate { position: absolute; z-index: 1; transform: translate(-50%, -100%); transform-origin: 50% 100%; }
+.nk-scene-mate .blitzi { display: block; }
+.nk-scene-name { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 2px; padding: 0 6px; border-radius: 8px; background: rgba(255, 255, 255, .85); color: #37352f; font-size: clamp(9px, 1.1vw, 12px); font-weight: 700; white-space: nowrap; z-index: 3; }
+.nk-scene-power { flex-basis: 100%; font-size: 12px; color: var(--nk-muted); }
+.nk-scene-mate.is-pull { animation: nk-pull 1.3s ease-in-out infinite; animation-delay: calc(var(--i) * -.17s); }
+.nk-scene-mate.is-pull-forward, .nk-scene-mate.is-push { animation: nk-push 1.2s ease-in-out infinite; animation-delay: calc(var(--i) * -.15s); }
+.nk-scene-mate.is-carry, .nk-scene-mate.is-run { animation: nk-step .7s ease-in-out infinite; animation-delay: calc(var(--i) * -.2s); }
+.nk-scene-mate.is-lift { animation: nk-lift 1.6s ease-in-out infinite; animation-delay: calc(var(--i) * -.1s); }
+.nk-scene-mate.is-pedal, .nk-scene-mate.is-row { animation: nk-step .9s ease-in-out infinite; animation-delay: calc(var(--i) * -.3s); }
+.nk-scene-mate.is-cheer { animation: nk-step 1.4s ease-in-out infinite; }
+.nk-scene-mate.is-wait { opacity: .9; }
+@keyframes nk-pull { 0%, 100% { transform: translate(-50%, -100%) rotate(-12deg); } 50% { transform: translate(-52%, -100%) rotate(-5deg); } }
+@keyframes nk-push { 0%, 100% { transform: translate(-50%, -100%) rotate(10deg); } 50% { transform: translate(-47%, -100%) rotate(4deg); } }
+@keyframes nk-step { 0%, 100% { transform: translate(-50%, -100%); } 50% { transform: translate(-50%, -104%); } }
+@keyframes nk-lift { 0%, 100% { transform: translate(-50%, -100%) scaleY(1); } 50% { transform: translate(-50%, -100%) scaleY(.96); } }
+.nk-scene-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 10px 14px; font-size: 13px; }
+.nk-scene-bar { flex: 1 1 220px; height: 12px; border-radius: 6px; background: var(--nk-hover-strong); overflow: hidden; }
+.nk-scene-bar span { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #ffd23f, #ff9f1c); transition: width .6s ease; }
+.nk-scene-confetti { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.nk-scene-confetti span { position: absolute; top: -10px; left: calc(var(--i) * 6.2%); width: 8px; height: 14px; border-radius: 2px; background: hsl(calc(var(--i) * 47), 85%, 60%); animation: nk-confetti 2.8s linear infinite; animation-delay: calc(var(--i) * -.21s); }
+@keyframes nk-confetti { to { transform: translateY(420px) rotate(540deg); } }
+@media (prefers-reduced-motion: reduce) { .nk-scene-mate, .nk-scene-confetti span { animation: none !important; } }
+@media (max-width: 760px) { .nk-dash-cols { grid-template-columns: 1fr; } .nk-dash { padding: 12px; } }

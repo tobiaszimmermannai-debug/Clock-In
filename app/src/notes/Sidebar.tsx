@@ -1,7 +1,7 @@
 // Seitenleiste: Suche, Startseite, Favoriten, Team, Privat, Vorlagen, Papierkorb – mit Ziehen & Ablegen
 import { type DragEvent, useState } from "react";
 import { MovePicker } from "./PageView";
-import { OVERVIEW, STUDIO_TASKS } from "./routes";
+import { OVERVIEW, STUDIO_BOARD, STUDIO_TASKS } from "./routes";
 import { useNotes } from "./state";
 import { TEMPLATES } from "./templates";
 import type { PageMeta, Space } from "./types";
@@ -164,8 +164,20 @@ export function Sidebar(props: {
             props.onClose?.();
           }}
         >
-          <Icon name="home" /> Startseite
+          <Icon name="home" /> {studio ? "Studio-Dashboard" : "Startseite"}
         </button>
+        {!studio && (
+          <button
+            type="button"
+            className={`nk-side-item${notes.current === STUDIO_BOARD ? " is-active" : ""}`}
+            onClick={() => {
+              notes.navigate(STUDIO_BOARD);
+              props.onClose?.();
+            }}
+          >
+            <Icon name="users" /> Studio-Dashboard
+          </button>
+        )}
         <button
           type="button"
           className={`nk-side-item${notes.current === STUDIO_TASKS ? " is-active" : ""}`}

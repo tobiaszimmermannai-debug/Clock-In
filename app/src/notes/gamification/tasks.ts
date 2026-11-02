@@ -5,6 +5,16 @@ import { today } from "../util";
 
 export type TaskItem = { row: PageMeta; db: PageMeta; due: string | null; done: boolean; overdue: boolean };
 
+/** Wann wurde die Aufgabe erledigt? (props.__doneAt, gesetzt beim Abhaken) */
+export const DONE_AT_KEY = "__doneAt";
+
+/** Zeitpunkt "erledigt am": gespeicherter Wert, sonst die Gutschrift aus den Erfolgen (ältere Aufgaben) */
+export function doneAtOf(row: PageMeta, completions: { pageId: string; doneAt: string }[] = []): string | null {
+  const v = row.props[DONE_AT_KEY];
+  if (typeof v === "string" && v) return v;
+  return completions.find((c) => c.pageId === row.id)?.doneAt ?? null;
+}
+
 /** Alle Einträge aller Datenbanken (nur lebende); filter grenzt die Datenbanken ein */
 export function allTasks(
   pages: Map<string, PageMeta>,

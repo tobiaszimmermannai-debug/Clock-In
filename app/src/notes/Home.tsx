@@ -5,6 +5,7 @@ import { FocusSection } from "./gamification/Focus";
 import { BlitziCard, Leaderboard } from "./gamification/GamePanel";
 import { allTasks, byDue, doneProps, tasksOf } from "./gamification/tasks";
 import { useNotes } from "./state";
+import { TaskStamp } from "./studio/TaskList";
 import type { Member, PageMeta } from "./types";
 import { Icon } from "./ui/Icon";
 import { formatDate, initials, relativeTime, today, untitled } from "./util";
@@ -97,10 +98,13 @@ export function Home(props: { title: string; onTemplates: () => void }) {
               {open.slice(0, 40).map(({ row, db, due, overdue }) => (
                 <div key={row.id} className="nk-home-task">
                   <button type="button" className="nk-check" aria-label="Erledigt" onClick={() => toggle(row.id, true)} />
-                  <button type="button" className="nk-home-task-title" onClick={() => (notes.navigate(db.id), setTimeout(() => notes.openPeek(row.id)))}>
-                    {row.icon && <span>{row.icon} </span>}
-                    {untitled(row)}
-                  </button>
+                  <div className="nk-task-main">
+                    <button type="button" className="nk-home-task-title" onClick={() => (notes.navigate(db.id), setTimeout(() => notes.openPeek(row.id)))}>
+                      {row.icon && <span>{row.icon} </span>}
+                      {untitled(row)}
+                    </button>
+                    <TaskStamp row={row} done={false} />
+                  </div>
                   <span className="nk-muted nk-home-task-db">{untitled(db)}</span>
                   {due && <span className={`nk-date${overdue ? " is-past" : due.slice(0, 10) === today() ? " is-today" : ""}`}>{formatDate(due)}</span>}
                 </div>

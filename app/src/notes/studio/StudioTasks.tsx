@@ -12,7 +12,8 @@ import { periodLabel, periodOf, periodRange, type Rhythm, shiftPeriod } from "./
 export const STUDIO_DB_ROLE = "studio_tasks";
 
 // Feste Eigenschafts-IDs, damit die Übersicht die Spalten findet
-const P = { studio: "studio", rhythm: "rhythm", period: "period", status: "status", assignee: "assignee", due: "due", group: "group" } as const;
+export const STUDIO_PROPS = { studio: "studio", rhythm: "rhythm", period: "period", status: "status", assignee: "assignee", due: "due", group: "group" } as const;
+const P = STUDIO_PROPS;
 
 function studioOptions(locations: Studio[]) {
   return locations.map((l, i) => ({ id: l.id, name: l.name, color: COLORS[1 + (i % (COLORS.length - 1))] as Color }));
