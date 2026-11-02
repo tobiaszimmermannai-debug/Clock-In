@@ -5,11 +5,33 @@ import { addDays, isoDay } from "../util";
 
 /** Aufgaben pro Tag für einen vollen Akku */
 export const DAILY_GOAL = 3;
-export const POINTS = 10;
-/** Pünktlich (bis zum Fälligkeitstag) erledigt */
-export const ON_TIME_BONUS = 5;
+/** Punkt je erledigter Aufgabe … */
+export const POINTS = 1;
+/** … höchstens so viele pro Person und Tag (mehr Aufgaben zählen nur noch für die Serie) */
+export const DAILY_POINTS = 3;
 
 export const dayOf = (iso: string) => isoDay(new Date(iso));
+
+/**
+ * Punkte nach Tagen: je Aufgabe 1, je Person und Tag höchstens DAILY_POINTS.
+ * Gespeicherte Punktwerte (früher 10–20) werden bewusst ignoriert – so gilt die Regel auch für alte Einträge.
+ */
+export function pointsByDay(completions: Completion[], fromDay?: string, toDay?: string): Map<string, Map<string, number>> {
+  const out = new Map<string, Map<string, number>>();
+  for (const c of completions) {
+    const day = dayOf(c.doneAt);
+    if ((fromDay && day < fromDay) || (toDay && day >= toDay)) continue;
+    const days = out.get(c.userId) ?? new Map<string, number>();
+    days.set(day, Math.min(DAILY_POINTS, (days.get(day) ?? 0) + POINTS));
+    out.set(c.userId, days);
+  }
+  return out;
+}
+
+const sum = (days: Map<string, number> | undefined) => [...(days?.values() ?? [])].reduce((s, n) => s + n, 0);
+
+/** Punkte, die eine weitere Aufgabe heute noch bringt (0 = Tagesmaximum erreicht) */
+export const pointsLeftToday = (doneToday: number) => Math.max(0, Math.min(POINTS, DAILY_POINTS - doneToday * POINTS));
 
 /** Montag der Woche */
 export function weekStart(day: string): string {
@@ -70,11 +92,12 @@ export function myStats(userId: string, completions: Completion[], opts: { today
     return worked ? !worked.has(day) : wd === 6;
   };
   const goal = opts.goal ?? DAILY_GOAL;
+  const points = pointsByDay(mine, week).get(userId);
   return {
     today: todays.length,
-    todayPoints: todays.reduce((s, c) => s + c.points, 0),
+    todayPoints: points?.get(opts.today) ?? 0,
     week: weeks.length,
-    weekPoints: weeks.reduce((s, c) => s + c.points, 0),
+    weekPoints: sum(points),
     streak: streakOf(new Set(mine.map((c) => dayOf(c.doneAt))), opts.today, neutral),
     goal,
     goalReached: todays.length >= goal,
@@ -86,10 +109,10 @@ export type LeaderRow = { member: Member; points: number; count: number; rank: n
 /** Rangliste ab einem Tag (Standard: Wochenbeginn), optional bis vor toDay; Geräte zählen nicht */
 export function leaderboard(completions: Completion[], members: Member[], fromDay: string, toDay?: string): LeaderRow[] {
   const sums = new Map<string, { points: number; count: number }>();
+  const points = pointsByDay(completions, fromDay, toDay);
   for (const c of completions) {
     if (dayOf(c.doneAt) < fromDay || (toDay && dayOf(c.doneAt) >= toDay)) continue;
-    const s = sums.get(c.userId) ?? { points: 0, count: 0 };
-    s.points += c.points;
+    const s = sums.get(c.userId) ?? { points: sum(points.get(c.userId)), count: 0 };
     s.count++;
     sums.set(c.userId, s);
   }

@@ -200,7 +200,7 @@ export function rankingText(rows: LeaderRow[], info: { label: string; range: str
   const medal = ["🥇", "🥈", "🥉"];
   lines.push("");
   for (const r of rows.slice(0, 10)) {
-    lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} Punkte (${r.count} ${r.count === 1 ? "Aufgabe" : "Aufgaben"})`);
+    lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} ${r.points === 1 ? "Punkt" : "Punkte"} (${r.count} ${r.count === 1 ? "Aufgabe" : "Aufgaben"})`);
   }
   const studios = new Map<string, number>();
   for (const r of rows) studios.set(studioName(r.member.studioId), (studios.get(studioName(r.member.studioId)) ?? 0) + r.points);

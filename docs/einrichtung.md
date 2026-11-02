@@ -213,6 +213,8 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
 - **Wochen- & Monatsaufgaben:** Wochenaufgaben legt die Studioleitung bzw. der Studio-PC fürs eigene Studio selbst an
   (Team-Reiter „＋ Neue Wochenaufgabe …“, optional „jede Woche“) – ohne Freigabe. Monatsaufgaben verteilen nur
   Tobias & Dominik (Seite „Wochen & Monat“ → Monat → „Aufgabe verteilen“).
+- **Punkte & Level:** 1 Punkt je erledigter Aufgabe, höchstens 3 pro Person und Tag (Wochenranking, Telegram).
+  Blitzi steigt höchstens eine Stufe pro Tag (ab der ersten erledigten Aufgabe des Tages, solange die Serie hält).
 - **Jede Aufgabe als Tagesaufgabe:** 📌 an der Aufgabe (in Listen oder in der geöffneten Aufgabe) → „Für mich“
   bzw. (Leitung) für eine andere Person. Im Fenster „Aufgabe anpinnen“ lassen sich alle offenen Aufgaben durchsuchen.
 - **Am PC anlegen/anpinnen:** im Reiter der Person „＋ Neue Aufgabe …“ oder bei „Aufgabe anpinnen“ direkt eintippen

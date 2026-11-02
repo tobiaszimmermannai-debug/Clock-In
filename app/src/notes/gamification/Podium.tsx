@@ -69,7 +69,7 @@ export function Podium(props: {
             ))}
           </ol>
         )}
-        {mine && <p className="nk-podium-mine">Du: Platz {mine.rank} mit {mine.points} Punkten ({mine.count} Aufgaben)</p>}
+        {mine && <p className="nk-podium-mine">Du: Platz {mine.rank} mit {mine.points} {mine.points === 1 ? "Punkt" : "Punkten"} ({mine.count} Aufgaben)</p>}
         <button type="button" className="nk-podium-close" onClick={props.onClose}>
           Los geht's in die neue Woche ⚡
         </button>

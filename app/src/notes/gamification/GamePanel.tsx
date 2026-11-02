@@ -114,7 +114,7 @@ export function BlitziCard(props: { member: Member; open: number }) {
           </div>
           <div className="nk-stat">
             <span className="nk-stat-value">{stats.weekPoints}</span>
-            <span className="nk-stat-label">Punkte diese Woche</span>
+            <span className="nk-stat-label" title="1 Punkt je Aufgabe, höchstens 3 pro Tag">Punkte diese Woche · max. 3/Tag</span>
           </div>
         </div>
       </div>
@@ -191,7 +191,7 @@ export function Celebration() {
               ? "Akku voll – Tagesziel geschafft!"
               : "Erledigt!"}
         </b>
-        <div className="nk-celebrate-points">+{c.points} ⚡</div>
+        <div className="nk-celebrate-points">{c.points > 0 ? `+${c.points} ⚡` : "⚡ Tagesmaximum (3 Punkte) erreicht – zählt für die Serie"}</div>
         {c.grew && coinsOf(c.streak) === 0 && <div className="nk-muted">{stageName(stageOf(c.streak))}</div>}
         {!c.grew && c.goal && c.streak > 1 && <div className="nk-muted">{c.streak} Tage Serie{c.name ? `, ${c.name}` : ""}!</div>}
       </div>
