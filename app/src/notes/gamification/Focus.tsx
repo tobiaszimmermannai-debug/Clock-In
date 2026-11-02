@@ -7,7 +7,7 @@ import { MenuItem, MenuLabel, Popover, usePopover } from "../ui/Popover";
 import { personDay } from "../daily/status";
 import { TaskStamp } from "../studio/TaskList";
 import { ProofBadge } from "./TaskExtras";
-import { QuickAdd } from "../studio/QuickAdd";
+import { createTaskFor } from "../studio/teamList";
 import { formatDate, today, untitled } from "../util";
 import { MAX_FOCUS } from "./focus";
 import { allTasks, byDue, doneProps, tasksOf } from "./tasks";
@@ -17,6 +17,10 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
   const pick = usePopover();
   // Mehrere Aufgaben in einem Rutsch anpinnen (bis die drei Plätze voll sind)
   const [chosen, setChosen] = useState<string[]>([]);
+  // Suche über alle offenen Aufgaben (nicht nur eigene) – oder neu anlegen
+  const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
+  const [busy, setBusy] = useState(false);
   const day = today();
   const userId = props.member.id;
   const { pages, isLive, inMyView } = notes;
@@ -31,10 +35,40 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
   const absent = today_?.absent ?? false;
   const focus = (today_?.focus ?? []).map((f) => ({ row: f.row, rank: f.rank, pending: f.pending, task: f }));
   const lead = notes.access.oversee;
-  const candidates = tasksOf(items, userId)
-    .filter((t) => !t.done && !focus.some((f) => f.row.id === t.row.id))
-    .sort(byDue)
-    .slice(0, 12);
+  const free = (t: (typeof items)[number]) => !t.done && !focus.some((f) => f.row.id === t.row.id);
+  const candidates = tasksOf(items, userId).filter(free).sort(byDue).slice(0, 12);
+  const allOpen = items.filter(free).sort(byDue);
+  const q = query.trim().toLowerCase();
+  const shown = q ? allOpen.filter((t) => untitled(t.row).toLowerCase().includes(q)).slice(0, 40) : showAll ? allOpen.slice(0, 80) : candidates;
+  const slots = MAX_FOCUS - focus.length;
+  const closePick = () => {
+    setChosen([]);
+    setQuery("");
+    setShowAll(false);
+    pick.close();
+  };
+  const addNew = async () => {
+    const title = query.trim();
+    if (!title || busy) return;
+    const same = allOpen.find((t) => untitled(t.row).trim().toLowerCase() === title.toLowerCase());
+    if (same) {
+      setChosen((c) => (c.includes(same.row.id) || c.length >= slots ? c : [...c, same.row.id]));
+      setQuery("");
+      return;
+    }
+    setBusy(true);
+    try {
+      const row = await createTaskFor(notes, props.member, title, notes.access.studioLocationId);
+      if (row) {
+        setChosen((c) => (c.length < slots ? [...c, row.id] : c));
+        setQuery("");
+      }
+    } catch {
+      // Fehlermeldung zeigt createPage bereits an
+    } finally {
+      setBusy(false);
+    }
+  };
   const first = props.member.name.split(" ")[0];
 
   const toggle = (id: string, done: boolean) => {
@@ -117,26 +151,27 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
         <p className="nk-muted nk-focus-empty">Wähle bis zu drei Aufgaben, die heute zuerst drankommen – sie bleiben hier oben angepinnt.</p>
       )}
       {pick.anchor && (
-        <Popover
-          anchor={pick.anchor}
-          onClose={() => {
-            setChosen([]);
-            pick.close();
-          }}
-          width={360}
-        >
+        <Popover anchor={pick.anchor} onClose={closePick} width={360}>
           <MenuLabel>
             Bis zu {MAX_FOCUS - focus.length} {MAX_FOCUS - focus.length === 1 ? "Aufgabe" : "Aufgaben"} auswählen
             {userId !== notes.actor?.id ? ` · ${first}` : ""}
           </MenuLabel>
-          <QuickAdd
-            member={props.member}
-            placeholder="Neue Aufgabe eintippen …"
-            autoFocus
-            onCreated={(row) => setChosen((c) => (c.length < MAX_FOCUS - focus.length ? [...c, row.id] : c))}
-          />
+          <form
+            className="nk-quickadd"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void addNew();
+            }}
+          >
+            <span aria-hidden>🔎</span>
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Alle Aufgaben suchen oder neu anlegen …" aria-label="Aufgabe suchen oder neu anlegen" autoFocus />
+          </form>
           <div className="nk-menu-scroll">
-            {candidates.map((t) => {
+            {q && !allOpen.some((t) => untitled(t.row).trim().toLowerCase() === q) && (
+              <MenuItem icon={<span>＋</span>} label={`„${query.trim()}“ neu anlegen`} hint={busy ? "…" : "Enter"} disabled={busy} onClick={() => void addNew()} />
+            )}
+            {!q && showAll && <MenuLabel>Alle offenen Aufgaben</MenuLabel>}
+            {shown.map((t) => {
               const index = chosen.indexOf(t.row.id);
               const full = chosen.length >= MAX_FOCUS - focus.length;
               return (
@@ -151,9 +186,14 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
                 />
               );
             })}
-            {!candidates.length && <div className="nk-empty-hint">Noch keine offenen Aufgaben – oben eine neue eintippen.</div>}
+            {!shown.length && !q && <div className="nk-empty-hint">Keine eigenen offenen Aufgaben – oben suchen oder eine neue eintippen.</div>}
+            {!q && !showAll && allOpen.length > candidates.length && (
+              <button type="button" className="nk-btn is-ghost nk-pick-all" onClick={() => setShowAll(true)}>
+                Alle offenen Aufgaben zeigen ({allOpen.length})
+              </button>
+            )}
           </div>
-          {(candidates.length > 0 || chosen.length > 0) && (
+          {(shown.length > 0 || chosen.length > 0) && (
             <div className="nk-pick-foot">
               <button
                 type="button"
@@ -162,8 +202,7 @@ export function FocusSection(props: { member: Member; compact?: boolean }) {
                 onClick={() => {
                   // In der gewählten Reihenfolge anpinnen
                   chosen.forEach((id, i) => notes.setFocus(id, userId, focus.length + i + 1));
-                  setChosen([]);
-                  pick.close();
+                  closePick();
                 }}
               >
                 📌 {chosen.length ? `${chosen.length} ${chosen.length === 1 ? "Aufgabe" : "Aufgaben"} anpinnen` : "Aufgaben auswählen"}

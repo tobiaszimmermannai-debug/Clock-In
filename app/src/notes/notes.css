@@ -977,3 +977,16 @@ select.nk-input { padding-right: 4px; }
 .nk-dash-owner { margin: -6px 0 8px; font-size: 12px; color: var(--nk-muted); }
 .nk-st-hint { margin: 4px 0 12px; font-size: 13px; }
 @media (max-width: 560px) { .nk-quickadd { flex-wrap: wrap; } .nk-quickadd input { flex-basis: calc(100% - 30px); } }
+
+/* 📌 Als Tagesaufgabe anpinnen – an jeder Aufgabe */
+.nk-pin-btn { display: inline-flex; align-items: center; gap: 4px; flex: none; min-width: 32px; min-height: 32px; justify-content: center; padding: 0 6px; border: 0; border-radius: 8px; background: none; color: var(--nk-muted); font: inherit; font-size: 13px; cursor: pointer; opacity: .55; }
+.nk-pin-btn:hover, .nk-pin-btn:focus-visible, .nk-pin-btn.is-on, .nk-pin-btn.is-full { opacity: 1; background: var(--nk-hover); }
+.nk-pin-btn.is-on { background: color-mix(in srgb, #2383e2 14%, transparent); color: var(--nk-fg); }
+.nk-pin-btn.is-pending { background: color-mix(in srgb, #d9a400 18%, transparent); }
+.nk-pin-btn.is-full { justify-content: flex-start; padding: 4px 10px; box-shadow: 0 0 0 1px var(--nk-line); }
+.nk-pin-btn small { font-size: 11px; color: var(--nk-muted); }
+.nk-pin-other { margin: 4px 6px 6px; width: calc(100% - 12px); }
+.nk-pin-empty { margin: 4px 10px 8px; font-size: 12px; }
+.nk-task-option-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.nk-pick-all { width: calc(100% - 8px); margin: 4px; justify-content: center; }
+@media (hover: none) { .nk-pin-btn { opacity: .85; min-width: 40px; min-height: 40px; } }

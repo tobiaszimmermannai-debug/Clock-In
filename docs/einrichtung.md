@@ -213,6 +213,8 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
 - **Wochen- & Monatsaufgaben:** Wochenaufgaben legt die Studioleitung bzw. der Studio-PC fürs eigene Studio selbst an
   (Team-Reiter „＋ Neue Wochenaufgabe …“, optional „jede Woche“) – ohne Freigabe. Monatsaufgaben verteilen nur
   Tobias & Dominik (Seite „Wochen & Monat“ → Monat → „Aufgabe verteilen“).
+- **Jede Aufgabe als Tagesaufgabe:** 📌 an der Aufgabe (in Listen oder in der geöffneten Aufgabe) → „Für mich“
+  bzw. (Leitung) für eine andere Person. Im Fenster „Aufgabe anpinnen“ lassen sich alle offenen Aufgaben durchsuchen.
 - **Am PC anlegen/anpinnen:** im Reiter der Person „＋ Neue Aufgabe …“ oder bei „Aufgabe anpinnen“ direkt eintippen
   (bis zu 3 auf einmal). Die Aufgaben landen in der Team-Liste „Aufgaben <Studio>“ (legt die App selbst an);
   vom PC/Mitarbeitern angepinnte Tagesaufgaben warten wie gewohnt auf Freigabe.

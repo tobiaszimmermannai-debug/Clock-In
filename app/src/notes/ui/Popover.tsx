@@ -26,16 +26,17 @@ export function Popover(props: {
 }) {
   const ref = useRef<HTMLDivElement>(null);
   // Bis zur Positionierung nur durchsichtig (nicht "hidden"), damit Eingabefelder mit autoFocus den Fokus bekommen
-  const [style, setStyle] = useState<CSSProperties>({ opacity: 0, left: 0, top: 0 });
+  const [style, setStyle] = useState<CSSProperties>({ opacity: 0, left: 0, top: 0, width: props.width });
   const { onClose } = props;
 
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const r = rectOf(props.anchor);
-    const w = el.offsetWidth;
-    const h = el.offsetHeight;
     const vw = window.innerWidth;
+    // Feste Breite gleich mitrechnen (sonst ragt das Menü am Handy über den Rand)
+    const w = props.width ? Math.min(props.width, vw - 16) : el.offsetWidth;
+    const h = el.offsetHeight;
     const vh = window.innerHeight;
     let left = props.placement === "bottom-end" ? r.right - w : props.placement === "right-start" ? r.right + 4 : r.left;
     let top = props.placement === "right-start" ? r.top : r.bottom + 4;
