@@ -1077,7 +1077,7 @@ function rankingText(rows, info, studioName) {
 		"🥉"
 	];
 	lines.push("");
-	for (const r of rows.slice(0, 10)) lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} Punkte (${r.count} ${r.count === 1 ? "Aufgabe" : "Aufgaben"})`);
+	for (const r of rows.slice(0, 10)) lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} ${r.points === 1 ? "Punkt" : "Punkte"} (${r.count} ${r.count === 1 ? "Aufgabe" : "Aufgaben"})`);
 	const studios = /* @__PURE__ */ new Map();
 	for (const r of rows) studios.set(studioName(r.member.studioId), (studios.get(studioName(r.member.studioId)) ?? 0) + r.points);
 	if (studios.size > 1) lines.push("", `Studios: ${[...studios].sort((a, b) => b[1] - a[1]).map(([s, p]) => `${s} ${p}`).join(" · ")}`);
@@ -1099,7 +1099,27 @@ function isoWeek(day) {
 }
 
 // src/notes/gamification/stats.ts
+/** Punkt je erledigter Aufgabe … */
+const POINTS = 1;
+/** … höchstens so viele pro Person und Tag (mehr Aufgaben zählen nur noch für die Serie) */
+const DAILY_POINTS = 3;
 const dayOf = (iso) => isoDay(new Date(iso));
+/**
+* Punkte nach Tagen: je Aufgabe 1, je Person und Tag höchstens DAILY_POINTS.
+* Gespeicherte Punktwerte (früher 10–20) werden bewusst ignoriert – so gilt die Regel auch für alte Einträge.
+*/
+function pointsByDay(completions, fromDay, toDay) {
+	const out = /* @__PURE__ */ new Map();
+	for (const c of completions) {
+		const day = dayOf(c.doneAt);
+		if (fromDay && day < fromDay || toDay && day >= toDay) continue;
+		const days = out.get(c.userId) ?? /* @__PURE__ */ new Map();
+		days.set(day, Math.min(3, (days.get(day) ?? 0) + 1));
+		out.set(c.userId, days);
+	}
+	return out;
+}
+const sum = (days) => [...days?.values() ?? []].reduce((s, n) => s + n, 0);
 /** Montag der Woche */
 function weekStart(day) {
 	const [y, m, d] = day.split("-").map(Number);
@@ -1109,13 +1129,13 @@ function weekStart(day) {
 /** Rangliste ab einem Tag (Standard: Wochenbeginn), optional bis vor toDay; Geräte zählen nicht */
 function leaderboard(completions, members, fromDay, toDay) {
 	const sums = /* @__PURE__ */ new Map();
+	const points = pointsByDay(completions, fromDay, toDay);
 	for (const c of completions) {
 		if (dayOf(c.doneAt) < fromDay || toDay && dayOf(c.doneAt) >= toDay) continue;
 		const s = sums.get(c.userId) ?? {
-			points: 0,
+			points: sum(points.get(c.userId)),
 			count: 0
 		};
-		s.points += c.points;
 		s.count++;
 		sums.set(c.userId, s);
 	}

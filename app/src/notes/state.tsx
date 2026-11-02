@@ -1,12 +1,12 @@
 // Zentraler Zustand: Seitenliste im Speicher, gebündeltes Speichern, Navigation, Live-Updates
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { isDone } from "./database/logic";
-import { FOCUS_KEY, focusEntry, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
+import { FOCUS_KEY, focusTasks, reorderFocus, withFocus } from "./gamification/focus";
 import { dailyStatus, type DayPlan, type DayStatus } from "./daily/status";
 import { DONE_AT_KEY } from "./gamification/tasks";
 import { everyWhileVisible } from "./visibility";
 import { dueProp, MOVES_KEY, movesOf, needsPhoto, nextOccurrence, postponed, PROOF_KEY, proofOf } from "./gamification/recur";
-import { daysFor, myStats, ON_TIME_BONUS, POINTS } from "./gamification/stats";
+import { dayOf, daysFor, myStats, pointsLeftToday } from "./gamification/stats";
 import { taskSchema, welcomeContent } from "./templates";
 import type {
   Access,
@@ -205,6 +205,8 @@ export function NotesProvider(props: {
   const [access, setAccess] = useState<Access>({ oversee: false, admin: false, studio: false });
   const [locations, setLocations] = useState<Studio[]>([]);
   const [completions, setCompletions] = useState<Completion[]>([]);
+  const completionsRef = useRef<Completion[]>([]);
+  completionsRef.current = completions;
   const [workDays, setWorkDays] = useState<Record<string, string[]> | null>(null);
   const [dayPlan, setDayPlan] = useState<DayPlan | null>(null);
   const [unlocked, setUnlocked] = useState<Set<string> | null>(null);
@@ -635,7 +637,7 @@ export function NotesProvider(props: {
     return meta;
   }
 
-  // Gutschrift: an die Zuständigen, sonst an die handelnde Person; Bonus für pünktlich und Tagesfokus
+  // Gutschrift: an die Zuständigen, sonst an die handelnde Person. 1 Punkt je Aufgabe, höchstens 3 pro Tag
   const recordCompletion = useCallback(
     (row: PageMeta, schema: DbSchema, done: boolean) => {
       if (!done) {
@@ -652,16 +654,10 @@ export function NotesProvider(props: {
       const credited = assigned.length ? assigned : actor ? [actor] : [];
       if (!credited.length) return;
       const day = today();
-      const dueProp = schema.properties.find((p) => p.type === "date");
-      const due = dueProp ? String(row.props[dueProp.id] ?? "").slice(0, 10) : "";
-      const onTime = Boolean(due) && day <= due;
       const now = new Date().toISOString();
-      const added = credited.map((userId) => ({
-        pageId: row.id,
-        userId,
-        points: POINTS + (onTime ? ON_TIME_BONUS : 0) + (focusEntry(row, userId, day)?.pending === false ? ON_TIME_BONUS : 0),
-        doneAt: now,
-      }));
+      const before = completionsRef.current;
+      const doneToday = (userId: string) => before.filter((x) => x.userId === userId && x.pageId !== row.id && dayOf(x.doneAt) === day).length;
+      const added = credited.map((userId) => ({ pageId: row.id, userId, points: pointsLeftToday(doneToday(userId)), doneAt: now }));
       setCompletions((c) => {
         const next = [...c.filter((x) => x.pageId !== row.id), ...added];
         // Feiern, wenn die handelnde Person etwas gutgeschrieben bekommt
