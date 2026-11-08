@@ -4,6 +4,7 @@ import { LeadingIcon, Row } from "./components/ui";
 import { KioskApp } from "./kiosk/KioskApp";
 import { parseToken } from "./lib/stamp";
 import { isConfigured, SESSION_KEYS } from "./lib/supabase";
+import { parsePcToken } from "./portal/PcUnlock";
 import { PortalApp } from "./portal/PortalApp";
 
 function useHash() {
@@ -37,6 +38,8 @@ export default function App() {
   }
   if (hash.startsWith("#/admin")) return <AdminApp />;
   if (hash.startsWith("#/s/")) return <PortalApp stampToken={parseToken(hash) ?? undefined} />;
+  // QR am Studio-PC: Studioleitung gibt die Schichtplanung frei
+  if (hash.startsWith("#/pc/")) return <PortalApp pcToken={parsePcToken(hash) ?? undefined} />;
   if (hash.startsWith("#/portal")) return <PortalApp />;
   if (hash.startsWith("#/kiosk")) return <KioskApp />;
   if (hasSession(SESSION_KEYS.kiosk)) return <KioskApp />;

@@ -125,6 +125,8 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 36. `supabase/migrations/20261104110000_notes_checkin_gate.sql` (Aufgaben: Mitarbeiter sehen sie nur eingecheckt)
 37. `supabase/migrations/20261105090000_notes_task_rules.sql` (Aufgaben: Fotonachweis und Verschieben)
 38. `supabase/migrations/20261106090000_notes_assigned_visible.sql` (Aufgaben: Zugewiesenes – auch aus privaten Listen der Leitung – ist für die Person sichtbar)
+39. `supabase/migrations/20261108090000_shift_wishes_pc_plan_stats.sql` (Schichtwünsche, Dienstplan am Studio-PC per QR, Ausstempel-Statistik – danach Funktion `pc-plan` deployen, Teil R)
+40. `supabase/migrations/20261108100000_notes_studio_teams_prestige.sql` (Aufgaben: jedes Studio sieht nur seine Aufgaben, Aushilfen, Team-Ranking, Prestige/Items)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -220,6 +222,20 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
 - **Am PC anlegen/anpinnen:** im Reiter der Person „＋ Neue Aufgabe …“ oder bei „Aufgabe anpinnen“ direkt eintippen
   (bis zu 3 auf einmal). Die Aufgaben landen in der Team-Liste „Aufgaben <Studio>“ (legt die App selbst an);
   vom PC/Mitarbeitern angepinnte Tagesaufgaben warten wie gewohnt auf Freigabe.
+
+## Teil R – Wünsche, Dienstplan am PC, Ranking, Statistik
+- **Funktion `pc-plan`** deployen (Edge Functions → Deploy new function → Name `pc-plan`, Code aus
+  `supabase/functions/pc-plan/index.ts`, „Verify JWT“ **an**). Danach `aufgaben` neu deployen (Team-Ranking).
+- **Schichtwünsche:** Mitarbeiter wählen im Portal (Dienstplan → „Schichtwunsch“) Tag, Studio und früh/mittel/spät
+  (bis 8 Wochen im Voraus). Die Studioleitung sieht offene Wünsche im Dienstplan und nimmt an (→ normale Schicht) oder
+  lehnt ab. Keine Benachrichtigung an Tobias/Dominik. Schichtzeiten stehen in der Tabelle `shift_slots`.
+- **Dienstplan am Studio-PC:** Reiter „Dienstplan“ zeigt alle Studios (nur lesen). Zum Planen: „Planung freigeben“ →
+  QR mit dem registrierten Stempel-Handy der Studioleitung scannen. Bearbeiten nur fürs Heimatstudio;
+  nach 5 Min. ohne Eingabe wieder gesperrt. Die Studioleitung braucht dafür ein registriertes Stempel-Handy.
+- **Ranking:** Team-Wertung = Wochenpunkte aller ÷ Personen je Studio (Reiter „Ranking“, rechts live, Podium Montag).
+- **Prestige:** Auf Stufe 30 ein Item aus 100 wählen, Blitzi startet bei 1; beim ersten Mal Spitzname.
+- **Statistik:** Nach „Gehen“ trägt jede Person 10 Kennzahlen ein (+1 Punkt). Reiter „Statistik“: eigene Zahlen;
+  Admin alle, Studioleitung ihr Heimatstudio.
 
 ## Gut zu wissen
 - **2FA:** Admin-Rechte in der App gelten nur mit zweitem Faktor (Authenticator-App).

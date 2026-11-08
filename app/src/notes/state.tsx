@@ -6,10 +6,12 @@ import { dailyStatus, type DayPlan, type DayStatus } from "./daily/status";
 import { DONE_AT_KEY } from "./gamification/tasks";
 import { everyWhileVisible } from "./visibility";
 import { dueProp, MOVES_KEY, movesOf, needsPhoto, nextOccurrence, postponed, PROOF_KEY, proofOf } from "./gamification/recur";
-import { dayOf, daysFor, myStats, pointsLeftToday } from "./gamification/stats";
+import { blitziInfo, type BlitziInfo } from "./gamification/blitzi";
+import { dayOf, daysFor, pointsLeftToday } from "./gamification/stats";
 import { taskSchema, welcomeContent } from "./templates";
 import type {
   Access,
+  BlitziProfile,
   Blocks,
   Completion,
   DbSchema,
@@ -43,15 +45,22 @@ export type Presence = { clientId: number; name: string; color: string };
 
 export type Toast = { id: number; text: string; action?: { label: string; run: () => void } };
 
-/** Kurze Feier nach einer erledigten Aufgabe (bzw. vollem Akku) */
+/** Belohnung nach einer erledigten Aufgabe (bzw. vollem Akku, neuer Stufe) – mit dem Blitzi der handelnden Person */
 export type Celebration = {
   id: number;
   points: number;
   goal: boolean;
   streak: number;
   name: string;
-  /** Serie ist mit dieser Aufgabe gewachsen: neue Stufe bzw. neue Goldmünze */
+  /** Serie ist mit dieser Aufgabe gewachsen */
   grew: boolean;
+  /** Blitzi der Person: Stufe vorher/nachher (levelUp = neue Stufe), Items, Spitzname */
+  memberId: string;
+  stage: number;
+  levelUp: boolean;
+  items: string[];
+  nickname: string | null;
+  prestige: number;
 };
 
 /** Erfolge werden so weit zurück geladen (Serie, Rangliste) */
@@ -134,6 +143,12 @@ type Ctx = {
   restoreDeleted: (id: string) => void;
   // ---- Erfolge ----
   completions: Completion[];
+  /** Blitzi-Profile (Prestige, Items, Spitzname) je Person */
+  profiles: Map<string, BlitziProfile>;
+  /** Blitzi einer Person (Stufe seit dem letzten Prestige, Items, Spitzname) */
+  blitzi: (memberId: string) => BlitziInfo;
+  /** Stufe 30: Item wählen (beim ersten Mal mit Spitzname) */
+  prestige: (memberId: string, item: string, nickname?: string) => Promise<void>;
   /** Arbeitstage je Person (für die Serie) */
   workDays: Record<string, string[]> | null;
   celebration: Celebration | null;
@@ -205,6 +220,10 @@ export function NotesProvider(props: {
   const [access, setAccess] = useState<Access>({ oversee: false, admin: false, studio: false });
   const [locations, setLocations] = useState<Studio[]>([]);
   const [completions, setCompletions] = useState<Completion[]>([]);
+  const [profiles, setProfiles] = useState<Map<string, BlitziProfile>>(new Map());
+  const profilesRef = useRef(profiles);
+  profilesRef.current = profiles;
+  const [here, setHere] = useState<Record<string, string>>({});
   const completionsRef = useRef<Completion[]>([]);
   completionsRef.current = completions;
   const [workDays, setWorkDays] = useState<Record<string, string[]> | null>(null);
@@ -352,6 +371,12 @@ export function NotesProvider(props: {
           .unlocked()
           .then((ids) => !cancelled && setUnlocked(ids ? new Set(ids) : null))
           .catch(() => undefined);
+        store.blitziProfiles?.()
+          .then((list) => !cancelled && setProfiles(new Map(list.map((p) => [p.userId, p]))))
+          .catch(() => undefined);
+        store.hereToday?.()
+          .then((map) => !cancelled && setHere(map))
+          .catch(() => undefined);
         if (cancelled) return;
         setMe(who);
         meRef.current = who;
@@ -459,6 +484,12 @@ export function NotesProvider(props: {
       store
         .unlocked()
         .then((ids) => setUnlocked(ids ? new Set(ids) : null))
+        .catch(() => undefined);
+      store.blitziProfiles?.()
+        .then((list) => setProfiles(new Map(list.map((p) => [p.userId, p]))))
+        .catch(() => undefined);
+      store.hereToday?.()
+        .then(setHere)
         .catch(() => undefined);
     }, 120_000);
   }, [loaded, store]);
@@ -656,7 +687,7 @@ export function NotesProvider(props: {
       const day = today();
       const now = new Date().toISOString();
       const before = completionsRef.current;
-      const doneToday = (userId: string) => before.filter((x) => x.userId === userId && x.pageId !== row.id && dayOf(x.doneAt) === day).length;
+      const doneToday = (userId: string) => before.filter((x) => !x.bonus && x.userId === userId && x.pageId !== row.id && dayOf(x.doneAt) === day).length;
       const added = credited.map((userId) => ({ pageId: row.id, userId, points: pointsLeftToday(doneToday(userId)), doneAt: now }));
       setCompletions((c) => {
         const next = [...c.filter((x) => x.pageId !== row.id), ...added];
@@ -664,16 +695,23 @@ export function NotesProvider(props: {
         const mine = actor ? added.find((a) => a.userId === actor) : undefined;
         if (mine) {
           const days = daysFor(workDaysRef.current, actor!);
-          const stats = myStats(actor!, next, { today: day, workDays: days });
-          const before = myStats(actor!, c, { today: day, workDays: days });
+          const profile = profilesRef.current.get(actor!) ?? null;
+          const after = blitziInfo(actor!, next, days, day, profile);
+          const prev = blitziInfo(actor!, c, days, day, profile);
           const person = people.find((m) => m.id === actor);
           setCelebration({
             id: Date.now(),
             points: mine.points,
-            goal: stats.today === stats.goal,
-            streak: stats.streak,
+            goal: after.stats.today === after.stats.goal,
+            streak: after.stats.streak,
             name: person?.name.split(" ")[0] ?? "",
-            grew: stats.streak > before.streak,
+            grew: after.stats.streak > prev.stats.streak,
+            memberId: actor!,
+            stage: after.stage,
+            levelUp: after.stage > prev.stage,
+            items: after.items,
+            nickname: after.nickname,
+            prestige: after.prestige,
           });
         }
         return next;
@@ -1045,11 +1083,26 @@ export function NotesProvider(props: {
   const inMyView = useCallback((p: PageMeta) => p.space === "team" || p.ownerId === meRef.current.id, []);
   const dismissCelebration = useCallback(() => setCelebration(null), []);
 
+  // Mitglieder mit dem Studio, in dem sie heute eingecheckt sind (Aushilfe)
+  const membersHere = useMemo(() => members.map((m) => (here[m.id] ? { ...m, hereId: here[m.id] } : m)), [members, here]);
+  const blitzi = useCallback(
+    (memberId: string) => blitziInfo(memberId, completions, daysFor(workDays, memberId), today(), profiles.get(memberId) ?? null),
+    [completions, workDays, profiles],
+  );
+  const prestige = useCallback(
+    async (memberId: string, item: string, nickname?: string) => {
+      if (!store.prestige) throw new Error("Prestige gibt es nur mit der Clock-In-Datenbank.");
+      const profile = await store.prestige(memberId, item, nickname);
+      setProfiles((m) => new Map(m).set(memberId, profile));
+    },
+    [store],
+  );
+
   const value = useMemo<Ctx>(
     () => ({
       store,
       me,
-      members,
+      members: membersHere,
       pages,
       favorites,
       recent,
@@ -1092,6 +1145,9 @@ export function NotesProvider(props: {
       purge,
       restoreDeleted,
       completions,
+      profiles,
+      blitzi,
+      prestige,
       workDays,
       celebration,
       dismissCelebration,
@@ -1102,7 +1158,7 @@ export function NotesProvider(props: {
       photoRequest,
       resolvePhoto,
     }),
-    [store, me, members, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, workDays, celebration, dismissCelebration, setFocus, dayStatus, decideFocus, unlocked, photoRequest, resolvePhoto],
+    [store, me, members, membersHere, pages, favorites, recent, current, peek, loaded, error, navigate, childrenOf, isLive, createPage, updatePage, saveContent, onDocSaved, loadDoc, saveVersionNow, restoreVersion, presence, setPresence, commentsOpen, setCommentsOpen, loadContent, archive, restore, destroy, duplicate, move, toggleFavorite, registerEditor, toast, toasts, dismissToast, flush, access, locations, actor, setActor, inMyView, purge, restoreDeleted, completions, profiles, blitzi, prestige, workDays, celebration, dismissCelebration, setFocus, dayStatus, decideFocus, unlocked, photoRequest, resolvePhoto],
   );
 
   return <NotesContext.Provider value={value}>{props.children}</NotesContext.Provider>;

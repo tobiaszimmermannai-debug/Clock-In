@@ -3,7 +3,7 @@
 // note_favorites · note_versions · Bucket "notes" (Dateien unter <Seiten-ID>/…)
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { mergeUpdates } from "yjs";
-import type { Access, Blocks, CollabMessage, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, StoreEvent, Studio, Version } from "../types";
+import type { Access, BlitziProfile, Blocks, CollabMessage, Completion, DocState, Member, NewPage, NotesStore, PageMeta, PagePatch, ShiftReport, StoreEvent, Studio, Version } from "../types";
 import { fromBase64, plainText, toBase64 } from "../util";
 import { colorFor, type DbRow, memberFromUser, META_COLUMNS, toMeta, type UserRow } from "./rows";
 
@@ -34,6 +34,14 @@ function toRow(p: PagePatch): Record<string, unknown> {
   for (const [k, v] of Object.entries(p)) if (k in map && v !== undefined) row[map[k]] = v;
   return row;
 }
+
+const toProfile = (r: { user_id: string; nickname: string | null; prestige: number; items: string[] | null; reset_day: string | null }): BlitziProfile => ({
+  userId: r.user_id,
+  nickname: r.nickname,
+  prestige: r.prestige ?? 0,
+  items: r.items ?? [],
+  resetDay: r.reset_day ? String(r.reset_day).slice(0, 10) : null,
+});
 
 export class SupabaseStore implements NotesStore {
   readonly kind = "supabase" as const;
@@ -102,6 +110,64 @@ export class SupabaseStore implements NotesStore {
         .range(from, from + 999);
       if (error) throw error;
       out.push(...(data ?? []).map((r) => ({ pageId: r.page_id, userId: r.user_id, points: r.points, doneAt: r.done_at })));
+      if (!data || data.length < 1000) break;
+    }
+    // Feierabend-Punkte (Ausstempel-Statistik abgegeben) – ältere Datenbank ohne Funktion: keine
+    const bonus = await this.db.rpc("note_bonus_points", { p_since: sinceIso });
+    if (!bonus.error) {
+      for (const r of (bonus.data ?? []) as { user_id: string; done_at: string; ref: string }[]) {
+        out.push({ pageId: `feierabend:${r.ref}`, userId: r.user_id, points: 1, doneAt: r.done_at, bonus: true });
+      }
+    }
+    return out;
+  }
+
+  async blitziProfiles(): Promise<BlitziProfile[]> {
+    const { data, error } = await this.db.from("blitzi_profiles").select("user_id, nickname, prestige, items, reset_day");
+    if (error) return [];
+    return ((data ?? []) as { user_id: string; nickname: string | null; prestige: number; items: string[] | null; reset_day: string | null }[]).map(toProfile);
+  }
+
+  async prestige(userId: string, item: string, nickname?: string): Promise<BlitziProfile> {
+    const { data, error } = await this.db.rpc("blitzi_prestige", { p_user: userId, p_item: item, p_nickname: nickname ?? null });
+    if (error) throw new Error(error.message);
+    return toProfile(data as { user_id: string; nickname: string | null; prestige: number; items: string[] | null; reset_day: string | null });
+  }
+
+  async hereToday(): Promise<Record<string, string>> {
+    const { data, error } = await this.db.rpc("note_here_today");
+    if (error) return {};
+    const out: Record<string, string> = {};
+    for (const r of (data ?? []) as { user_id: string; location_id: string }[]) out[r.user_id] = r.location_id;
+    return out;
+  }
+
+  async shiftReports(sinceIso?: string): Promise<ShiftReport[]> {
+    const out: ShiftReport[] = [];
+    for (let from = 0; from < 100_000; from += 1000) {
+      let q = this.db
+        .from("shift_reports")
+        .select("*, user:users!shift_reports_user_id_fkey(first_name, last_name, auth_user_id, home_location_id)")
+        .order("created_at")
+        .order("id")
+        .range(from, from + 999);
+      if (sinceIso) q = q.gte("created_at", sinceIso);
+      const { data, error } = await q;
+      if (error) throw new Error(error.message);
+      for (const r of (data ?? []) as Record<string, unknown>[]) {
+        const u = r.user as { first_name: string; last_name: string; auth_user_id: string | null; home_location_id: string | null } | null;
+        const values: Record<string, number> = {};
+        for (const [k, v] of Object.entries(r)) if (typeof v === "number") values[k] = v;
+        out.push({
+          id: String(r.id),
+          userId: String(r.user_id),
+          authUserId: u?.auth_user_id ?? null,
+          name: u ? `${u.first_name} ${u.last_name}`.trim() : "?",
+          studioId: u?.home_location_id ?? null,
+          createdAt: String(r.created_at),
+          values,
+        });
+      }
       if (!data || data.length < 1000) break;
     }
     return out;

@@ -154,6 +154,8 @@ export type Member = {
   studioId?: string | null;
   /** Studio-PC statt Person */
   device?: boolean;
+  /** Heute eingecheckt in diesem Studio (Aushilfe: anderes als das Heimatstudio) */
+  hereId?: string | null;
 };
 
 export type Studio = { id: string; name: string };
@@ -170,7 +172,28 @@ export type Access = {
 };
 
 /** Erledigte Aufgabe, einer Person gutgeschrieben */
-export type Completion = { pageId: string; userId: string; points: number; doneAt: string };
+export type Completion = {
+  pageId: string;
+  userId: string;
+  points: number;
+  doneAt: string;
+  /** Feierabend-Punkt (Statistik beim Ausstempeln abgegeben): +1, zählt nicht als Aufgabe und nicht für die Serie */
+  bonus?: boolean;
+};
+
+/** Blitzi: Prestige (wie oft Stufe 30 + Item gewählt), Items (für immer), Spitzname */
+export type BlitziProfile = { userId: string; nickname: string | null; prestige: number; items: string[]; resetDay: string | null };
+
+/** Ausstempel-Statistik einer Schicht (Clock-In, shift_reports) */
+export type ShiftReport = {
+  id: string;
+  userId: string;
+  authUserId: string | null;
+  name: string;
+  studioId: string | null;
+  createdAt: string;
+  values: Record<string, number>;
+};
 
 export type StoreEvent =
   | { type: "upsert"; page: PageMeta; content?: Blocks; ydoc?: string | null }
@@ -248,4 +271,13 @@ export interface NotesStore {
   /** Gespeicherte Adresse → anzeigbare Adresse (z. B. signierte URL) */
   resolveUrl(url: string): Promise<string>;
   subscribe(onEvent: (event: StoreEvent) => void): () => void;
+  // ---- optional (nur mit Clock-In-Datenbank) ----
+  /** Blitzi-Profile aller (Prestige, Items, Spitzname) */
+  blitziProfiles?(): Promise<BlitziProfile[]>;
+  /** Stufe 30: Item wählen (beim ersten Mal mit Spitzname) */
+  prestige?(userId: string, item: string, nickname?: string): Promise<BlitziProfile>;
+  /** Wer ist heute wo eingecheckt (Person → Studio) */
+  hereToday?(): Promise<Record<string, string>>;
+  /** Ausstempel-Statistik (RLS: eigene; Studioleitung ihr Studio; Admin alle) */
+  shiftReports?(sinceIso?: string): Promise<ShiftReport[]>;
 }

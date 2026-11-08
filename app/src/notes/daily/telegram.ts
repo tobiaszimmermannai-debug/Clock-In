@@ -2,7 +2,7 @@
 // Benutzt von supabase/functions/aufgaben (Server). Texte bauen immer auf dailyStatus auf.
 import { displayValue } from "../database/logic";
 import type { Member, PageMeta } from "../types";
-import type { LeaderRow } from "../gamification/stats";
+import { fmtAvg, type LeaderRow, type TeamRow } from "../gamification/stats";
 import type { DayStatus, FocusItem, PersonDay } from "./status";
 
 // ---------------- Zeit (Berlin) ----------------
@@ -193,11 +193,23 @@ export function reminderText(kind: ReminderKind, s: DayStatus, studioName: (id: 
     .trim();
 }
 
-/** Wochenranking (montags): Treppchen, Plätze 4–10, Punkte je Studio */
-export function rankingText(rows: LeaderRow[], info: { label: string; range: string }, studioName: (id: string | null | undefined) => string): string {
+/** Wochenranking (montags): Team-Wertung der Studios (Punkteschnitt je Person), dann die Punktbesten */
+export function rankingText(
+  rows: LeaderRow[],
+  info: { label: string; range: string },
+  studioName: (id: string | null | undefined) => string,
+  teams?: TeamRow[],
+): string {
   const lines = [`🏆 Wochenranking ${info.label} (${info.range})`];
   if (!rows.length) return [...lines, "", "Letzte Woche wurde keine Aufgabe erledigt."].join("\n");
   const medal = ["🥇", "🥈", "🥉"];
+  if (teams?.length) {
+    lines.push("", "Studio-Wertung (Punkte je Person):");
+    for (const t of teams) lines.push(`${t.avg > 0 ? (medal[t.rank - 1] ?? `${t.rank}.`) : `${t.rank}.`} ${t.studio.name} – Ø ${fmtAvg(t.avg)} (${t.points} Punkte, ${t.people} Personen)`);
+    lines.push("", "Punktbeste:");
+    for (const r of rows.slice(0, 5)) lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} ${r.points === 1 ? "Punkt" : "Punkte"}`);
+    return lines.join("\n");
+  }
   lines.push("");
   for (const r of rows.slice(0, 10)) {
     lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} ${r.points === 1 ? "Punkt" : "Punkte"} (${r.count} ${r.count === 1 ? "Aufgabe" : "Aufgaben"})`);

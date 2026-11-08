@@ -8,7 +8,7 @@ import type { Member } from "../types";
 import { SCENES } from "./sceneArt";
 
 export { SCENES } from "./sceneArt";
-export type TeamMate = { member: Member; stage: number; coins: number };
+export type TeamMate = { member: Member; stage: number; items?: string[] };
 
 /** ISO-Kalenderwoche → Aktion der Woche */
 export function sceneOfWeek(isoWeek: number) {
@@ -22,6 +22,8 @@ export function TeamScene(props: {
   initial: number;
   caption: string;
   absent?: string[];
+  /** klein am Rand (Seitenleiste) statt groß über den Aufgaben */
+  compact?: boolean;
 }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const ids = { sky: `${id}-sky`, water: `${id}-water` };
@@ -36,7 +38,7 @@ export function TeamScene(props: {
   const sizeOf = (stage: number) => 8.5 + (4 * (stage - 1)) / (MAX_STAGE - 1); // Prozent der Breite
 
   return (
-    <section className={`nk-scene${won ? " is-won" : ""}`}>
+    <section className={`nk-scene${won ? " is-won" : ""}${props.compact ? " is-compact" : ""}`}>
       <header className="nk-scene-head">
         <button type="button" className="nk-icon-btn" aria-label="Vorige Aktion" onClick={() => setIndex((index + SCENES.length - 1) % SCENES.length)}>
           ◀
@@ -74,7 +76,7 @@ export function TeamScene(props: {
               style={{ left: `${spot.x / 10}%`, top: `${spot.y / 4}%`, width: `${width}%`, ["--i" as string]: i }}
               title={`${t.member.name} · Stufe ${t.stage} · trägt ${Math.round((t.stage / total) * 100)} % bei`}
             >
-              <Blitzi mood={won ? "party" : "happy"} stage={t.stage} coins={0} still fluid noShadow title={t.member.name} />
+              <Blitzi mood={won ? "party" : "happy"} stage={t.stage} items={t.items} still fluid noShadow title={t.member.name} />
               <span className="nk-scene-name">{t.member.name.split(" ")[0]}</span>
             </div>
           );

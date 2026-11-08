@@ -1,5 +1,5 @@
-// Blitzis Entwicklung: ohne Serie Stufe 1, jeder Tag der Serie schaltet die nächste Stufe frei (bis 30),
-// danach gibt es je weiterem Tag eine Goldmünze.
+// Blitzis Entwicklung: ohne Serie Stufe 1, jeder Tag der Serie schaltet die nächste Stufe frei (bis 30).
+// Auf Stufe 30 wählt man ein Item (Prestige) – danach fängt Blitzi wieder bei Stufe 1 an, die Items bleiben.
 // Stufe 1–3 klein und kugelrund, ab 8 schlank und sportlich, ab 20 Bodybuilder, 28–30 extreme Definition.
 
 export const MAX_STAGE = 30;
@@ -7,8 +7,8 @@ export const MAX_STAGE = 30;
 /** Stufe zur Serie: 0 Tage = Stufe 1, 1 Tag = Stufe 2 … ab 29 Tagen Stufe 30 */
 export const stageOf = (streak: number) => Math.min(MAX_STAGE, Math.max(0, Math.floor(streak)) + 1);
 
-/** Goldmünzen: jeder Serien-Tag nach Erreichen von Stufe 30 */
-export const coinsOf = (streak: number) => Math.max(0, Math.floor(streak) - (MAX_STAGE - 1));
+/** Höchstens so viele Prestige-Stufen (= Items im Katalog) */
+export const MAX_PRESTIGE = 100;
 
 const clampStage = (stage: number) => Math.min(MAX_STAGE, Math.max(1, stage));
 
@@ -74,5 +74,5 @@ export const UNLOCKS: Record<number, string> = {
   23: "Adern",
   28: "mehr Adern, Brustfasern",
   29: "Achtpack, Laten, Beine",
-  30: "Adern überall, Goldgurt",
+  30: "Adern überall, Goldgurt – Item wählen (Prestige)",
 };

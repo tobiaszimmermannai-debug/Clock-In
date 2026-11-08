@@ -523,15 +523,21 @@ select.nk-input { padding-right: 4px; }
 .nk-home { padding-top: 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 36px; max-width: 920px !important; margin: 0 auto; }
 .nk-home-title { margin: 0; font-size: 30px; font-weight: 700; text-align: center; }
 .nk-home-heading { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--nk-muted); margin-bottom: 10px; }
-.nk-home-cards { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 8px; }
+.nk-home-cards { display: flex; gap: 12px; overflow-x: auto; overflow-y: visible; padding: 6px 4px 10px; }
 .nk-home-card {
-  flex: none; width: 150px; height: 130px; display: grid; align-content: start; gap: 4px; padding: 14px; border-radius: 12px;
+  flex: none; width: 160px; min-height: 132px; display: grid; grid-template-rows: auto auto 1fr; align-content: start; gap: 6px;
+  padding: 14px 14px 12px; border-radius: 12px; overflow: visible; text-align: left;
   background: var(--nk-side); box-shadow: 0 0 0 1px var(--nk-line);
 }
 .nk-home-card:hover { background: var(--nk-hover-strong); }
-.nk-home-card b { font-size: 14px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-top: 18px; }
+/* lange Titel mit Ellipsis – die Icons werden nie abgeschnitten */
+.nk-home-card b { min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
 .nk-home-card.is-new { color: var(--nk-muted); }
-.nk-home-card-icon { font-size: 24px; height: 28px; }
+.nk-home-card-icon {
+  display: flex; align-items: center; justify-content: flex-start; width: 40px; height: 40px; flex: none;
+  font-size: 28px; line-height: 1; overflow: visible; padding: 2px;
+}
+.nk-home-card-icon > * { flex: none; }
 .nk-home-tasks { display: grid; border-radius: 10px; box-shadow: 0 0 0 1px var(--nk-line); overflow: hidden; }
 .nk-home-task { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--nk-line) !important; font-size: 14px; }
 .nk-home-task:last-child { border-bottom: 0 !important; }
@@ -990,3 +996,66 @@ select.nk-input { padding-right: 4px; }
 .nk-task-option-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .nk-pick-all { width: calc(100% - 8px); margin: 4px; justify-content: center; }
 @media (hover: none) { .nk-pin-btn { opacity: .85; min-width: 40px; min-height: 40px; } }
+
+/* ---------------- Studio-Dashboard: Seitenleiste (Team-Rangliste, Team-Szene klein am Rand) ---------------- */
+.nk-dash-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+.nk-dash-aside { display: grid; gap: 14px; position: sticky; top: 12px; }
+.nk-dash-caption { margin: -4px 0 0; }
+.nk-scene.is-compact { max-width: 300px; border-radius: 12px; }
+.nk-scene.is-compact .nk-scene-head { padding: 6px 8px; }
+.nk-scene.is-compact .nk-scene-title b { font-size: 13px; }
+.nk-scene.is-compact .nk-scene-title span { font-size: 11px; }
+.nk-scene.is-compact .nk-scene-name { font-size: 9px; }
+.nk-scene.is-compact .nk-scene-foot { font-size: 11px; padding: 6px 8px; }
+.nk-scene.is-compact .nk-scene-power { display: none; }
+.nk-leaders-help { font-size: 11px; margin: 6px 0 0; }
+@media (max-width: 960px) {
+  .nk-dash-layout { grid-template-columns: 1fr; }
+  .nk-dash-aside { position: static; order: -1; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .nk-scene.is-compact { max-width: none; }
+}
+/* Ranking-Reiter */
+.nk-ranking { display: grid; gap: 22px; }
+.nk-ranking-table tr.is-me td { background: color-mix(in srgb, #f6c544 18%, transparent); font-weight: 600; }
+/* Archiv erledigter Aufgaben */
+.nk-archive .nk-home-heading { justify-content: space-between; }
+.nk-archive-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.nk-archive-list li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: center; opacity: .8; }
+.nk-archive-list time { font-size: 12px; color: var(--nk-muted); font-variant-numeric: tabular-nums; }
+/* Blitzi: Spitzname, Prestige */
+.nk-stage .nk-stage-prestige { font-weight: 700; color: #b9861a; }
+.nk-blitzi-name { font-weight: 700; font-size: 13px; text-align: center; }
+.nk-prestige-btn { margin-top: 4px; }
+.nk-prestige-modal { width: min(980px, 96vw); }
+.nk-prestige-body { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 18px; padding: 14px; max-height: 76vh; overflow: auto; }
+.nk-prestige-preview { display: grid; justify-items: center; gap: 10px; align-content: start; text-align: center; }
+.nk-prestige-nick { display: grid; gap: 4px; width: 100%; text-align: left; font-size: 13px; }
+.nk-prestige-nick input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--nk-line); background: var(--nk-bg); color: inherit; }
+.nk-prestige-error { color: #d93f3f; font-size: 13px; margin: 0; }
+.nk-prestige-cats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.nk-prestige-cats button { padding: 5px 10px; border-radius: 999px; border: 1px solid var(--nk-line); background: var(--nk-bg); font-size: 12px; }
+.nk-prestige-cats button[aria-pressed="true"] { background: #ffe14d; border-color: #e0b400; font-weight: 700; }
+.nk-prestige-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.nk-prestige-item { display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border-radius: 10px; border: 2px solid var(--nk-line); background: var(--nk-bg); font-size: 11px; text-align: center; }
+.nk-prestige-item[aria-pressed="true"] { border-color: #e0b400; background: color-mix(in srgb, #ffe14d 25%, var(--nk-bg)); }
+.nk-prestige-item:disabled { opacity: .4; cursor: not-allowed; }
+@media (max-width: 700px) { .nk-prestige-body { grid-template-columns: 1fr; } }
+/* Team-Siegerehrung */
+.nk-podium-team .nk-podium-heroes { display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
+/* Statistik */
+.nk-stats { display: grid; gap: 24px; }
+.nk-stats-error { color: #d93f3f; }
+.nk-stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.nk-stats-card { border-radius: 12px; box-shadow: 0 0 0 1px var(--nk-line); padding: 12px 14px; display: grid; gap: 8px; }
+.nk-stats-card header { display: flex; justify-content: space-between; align-items: baseline; }
+.nk-stats-card dl { margin: 0; display: grid; gap: 3px; }
+.nk-stats-card dl div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.nk-stats-card dt { color: var(--nk-muted); }
+.nk-stats-card dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.nk-stats-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.nk-stats-filters select, .nk-stats-filters input { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--nk-line); background: var(--nk-bg); color: inherit; }
+.nk-stats-table-wrap { overflow-x: auto; }
+.nk-stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.nk-stats-table th, .nk-stats-table td { padding: 6px 8px; border-bottom: 1px solid var(--nk-line); text-align: left; white-space: nowrap; }
+.nk-stats-table th button { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; cursor: pointer; color: inherit; }
+.nk-stats-table .num { text-align: right; font-variant-numeric: tabular-nums; }

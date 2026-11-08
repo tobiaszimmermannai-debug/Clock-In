@@ -5,6 +5,7 @@ import { type CSSProperties, type MouseEvent, useEffect, useState } from "react"
 import { addDays, berlinDate, berlinTime, dayOfMonth, rangeLabel, weekdayShort } from "../lib/dates";
 import { studioColor } from "../lib/studios";
 import { type Location, SHIFT_TYPE_LABEL, studioShort } from "../lib/types";
+import { SLOT_LABEL, type SlotTime, slotTime, type Wish, WISH_NOTICE } from "../lib/wishes";
 import { type AbsenceBlock, type PlanShift, absenceTitle, blockRange, isAllDay, isHelpShift } from "./WeekPlan";
 import { DayStrip, Segmented } from "./ui";
 
@@ -80,6 +81,9 @@ export function StudioCalendar(props: {
   canEdit?: (shift: PlanShift) => boolean;
   onSelect?: (shift: PlanShift) => void;
   blockOf?: (id: string) => AbsenceBlock | undefined;
+  /** offene Schichtwünsche – gestrichelt, „Wunsch“ + früh/mittel/spät */
+  wishes?: Wish[];
+  slots?: SlotTime[];
 }) {
   const narrow = useNarrow();
   const today = berlinDate();
@@ -105,6 +109,19 @@ export function StudioCalendar(props: {
   const placeOf = (s: PlanShift) => s.location_id ?? homeOf(s);
   const isVisible = (s: PlanShift) => !hidden.has(placeOf(s) || "");
   const onDay = (d: string) => props.shifts.filter((s) => berlinDate(s.starts_at) === d && isVisible(s));
+  const wishesOn = (d: string) => (props.wishes ?? []).filter((w) => w.day === d && !hidden.has(w.location_id));
+  const wishChip = (w: Wish) => {
+    const t = slotTime(props.slots ?? [], w.location_id, w.slot);
+    const who = w.user ? `${w.user.first_name} ${w.user.last_name[0] ?? ""}.` : "?";
+    return (
+      <span key={w.id} className="cal-wish" style={{ "--studio": studioColor(w.location_id) } as CSSProperties}
+        title={`${who} · Wunsch ${SLOT_LABEL[w.slot]}${t ? ` ${t.starts}–${t.ends}` : ""} – ${WISH_NOTICE}`}>
+        <span className="cal-wish-tag">Wunsch · {SLOT_LABEL[w.slot]}</span>
+        <strong>{who}</strong>
+      </span>
+    );
+  };
+  const anyWishes = (props.wishes ?? []).some((w) => days.includes(w.day));
 
   const columns: Column[] = visibleStudios.map((l) => ({
     key: l.id,
@@ -162,6 +179,7 @@ export function StudioCalendar(props: {
 
   return (
     <div className="stack">
+      {anyWishes && <p className="cal-wish-note">{WISH_NOTICE}</p>}
       <div className="cal-toolbar">
         <Segmented<Mode>
           label="Ansicht"
@@ -247,7 +265,8 @@ export function StudioCalendar(props: {
                       {label(s) && <span>{label(s)}</span>}
                     </button>
                   ))}
-                  {work.length === 0 && !barOnDay(i) && <span className="cal-empty">–</span>}
+                  {wishesOn(d).map(wishChip)}
+                  {work.length === 0 && !barOnDay(i) && wishesOn(d).length === 0 && <span className="cal-empty">–</span>}
                 </div>
               );
             })}
@@ -265,7 +284,7 @@ export function StudioCalendar(props: {
                 </div>
             ))}
 
-            {hasAllDay && (
+            {(hasAllDay || wishesOn(day).length > 0) && (
               <>
                 <div className="cal-gutter-label">ganztags</div>
                 {columns.map((c) => (
@@ -282,6 +301,7 @@ export function StudioCalendar(props: {
                         </button>
                       );
                     })}
+                    {wishesOn(day).filter((w) => w.location_id === c.key).map(wishChip)}
                   </div>
                 ))}
               </>

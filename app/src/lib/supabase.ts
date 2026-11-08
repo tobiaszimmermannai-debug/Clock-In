@@ -21,6 +21,13 @@ export function tempClient(): SupabaseClient {
   });
 }
 
+/** Studio-PC: Sitzung der Studioleitung nur für die Schichtplanung (nicht gespeichert, nach 5 Min. Ruhe abgemeldet) */
+export function planClient(): SupabaseClient {
+  return createClient(url ?? "http://localhost", key ?? "missing", {
+    auth: { storageKey: "clockin-pc-plan", persistSession: false, autoRefreshToken: true, detectSessionInUrl: false },
+  });
+}
+
 export const kioskDb = client("clockin-kiosk");
 export const adminDb = client("clockin-admin");
 export const portalDb = client("clockin-portal");

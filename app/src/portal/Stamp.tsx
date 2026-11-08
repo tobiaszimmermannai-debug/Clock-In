@@ -5,6 +5,7 @@ import { ACTIONS, ACTION_ICON, GREETING } from "../components/actions";
 import { TaskReminder } from "../components/TaskReminder";
 import { WeeklyPodium } from "../components/WeeklyPodium";
 import { QrScanner } from "../components/QrScanner";
+import { FeierabendScreen, ShiftReportForm } from "../components/ShiftReport";
 import { Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
 import { type Notice as ShiftNote, relevantShift, shiftNotice } from "../lib/shiftInfo";
 import { type EarlyReason, type StampCheck, StampError, parseToken, stamp, stampCheck } from "../lib/stamp";
@@ -13,6 +14,7 @@ import { portalDb } from "../lib/supabase";
 import { fmtHM } from "../lib/dates";
 import { fmtClock } from "../lib/time";
 import { DEFAULT_RULES, EVENT_LABEL, type EventType, type LogEntry, type RuleSettings, type Shift, studioShort } from "../lib/types";
+import { parsePcToken } from "./PcUnlock";
 import type { Me } from "./PortalApp";
 import { VacationRow } from "./Vacation";
 
@@ -26,6 +28,9 @@ type Phase =
   // mehr als 30 Min. vor Schichtende gehen: erst nach dem Grund fragen
   | { kind: "early"; choose: Extract<Phase, { kind: "choose" }>; minutes: number; end: string; busy?: boolean }
   | { kind: "done"; event: EventType; at: string; location: string; note: ShiftNote | null; registered: boolean; pending: boolean; early?: boolean }
+  // nach „Gehen“: erst Statistik, dann Feierabend-Blitzi, dann der Fertig-Screen
+  | { kind: "report"; done: Extract<Phase, { kind: "done" }> }
+  | { kind: "feierabend"; done: Extract<Phase, { kind: "done" }> }
   | { kind: "error"; text: string; detail?: string };
 
 function StatusPill(props: { state: WorkState; since?: string | null }) {
@@ -97,6 +102,13 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
   }, [props.token, check]);
 
   function scanned(text: string) {
+    // QR am Studio-PC (Schichtplanung freigeben, nur Studioleitung)
+    const pc = parsePcToken(text);
+    if (pc) {
+      setPhase({ kind: "idle" });
+      location.hash = `#/pc/${pc}`;
+      return;
+    }
     const token = parseToken(text);
     if (!token) return setPhase({ kind: "error", text: "Das ist kein Clock-In-Code. Bitte den QR-Code am Studio-Tablet scannen." });
     void check(token);
@@ -117,10 +129,11 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         since: p.check.since ?? undefined,
         rules: p.ctx.rules,
       });
-      setPhase({
-        kind: "done", event, at: result.recorded_at, location: result.location, note,
+      const done = {
+        kind: "done" as const, event, at: result.recorded_at, location: result.location, note,
         registered: p.check.registered, pending: !!result.pending, early: !!result.early,
-      });
+      };
+      setPhase(event === "clock_out" ? { kind: "report", done } : done);
       void loadStatus();
     } catch (e) {
       setPhase(errorPhase(e));
@@ -206,6 +219,16 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         <button type="button" className="btn btn-outline btn-block" onClick={() => setPhase({ kind: "idle" })}>Abbrechen</button>
       </>
     );
+  }
+
+  if (phase.kind === "report") {
+    const done = phase.done;
+    return <ShiftReportForm db={portalDb} firstName={props.me.first_name} onSaved={() => setPhase({ kind: "feierabend", done })} />;
+  }
+
+  if (phase.kind === "feierabend") {
+    const done = phase.done;
+    return <FeierabendScreen db={portalDb} onDone={() => setPhase(done)} />;
   }
 
   if (phase.kind === "done") {

@@ -878,6 +878,131 @@ function dailyStatus(input) {
 	};
 }
 
+// src/notes/studio/period.ts
+/** ISO-Kalenderwoche (Montag–Sonntag) */
+function isoWeek(day) {
+	const [y, m, d] = day.split("-").map(Number);
+	const date = new Date(Date.UTC(y, m - 1, d));
+	const wd = date.getUTCDay() || 7;
+	date.setUTCDate(date.getUTCDate() + 4 - wd);
+	const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+	return {
+		year: date.getUTCFullYear(),
+		week: Math.ceil(((date.getTime() - yearStart.getTime()) / 864e5 + 1) / 7)
+	};
+}
+
+// src/notes/gamification/stats.ts
+/** Punkt je erledigter Aufgabe … */
+const POINTS = 1;
+/** … höchstens so viele pro Person und Tag (mehr Aufgaben zählen nur noch für die Serie) */
+const DAILY_POINTS = 3;
+const dayOf = (iso) => isoDay(new Date(iso));
+/** Feierabend-Punkt je abgegebener Ausstempel-Statistik – zusätzlich zu den höchstens 3 Aufgaben-Punkten */
+const BONUS_POINTS = 1;
+/**
+* Punkte nach Tagen: je Aufgabe 1, je Person und Tag höchstens DAILY_POINTS; dazu der Feierabend-Punkt.
+* Gespeicherte Punktwerte (früher 10–20) werden bewusst ignoriert – so gilt die Regel auch für alte Einträge.
+*/
+function pointsByDay(completions, fromDay, toDay) {
+	const tasks = /* @__PURE__ */ new Map();
+	const bonus = /* @__PURE__ */ new Map();
+	for (const c of completions) {
+		const day = dayOf(c.doneAt);
+		if (fromDay && day < fromDay || toDay && day >= toDay) continue;
+		const target = c.bonus ? bonus : tasks;
+		const days = target.get(c.userId) ?? /* @__PURE__ */ new Map();
+		days.set(day, (days.get(day) ?? 0) + (c.bonus ? 1 : 1));
+		target.set(c.userId, days);
+	}
+	const out = /* @__PURE__ */ new Map();
+	for (const [user, days] of tasks) out.set(user, new Map([...days].map(([d, n]) => [d, Math.min(3, n)])));
+	for (const [user, days] of bonus) {
+		const merged = out.get(user) ?? /* @__PURE__ */ new Map();
+		for (const [d, n] of days) merged.set(d, (merged.get(d) ?? 0) + n);
+		out.set(user, merged);
+	}
+	return out;
+}
+const sum = (days) => [...days?.values() ?? []].reduce((s, n) => s + n, 0);
+/** Montag der Woche */
+function weekStart(day) {
+	const [y, m, d] = day.split("-").map(Number);
+	const wd = (new Date(y, m - 1, d).getDay() + 6) % 7;
+	return addDays(day, -wd);
+}
+/** Rangliste ab einem Tag (Standard: Wochenbeginn), optional bis vor toDay; Geräte zählen nicht */
+function leaderboard(completions, members, fromDay, toDay) {
+	const sums = /* @__PURE__ */ new Map();
+	const points = pointsByDay(completions, fromDay, toDay);
+	for (const c of completions) {
+		if (dayOf(c.doneAt) < fromDay || toDay && dayOf(c.doneAt) >= toDay) continue;
+		const s = sums.get(c.userId) ?? {
+			points: sum(points.get(c.userId)),
+			count: 0
+		};
+		if (!c.bonus) s.count++;
+		sums.set(c.userId, s);
+	}
+	const rows = members.filter((m) => !m.device && sums.has(m.id)).map((m) => ({
+		member: m,
+		...sums.get(m.id),
+		rank: 0
+	})).sort((a, b) => b.points - a.points || b.count - a.count || a.member.name.localeCompare(b.member.name, "de"));
+	rows.forEach((r, i) => r.rank = i > 0 && rows[i - 1].points === r.points ? rows[i - 1].rank : i + 1);
+	return rows;
+}
+/** Wer zählt für ein Studio: Heimatstudio, keine Geräte-Konten, keine Admins */
+const teamMembers = (members, studioId) => members.filter((m) => !m.device && m.role !== "admin" && m.studioId === studioId);
+/**
+* Team-Wertung: Wochenpunkte aller Personen eines Studios ÷ Anzahl dieser Personen. So hat jedes Studio die
+* gleichen Chancen, egal wie viele dort arbeiten. Gleichstand: mehr Aufgaben je Person, dann Studio-Name.
+* Studios ohne Punkte stehen hinten.
+*/
+function teamLeaderboard(completions, members, studios, fromDay, toDay) {
+	const rows = leaderboard(completions, members, fromDay, toDay);
+	const byUser = new Map(rows.map((r) => [r.member.id, r]));
+	const out = studios.map((studio) => {
+		const team = teamMembers(members, studio.id);
+		const points = team.reduce((s, m) => s + (byUser.get(m.id)?.points ?? 0), 0);
+		const count = team.reduce((s, m) => s + (byUser.get(m.id)?.count ?? 0), 0);
+		const n = team.length;
+		return {
+			studio,
+			people: n,
+			points,
+			count,
+			avg: n ? points / n : 0,
+			avgCount: n ? count / n : 0,
+			rank: 0
+		};
+	});
+	out.sort((a, b) => b.avg - a.avg || b.avgCount - a.avgCount || a.studio.name.localeCompare(b.studio.name, "de"));
+	out.forEach((r, i) => {
+		const prev = out[i - 1];
+		r.rank = prev && prev.avg === r.avg && prev.avgCount === r.avgCount ? prev.rank : i + 1;
+	});
+	return out;
+}
+/** Punkteschnitt mit einer Nachkommastelle („2,4“) */
+const fmtAvg = (n) => n.toLocaleString("de-DE", {
+	minimumFractionDigits: 1,
+	maximumFractionDigits: 1
+});
+/** Vorwoche (Montag–Sonntag) zu einem Tag */
+function lastWeek(day) {
+	const thisMonday = weekStart(day);
+	const from = addDays(thisMonday, -7);
+	const [, m1, d1] = from.split("-").map(Number);
+	const [, m2, d2] = addDays(thisMonday, -1).split("-").map(Number);
+	return {
+		label: `KW ${isoWeek(from).week}`,
+		from,
+		to: thisMonday,
+		range: `${d1}.${m1}.–${d2}.${m2}.`
+	};
+}
+
 // src/notes/daily/telegram.ts
 const WEEKDAY_INDEX = {
 	Mon: 1,
@@ -1063,8 +1188,8 @@ function reminderText(kind, s, studioName) {
 	if (absent) lines.push(absent);
 	return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
-/** Wochenranking (montags): Treppchen, Plätze 4–10, Punkte je Studio */
-function rankingText(rows, info, studioName) {
+/** Wochenranking (montags): Team-Wertung der Studios (Punkteschnitt je Person), dann die Punktbesten */
+function rankingText(rows, info, studioName, teams) {
 	const lines = [`🏆 Wochenranking ${info.label} (${info.range})`];
 	if (!rows.length) return [
 		...lines,
@@ -1076,89 +1201,19 @@ function rankingText(rows, info, studioName) {
 		"🥈",
 		"🥉"
 	];
+	if (teams?.length) {
+		lines.push("", "Studio-Wertung (Punkte je Person):");
+		for (const t of teams) lines.push(`${t.avg > 0 ? medal[t.rank - 1] ?? `${t.rank}.` : `${t.rank}.`} ${t.studio.name} – Ø ${fmtAvg(t.avg)} (${t.points} Punkte, ${t.people} Personen)`);
+		lines.push("", "Punktbeste:");
+		for (const r of rows.slice(0, 5)) lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} ${r.points === 1 ? "Punkt" : "Punkte"}`);
+		return lines.join("\n");
+	}
 	lines.push("");
 	for (const r of rows.slice(0, 10)) lines.push(`${medal[r.rank - 1] ?? `${r.rank}.`} ${r.member.name} – ${r.points} ${r.points === 1 ? "Punkt" : "Punkte"} (${r.count} ${r.count === 1 ? "Aufgabe" : "Aufgaben"})`);
 	const studios = /* @__PURE__ */ new Map();
 	for (const r of rows) studios.set(studioName(r.member.studioId), (studios.get(studioName(r.member.studioId)) ?? 0) + r.points);
 	if (studios.size > 1) lines.push("", `Studios: ${[...studios].sort((a, b) => b[1] - a[1]).map(([s, p]) => `${s} ${p}`).join(" · ")}`);
 	return lines.join("\n");
-}
-
-// src/notes/studio/period.ts
-/** ISO-Kalenderwoche (Montag–Sonntag) */
-function isoWeek(day) {
-	const [y, m, d] = day.split("-").map(Number);
-	const date = new Date(Date.UTC(y, m - 1, d));
-	const wd = date.getUTCDay() || 7;
-	date.setUTCDate(date.getUTCDate() + 4 - wd);
-	const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-	return {
-		year: date.getUTCFullYear(),
-		week: Math.ceil(((date.getTime() - yearStart.getTime()) / 864e5 + 1) / 7)
-	};
-}
-
-// src/notes/gamification/stats.ts
-/** Punkt je erledigter Aufgabe … */
-const POINTS = 1;
-/** … höchstens so viele pro Person und Tag (mehr Aufgaben zählen nur noch für die Serie) */
-const DAILY_POINTS = 3;
-const dayOf = (iso) => isoDay(new Date(iso));
-/**
-* Punkte nach Tagen: je Aufgabe 1, je Person und Tag höchstens DAILY_POINTS.
-* Gespeicherte Punktwerte (früher 10–20) werden bewusst ignoriert – so gilt die Regel auch für alte Einträge.
-*/
-function pointsByDay(completions, fromDay, toDay) {
-	const out = /* @__PURE__ */ new Map();
-	for (const c of completions) {
-		const day = dayOf(c.doneAt);
-		if (fromDay && day < fromDay || toDay && day >= toDay) continue;
-		const days = out.get(c.userId) ?? /* @__PURE__ */ new Map();
-		days.set(day, Math.min(3, (days.get(day) ?? 0) + 1));
-		out.set(c.userId, days);
-	}
-	return out;
-}
-const sum = (days) => [...days?.values() ?? []].reduce((s, n) => s + n, 0);
-/** Montag der Woche */
-function weekStart(day) {
-	const [y, m, d] = day.split("-").map(Number);
-	const wd = (new Date(y, m - 1, d).getDay() + 6) % 7;
-	return addDays(day, -wd);
-}
-/** Rangliste ab einem Tag (Standard: Wochenbeginn), optional bis vor toDay; Geräte zählen nicht */
-function leaderboard(completions, members, fromDay, toDay) {
-	const sums = /* @__PURE__ */ new Map();
-	const points = pointsByDay(completions, fromDay, toDay);
-	for (const c of completions) {
-		if (dayOf(c.doneAt) < fromDay || toDay && dayOf(c.doneAt) >= toDay) continue;
-		const s = sums.get(c.userId) ?? {
-			points: sum(points.get(c.userId)),
-			count: 0
-		};
-		s.count++;
-		sums.set(c.userId, s);
-	}
-	const rows = members.filter((m) => !m.device && sums.has(m.id)).map((m) => ({
-		member: m,
-		...sums.get(m.id),
-		rank: 0
-	})).sort((a, b) => b.points - a.points || b.count - a.count || a.member.name.localeCompare(b.member.name, "de"));
-	rows.forEach((r, i) => r.rank = i > 0 && rows[i - 1].points === r.points ? rows[i - 1].rank : i + 1);
-	return rows;
-}
-/** Vorwoche (Montag–Sonntag) zu einem Tag */
-function lastWeek(day) {
-	const thisMonday = weekStart(day);
-	const from = addDays(thisMonday, -7);
-	const [, m1, d1] = from.split("-").map(Number);
-	const [, m2, d2] = addDays(thisMonday, -1).split("-").map(Number);
-	return {
-		label: `KW ${isoWeek(from).week}`,
-		from,
-		to: thisMonday,
-		range: `${d1}.${m1}.–${d2}.${m2}.`
-	};
 }
 
 // src/notes/store/rows.ts
@@ -1445,8 +1500,20 @@ async function buildRanking(db, day) {
 		})));
 		if (rows.length < 1e3) break;
 	}
+	const bonus = await db.get(`shift_reports?select=id,created_at,user_id&created_at=gte.${info.from}&created_at=lt.${info.to}&limit=10000`).catch(() => []);
+	const authOf = await db.get("users?select=id,auth_user_id").catch(() => []);
+	for (const b of bonus) {
+		const auth = authOf.find((u) => u.id === b.user_id)?.auth_user_id;
+		if (auth) events.push({
+			pageId: `feierabend:${b.id}`,
+			userId: auth,
+			points: 1,
+			doneAt: b.created_at,
+			bonus: true
+		});
+	}
 	const studioName = (id) => studios.find((s) => s.id === id)?.name ?? "Ohne Studio";
-	return rankingText(leaderboard(events, members, info.from, info.to), info, studioName);
+	return rankingText(leaderboard(events, members, info.from, info.to), info, studioName, teamLeaderboard(events, members, studios, info.from, info.to));
 }
 async function manualReminder(cfg, db, b) {
 	const day = /^\d{4}-\d{2}-\d{2}$/.test(b.day ?? "") ? b.day : berlinNow().day;

@@ -7,6 +7,7 @@
 // (Aushilfe stellen – mit oder ohne Anfrage, Akquise). Wer an dem Tag schon eingetragen ist, fällt aus der Auswahl.
 // Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
 // Unter dem Tag: „Noch ohne Schicht“ – eigene Leute ohne Eintrag; planen oder (nur Vollzeit) auf frei setzen.
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
 import { type PlanShift, ShiftRow, blockRange, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
@@ -15,12 +16,18 @@ import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtH
 import { dbMessage } from "../lib/errors";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
+import { useWishes, type Wish, WISH_NOTICE } from "../lib/wishes";
+import { WishRow } from "../components/Wishes";
 import {
   ABSENCE_WEEK_DAYS, FULL_TIME_WEEKLY_MINUTES, type Location, ROLE_LABEL, type Role, SCHOOL_CREDIT_MINUTES, SHIFT_TYPE_LABEL,
   SICK_MAX_MINUTES,
   type ShiftType, studioShort,
 } from "../lib/types";
 import type { Profile } from "./AdminApp";
+
+// Verbindung für alle Planungs-Zugriffe: Verwaltung (adminDb) oder Studio-PC nach QR-Freigabe der Studioleitung.
+// Es gibt immer nur einen Dienstplan auf dem Bildschirm, darum genügt eine Modul-Variable.
+let db: SupabaseClient = adminDb;
 
 type Staffer = {
   id: string;
@@ -100,7 +107,7 @@ const durationMinutes = (s: { starts_at: string; ends_at: string }) => Math.roun
 function useHelpRequests() {
   const [requests, setRequests] = useState<HelpRequest[]>([]);
   const reload = useCallback(async () => {
-    const { data } = await adminDb
+    const { data } = await db
       .from("help_requests")
       .select("id, location_id, starts_at, ends_at, note, location:locations(name)")
       .eq("status", "open")
@@ -115,7 +122,9 @@ function useHelpRequests() {
   return { requests, reload };
 }
 
-export function Plan({ profile }: { profile: Profile }) {
+// db: andere Verbindung (Studio-PC); onlyStudio: nur dieses Studio planen (Heimatstudio der Studioleitung am PC)
+export function Plan({ profile, db: client, onlyStudio }: { profile: Profile; db?: SupabaseClient; onlyStudio?: string }) {
+  db = client ?? adminDb;
   const today = berlinDate();
   const [start, setStart] = useState(weekStart(today));
   const [day, setDay] = useState(today);
@@ -128,28 +137,30 @@ export function Plan({ profile }: { profile: Profile }) {
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [flash, setFlash] = useState<string>();
   const [failure, setFailure] = useState<string>();
-  const { shifts, error, reload, blockOf } = useWeekShifts(adminDb, start);
+  const { shifts, error, reload, blockOf } = useWeekShifts(db, start);
   const help = useHelpRequests();
+  const wishes = useWishes(db, start);
+  const [deciding, setDeciding] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
       const [users, locs, managed] = await Promise.all([
-        adminDb.from("users").select("id, first_name, last_name, role, home_location_id, employment_details(weekly_target_minutes, employment_start, employment_end)").eq("is_active", true).neq("role", "admin").order("first_name"),
-        adminDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
-        adminDb.from("location_managers").select("location_id").eq("user_id", profile.id),
+        db.from("users").select("id, first_name, last_name, role, home_location_id, employment_details(weekly_target_minutes, employment_start, employment_end)").eq("is_active", true).neq("role", "admin").order("first_name"),
+        db.from("locations").select("id, code, name").eq("is_active", true).order("name"),
+        db.from("location_managers").select("location_id").eq("user_id", profile.id),
       ]);
-      const mine = new Set((managed.data ?? []).map((m) => m.location_id as string));
+      const mine = new Set((managed.data ?? []).map((m) => m.location_id as string).filter((id) => !onlyStudio || id === onlyStudio));
       const all = (locs.data ?? []) as Location[];
       registerStudios(all);
       // Admin plant alle Studios, Studioleitung nur die eigenen
-      const allowed = all.filter((l) => profile.role === "admin" || mine.has(l.id));
+      const allowed = all.filter((l) => (profile.role === "admin" && !onlyStudio) || mine.has(l.id));
       setPeople((users.data ?? []) as unknown as Staffer[]);
       setAllLocations(all);
       setManaged(mine);
       setLocations(allowed);
       setStudio(allowed[0]?.id ?? "");
     })();
-  }, [profile.id, profile.role]);
+  }, [profile.id, profile.role, onlyStudio]);
 
   function goWeek(next: string) {
     setStart(next);
@@ -166,7 +177,21 @@ export function Plan({ profile }: { profile: Profile }) {
     );
   }
 
-  const isAdmin = profile.role === "admin";
+  const isAdmin = profile.role === "admin" && !onlyStudio;
+  // Offene Wünsche des Studios (Tag bzw. ganze Woche) – die Studioleitung gibt frei oder lehnt ab
+  const openWishes = wishes.wishes.filter((w) => w.status === "open" && w.location_id === studio);
+  const dayWishes = openWishes.filter((w) => w.day === day);
+  async function decide(w: Wish, ok: boolean) {
+    setDeciding(w.id);
+    setFailure(undefined);
+    const { error } = await db.rpc("shift_wish_decide", { p_id: w.id, p_ok: ok });
+    setDeciding(null);
+    if (error) return setFailure(dbMessage(error));
+    const who = w.user ? `${w.user.first_name} ${w.user.last_name}` : "Wunsch";
+    setFlash(ok ? `${who}: Wunsch freigegeben – jetzt feste Schicht.` : `${who}: Wunsch abgelehnt.`);
+    void wishes.reload();
+    if (ok) void reload();
+  }
   const studioName = studioShort(locations.find((l) => l.id === studio)?.name ?? "");
   // Schichten im Studio + eigene Leute überall (Aushilfe, Akquise, Abwesenheit)
   const inStudio = (s: PlanShift) => s.location_id === studio || s.user?.home_location_id === studio;
@@ -194,7 +219,7 @@ export function Plan({ profile }: { profile: Profile }) {
     setSheet({ category: "help_fill", requestId: r.id });
   }
   async function cancelRequest(r: HelpRequest) {
-    const { error } = await adminDb.from("help_requests").delete().eq("id", r.id);
+    const { error } = await db.from("help_requests").delete().eq("id", r.id);
     setFlash(error ? dbMessage(error) : "Aushilfe-Anfrage zurückgezogen.");
     void help.reload();
   }
@@ -206,7 +231,7 @@ export function Plan({ profile }: { profile: Profile }) {
   const unplanned = isSunday(day) ? [] : people.filter((p) => p.home_location_id === studio && !taken.has(p.id) && employedOn(p, day));
   async function setDayOff(p: Staffer) {
     setFlash(undefined);
-    const { error } = await adminDb.from("shifts").insert({
+    const { error } = await db.from("shifts").insert({
       user_id: p.id, shift_type: "day_off", location_id: null,
       starts_at: berlinToISO(day, ABSENCE_TIMES.from), ends_at: berlinToISO(day, ABSENCE_TIMES.to),
     });
@@ -257,6 +282,8 @@ export function Plan({ profile }: { profile: Profile }) {
           canEdit={canEdit}
           blockOf={blockOf}
           onSelect={(s) => setSheet({ shift: s })}
+          wishes={wishes.wishes.filter((w) => w.status === "open")}
+          slots={wishes.slots}
         />
         {sheet?.shift && editSheet(sheet.shift)}
       </>
@@ -289,6 +316,16 @@ export function Plan({ profile }: { profile: Profile }) {
         <Icon name="plus" size={20} /> Eintragen
       </button>
       {failure && <Notice tone="error">{failure}</Notice>}
+
+      {openWishes.length > 0 && (
+        <Section title="Schichtwünsche" aside={<span>{dayWishes.length} heute · {openWishes.length} diese Woche</span>}
+          footer={WISH_NOTICE}>
+          {(dayWishes.length ? dayWishes : openWishes).map((w) => (
+            <WishRow key={w.id} wish={w} slots={wishes.slots} showDay={!dayWishes.length} busy={deciding === w.id}
+              onApprove={() => void decide(w, true)} onReject={() => void decide(w, false)} />
+          ))}
+        </Section>
+      )}
 
       {unplanned.length > 0 && (
         <Section title="Noch ohne Schicht" aside={<span>{unplanned.length}</span>}
@@ -444,7 +481,7 @@ function sickValid(shift: PlanShift, from: string | null) {
 }
 
 async function reportSick(shift: PlanShift, from: string | null) {
-  const { error } = await adminDb.rpc("report_sick", {
+  const { error } = await db.rpc("report_sick", {
     p_shift_id: shift.id,
     p_from: from ? berlinToISO(berlinDate(shift.starts_at), from) : null,
   });
@@ -516,7 +553,7 @@ function AddShift(props: {
   const year = Number(props.day.slice(0, 4));
 
   useEffect(() => {
-    void adminDb.rpc("vacation_overview", { p_year: year }).then(({ data }) => {
+    void db.rpc("vacation_overview", { p_year: year }).then(({ data }) => {
       setVacation(Object.fromEntries(((data ?? []) as Vacation[]).map((v) => [v.user_id, v])));
     });
   }, [year]);
@@ -570,7 +607,7 @@ function AddShift(props: {
     if (isHelpReq) {
       if (minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
       setBusy(true);
-      const { error } = await adminDb.from("help_requests").insert({
+      const { error } = await db.from("help_requests").insert({
         location_id: props.studio,
         starts_at: berlinToISO(props.day, from),
         ends_at: berlinToISO(props.day, to),
@@ -586,8 +623,8 @@ function AddShift(props: {
       setBusy(true);
       // mit Anfrage: übernimmt deren Zeit; ohne: direkt eintragen (telefonisch/WhatsApp abgesprochen)
       const { error } = request
-        ? await adminDb.rpc("fill_help_request", { p_request_id: request.id, p_user_id: person.id })
-        : await adminDb.from("shifts").insert({
+        ? await db.rpc("fill_help_request", { p_request_id: request.id, p_user_id: person.id })
+        : await db.from("shifts").insert({
             user_id: person.id,
             shift_type: "work",
             location_id: target,
@@ -608,7 +645,7 @@ function AddShift(props: {
       if (!twoValid) return setError("Bitte Zeiten prüfen: Ende nach Beginn, Herold und Schicht ohne Überschneidung.");
       setBusy(true);
       // zwei Schichten: Herold in Krailling (markiert) + Schicht im Studio – beides in einem Schritt
-      const { error } = await adminDb.from("shifts").insert([
+      const { error } = await db.from("shifts").insert([
         { user_id: person.id, shift_type: "work", location_id: herold.id, is_herold: true,
           starts_at: berlinToISO(props.day, firstFrom), ends_at: berlinToISO(props.day, firstTo) },
         { user_id: person.id, shift_type: "work", location_id: props.studio, is_herold: false,
@@ -629,7 +666,7 @@ function AddShift(props: {
         user_id: person.id, shift_type: "work", location_id: props.studio, credit_by_time: false,
         starts_at: berlinToISO(props.day, a), ends_at: berlinToISO(props.day, b), note: isSplit ? "Splitschicht" : null,
       });
-      const { error } = await adminDb.from("shifts").insert(isSplit
+      const { error } = await db.from("shifts").insert(isSplit
         ? [work(firstFrom, firstTo), work(from, to)]
         : [{ user_id: person.id, shift_type: "vocational_school", location_id: null, credit_by_time: true,
             starts_at: berlinToISO(props.day, firstFrom), ends_at: berlinToISO(props.day, firstTo), note: schoolKind },
@@ -647,7 +684,7 @@ function AddShift(props: {
     if (isWork) {
       if (minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
       setBusy(true);
-      const { error } = await adminDb.from("shifts").insert({
+      const { error } = await db.from("shifts").insert({
         user_id: person.id,
         shift_type: "work",
         location_id: location,
@@ -663,7 +700,7 @@ function AddShift(props: {
     }
     if (days.length > MAX_ABSENCE_DAYS) return setError(`Bitte höchstens ${MAX_ABSENCE_DAYS} Tage auf einmal eintragen.`);
     setBusy(true);
-    const { error } = await adminDb.from("shifts").insert(
+    const { error } = await db.from("shifts").insert(
       days.map((d) => ({
         user_id: person.id,
         shift_type: cat,
@@ -897,7 +934,7 @@ function EditShift(props: {
   async function save() {
     if (minutesBetween(from, to) <= 0) return setError("Das Ende muss nach dem Beginn liegen.");
     setBusy(true);
-    const { error } = await adminDb
+    const { error } = await db
       .from("shifts")
       .update({ starts_at: berlinToISO(day, from), ends_at: berlinToISO(day, to), is_acquisition: acq })
       .eq("id", s.id);
@@ -917,7 +954,7 @@ function EditShift(props: {
 
   async function remove() {
     setBusy(true);
-    const { error } = await adminDb.from("shifts").delete().eq("id", s.id);
+    const { error } = await db.from("shifts").delete().eq("id", s.id);
     setBusy(false);
     if (error) return setError(dbMessage(error));
     props.onSaved(`Eintrag von ${name} gelöscht.`);

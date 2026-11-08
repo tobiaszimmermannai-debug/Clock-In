@@ -5,6 +5,7 @@
 import "./blitzi.css";
 import { useId, useState, type ReactNode } from "react";
 import { atStage, detailOf, MAX_STAGE } from "./evolution";
+import { type Anchors, itemLayer } from "./items";
 import type { Mood } from "./stats";
 
 const OUTLINE = "#3a2914";
@@ -131,6 +132,8 @@ export type BlitziProps = {
   fluid?: boolean;
   /** Ohne Boden-Schatten (Szenen mit eigenem Boden) */
   noShadow?: boolean;
+  /** Ausgerüstete Items (Prestige) – wachsen mit der Stufe mit */
+  items?: string[];
 };
 
 export function Blitzi(props: BlitziProps) {
@@ -256,6 +259,21 @@ export function Blitzi(props: BlitziProps) {
   const gold = stage >= MAX_STAGE;
   const donut = stage <= 3;
   const grin = stage >= 20;
+
+  // Ankerpunkte für Items (wachsen mit der Stufe mit)
+  const anchors: Anchors = {
+    head: { cy: head.cy, rx: head.rx, ry: head.ry },
+    eye: { x: eye.x, y: eye.y },
+    mouthY: head.cy + 15,
+    neckY: head.cy + head.ry * 0.85,
+    chest: { cy: chest.cy, rx: chest.rx },
+    beltY,
+    bellyRx: Math.max(belly.rx, chest.rx * 0.8),
+    hands: arms.map((p) => ({ x: p.hx, y: p.hy })),
+    arms: arms.map((p) => ({ x: (p.sx + p.ex) / 2, y: (p.sy + p.ey) / 2, w: arm.w })),
+    feet: [-1, 1].map((s) => ({ x: s * foot.x, y: foot.y, rx: foot.rx })),
+    torsoClip: `${uid}-torso`,
+  };
 
   const tap = () => {
     setJump((j) => j + 1);
@@ -443,6 +461,7 @@ export function Blitzi(props: BlitziProps) {
             })()}
           </g>
 
+          {itemLayer(props.items, anchors, "back")}
           {ear(-1)}
           {ear(1)}
 
@@ -530,6 +549,8 @@ export function Blitzi(props: BlitziProps) {
               )}
             </g>
           )}
+
+          {itemLayer(props.items, anchors, "body")}
 
           {/* Beine */}
           <Blob shapes={legs} fill={`url(#${uid}-body)`} />
@@ -672,6 +693,8 @@ export function Blitzi(props: BlitziProps) {
               </text>
             </g>
           )}
+
+          {itemLayer(props.items, anchors, "front")}
         </g>
       </svg>
     </Tag>

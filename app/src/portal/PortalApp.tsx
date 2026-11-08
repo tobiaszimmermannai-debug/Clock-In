@@ -15,7 +15,10 @@ import type { Location, Role } from "../lib/types";
 import { Account } from "./Account";
 import { Hours } from "./Hours";
 import { Stamp } from "./Stamp";
+import { MyWishes } from "./ShiftWishes";
+import { PcUnlock } from "./PcUnlock";
 import { Swap } from "./Swap";
+import { useWishes } from "../lib/wishes";
 
 export type Me = {
   id: string;
@@ -40,7 +43,7 @@ const TABS: ShellTab<Tab>[] = [
 ];
 
 // stampToken: QR-Code vom Tablet, wenn die App über die Kamera-App geöffnet wurde (#/s/<code>)
-export function PortalApp(props: { stampToken?: string }) {
+export function PortalApp(props: { stampToken?: string; pcToken?: string }) {
   const [me, setMe] = useState<Me | null | undefined>(undefined); // undefined = lädt, null = abgemeldet
   const [colleagues, setColleagues] = useState<Colleague[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -102,7 +105,7 @@ export function PortalApp(props: { stampToken?: string }) {
   }, [load]);
 
   // Erinnerung an offene Aufgaben: einmal am Tag beim Öffnen (nicht mitten im Stempeln per QR)
-  const showReminder = Boolean(me) && !props.stampToken && reminderDay !== berlinDate();
+  const showReminder = Boolean(me) && !props.stampToken && !props.pcToken && reminderDay !== berlinDate();
 
   if (me === undefined) return <div className="screen center muted">Lädt …</div>;
   if (me === null) return <PortalLogin error={error} onDone={load} />;
@@ -121,7 +124,8 @@ export function PortalApp(props: { stampToken?: string }) {
       onTab={setTab}
       full={tab === "tasks"}
     >
-      {tab === "stamp" && (
+      {props.pcToken && <PcUnlock me={me} token={props.pcToken} onDone={() => location.replace("#/portal")} />}
+      {tab === "stamp" && !props.pcToken && (
         <Stamp
           me={me}
           token={token}
@@ -160,6 +164,7 @@ function Plan(props: { me: Me; locations: Location[] }) {
   const [studio, setStudio] = useState("");
   const [view, setView] = useState<"list" | "calendar">("list");
   const { shifts, error, blockOf } = useWeekShifts(portalDb, start);
+  const wishes = useWishes(portalDb, start);
   return (
     <>
       <PageHeader
@@ -174,7 +179,9 @@ function Plan(props: { me: Me; locations: Location[] }) {
       {error && <Notice tone="error">{error}</Notice>}
       {view === "list"
         ? <WeekPlan start={start} shifts={shifts} studio={studio} highlightUserId={props.me.id} blockOf={blockOf} />
-        : <StudioCalendar start={start} shifts={shifts} locations={props.locations} highlightUserId={props.me.id} blockOf={blockOf} />}
+        : <StudioCalendar start={start} shifts={shifts} locations={props.locations} highlightUserId={props.me.id} blockOf={blockOf}
+            wishes={wishes.wishes.filter((w) => w.status === "open")} slots={wishes.slots} />}
+      <MyWishes me={props.me} locations={props.locations} onChanged={() => void wishes.reload()} />
     </>
   );
 }

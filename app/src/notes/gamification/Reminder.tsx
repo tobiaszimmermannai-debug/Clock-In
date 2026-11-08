@@ -5,15 +5,15 @@ import { useEffect, useState } from "react";
 import type { NotesStore, PageMeta } from "../types";
 import { today, untitled } from "../util";
 import { Blitzi } from "./Blitzi";
-import { coinsOf, stageOf } from "./evolution";
+import { blitziInfo, type BlitziInfo } from "./blitzi";
 import { focusTasks } from "./focus";
 import { Energy } from "./GamePanel";
-import { daysFor, moodFor, myStats, speech, type MyStats } from "./stats";
+import { daysFor, moodFor, speech, type MyStats } from "./stats";
 import { allTasks, byDue, tasksOf, type TaskItem } from "./tasks";
 
 export type ReminderReason = "login" | "clock_in" | "break";
 
-type Data = { name: string; open: TaskItem[]; focus: { item: TaskItem; rank: number }[]; stats: MyStats };
+type Data = { name: string; open: TaskItem[]; focus: { item: TaskItem; rank: number }[]; stats: MyStats; blitzi: BlitziInfo };
 
 export function TaskReminder(props: { store: NotesStore; reason: ReminderReason; onOpen: () => void; onClose?: () => void }) {
   const { store } = props;
@@ -26,7 +26,13 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
       const since = new Date(Date.now() - 90 * 864e5).toISOString();
       // Nicht eingecheckt: Aufgaben gesperrt – dann keine Erinnerung
       if ((await store.access()).locked) return;
-      const [me, list, events, days] = await Promise.all([store.me(), store.listPages(), store.completions(since), store.workDays(since)]);
+      const [me, list, events, days, profiles] = await Promise.all([
+        store.me(),
+        store.listPages(),
+        store.completions(since),
+        store.workDays(since),
+        store.blitziProfiles?.().catch(() => []) ?? Promise.resolve([]),
+      ]);
       if (me.device) return;
       const pages = new Map(list.map((p) => [p.id, p]));
       const isLive = (id: string) => {
@@ -48,7 +54,8 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
         me.id,
         today(),
       ).map((f) => ({ item: byId.get(f.row.id)!, rank: f.rank }));
-      if (!cancelled) setData({ name: me.name.split(" ")[0], open, focus, stats: myStats(me.id, events, { today: today(), workDays: daysFor(days, me.id) }) });
+      const blitzi = blitziInfo(me.id, events, daysFor(days, me.id), today(), profiles.find((p) => p.userId === me.id) ?? null);
+      if (!cancelled) setData({ name: me.name.split(" ")[0], open, focus, stats: blitzi.stats, blitzi });
     })().catch(() => undefined);
     return () => {
       cancelled = true;
@@ -74,8 +81,8 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
         <Blitzi
           mood={props.reason === "break" && mood === "sad" ? "sleepy" : mood}
           size={92}
-          stage={stageOf(stats.streak)}
-          coins={coinsOf(stats.streak)}
+          stage={data.blitzi.stage}
+          items={data.blitzi.items}
           onTap={() => setVariant((v) => v + 1)}
         />
         <div className="nk-reminder-text">
@@ -85,7 +92,8 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
       </div>
       <div className="nk-reminder-stats">
         <span>
-          <b>⚡ {stats.streak}</b> {stats.streak === 1 ? "Tag" : "Tage"} Serie · Stufe {stageOf(stats.streak)}
+          <b>⚡ {stats.streak}</b> {stats.streak === 1 ? "Tag" : "Tage"} Serie · Stufe {data.blitzi.stage}
+          {data.blitzi.prestige > 0 ? ` · Prestige ${data.blitzi.prestige}` : ""}
         </span>
         <span className="nk-reminder-energy">
           <Energy value={Math.min(stats.today, stats.goal)} goal={stats.goal} /> {stats.today}/{stats.goal}

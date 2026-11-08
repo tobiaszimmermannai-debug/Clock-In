@@ -1,5 +1,5 @@
 // Erfolge: Serie (Tage am Stück), Tagesziel ("Akku"), Wochenpunkte, Rangliste, Blitzis Stimmung
-import type { Completion, Member } from "../types";
+import type { BlitziProfile, Completion, Member, Studio } from "../types";
 import { isoWeek } from "../studio/period";
 import { addDays, isoDay } from "../util";
 
@@ -12,21 +12,36 @@ export const DAILY_POINTS = 3;
 
 export const dayOf = (iso: string) => isoDay(new Date(iso));
 
+/** Feierabend-Punkt je abgegebener Ausstempel-Statistik – zusätzlich zu den höchstens 3 Aufgaben-Punkten */
+export const BONUS_POINTS = 1;
+
 /**
- * Punkte nach Tagen: je Aufgabe 1, je Person und Tag höchstens DAILY_POINTS.
+ * Punkte nach Tagen: je Aufgabe 1, je Person und Tag höchstens DAILY_POINTS; dazu der Feierabend-Punkt.
  * Gespeicherte Punktwerte (früher 10–20) werden bewusst ignoriert – so gilt die Regel auch für alte Einträge.
  */
 export function pointsByDay(completions: Completion[], fromDay?: string, toDay?: string): Map<string, Map<string, number>> {
-  const out = new Map<string, Map<string, number>>();
+  const tasks = new Map<string, Map<string, number>>();
+  const bonus = new Map<string, Map<string, number>>();
   for (const c of completions) {
     const day = dayOf(c.doneAt);
     if ((fromDay && day < fromDay) || (toDay && day >= toDay)) continue;
-    const days = out.get(c.userId) ?? new Map<string, number>();
-    days.set(day, Math.min(DAILY_POINTS, (days.get(day) ?? 0) + POINTS));
-    out.set(c.userId, days);
+    const target = c.bonus ? bonus : tasks;
+    const days = target.get(c.userId) ?? new Map<string, number>();
+    days.set(day, (days.get(day) ?? 0) + (c.bonus ? BONUS_POINTS : POINTS));
+    target.set(c.userId, days);
+  }
+  const out = new Map<string, Map<string, number>>();
+  for (const [user, days] of tasks) out.set(user, new Map([...days].map(([d, n]) => [d, Math.min(DAILY_POINTS, n)])));
+  for (const [user, days] of bonus) {
+    const merged = out.get(user) ?? new Map<string, number>();
+    for (const [d, n] of days) merged.set(d, (merged.get(d) ?? 0) + n);
+    out.set(user, merged);
   }
   return out;
 }
+
+/** Nur echte Aufgaben (ohne Feierabend-Punkte) */
+export const tasksOnly = (completions: Completion[]) => completions.filter((c) => !c.bonus);
 
 const sum = (days: Map<string, number> | undefined) => [...(days?.values() ?? [])].reduce((s, n) => s + n, 0);
 
@@ -81,7 +96,8 @@ export type MyStats = {
  * nur diese können die Serie unterbrechen. Ohne Stempeldaten sind Samstag und Sonntag neutral.
  */
 export function myStats(userId: string, completions: Completion[], opts: { today: string; workDays: string[] | null; goal?: number }): MyStats {
-  const mine = completions.filter((c) => c.userId === userId);
+  const all = completions.filter((c) => c.userId === userId);
+  const mine = tasksOnly(all);
   const week = weekStart(opts.today);
   const todays = mine.filter((c) => dayOf(c.doneAt) === opts.today);
   const weeks = mine.filter((c) => dayOf(c.doneAt) >= week);
@@ -92,7 +108,7 @@ export function myStats(userId: string, completions: Completion[], opts: { today
     return worked ? !worked.has(day) : wd === 6;
   };
   const goal = opts.goal ?? DAILY_GOAL;
-  const points = pointsByDay(mine, week).get(userId);
+  const points = pointsByDay(all, week).get(userId);
   return {
     today: todays.length,
     todayPoints: points?.get(opts.today) ?? 0,
@@ -113,7 +129,7 @@ export function leaderboard(completions: Completion[], members: Member[], fromDa
   for (const c of completions) {
     if (dayOf(c.doneAt) < fromDay || (toDay && dayOf(c.doneAt) >= toDay)) continue;
     const s = sums.get(c.userId) ?? { points: sum(points.get(c.userId)), count: 0 };
-    s.count++;
+    if (!c.bonus) s.count++;
     sums.set(c.userId, s);
   }
   const rows = members
@@ -122,6 +138,59 @@ export function leaderboard(completions: Completion[], members: Member[], fromDa
     .sort((a, b) => b.points - a.points || b.count - a.count || a.member.name.localeCompare(b.member.name, "de"));
   rows.forEach((r, i) => (r.rank = i > 0 && rows[i - 1].points === r.points ? rows[i - 1].rank : i + 1));
   return rows;
+}
+
+/** Wer zählt für ein Studio: Heimatstudio, keine Geräte-Konten, keine Admins */
+export const teamMembers = (members: Member[], studioId: string) =>
+  members.filter((m) => !m.device && m.role !== "admin" && m.studioId === studioId);
+
+export type TeamRow = {
+  studio: Studio;
+  /** Personen des Studios (Teiler) */
+  people: number;
+  points: number;
+  count: number;
+  /** Punkteschnitt je Person – entscheidet */
+  avg: number;
+  /** Aufgaben je Person – bei Gleichstand */
+  avgCount: number;
+  rank: number;
+};
+
+/**
+ * Team-Wertung: Wochenpunkte aller Personen eines Studios ÷ Anzahl dieser Personen. So hat jedes Studio die
+ * gleichen Chancen, egal wie viele dort arbeiten. Gleichstand: mehr Aufgaben je Person, dann Studio-Name.
+ * Studios ohne Punkte stehen hinten.
+ */
+export function teamLeaderboard(completions: Completion[], members: Member[], studios: Studio[], fromDay: string, toDay?: string): TeamRow[] {
+  const rows = leaderboard(completions, members, fromDay, toDay);
+  const byUser = new Map(rows.map((r) => [r.member.id, r]));
+  const out = studios.map((studio) => {
+    const team = teamMembers(members, studio.id);
+    const points = team.reduce((s, m) => s + (byUser.get(m.id)?.points ?? 0), 0);
+    const count = team.reduce((s, m) => s + (byUser.get(m.id)?.count ?? 0), 0);
+    const n = team.length;
+    return { studio, people: n, points, count, avg: n ? points / n : 0, avgCount: n ? count / n : 0, rank: 0 };
+  });
+  out.sort((a, b) => b.avg - a.avg || b.avgCount - a.avgCount || a.studio.name.localeCompare(b.studio.name, "de"));
+  out.forEach((r, i) => {
+    const prev = out[i - 1];
+    r.rank = prev && prev.avg === r.avg && prev.avgCount === r.avgCount ? prev.rank : i + 1;
+  });
+  return out;
+}
+
+/** Punkteschnitt mit einer Nachkommastelle („2,4“) */
+export const fmtAvg = (n: number) => n.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/**
+ * Blitzis Serie für die Stufe: nach einem Prestige zählen nur Tage NACH dem Prestige-Tag
+ * (die verbrauchte Serie erzeugt nicht sofort wieder Stufe 30).
+ */
+export function blitziStreak(userId: string, completions: Completion[], workDays: string[] | null, today: string, profile?: Pick<BlitziProfile, "resetDay"> | null): number {
+  const reset = profile?.resetDay ?? null;
+  const counted = reset ? completions.filter((c) => c.userId === userId && dayOf(c.doneAt) > reset) : completions;
+  return myStats(userId, counted, { today, workDays }).streak;
 }
 
 export type Mood = "party" | "proud" | "happy" | "neutral" | "sleepy" | "sad";
