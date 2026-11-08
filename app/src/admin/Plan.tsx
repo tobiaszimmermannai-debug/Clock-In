@@ -16,7 +16,7 @@ import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtH
 import { dbMessage } from "../lib/errors";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
-import { useWishes, type Wish, WISH_NOTICE } from "../lib/wishes";
+import { SLOT_LABEL, useWishes, type Wish, WISH_NOTICE } from "../lib/wishes";
 import { WishRow } from "../components/Wishes";
 import {
   ABSENCE_WEEK_DAYS, FULL_TIME_WEEKLY_MINUTES, type Location, ROLE_LABEL, type Role, SCHOOL_CREDIT_MINUTES, SHIFT_TYPE_LABEL,
@@ -78,7 +78,7 @@ const SHEET_TITLE: Record<Category, string> = {
 };
 type Vacation = { user_id: string; allowance: number | null; taken: number; planned: number };
 type HelpRequest = { id: string; location_id: string; starts_at: string; ends_at: string; note: string | null; location: { name: string } | null };
-type SheetState = { shift?: PlanShift; category?: Category; requestId?: string; userId?: string };
+type SheetState = { shift?: PlanShift; category?: Category; requestId?: string; userId?: string; wish?: Wish };
 // Gutschrift zur Anzeige: minutes = Dauer des Eintrags, share = Anteil am Tag (Krank ab Uhrzeit)
 type Credit = { minutes?: number; trainee: boolean };
 type CreditOf = (userId: string, minutes: number, share: number) => Credit;
@@ -181,16 +181,34 @@ export function Plan({ profile, db: client, onlyStudio }: { profile: Profile; db
   // Offene Wünsche des Studios (Tag bzw. ganze Woche) – die Studioleitung gibt frei oder lehnt ab
   const openWishes = wishes.wishes.filter((w) => w.status === "open" && w.location_id === studio);
   const dayWishes = openWishes.filter((w) => w.day === day);
+  // Annehmen: normales Eintragen-Fenster mit Person und Tag – die Zeit legt die Leitung selbst fest,
+  // der Wunsch (früh/mittel/spät) steht nur als Hinweis dabei. Erst nach dem Speichern gilt er als angenommen.
   async function decide(w: Wish, ok: boolean) {
-    setDeciding(w.id);
     setFailure(undefined);
-    const { error } = await db.rpc("shift_wish_decide", { p_id: w.id, p_ok: ok });
+    if (ok) {
+      setStart(weekStart(w.day));
+      setDay(w.day);
+      setView("plan");
+      setFlash(undefined);
+      return setSheet({ category: "work", userId: w.user_id, wish: w });
+    }
+    setDeciding(w.id);
+    const { error } = await db.rpc("shift_wish_decide", { p_id: w.id, p_ok: false });
     setDeciding(null);
     if (error) return setFailure(dbMessage(error));
     const who = w.user ? `${w.user.first_name} ${w.user.last_name}` : "Wunsch";
-    setFlash(ok ? `${who}: Wunsch freigegeben – jetzt feste Schicht.` : `${who}: Wunsch abgelehnt.`);
+    setFlash(`${who}: Wunsch abgelehnt.`);
     void wishes.reload();
-    if (ok) void reload();
+  }
+  async function savedWithWish(text: string) {
+    const w = sheet?.wish;
+    if (w) {
+      const { error } = await db.rpc("shift_wish_decide", { p_id: w.id, p_ok: true });
+      void wishes.reload();
+      if (error) return done(`${text} (Wunsch konnte nicht als angenommen markiert werden: ${dbMessage(error)})`);
+      return done(`${text} Wunsch angenommen.`);
+    }
+    done(text);
   }
   const studioName = studioShort(locations.find((l) => l.id === studio)?.name ?? "");
   // Schichten im Studio + eigene Leute überall (Aushilfe, Akquise, Abwesenheit)
@@ -365,9 +383,10 @@ export function Plan({ profile, db: client, onlyStudio }: { profile: Profile; db
           initialCategory={sheet.category}
           initialRequestId={sheet.requestId}
           initialUserId={sheet.userId}
+          wishHint={sheet.wish ? `Wunsch: ${SLOT_LABEL[sheet.wish.slot]} – die Zeit legst du selbst fest.` : undefined}
           creditOf={creditOf}
           onClose={() => setSheet(null)}
-          onSaved={done}
+          onSaved={(t) => void savedWithWish(t)}
         />
       )}
       {sheet?.shift && editSheet(sheet.shift)}
@@ -501,6 +520,8 @@ function AddShift(props: {
   initialCategory?: Category;
   initialRequestId?: string;
   initialUserId?: string;
+  /** Schichtwunsch als Hinweis (keine Zeiten vorgegeben) */
+  wishHint?: string;
   creditOf: CreditOf;
   onClose: () => void;
   onSaved: (text: string) => void;
@@ -755,6 +776,7 @@ function AddShift(props: {
         </button>
       }
     >
+      {props.wishHint && <Notice tone="warn">{props.wishHint}</Notice>}
       <Field label="Art">
         <select id="shift-category" value={cat} onChange={(e) => choose(e.target.value as Category)}>
           {CATEGORIES.filter((c) => c.id !== "herold" || herold).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}

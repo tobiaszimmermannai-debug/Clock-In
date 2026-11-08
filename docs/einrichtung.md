@@ -127,6 +127,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 38. `supabase/migrations/20261106090000_notes_assigned_visible.sql` (Aufgaben: Zugewiesenes – auch aus privaten Listen der Leitung – ist für die Person sichtbar)
 39. `supabase/migrations/20261108090000_shift_wishes_pc_plan_stats.sql` (Schichtwünsche, Dienstplan am Studio-PC per QR, Ausstempel-Statistik – danach Funktion `pc-plan` deployen, Teil R)
 40. `supabase/migrations/20261108100000_notes_studio_teams_prestige.sql` (Aufgaben: jedes Studio sieht nur seine Aufgaben, Aushilfen, Team-Ranking, Prestige/Items)
+41. `supabase/migrations/20261109090000_shift_wish_no_times.sql` (Schichtwunsch annehmen: Leitung trägt die Zeit selbst ein, Wunsch nur als Hinweis)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -227,8 +228,8 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
 - **Funktion `pc-plan`** deployen (Edge Functions → Deploy new function → Name `pc-plan`, Code aus
   `supabase/functions/pc-plan/index.ts`, „Verify JWT“ **an**). Danach `aufgaben` neu deployen (Team-Ranking).
 - **Schichtwünsche:** Mitarbeiter wählen im Portal (Dienstplan → „Schichtwunsch“) Tag, Studio und früh/mittel/spät
-  (bis 8 Wochen im Voraus). Die Studioleitung sieht offene Wünsche im Dienstplan und nimmt an (→ normale Schicht) oder
-  lehnt ab. Keine Benachrichtigung an Tobias/Dominik. Schichtzeiten stehen in der Tabelle `shift_slots`.
+  (bis 8 Wochen im Voraus). Die Studioleitung sieht offene Wünsche im Dienstplan: „Eintragen“ öffnet das normale Eintragen-Fenster
+  (Zeit legt sie selbst fest, der Wunsch steht nur als Hinweis dabei) oder sie lehnt ab. Keine Benachrichtigung an Tobias/Dominik. Schichtzeiten stehen in der Tabelle `shift_slots`.
 - **Dienstplan am Studio-PC:** Reiter „Dienstplan“ zeigt alle Studios (nur lesen). Zum Planen: „Planung freigeben“ →
   QR mit dem registrierten Stempel-Handy der Studioleitung scannen. Bearbeiten nur fürs Heimatstudio;
   nach 5 Min. ohne Eingabe wieder gesperrt. Die Studioleitung braucht dafür ein registriertes Stempel-Handy.

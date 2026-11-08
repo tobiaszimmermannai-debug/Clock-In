@@ -5,7 +5,7 @@ import { type CSSProperties, type MouseEvent, useEffect, useState } from "react"
 import { addDays, berlinDate, berlinTime, dayOfMonth, rangeLabel, weekdayShort } from "../lib/dates";
 import { studioColor } from "../lib/studios";
 import { type Location, SHIFT_TYPE_LABEL, studioShort } from "../lib/types";
-import { SLOT_LABEL, type SlotTime, slotTime, type Wish, WISH_NOTICE } from "../lib/wishes";
+import { SLOT_LABEL, type SlotTime, type Wish, WISH_NOTICE } from "../lib/wishes";
 import { type AbsenceBlock, type PlanShift, absenceTitle, blockRange, isAllDay, isHelpShift } from "./WeekPlan";
 import { DayStrip, Segmented } from "./ui";
 
@@ -111,11 +111,10 @@ export function StudioCalendar(props: {
   const onDay = (d: string) => props.shifts.filter((s) => berlinDate(s.starts_at) === d && isVisible(s));
   const wishesOn = (d: string) => (props.wishes ?? []).filter((w) => w.day === d && !hidden.has(w.location_id));
   const wishChip = (w: Wish) => {
-    const t = slotTime(props.slots ?? [], w.location_id, w.slot);
     const who = w.user ? `${w.user.first_name} ${w.user.last_name[0] ?? ""}.` : "?";
     return (
       <span key={w.id} className="cal-wish" style={{ "--studio": studioColor(w.location_id) } as CSSProperties}
-        title={`${who} · Wunsch ${SLOT_LABEL[w.slot]}${t ? ` ${t.starts}–${t.ends}` : ""} – ${WISH_NOTICE}`}>
+        title={`${who} · Wunsch ${SLOT_LABEL[w.slot]} – ${WISH_NOTICE}`}>
         <span className="cal-wish-tag">Wunsch · {SLOT_LABEL[w.slot]}</span>
         <strong>{who}</strong>
       </span>
