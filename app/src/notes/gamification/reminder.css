@@ -35,3 +35,27 @@
 .nk-reminder-primary { flex: 1; background: var(--r-accent); color: #fff; }
 .nk-reminder-secondary { background: transparent; color: var(--r-fg); box-shadow: inset 0 0 0 1px var(--r-line); }
 .nk-reminder .blitzi-eyes { transform-origin: 61px 68px; }
+
+/* Tagesaufgaben nach dem Einchecken: Plätze 1–3, direkt anfragen, kurze Anleitung */
+.nk-reminder-day { display: grid; gap: 8px; }
+.nk-reminder-day-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; }
+.nk-reminder-day-head span { color: var(--r-muted); font-size: 13px; font-weight: 600; }
+.nk-reminder-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nk-reminder-focus li.is-free { font-weight: 500; color: var(--r-muted); background: transparent; box-shadow: inset 0 0 0 1px var(--r-line); border: 0; }
+.nk-reminder-focus li.is-free .nk-reminder-rank { background: transparent; color: var(--r-muted); box-shadow: inset 0 0 0 1.5px var(--r-line); }
+.nk-reminder-pending { flex: none; font-size: 12px; font-weight: 600; color: #b26b00; }
+@media (prefers-color-scheme: dark) { .nk-reminder-pending { color: #ffc14d; } }
+.nk-reminder-request { display: flex; gap: 8px; }
+.nk-reminder-request input {
+  flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--r-line);
+  background: rgba(255, 255, 255, .85); color: var(--r-fg); font: 16px/1.2 inherit;
+}
+@media (prefers-color-scheme: dark) { .nk-reminder-request input { background: rgba(0, 0, 0, .3); } }
+.nk-reminder-request button {
+  min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0; background: var(--r-accent); color: #fff; font: 600 15px/1 inherit; cursor: pointer;
+}
+.nk-reminder-request button:disabled { opacity: .45; cursor: default; }
+.nk-reminder-error { margin: 0; color: #d44c47; font-size: 13px; }
+.nk-reminder-guide { font-size: 14px; color: var(--r-muted); }
+.nk-reminder-guide summary { cursor: pointer; font-weight: 600; color: var(--r-fg); padding: 4px 0; }
+.nk-reminder-guide ol { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; }

@@ -235,6 +235,9 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
   nach 5 Min. ohne Eingabe wieder gesperrt. Die Studioleitung braucht dafür ein registriertes Stempel-Handy.
 - **Ranking:** Team-Wertung = Wochenpunkte aller ÷ Personen je Studio (Reiter „Ranking“, rechts live, Podium Montag).
 - **Prestige:** Auf Stufe 30 ein Item aus 100 wählen, Blitzi startet bei 1; beim ersten Mal Spitzname.
+- **Tagesaufgaben nach dem Einchecken:** Nach „Kommen“ (und einmal am Tag beim Öffnen) zeigt Clock-In die 3 Plätze
+  für Tagesaufgaben. Wer schon etwas im Kopf hat, tippt es ein → „Anfragen“: Die Aufgabe landet in der Team-Liste des
+  Studios, die Studioleitung bekommt die Freigabe per Telegram. Leitungen tragen direkt ein. Kurze Anleitung ist eingebaut.
 - **Statistik:** Nach „Gehen“ trägt jede Person 10 Kennzahlen ein (+1 Punkt). Reiter „Statistik“: eigene Zahlen;
   Admin alle, Studioleitung ihr Heimatstudio.
 
