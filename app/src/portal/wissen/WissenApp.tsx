@@ -3,6 +3,7 @@
 import "./wissen.css";
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Notice } from "../../components/ui";
+import { isMuted, setMuted, sounds } from "../../lib/sounds";
 import { portalDb } from "../../lib/supabase";
 import {
   BLITZ_SECONDS, CARD_XP, CARDS, composeLesson, currentUnit, DAILY_GOAL_XP, type DayXp, DECK_KIND, type Deck, DECKS, dueCards,
@@ -115,6 +116,7 @@ function Home(props: {
   const today = todayXp(days);
   const goalPct = Math.min(100, Math.round((today / DAILY_GOAL_XP) * 100));
   const [week, setWeek] = useState<number | null>(null);
+  const [muted, setMute] = useState(isMuted);
 
   return (
     <div className="wi">
@@ -124,6 +126,11 @@ function Home(props: {
           <h1>Wissen</h1>
           <p>Lernen wie bei Duolingo – kurz, jeden Tag, mit Blitzi.</p>
         </div>
+        <button type="button" className="wi-sound" aria-pressed={!muted} aria-label={muted ? "Ton einschalten" : "Ton ausschalten"}
+          title={muted ? "Ton einschalten" : "Ton ausschalten"}
+          onClick={() => { setMuted(!muted); setMute(!muted); if (muted) setTimeout(sounds.correct, 0); }}>
+          {muted ? "🔇" : "🔊"}
+        </button>
       </header>
       {props.error && <Notice tone="warn">{props.error}</Notice>}
 
@@ -220,6 +227,7 @@ function TopBar(props: { done: number; total: number; onClose: () => void; extra
 }
 
 function Finish(props: { title: string; xp: number; lines: string[]; onClose: () => void }) {
+  useEffect(() => sounds.finish(), []);
   return (
     <div className="wi wi-finish">
       <div className="wi-finish-blitzi"><Blitzi mood="party" size={150} stage={20} /></div>
@@ -244,6 +252,7 @@ function QuestionCard(props: { q: Question; onChecked: (ok: boolean, chosen: str
   };
   const check = () => {
     const ok = isCorrect(q, chosen);
+    (ok ? sounds.correct : sounds.wrong)();
     setResult(ok);
     props.onChecked(ok, chosen);
     if (props.quick) setTimeout(props.onNext, ok ? 450 : 1400);
@@ -348,8 +357,8 @@ function FlipCard(props: { card: Flashcard; onAnswer: (known: boolean) => void }
       </button>
       {flipped ? (
         <div className="wi-card-actions">
-          <button type="button" className="wi-btn is-again" onClick={() => props.onAnswer(false)}>Nochmal</button>
-          <button type="button" className="wi-btn is-primary" onClick={() => props.onAnswer(true)}>Gewusst</button>
+          <button type="button" className="wi-btn is-again" onClick={() => (sounds.wrong(), props.onAnswer(false))}>Nochmal</button>
+          <button type="button" className="wi-btn is-primary" onClick={() => (sounds.known(), props.onAnswer(true))}>Gewusst</button>
         </div>
       ) : (
         <div className="wi-card-actions"><button type="button" className="wi-btn" onClick={() => setFlipped(true)}>Umdrehen</button></div>

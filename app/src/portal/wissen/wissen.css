@@ -110,3 +110,4 @@
 .wi-finish-xp { font-size: 2rem; font-weight: 900; color: #ff9f0a; }
 @keyframes wi-pop { from { transform: scale(.4); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .wi *, .wi { animation: none !important; transition: none !important; } }
+.wi-sound { margin-left: auto; align-self: flex-start; width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--surface); box-shadow: 0 0 0 1px var(--line); font-size: 20px; cursor: pointer; }
