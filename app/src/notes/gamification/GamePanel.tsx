@@ -153,7 +153,7 @@ export function Leaderboard(props: { highlight?: string; limit?: number; studioI
     <div className="nk-board-card">
       <div className="nk-home-heading">{props.title ?? "🏆 Team-Rangliste dieser Woche"}</div>
       {rows.length ? (
-        <ol className="nk-leaders">
+        <ol className="nk-leaders is-team">
           {rows.slice(0, props.limit ?? rows.length).map((r) => (
             <li key={r.studio.id} className={r.studio.id === mine ? "is-me" : ""}>
               <span className="nk-leader-rank">{r.avg > 0 ? (MEDALS[r.rank - 1] ?? `${r.rank}.`) : `${r.rank}.`}</span>
