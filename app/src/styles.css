@@ -683,3 +683,9 @@ input.switch:checked { background: var(--accent); }
 .report-form { display: grid; gap: 10px; }
 .report-field { display: grid; grid-template-columns: 1fr 96px; align-items: center; gap: 10px; font-size: .95rem; }
 .report-field input { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Anmeldung per QR-Code (Verwaltung, Studioleitung) */
+.qr-login { justify-items: center; text-align: left; }
+.qr-login-code { width: min(240px, 70vw); aspect-ratio: 1; display: grid; place-items: center; background: #fff; border-radius: 16px; padding: 8px; }
+.qr-login-code svg { width: 100%; height: 100%; }
+.qr-login-steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; justify-self: stretch; }

@@ -4,11 +4,13 @@ import { Shell, type ShellTab } from "../components/Shell";
 import { Tasks } from "../components/Tasks";
 import { BrandMark, Field, Notice, Segmented } from "../components/ui";
 import { staffLoginEmail } from "../lib/config";
+import { isQrSession } from "../lib/qrLogin";
 import { adminDb } from "../lib/supabase";
 import type { Role } from "../lib/types";
 import { Approvals } from "./Approvals";
 import { Plan } from "./Plan";
 import { Presence } from "./Presence";
+import { QrLogin } from "./QrLogin";
 import { SchoolImport } from "./SchoolImport";
 import { Sickness } from "./Sickness";
 import { Staff } from "./Staff";
@@ -20,7 +22,7 @@ export type Profile = { id: string; first_name: string; last_name: string; role:
 
 type Phase =
   | { kind: "loading" }
-  | { kind: "login"; error?: string }
+  | { kind: "login"; error?: string; qr?: boolean }
   | { kind: "mfa-verify"; factorId: string; error?: string }
   | { kind: "mfa-enroll"; factorId: string; qr: string; secret: string; error?: string }
   | { kind: "denied"; text: string }
@@ -40,6 +42,12 @@ export function AdminApp() {
       .maybeSingle<Profile>();
     if (!profile || (profile.role !== "admin" && profile.role !== "manager")) {
       return setPhase({ kind: "denied", text: "Die Verwaltung ist nur für Studioleitung und Admins." });
+    }
+    // Regel: Studioleitung meldet sich an externen Geräten nur per QR-Code mit dem Stempel-Handy an (gilt 12 Std.)
+    if (profile.role === "manager") {
+      if (isQrSession(data.session)) return setPhase({ kind: "ready", profile, mfa: false });
+      await adminDb.auth.signOut({ scope: "local" });
+      return setPhase({ kind: "login", qr: true, error: "Studioleitung: Bitte per QR-Code mit deinem Stempel-Handy anmelden." });
     }
 
     const { data: aal } = await adminDb.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -84,7 +92,7 @@ export function AdminApp() {
   return (
     <AuthLayout title="Verwaltung" text="Für Studioleitung und Geschäftsführung">
       {phase.kind === "loading" && <p className="muted" style={{ textAlign: "center" }}>Lädt …</p>}
-      {phase.kind === "login" && <Login error={phase.error} onDone={resolve} />}
+      {phase.kind === "login" && <LoginChoice error={phase.error} qr={phase.qr} onDone={resolve} />}
       {phase.kind === "denied" && (
         <div className="panel stack">
           <Notice tone="warn">{phase.text}</Notice>
@@ -131,6 +139,19 @@ export function AuthLayout(props: { title: string; text: string; children: React
         </div>
         {props.children}
       </div>
+    </div>
+  );
+}
+
+// Studioleitung: QR-Code (Standard); Tobias & Dominik: Passwort + 2FA
+function LoginChoice(props: { error?: string; qr?: boolean; onDone: () => void }) {
+  const [mode, setMode] = useState<"qr" | "password">(props.qr === false ? "password" : "qr");
+  return (
+    <div className="stack">
+      <Segmented label="Anmeldung" value={mode} onChange={setMode} fill
+        options={[{ id: "qr", label: "Studioleitung (QR)" }, { id: "password", label: "Admin (Passwort)" }]} />
+      {props.error && <Notice tone="warn">{props.error}</Notice>}
+      {mode === "qr" ? <QrLogin onDone={props.onDone} /> : <Login onDone={props.onDone} />}
     </div>
   );
 }

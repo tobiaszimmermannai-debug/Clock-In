@@ -18,6 +18,7 @@ import { Stamp } from "./Stamp";
 import { MyWishes } from "./ShiftWishes";
 import { PcUnlock } from "./PcUnlock";
 import { Knowledge } from "./Knowledge";
+import { QrLoginConfirm } from "./QrLoginConfirm";
 import { Swap } from "./Swap";
 import { useWishes } from "../lib/wishes";
 
@@ -44,7 +45,7 @@ const TABS: ShellTab<Tab>[] = [
 ];
 
 // stampToken: QR-Code vom Tablet, wenn die App über die Kamera-App geöffnet wurde (#/s/<code>)
-export function PortalApp(props: { stampToken?: string; pcToken?: string }) {
+export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToken?: string }) {
   const [me, setMe] = useState<Me | null | undefined>(undefined); // undefined = lädt, null = abgemeldet
   const [colleagues, setColleagues] = useState<Colleague[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -106,7 +107,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string }) {
   }, [load]);
 
   // Erinnerung an offene Aufgaben: einmal am Tag beim Öffnen (nicht mitten im Stempeln per QR)
-  const showReminder = Boolean(me) && !props.stampToken && !props.pcToken && reminderDay !== berlinDate();
+  const showReminder = Boolean(me) && !props.stampToken && !props.pcToken && !props.qrToken && reminderDay !== berlinDate();
 
   if (me === undefined) return <div className="screen center muted">Lädt …</div>;
   if (me === null) return <PortalLogin error={error} onDone={load} />;
@@ -126,7 +127,8 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string }) {
       full={tab === "tasks"}
     >
       {props.pcToken && <PcUnlock me={me} token={props.pcToken} onDone={() => location.replace("#/portal")} />}
-      {tab === "stamp" && !props.pcToken && (
+      {props.qrToken && <QrLoginConfirm me={me} token={props.qrToken} onDone={() => location.replace("#/portal")} />}
+      {tab === "stamp" && !props.pcToken && !props.qrToken && (
         <Stamp
           me={me}
           token={token}

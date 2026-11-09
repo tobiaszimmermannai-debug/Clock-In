@@ -15,6 +15,7 @@ import { fmtHM } from "../lib/dates";
 import { fmtClock } from "../lib/time";
 import { DEFAULT_RULES, EVENT_LABEL, type EventType, type LogEntry, type RuleSettings, type Shift, studioShort } from "../lib/types";
 import { parsePcToken } from "./PcUnlock";
+import { parseQrLoginToken } from "../lib/qrLogin";
 import type { Me } from "./PortalApp";
 import { VacationRow } from "./Vacation";
 
@@ -107,6 +108,13 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
     if (pc) {
       setPhase({ kind: "idle" });
       location.hash = `#/pc/${pc}`;
+      return;
+    }
+    // QR in der Verwaltung an einem anderen Gerät (Anmeldung der Studioleitung)
+    const login = parseQrLoginToken(text);
+    if (login) {
+      setPhase({ kind: "idle" });
+      location.hash = `#/q/${login}`;
       return;
     }
     const token = parseToken(text);

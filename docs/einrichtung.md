@@ -128,6 +128,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 39. `supabase/migrations/20261108090000_shift_wishes_pc_plan_stats.sql` (Schichtwünsche, Dienstplan am Studio-PC per QR, Ausstempel-Statistik – danach Funktion `pc-plan` deployen, Teil R)
 40. `supabase/migrations/20261108100000_notes_studio_teams_prestige.sql` (Aufgaben: jedes Studio sieht nur seine Aufgaben, Aushilfen, Team-Ranking, Prestige/Items)
 41. `supabase/migrations/20261109090000_shift_wish_no_times.sql` (Schichtwunsch annehmen: Leitung trägt die Zeit selbst ein, Wunsch nur als Hinweis)
+42. `supabase/migrations/20261110090000_qr_login.sql` (Studioleitung meldet sich in der Verwaltung per QR-Code mit dem Stempel-Handy an – danach Funktion `qr-login` deployen)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -235,6 +236,10 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
   nach 5 Min. ohne Eingabe wieder gesperrt. Die Studioleitung braucht dafür ein registriertes Stempel-Handy.
 - **Ranking:** Team-Wertung = Wochenpunkte aller ÷ Personen je Studio (Reiter „Ranking“, rechts live, Podium Montag).
 - **Prestige:** Auf Stufe 30 ein Item aus 100 wählen, Blitzi startet bei 1; beim ersten Mal Spitzname.
+- **Anmeldung Studioleitung (Regel):** An externen Geräten (z. B. privater PC) meldet sich die Studioleitung in der
+  Verwaltung (`#/admin`) nur per QR-Code an: Code mit dem registrierten Stempel-Handy scannen (Stempeln → Scannen) →
+  „Am PC anmelden“. Gilt 12 Std. Am Stempel-Handy selbst: „Mit diesem Handy anmelden“. Funktion `qr-login` (Verify JWT an).
+  Admins (Tobias/Dominik) weiter mit Passwort + 2FA. Studio-PC: eigene Freigabe wie bisher.
 - **Tagesaufgaben nach dem Einchecken:** Nach „Kommen“ (und einmal am Tag beim Öffnen) zeigt Clock-In die 3 Plätze
   für Tagesaufgaben. Wer schon etwas im Kopf hat, tippt es ein → „Anfragen“: Die Aufgabe landet in der Team-Liste des
   Studios, die Studioleitung bekommt die Freigabe per Telegram. Leitungen tragen direkt ein. Kurze Anleitung ist eingebaut.
