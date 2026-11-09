@@ -87,6 +87,7 @@ export function StudioTasks() {
               </button>
             ))}
           </div>
+          <div className="nk-st-nav">
           <button type="button" className="nk-icon-btn" aria-label="Voriger Zeitraum" onClick={() => setPeriod(shiftPeriod(period, -1))}>
             <Icon name="chevronLeft" />
           </button>
@@ -94,6 +95,7 @@ export function StudioTasks() {
           <button type="button" className="nk-icon-btn" aria-label="Nächster Zeitraum" onClick={() => setPeriod(shiftPeriod(period, 1))}>
             <Icon name="chevronRight" />
           </button>
+          </div>
           {period !== periodOf(rhythm, today()) && (
             <button type="button" className="nk-btn is-ghost" onClick={() => setPeriod(periodOf(rhythm, today()))}>
               {rhythm === "week" ? "Diese Woche" : "Dieser Monat"}

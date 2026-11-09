@@ -320,6 +320,7 @@ select.nk-input { padding-right: 4px; }
 
 /* Suche */
 .nk-search-head { display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 52px; border-bottom: 1px solid var(--nk-line); color: var(--nk-muted); }
+.nk-search-close { display: none; color: var(--nk-accent); font-weight: 600; padding: 8px 0 8px 8px; }
 .nk-search-head input { flex: 1; border: 0; outline: none; background: transparent; font-size: 17px; color: var(--nk-fg); }
 .nk-search-body { overflow-y: auto; padding: 4px; }
 .nk-search-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 10px; border-radius: 6px; }
@@ -736,6 +737,7 @@ select.nk-input { padding-right: 4px; }
 .nk-st-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .nk-st-title { margin: 0; font-size: 28px; font-weight: 700; }
 .nk-st-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.nk-st-nav { display: inline-flex; align-items: center; gap: 2px; }
 .nk-st-period { min-width: 150px; text-align: center; }
 .nk-st-progress { position: relative; width: 200px; height: 26px; border-radius: 13px; background: var(--nk-hover); overflow: hidden; display: grid; place-items: center; font-size: 12px; }
 .nk-st-progress span { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #ffe36e, #ffb000); transition: width .4s; }
@@ -852,7 +854,7 @@ select.nk-input { padding-right: 4px; }
 .nk-dash-tab-blitzi { display: grid; place-items: center; width: 30px; }
 .nk-dash-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--nk-accent); color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
 .nk-dash-badge.is-absent { background: var(--nk-hover-strong); color: var(--nk-fg); }
-.nk-dash-body { display: grid; gap: 16px; }
+.nk-dash-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
 .nk-dash-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .nk-dash-person { display: grid; }
 
@@ -1010,12 +1012,14 @@ select.nk-input { padding-right: 4px; }
 .nk-scene.is-compact .nk-scene-power { display: none; }
 .nk-leaders-help { font-size: 11px; margin: 6px 0 0; }
 @media (max-width: 960px) {
-  .nk-dash-layout { grid-template-columns: 1fr; }
+  .nk-dash-layout { grid-template-columns: minmax(0, 1fr); }
   .nk-dash-aside { position: static; order: -1; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
   .nk-scene.is-compact { max-width: none; }
 }
 /* Ranking-Reiter */
-.nk-ranking { display: grid; gap: 22px; }
+.nk-ranking { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; min-width: 0; }
+.nk-ranking section { min-width: 0; }
+.nk-leader-points { white-space: nowrap; }
 .nk-ranking-table tr.is-me td { background: color-mix(in srgb, #f6c544 18%, transparent); font-weight: 600; }
 /* Archiv erledigter Aufgaben */
 .nk-archive .nk-home-heading { justify-content: space-between; }
@@ -1043,7 +1047,7 @@ select.nk-input { padding-right: 4px; }
 /* Team-Siegerehrung */
 .nk-podium-team .nk-podium-heroes { display: flex; align-items: flex-end; justify-content: center; gap: 2px; }
 /* Statistik */
-.nk-stats { display: grid; gap: 24px; }
+.nk-stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
 .nk-stats-error { color: #d93f3f; }
 .nk-stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
 .nk-stats-card { border-radius: 12px; box-shadow: 0 0 0 1px var(--nk-line); padding: 12px 14px; display: grid; gap: 8px; }
@@ -1059,3 +1063,69 @@ select.nk-input { padding-right: 4px; }
 .nk-stats-table th, .nk-stats-table td { padding: 6px 8px; border-bottom: 1px solid var(--nk-line); text-align: left; white-space: nowrap; }
 .nk-stats-table th button { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; cursor: pointer; color: inherit; }
 .nk-stats-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ================= Handy: Menüs und Dialoge als Blatt von unten, große Tippflächen ================= */
+.nk-sheet-backdrop { position: fixed; inset: 0; z-index: 999; background: var(--nk-overlay); animation: nk-fade .15s ease-out; }
+.nk-sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: var(--nk-line); margin: 2px auto 8px; flex: none; }
+@keyframes nk-fade { from { opacity: 0; } }
+@keyframes nk-sheet-up { from { transform: translateY(24px); opacity: .6; } }
+.nk-popover.is-sheet {
+  left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; width: auto !important;
+  min-width: 0; max-width: none; max-height: min(78dvh, 640px); border-radius: 16px 16px 0 0;
+  padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px)); font-size: 16px; animation: nk-sheet-up .18s ease-out;
+  overscroll-behavior: contain;
+}
+.nk-popover.is-sheet .nk-menu-item { min-height: 46px; padding: 0 12px; border-radius: 8px; }
+.nk-popover.is-sheet .nk-menu-scroll, .nk-popover.is-sheet .nk-menu-scroll.is-tall { max-height: none; }
+.nk-popover.is-sheet .nk-picker-head { margin: 0 -8px 6px; padding: 8px 12px; }
+.nk-popover.is-sheet .nk-picker-input { height: 36px; font-size: 16px; }
+.nk-popover.is-sheet .nk-option-row .nk-icon-btn { opacity: 1; width: 40px; height: 40px; }
+.nk-popover.is-sheet input, .nk-popover.is-sheet select, .nk-popover.is-sheet textarea { font-size: 16px; }
+
+@media (max-width: 640px) {
+  /* Dialoge: unten andocken, ganze Breite, Kopf und Fuß bleiben stehen */
+  .nk-modal-backdrop { padding: 0; align-items: end; }
+  .nk-modal, .nk-modal.nk-photo-modal, .nk-modal.nk-evo-modal, .nk-modal.nk-prestige-modal {
+    width: 100%; max-width: none; max-height: 92dvh; border-radius: 16px 16px 0 0; overflow-y: auto; overscroll-behavior: contain;
+    padding-bottom: env(safe-area-inset-bottom, 0px); animation: nk-sheet-up .18s ease-out;
+  }
+  .nk-modal-head { position: sticky; top: 0; z-index: 2; background: var(--nk-bg); padding: 14px 16px; }
+  .nk-modal-head b { font-size: 16px; line-height: 1.3; }
+  .nk-modal-foot { position: sticky; bottom: 0; z-index: 2; background: var(--nk-bg); padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); gap: 8px; }
+  .nk-modal-foot .nk-btn { min-height: 44px; flex: 1; justify-content: center; }
+  .nk-modal-foot .nk-spacer { display: none; }
+  .nk-photo-body { padding: 14px 16px; }
+  .nk-photo-pick { min-height: 160px; }
+  .nk-photo-pick img { max-height: 34dvh; }
+  .nk-modal.nk-search { max-height: 100dvh; height: 100dvh; border-radius: 0; }
+  .nk-search-close { display: block; }
+  .nk-st-bar { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .nk-st-bar .nk-segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .nk-st-bar .nk-segmented button { padding: 8px 6px; }
+  .nk-st-bar .nk-spacer { display: none; }
+  .nk-st-nav { justify-content: space-between; }
+  .nk-st-nav .nk-icon-btn { width: 44px; height: 44px; }
+  .nk-st-progress { width: 100%; }
+  .nk-st-matrix tbody th { min-width: 160px; }
+  .nk-search-row { min-height: 48px; }
+  .nk-board { scroll-snap-type: x mandatory; margin: 0 -16px; padding-inline: 16px; scroll-padding-inline: 16px; }
+  .nk-board-col { width: min(82vw, 320px); scroll-snap-align: start; }
+  .nk-board-col.is-empty-none { display: none; }
+  /* Eingaben: 16 px, sonst zoomt iOS hinein */
+  .nk input, .nk select, .nk textarea { font-size: 16px; }
+  .nk-btn { min-height: 40px; }
+  /* Studio-Dashboard: Inhalt zuerst, Rangliste/Szene darunter; Reiter kompakt und wischbar */
+  .nk-dash-aside { order: 1; grid-template-columns: 1fr; }
+  .nk-dash-tabs { margin-inline: -12px; padding-inline: 12px; scroll-snap-type: x proximity; }
+  .nk-dash-tab { scroll-snap-align: start; padding: 6px 12px 6px 8px; }
+  .nk-dash-tab-text small { display: none; }
+  .nk-dash-head { flex-wrap: wrap; gap: 8px; }
+  .nk-stats-cards { grid-template-columns: 1fr; }
+  .nk-stats-filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .nk-stats-filters > * { min-width: 0; }
+}
+@media (hover: none) {
+  .nk-menu-item { min-height: 40px; }
+  .nk-topbar .nk-icon-btn, .nk-peek .nk-icon-btn { min-width: 40px; min-height: 40px; }
+  .nk-option-row .nk-icon-btn { opacity: 1; }
+}

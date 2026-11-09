@@ -64,6 +64,7 @@ export function Search(props: { onClose: () => void }) {
             if (e.key === "Enter" && results[index]) open(results[index]);
           }}
         />
+        <button type="button" className="nk-search-close" onClick={props.onClose}>Abbrechen</button>
       </div>
       <div className="nk-search-body">
         <div className="nk-menu-section">{q ? "Ergebnisse" : "Zuletzt besucht"}</div>

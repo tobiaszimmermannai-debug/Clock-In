@@ -249,6 +249,7 @@ function RankingTab(props: { studioId: string }) {
       <section>
         <h2 className="nk-home-heading">🏆 Team-Wertung dieser Woche</h2>
         <p className="nk-muted">Wochenpunkte aller Personen eines Studios ÷ Anzahl der Personen. Gleichstand: mehr Aufgaben je Person, dann Studio-Name.</p>
+        <div className="nk-stats-table-wrap">
         <table className="nk-stats-table nk-ranking-table">
           <thead>
             <tr>
@@ -273,6 +274,7 @@ function RankingTab(props: { studioId: string }) {
             ))}
           </tbody>
         </table>
+        </div>
       </section>
       <section>
         <h2 className="nk-home-heading">⚡ Punkte im Studio {short(notes.locations.find((l) => l.id === props.studioId)?.name ?? "")}</h2>

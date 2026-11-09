@@ -4,7 +4,7 @@ import { useNotes } from "../state";
 import type { DbSchema, PageMeta, PropDef, PropValue, ViewDef } from "../types";
 import { coverCss } from "../ui/EmojiPicker";
 import { Icon } from "../ui/Icon";
-import { usePopover } from "../ui/Popover";
+import { isPhone, usePopover } from "../ui/Popover";
 import { addDays, between, isoDay, MONTHS, today, untitled } from "../util";
 import { PropertyMenu, AddPropertyMenu } from "./DatabaseView";
 import { InlineInput, Tag, ValueCell, ValueView, TYPE_ICONS } from "./cells";
@@ -60,7 +60,7 @@ function RowTitle(props: { row: PageMeta; onOpen: () => void; editable: boolean;
           props.onOpen();
         }}
       >
-        <Icon name="expand" size={12} /> Öffnen
+        <Icon name="expand" size={12} /> <span className="nk-hide-sm">Öffnen</span>
       </button>
     </div>
   );
@@ -75,7 +75,13 @@ export function TableView(p: ViewProps) {
   const [menuProp, setMenuProp] = useState<PropDef | null>(null);
   const [drag, setDrag] = useState<string | null>(null);
   const widths = p.view.widths ?? {};
-  const width = (prop: PropDef) => widths[prop.id] ?? (prop.type === "title" ? 280 : prop.type === "checkbox" ? 90 : 180);
+  // Handy: Titelspalte schmaler, damit Status & Co. ohne Wischen sichtbar sind
+  const phone = isPhone();
+  const width = (prop: PropDef) => {
+    const w = widths[prop.id] ?? (prop.type === "title" ? 280 : prop.type === "checkbox" ? 90 : 180);
+    if (!phone) return w;
+    return prop.type === "title" ? Math.min(w, Math.round(window.innerWidth * 0.52)) : Math.min(w, 150);
+  };
 
   const startResize = (prop: PropDef, e: React.PointerEvent) => {
     e.preventDefault();
@@ -257,7 +263,7 @@ export function BoardView(p: ViewProps) {
       {groups.map((g) => (
         <div
           key={g.key}
-          className={`nk-board-col${over === g.key ? " is-over" : ""}`}
+          className={`nk-board-col${over === g.key ? " is-over" : ""}${g.key === "" && g.rows.length === 0 ? " is-empty-none" : ""}`}
           onDragOver={(e) => {
             if (!drag) return;
             e.preventDefault();
