@@ -1,12 +1,11 @@
-// Reiter „Wissen“: Einarbeitung im Duolingo-Stil (lädt Inhalte und Lernlogik erst beim Öffnen)
-import { lazy, Suspense } from "react";
-
-const WissenApp = lazy(() => import("./wissen/WissenApp"));
+// Reiter „Wissen“: Einarbeitung im Duolingo-Stil (fest in der App – kein Nachladen, das nach Updates fehlschlagen kann)
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import WissenApp from "./wissen/WissenApp";
 
 export function Knowledge() {
   return (
-    <Suspense fallback={<p className="muted">Lädt …</p>}>
+    <ErrorBoundary label="Wissen">
       <WissenApp />
-    </Suspense>
+    </ErrorBoundary>
   );
 }

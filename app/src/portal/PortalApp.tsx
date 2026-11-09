@@ -17,6 +17,7 @@ import { Hours } from "./Hours";
 import { Stamp } from "./Stamp";
 import { MyWishes } from "./ShiftWishes";
 import { PcUnlock } from "./PcUnlock";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Knowledge } from "./Knowledge";
 import { QrLoginConfirm } from "./QrLoginConfirm";
 import { Swap } from "./Swap";
@@ -143,7 +144,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
       {tab === "hours" && <Hours me={me} />}
       {tab === "plan" && <Plan me={me} locations={locations} colleagues={colleagues} />}
       {tab === "knowledge" && <Knowledge />}
-      {tab === "tasks" && <Tasks db={portalDb} />}
+      {tab === "tasks" && <ErrorBoundary label="Aufgaben"><Tasks db={portalDb} /></ErrorBoundary>}
       {tab === "account" && <Account me={me} onLogout={logout} />}
       {showReminder && tab !== "tasks" && (
         <Sheet title="Deine Aufgaben heute" onClose={closeReminder}>
