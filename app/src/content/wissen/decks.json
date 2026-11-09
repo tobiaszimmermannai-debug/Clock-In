@@ -1,0 +1,219 @@
+{
+  "meta": {
+    "version": "2026.11.09",
+    "sources": [
+      "Qualitäts- und Prozesshandbuch 2026",
+      "Einarbeitung 2026"
+    ]
+  },
+  "items": [
+    {
+      "id": "w1-gaeste",
+      "week": 1,
+      "title": "Mitglieder begrüßen & verabschieden",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 3
+    },
+    {
+      "id": "w1-trainings",
+      "week": 1,
+      "title": "Trainings trocken üben",
+      "kind": "uebung",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w1-vorbild",
+      "week": 1,
+      "title": "Selbst trainieren & alle Trainer trainieren",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 2
+    },
+    {
+      "id": "w1-schluessel",
+      "week": 1,
+      "title": "Schlüsselübergabe & Foto-Einwilligung",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w1-regeln",
+      "week": 1,
+      "title": "Regeln & Rituale",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w1-westen",
+      "week": 1,
+      "title": "Westen wechseln & waschen",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w1-prioritaeten",
+      "week": 1,
+      "title": "Prioritäten im Alltag",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w1-ws-korrektur",
+      "week": 1,
+      "title": "WS: Korrekturen & Intensivierungen",
+      "kind": "workshop",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w2-opening",
+      "week": 2,
+      "title": "Opening & Closing",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w2-telefon",
+      "week": 2,
+      "title": "Telefon & E-Mails",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w2-magicline",
+      "week": 2,
+      "title": "Magic Line: Check-In, DataPlus, BIF",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 2
+    },
+    {
+      "id": "w2-kasse",
+      "week": 2,
+      "title": "Kassenabschluss",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 3
+    },
+    {
+      "id": "w2-terminierung",
+      "week": 2,
+      "title": "Übung: Terminierung Call-Ins / Walk-Ins",
+      "kind": "uebung",
+      "needsContent": false,
+      "cardCount": 3
+    },
+    {
+      "id": "w2-ws-verletzung",
+      "week": 2,
+      "title": "WS: Verletzungsbilder Basics",
+      "kind": "workshop",
+      "needsContent": false,
+      "cardCount": 4
+    },
+    {
+      "id": "w3-buchen",
+      "week": 3,
+      "title": "Käufe & Verkäufe in ML buchen",
+      "kind": "aufgabe",
+      "needsContent": true,
+      "cardCount": 1
+    },
+    {
+      "id": "w3-hardfacts",
+      "week": 3,
+      "title": "Konkurrenten & Hardfacts EMS",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 5
+    },
+    {
+      "id": "w3-abwesenheit",
+      "week": 3,
+      "title": "Abwesenheiten",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 2
+    },
+    {
+      "id": "w3-beschwerde",
+      "week": 3,
+      "title": "Übung: Beschwerdemanagement",
+      "kind": "uebung",
+      "needsContent": false,
+      "cardCount": 3
+    },
+    {
+      "id": "w3-ws-mitgliedschaft",
+      "week": 3,
+      "title": "WS: Mitgliedschaften, Kündigungen, Ruhezeiten",
+      "kind": "workshop",
+      "needsContent": false,
+      "cardCount": 5
+    },
+    {
+      "id": "w4-bestand",
+      "week": 4,
+      "title": "Bestand: Wo ist was?",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 3
+    },
+    {
+      "id": "w4-akquise",
+      "week": 4,
+      "title": "Übung: Akquise (DAs, VIPs, Ehemalige)",
+      "kind": "uebung",
+      "needsContent": false,
+      "cardCount": 3
+    },
+    {
+      "id": "w4-ws-kv",
+      "week": 4,
+      "title": "WS: Körpervermessungen",
+      "kind": "workshop",
+      "needsContent": false,
+      "cardCount": 5
+    },
+    {
+      "id": "w5-kuendigung",
+      "week": 5,
+      "title": "Kündigungen entgegennehmen",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 2
+    },
+    {
+      "id": "w5-chaos",
+      "week": 5,
+      "title": "Chaostraining & Videoanalyse",
+      "kind": "aufgabe",
+      "needsContent": true,
+      "cardCount": 1
+    },
+    {
+      "id": "w5-ws-kontra",
+      "week": 5,
+      "title": "WS: Kontraindikatoren",
+      "kind": "workshop",
+      "needsContent": false,
+      "cardCount": 5
+    },
+    {
+      "id": "w6-verantwortung",
+      "week": 6,
+      "title": "Eigener Aufgabenbereich & Reflexion",
+      "kind": "aufgabe",
+      "needsContent": false,
+      "cardCount": 2
+    }
+  ]
+}

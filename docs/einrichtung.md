@@ -129,6 +129,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 40. `supabase/migrations/20261108100000_notes_studio_teams_prestige.sql` (Aufgaben: jedes Studio sieht nur seine Aufgaben, Aushilfen, Team-Ranking, Prestige/Items)
 41. `supabase/migrations/20261109090000_shift_wish_no_times.sql` (Schichtwunsch annehmen: Leitung trägt die Zeit selbst ein, Wunsch nur als Hinweis)
 42. `supabase/migrations/20261110090000_qr_login.sql` (Studioleitung meldet sich in der Verwaltung per QR-Code mit dem Stempel-Handy an – danach Funktion `qr-login` deployen)
+43. `supabase/migrations/20261111090000_wissen.sql` (Reiter „Wissen“: Lernfortschritt für Lektionen, Blitzi-Karteikarten, Blitzrunde)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -236,6 +237,9 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
   nach 5 Min. ohne Eingabe wieder gesperrt. Die Studioleitung braucht dafür ein registriertes Stempel-Handy.
 - **Ranking:** Team-Wertung = Wochenpunkte aller ÷ Personen je Studio (Reiter „Ranking“, rechts live, Podium Montag).
 - **Prestige:** Auf Stufe 30 ein Item aus 100 wählen, Blitzi startet bei 1; beim ersten Mal Spitzname.
+- **Wissen:** Reiter „Wissen“ im Portal – Lernpfad mit 14 Lektionen (220 Fragen aus dem QM-Handbuch), Blitzi-Karteikarten
+  (Einarbeitung Woche 1–6), Blitzrunde (60 s), Wiederholung nach Leitner, Serie und Tagesziel (30 XP). Inhalte liegen in
+  `app/src/content/wissen/` (neue Fragen mit neuen IDs ergänzen, bestehende IDs nie ändern), Übersicht: `docs/wissen-fragen-und-loesungen.md`.
 - **Anmeldung Studioleitung (Regel):** An externen Geräten (z. B. privater PC) meldet sich die Studioleitung in der
   Verwaltung (`#/admin`) nur per QR-Code an: Code mit dem registrierten Stempel-Handy scannen (Stempeln → Scannen) →
   „Am PC anmelden“. Gilt 12 Std. Am Stempel-Handy selbst: „Mit diesem Handy anmelden“. Funktion `qr-login` (Verify JWT an).

@@ -1,0 +1,9 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 300' font-family='system-ui,-apple-system,Segoe UI,Roboto,sans-serif'><rect width='420' height='300' rx='16' fill='#f3f4f6'/><rect x='160' y='60' width='100' height='180' rx='16' fill='#fff' stroke='#1f2937' stroke-width='3'/>
+<rect x='172' y='80' width='76' height='120' rx='6' fill='#e5e7eb'/>
+<circle cx='210' cy='220' r='9' fill='none' stroke='#1f2937' stroke-width='2'/>
+<g fill='none' stroke='#e30613' stroke-width='4' stroke-linecap='round'>
+ <path d='M140 110 q-18 30 0 60'/><path d='M120 95 q-30 45 0 90'/>
+ <path d='M280 110 q18 30 0 60'/><path d='M300 95 q30 45 0 90'/>
+</g>
+<text x='210' y='145' text-anchor='middle' font-size='16' font-weight='700' fill='#1f2937'>Ring…</text>
+<text x='210' y='275' text-anchor='middle' font-size='13' fill='#6b7280'>Das Studiotelefon klingelt</text></svg>

@@ -1,0 +1,6948 @@
+{
+  "meta": {
+    "version": "2026.11.09",
+    "sources": [
+      "Qualitäts- und Prozesshandbuch 2026",
+      "Einarbeitung 2026"
+    ]
+  },
+  "items": [
+    {
+      "id": "werte-01",
+      "unitId": "werte",
+      "type": "multi",
+      "difficulty": 1,
+      "prompt": "Welche Begriffe gehören zu unseren vier Unternehmenswerten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ehrlichkeit"
+        },
+        {
+          "id": "b",
+          "text": "Fairness"
+        },
+        {
+          "id": "c",
+          "text": "Fortschritt"
+        },
+        {
+          "id": "d",
+          "text": "Vollgas"
+        },
+        {
+          "id": "e",
+          "text": "Perfektion"
+        },
+        {
+          "id": "f",
+          "text": "Pünktlichkeit"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Unsere Werte: Ehrlichkeit, Fairness, Fortschritt, Vollgas.",
+      "source": "QM 1.2"
+    },
+    {
+      "id": "werte-02",
+      "unitId": "werte",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Ehrlichkeit ist laut Handbuch die Grundlage für …",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "gegenseitigen Respekt"
+        },
+        {
+          "id": "b",
+          "text": "hohen Umsatz"
+        },
+        {
+          "id": "c",
+          "text": "gute Bewertungen"
+        },
+        {
+          "id": "d",
+          "text": "schnelle Beförderung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ehrlichkeit – ist die Grundlage für gegenseitigen Respekt.",
+      "source": "QM 1.2"
+    },
+    {
+      "id": "werte-03",
+      "unitId": "werte",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Für welchen Bereich ist Fairness laut Handbuch erfolgsentscheidend?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Zusammenarbeit in den Teams"
+        },
+        {
+          "id": "b",
+          "text": "Die Preisgestaltung"
+        },
+        {
+          "id": "c",
+          "text": "Die Urlaubsplanung"
+        },
+        {
+          "id": "d",
+          "text": "Den Verkauf"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Fairness ist für die Zusammenarbeit in den Teams erfolgsentscheidend.",
+      "source": "QM 1.2"
+    },
+    {
+      "id": "werte-04",
+      "unitId": "werte",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was entscheidet in unserem Team – nicht dein Wissen, sondern …?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "deine Einstellung"
+        },
+        {
+          "id": "b",
+          "text": "dein Abschluss"
+        },
+        {
+          "id": "c",
+          "text": "deine Berufserfahrung"
+        },
+        {
+          "id": "d",
+          "text": "dein Alter"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "„Nicht können bedeutet immer etwas nicht wollen“ – entscheidend ist die Einstellung.",
+      "source": "QM 1.1"
+    },
+    {
+      "id": "werte-05",
+      "unitId": "werte",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie werden Fehler während der Ausbildung gesehen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Als Erfahrungen und Lernbausteine"
+        },
+        {
+          "id": "b",
+          "text": "Als Grund für eine Abmahnung"
+        },
+        {
+          "id": "c",
+          "text": "Als etwas, das man verschweigen sollte"
+        },
+        {
+          "id": "d",
+          "text": "Als Zeichen fehlender Eignung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Fehler sind Erfahrungen und Lernbausteine, die – richtig gesetzt – eine Brücke bilden.",
+      "source": "QM 1.2"
+    },
+    {
+      "id": "werte-06",
+      "unitId": "werte",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wer ist als Trainer dein erster Ansprechpartner?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Dein Studioleiter (bei Abwesenheit der Stellvertreter)"
+        },
+        {
+          "id": "b",
+          "text": "Tobi"
+        },
+        {
+          "id": "c",
+          "text": "Domi"
+        },
+        {
+          "id": "d",
+          "text": "Die Franchise-Zentrale"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erster Ansprechpartner ist der Studioleiter bzw. dessen Stellvertreter.",
+      "source": "QM 2.1"
+    },
+    {
+      "id": "werte-07",
+      "unitId": "werte",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Für welche Themen ist Domi verantwortlich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Urlaubsplanung"
+        },
+        {
+          "id": "b",
+          "text": "Lohnbuchhaltung"
+        },
+        {
+          "id": "c",
+          "text": "Zahlungsverkehr"
+        },
+        {
+          "id": "d",
+          "text": "Marketing und Design"
+        },
+        {
+          "id": "e",
+          "text": "Inkasso"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Domi: Zahlungsverkehr, Urlaubsplanung, Finanz- und Lohnbuchhaltung.",
+      "source": "QM Geschäftsführung"
+    },
+    {
+      "id": "werte-08",
+      "unitId": "werte",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Für welche Themen ist Tobi verantwortlich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Talents gewinnen und einstellen"
+        },
+        {
+          "id": "b",
+          "text": "Bestellungen und Disposition"
+        },
+        {
+          "id": "c",
+          "text": "Ausbildung und Weiterbildung"
+        },
+        {
+          "id": "d",
+          "text": "Lohnbuchhaltung"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Tobi: u. a. Talents gewinnen, Bestellungen/Disposition, Aus- und Weiterbildung, Inkasso, Controlling, Marketing.",
+      "source": "QM Geschäftsführung"
+    },
+    {
+      "id": "werte-09",
+      "unitId": "werte",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wer ist für das Inkasso zuständig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Tobi"
+        },
+        {
+          "id": "b",
+          "text": "Domi"
+        },
+        {
+          "id": "c",
+          "text": "Der Studioleiter"
+        },
+        {
+          "id": "d",
+          "text": "Beide Geschäftsführer gemeinsam"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Inkasso liegt bei Tobi.",
+      "source": "QM Geschäftsführung"
+    },
+    {
+      "id": "werte-10",
+      "unitId": "werte",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Welche Aufgaben übernehmen Tobi und Domi gemeinsam?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Personalmanagement"
+        },
+        {
+          "id": "b",
+          "text": "Talents binden und verabschieden"
+        },
+        {
+          "id": "c",
+          "text": "Finanzbuchhaltung"
+        },
+        {
+          "id": "d",
+          "text": "Bestellungen und Disposition"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Gemeinsam: Personalmanagement, Talents binden/verabschieden, Unterstützung von Studioleitern & Mitarbeitern.",
+      "source": "QM Geschäftsführung"
+    },
+    {
+      "id": "verhalten-01",
+      "unitId": "verhalten",
+      "type": "multi",
+      "difficulty": 1,
+      "prompt": "Was wird bei der Körperhygiene vorausgesetzt bzw. ist Pflicht?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Saubere Kleidung und saubere Schuhe"
+        },
+        {
+          "id": "b",
+          "text": "Ein ordentliches Namensschild"
+        },
+        {
+          "id": "c",
+          "text": "Die Benutzung von Deo"
+        },
+        {
+          "id": "d",
+          "text": "Eine Sportuhr am Handgelenk"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Saubere Kleidung/Schuhe, Namensschild, gepflegter Bart, frischer Atem, Deo ist Pflicht.",
+      "source": "QM 2.2.1"
+    },
+    {
+      "id": "verhalten-02",
+      "unitId": "verhalten",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Bis wie viele Minuten vor Kundenkontakt ist Rauchen generell untersagt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "30 Minuten"
+        },
+        {
+          "id": "b",
+          "text": "10 Minuten"
+        },
+        {
+          "id": "c",
+          "text": "15 Minuten"
+        },
+        {
+          "id": "d",
+          "text": "60 Minuten"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bis 30 Minuten vor Kundenkontakt ist Rauchen untersagt.",
+      "source": "QM 2.2.2"
+    },
+    {
+      "id": "verhalten-03",
+      "unitId": "verhalten",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Regeln gelten zum Rauchen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Niemals direkt vor dem Studio"
+        },
+        {
+          "id": "b",
+          "text": "Niemals in Trainerkleidung"
+        },
+        {
+          "id": "c",
+          "text": "Danach Hände waschen und auf frischen Atem achten"
+        },
+        {
+          "id": "d",
+          "text": "In der Pause im Eingangsbereich ist es okay"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Nie vor dem Studio, nie in Trainerkleidung, nicht sichtbar für Mitglieder/Nachbarn; danach Hände waschen, frischer Atem.",
+      "source": "QM 2.2.2"
+    },
+    {
+      "id": "verhalten-04",
+      "unitId": "verhalten",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen zum Studio-PC stimmen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nur für betriebliche Zwecke nutzen"
+        },
+        {
+          "id": "b",
+          "text": "Keine Programme installieren, keine ZIP-/EXE-Downloads"
+        },
+        {
+          "id": "c",
+          "text": "Private E-Mails sind verboten"
+        },
+        {
+          "id": "d",
+          "text": "Word-Anhänge von Mitgliedern dürfen geöffnet werden"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Nur betrieblich, keine Installationen/Downloads, keine privaten Mails, nur freigegebene Webseiten.",
+      "source": "QM 2.2.4"
+    },
+    {
+      "id": "verhalten-05",
+      "unitId": "verhalten",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welche Dateien dürfen in E-Mails am Studio-PC geöffnet werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nur PDF-Dateien"
+        },
+        {
+          "id": "b",
+          "text": "PDF- und Word-Dateien"
+        },
+        {
+          "id": "c",
+          "text": "Alle Dateien von bekannten Absendern"
+        },
+        {
+          "id": "d",
+          "text": "ZIP-Dateien nach Virenscan"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bei sämtlichen E-Mails dürfen nur PDF-Dateien geöffnet werden.",
+      "source": "QM 2.2.4"
+    },
+    {
+      "id": "verhalten-06",
+      "unitId": "verhalten",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Du willst am Studio-PC eine Webseite öffnen, die nicht auf der Freigabeliste steht. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Vorher von der Studioleitung freigeben lassen"
+        },
+        {
+          "id": "b",
+          "text": "Ist okay, wenn es betrieblich ist"
+        },
+        {
+          "id": "c",
+          "text": "Nur in der Pause erlaubt"
+        },
+        {
+          "id": "d",
+          "text": "Über den Inkognito-Modus öffnen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Der Besuch anderer Webseiten ist stets vorab von der Studioleitung freizugeben.",
+      "source": "QM 2.2.4"
+    },
+    {
+      "id": "verhalten-07",
+      "unitId": "verhalten",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wo ist dein privates Handy während der Arbeit?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Im Mitarbeiter-/Büroraum, auf lautlos"
+        },
+        {
+          "id": "b",
+          "text": "In der Hosentasche auf Vibration"
+        },
+        {
+          "id": "c",
+          "text": "Am Empfangstrolley"
+        },
+        {
+          "id": "d",
+          "text": "Im Spind, aber laut für Notfälle"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Handy nur in Pausen nutzen, sonst im Mitarbeiter-/Büroraum und lautlos.",
+      "source": "QM 2.2.5"
+    },
+    {
+      "id": "verhalten-08",
+      "unitId": "verhalten",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie oft solltest du selbst ein EMS-Training absolvieren?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Wöchentlich – bei einem Trainer"
+        },
+        {
+          "id": "b",
+          "text": "Monatlich"
+        },
+        {
+          "id": "c",
+          "text": "Wöchentlich – selbst gesteuert"
+        },
+        {
+          "id": "d",
+          "text": "Nur in der Einarbeitung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wöchentlich bei einem Trainer – niemals selbst trainieren oder selbst intensivieren.",
+      "source": "QM 2.2.7"
+    },
+    {
+      "id": "verhalten-09",
+      "unitId": "verhalten",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Was gilt für dein eigenes EMS-Training?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Niemals selbst trainieren oder intensivieren"
+        },
+        {
+          "id": "b",
+          "text": "Am besten parallel zu einem Mitglied trainieren"
+        },
+        {
+          "id": "c",
+          "text": "Auf vorbildliche Haltung und Intensität achten"
+        },
+        {
+          "id": "d",
+          "text": "Intensität selbst einstellen, du kennst das Gerät"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Du bist Vorbild: bei einem Trainer, am besten parallel zu einem Mitglied, vorbildliche Haltung & Intensität.",
+      "source": "QM 2.2.7"
+    },
+    {
+      "id": "verhalten-10",
+      "unitId": "verhalten",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was passiert mit der Trainerbekleidung bei Ende des Arbeitsverhältnisses?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Vollständig und gereinigt an den Studiomanager zurückgeben"
+        },
+        {
+          "id": "b",
+          "text": "Sie darf behalten werden"
+        },
+        {
+          "id": "c",
+          "text": "Sie wird vom Gehalt abgezogen"
+        },
+        {
+          "id": "d",
+          "text": "Sie wird entsorgt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die kostenfreie Bekleidung muss vollständig und gereinigt zurückgegeben werden.",
+      "source": "QM 2.2.3"
+    },
+    {
+      "id": "verhalten-11",
+      "unitId": "verhalten",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie bleibt die Tür zum Mitarbeiterraum?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Stets geschlossen"
+        },
+        {
+          "id": "b",
+          "text": "Immer offen, damit du Mitglieder siehst"
+        },
+        {
+          "id": "c",
+          "text": "Offen während der Öffnungszeiten"
+        },
+        {
+          "id": "d",
+          "text": "Egal"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die Tür zum Mitarbeiterraum ist stets geschlossen zu halten.",
+      "source": "QM 2.2.6"
+    },
+    {
+      "id": "arbeitszeit-04",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Bis wann musst du deine Dienstplanwünsche für den nächsten Monat abgeben?",
+      "image": "/wissen/kalender-15.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "Bis spätestens zum 15. des aktuellen Monats"
+        },
+        {
+          "id": "b",
+          "text": "Bis zum 1. des aktuellen Monats"
+        },
+        {
+          "id": "c",
+          "text": "Bis zum 25. des aktuellen Monats"
+        },
+        {
+          "id": "d",
+          "text": "Eine Woche vor Monatsbeginn"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wünsche rechtzeitig und selbstständig bis spätestens zum 15. des aktuellen Monats (WhatsApp oder Zettel im Studio).",
+      "source": "QM 2.3.1 c"
+    },
+    {
+      "id": "arbeitszeit-05",
+      "unitId": "arbeitszeit",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Wer darf Änderungen am Einsatzplan vornehmen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der Studioleiter"
+        },
+        {
+          "id": "b",
+          "text": "Domi"
+        },
+        {
+          "id": "c",
+          "text": "Tobi"
+        },
+        {
+          "id": "d",
+          "text": "Jeder Trainer nach Absprache mit Kollegen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Änderungen nehmen ausschließlich Studioleiter, Domi und Tobi vor.",
+      "source": "QM 2.3.1 c"
+    },
+    {
+      "id": "arbeitszeit-06",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie werden Promotion-Tage an Sonntagen verrechnet?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Als 7,5-Stunden-Tage"
+        },
+        {
+          "id": "b",
+          "text": "Nach tatsächlicher Zeit"
+        },
+        {
+          "id": "c",
+          "text": "Als halber Tag"
+        },
+        {
+          "id": "d",
+          "text": "Als 8-Stunden-Tag"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Promotion-Tage an Sonntagen werden als 7,5-Stunden-Tage verrechnet.",
+      "source": "QM 2.3.1 d"
+    },
+    {
+      "id": "arbeitszeit-07",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Du hast eine Nachprüfung an der DHfPG. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Keine Freistellung – Arbeitszeit abstimmen oder Urlaubstag nehmen; Kosten trägst du selbst"
+        },
+        {
+          "id": "b",
+          "text": "Du wirst wie bei Präsenztagen freigestellt"
+        },
+        {
+          "id": "c",
+          "text": "Du bekommst einen halben Tag frei"
+        },
+        {
+          "id": "d",
+          "text": "Die Kosten übernimmt der Betrieb"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Freistellung gibt es nur für Präsenztage – nicht für Nachprüfungen/Zweitversuche.",
+      "source": "QM 2.3.1 h"
+    },
+    {
+      "id": "arbeitszeit-08",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Sind Betriebsveranstaltungen wie Sommerfest oder Kick-Off freiwillig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein, sie sind feste, verpflichtende Arbeitstermine"
+        },
+        {
+          "id": "b",
+          "text": "Ja, komplett freiwillig"
+        },
+        {
+          "id": "c",
+          "text": "Nur für Studioleiter verpflichtend"
+        },
+        {
+          "id": "d",
+          "text": "Nur wenn sie in der Arbeitszeit liegen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Betriebsveranstaltungen sind für jeden Mitarbeiter verpflichtend; Absagen nur aus wichtigem Grund per Nachricht an die GF.",
+      "source": "QM 2.3.1 i"
+    },
+    {
+      "id": "arbeitszeit-09",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Darf ein Trainer einen Kundentermin verschieben, weil es ihm privat besser passt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein – strengstens untersagt, wird abgemahnt"
+        },
+        {
+          "id": "b",
+          "text": "Ja, wenn das Mitglied zustimmt"
+        },
+        {
+          "id": "c",
+          "text": "Ja, maximal einmal im Monat"
+        },
+        {
+          "id": "d",
+          "text": "Ja, mit Info an die Teamgruppe"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Das Verschieben von Kundenterminen zum privaten Vorteil ist strengstens untersagt und wird abgemahnt.",
+      "source": "QM 2.3.1 g"
+    },
+    {
+      "id": "arbeitszeit-10",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist beim Urlaubsantrag der erste Schritt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Beim Studiomanager anfragen"
+        },
+        {
+          "id": "b",
+          "text": "Direkt Domi per WhatsApp schreiben"
+        },
+        {
+          "id": "c",
+          "text": "Urlaub buchen und dann melden"
+        },
+        {
+          "id": "d",
+          "text": "In den Kalender eintragen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ablauf: Studiomanager → nach OK WhatsApp an Domi → nach Domis OK der Studioleitung mitteilen → buchen.",
+      "source": "QM 2.3.2"
+    },
+    {
+      "id": "arbeitszeit-11",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ab wann darfst du deinen Urlaub fest planen und buchen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Wenn Domis OK da ist und du es der Studioleitung mitgeteilt hast"
+        },
+        {
+          "id": "b",
+          "text": "Sobald der Studiomanager zugestimmt hat"
+        },
+        {
+          "id": "c",
+          "text": "Sobald du den Antrag abgeschickt hast"
+        },
+        {
+          "id": "d",
+          "text": "Nach Eintrag im Kalender"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erst nach dem OK von Domi und Mitteilung an die Studioleitung.",
+      "source": "QM 2.3.2"
+    },
+    {
+      "id": "arbeitszeit-12",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viele Trainer dürfen pro Studio gleichzeitig im Urlaub sein?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Maximal einer – jeder weitere muss auf Abruf verfügbar sein"
+        },
+        {
+          "id": "b",
+          "text": "Maximal zwei"
+        },
+        {
+          "id": "c",
+          "text": "Beliebig viele, wenn der Plan steht"
+        },
+        {
+          "id": "d",
+          "text": "Keiner in den Ferien"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Pro Studio maximal ein Trainer gleichzeitig im Urlaub.",
+      "source": "QM 2.3.2"
+    },
+    {
+      "id": "arbeitszeit-13",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Bis wann musst du mindestens 10 Tage deines Jahresurlaubs beantragt haben?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bis 31.03."
+        },
+        {
+          "id": "b",
+          "text": "Bis 31.01."
+        },
+        {
+          "id": "c",
+          "text": "Bis 30.06."
+        },
+        {
+          "id": "d",
+          "text": "Bis 31.10."
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Zum 31.03. mind. 10 Tage beantragen – sonst trägt die GF den Urlaub ein.",
+      "source": "QM 2.3.2"
+    },
+    {
+      "id": "arbeitszeit-14",
+      "unitId": "arbeitszeit",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Für welche Kalenderwochen gilt NICHT „First come, first serve“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "KW 51"
+        },
+        {
+          "id": "b",
+          "text": "KW 52"
+        },
+        {
+          "id": "c",
+          "text": "KW 1"
+        },
+        {
+          "id": "d",
+          "text": "KW 30"
+        },
+        {
+          "id": "e",
+          "text": "KW 2"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "KW 51, 52 und 1 werden spätestens 2 Monate vorher im Team besprochen und mit der GF festgelegt.",
+      "source": "QM 2.3.2"
+    },
+    {
+      "id": "arbeitszeit-15",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Bis wann müssen alle übrigen Urlaubstage beantragt und genommen sein?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Beantragt bis 31.10., genommen bis 31.03. des Folgejahres"
+        },
+        {
+          "id": "b",
+          "text": "Beantragt bis 31.12., genommen bis 31.12."
+        },
+        {
+          "id": "c",
+          "text": "Beantragt bis 30.09., genommen bis 31.12."
+        },
+        {
+          "id": "d",
+          "text": "Beantragt bis 31.10., genommen bis 31.12."
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Übrige Urlaubstage: Antrag bis 31.10., nehmen bis 31.03. des Folgejahres.",
+      "source": "QM 2.3.2"
+    },
+    {
+      "id": "arbeitszeit-16",
+      "unitId": "arbeitszeit",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "An welchen Tagen kannst du keinen Urlaub nehmen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "An Fortbildungstagen der IST / DHfPG"
+        },
+        {
+          "id": "b",
+          "text": "An internen Veranstaltungen"
+        },
+        {
+          "id": "c",
+          "text": "An Brückentagen"
+        },
+        {
+          "id": "d",
+          "text": "An Samstagen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "An Fortbildungstagen der IST/DHfPG und internen Veranstaltungen kann kein Urlaub genommen werden.",
+      "source": "QM 2.3.2"
+    },
+    {
+      "id": "arbeitszeit-17",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Du wirst krank und kannst am nächsten Tag nicht arbeiten. Bis wann musst du dich bei der Geschäftsführung melden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "So bald wie möglich – spätestens am Folgetag bis 07:00 Uhr (sofern du keine Frühschicht hast)"
+        },
+        {
+          "id": "b",
+          "text": "Erst bei Schichtbeginn"
+        },
+        {
+          "id": "c",
+          "text": "Am Folgetag bis 12:00 Uhr"
+        },
+        {
+          "id": "d",
+          "text": "Es reicht, wenn du das Attest nachreichst"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "So bald wie möglich bei der GF melden, spätestens am Folgetag bis 07:00 Uhr (sofern keine Frühschicht) – auch für Seminar-, Uni- und Berufsschultage.",
+      "source": "QM 2.3.6"
+    },
+    {
+      "id": "arbeitszeit-18",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Du merkst am Vortag, dass du krank wirst. Was ist zusätzlich erforderlich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ankündigung bis 18 Uhr in der Teamgruppe, damit ein Notfallplan organisiert werden kann"
+        },
+        {
+          "id": "b",
+          "text": "Nichts, Meldung am Morgen reicht"
+        },
+        {
+          "id": "c",
+          "text": "Anruf beim Studioleiter bis 22 Uhr"
+        },
+        {
+          "id": "d",
+          "text": "E-Mail an Domi"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Eine Ankündigung am Vortag bis 18 Uhr in der Teamgruppe ist erforderlich.",
+      "source": "QM 2.3.6"
+    },
+    {
+      "id": "arbeitszeit-19",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ab wann brauchst du ein ärztliches Attest?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ab dem zweiten Fehltag – binnen drei Tagen bei Domi nachreichen"
+        },
+        {
+          "id": "b",
+          "text": "Ab dem ersten Fehltag"
+        },
+        {
+          "id": "c",
+          "text": "Ab dem dritten Fehltag"
+        },
+        {
+          "id": "d",
+          "text": "Ab dem vierten Fehltag"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Attest ab dem 2. Fehltag, binnen 3 Tagen bei Domi.",
+      "source": "QM 2.3.6"
+    },
+    {
+      "id": "arbeitszeit-20",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was passiert, wenn du dich im Krankheitsfall nicht bei der Geschäftsführung abmeldest?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der Tag gilt als Urlaubstag"
+        },
+        {
+          "id": "b",
+          "text": "Nichts, wenn du ein Attest hast"
+        },
+        {
+          "id": "c",
+          "text": "Der Tag wird unbezahlt"
+        },
+        {
+          "id": "d",
+          "text": "Du musst nacharbeiten"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ohne Abmeldung bei der GF gilt der Tag als Urlaubstag.",
+      "source": "QM 2.3.6"
+    },
+    {
+      "id": "arbeitszeit-21",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Du willst einen Nebenjob annehmen. Was musst du tun?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bei der Geschäftsführung anmelden und genehmigen lassen"
+        },
+        {
+          "id": "b",
+          "text": "Nichts, wenn er am Wochenende ist"
+        },
+        {
+          "id": "c",
+          "text": "Nur dem Studioleiter Bescheid sagen"
+        },
+        {
+          "id": "d",
+          "text": "Erst nach der Ausbildung möglich"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Nebenjobs sind generell bei der GF anzumelden und zu genehmigen.",
+      "source": "QM 2.3.7"
+    },
+    {
+      "id": "arbeitszeit-22",
+      "unitId": "arbeitszeit",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gilt für vergünstigte Mitarbeitereinkäufe?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Du zahlst den Selbstkostenpreis des Unternehmens"
+        },
+        {
+          "id": "b",
+          "text": "Nur für den Eigenverbrauch"
+        },
+        {
+          "id": "c",
+          "text": "Weiterverkauf an Freunde ist erlaubt"
+        },
+        {
+          "id": "d",
+          "text": "Es gibt pauschal 50 % Rabatt"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Selbstkostenpreis (Einkauf, USt, Lieferkosten), nur Eigenverbrauch – Weiterverkauf wird abgemahnt.",
+      "source": "QM 2.3.8"
+    },
+    {
+      "id": "arbeitszeit-23",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Über wen läuft eine Terminänderung einer Präsenzphase?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ausschließlich über Tobi"
+        },
+        {
+          "id": "b",
+          "text": "Über den Studioleiter"
+        },
+        {
+          "id": "c",
+          "text": "Über Domi"
+        },
+        {
+          "id": "d",
+          "text": "Direkt über die Hochschule"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Terminänderungen von Präsenzphasen sind ausschließlich über Tobi möglich.",
+      "source": "QM 2.3.4"
+    },
+    {
+      "id": "arbeitszeit-24",
+      "unitId": "arbeitszeit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wer darf die Einsatzplanung in den Kalender eintragen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nur die Studioleitung"
+        },
+        {
+          "id": "b",
+          "text": "Jeder Trainer für sich selbst"
+        },
+        {
+          "id": "c",
+          "text": "Nur Domi"
+        },
+        {
+          "id": "d",
+          "text": "Der Trainer mit Frühschicht"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Einsatzplanung im Kalender trägt nur die Studioleitung ein; Änderungen immer absprechen.",
+      "source": "QM 2.3.3"
+    },
+    {
+      "id": "sicherheit-01",
+      "unitId": "sicherheit",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie dürfen Passwörter weitergegeben werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nur persönlich"
+        },
+        {
+          "id": "b",
+          "text": "Per WhatsApp an Kollegen"
+        },
+        {
+          "id": "c",
+          "text": "Auf einem Zettel am Trolley"
+        },
+        {
+          "id": "d",
+          "text": "Per E-Mail, wenn intern"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Passwörter nur persönlich kommunizieren – schriftlich notieren oder weiterleiten ist strengstens untersagt.",
+      "source": "QM 2.4.1"
+    },
+    {
+      "id": "sicherheit-02",
+      "unitId": "sicherheit",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie werden Studioschlüssel ausgehändigt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ausschließlich per Schlüsselübergabeprotokoll"
+        },
+        {
+          "id": "b",
+          "text": "Mündlich vom Studioleiter"
+        },
+        {
+          "id": "c",
+          "text": "Per Unterschrift im Kalender"
+        },
+        {
+          "id": "d",
+          "text": "Formlos bei Bedarf"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Schlüssel werden ausschließlich per Schlüsselübergabeprotokoll ausgehändigt.",
+      "source": "QM 2.4.2"
+    },
+    {
+      "id": "sicherheit-03",
+      "unitId": "sicherheit",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gilt für deinen Studioschlüssel?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der Besitz ist streng vertraulich"
+        },
+        {
+          "id": "b",
+          "text": "Er dient nur dem betrieblichen Aufenthalt im Studio"
+        },
+        {
+          "id": "c",
+          "text": "Bei Verlust kannst du haftbar gemacht werden"
+        },
+        {
+          "id": "d",
+          "text": "Du darfst ihn Kollegen anderer Studios leihen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Vertraulich, nur betrieblich, sicher aufbewahren – bei Verlust Haftung möglich.",
+      "source": "QM 2.4.2"
+    },
+    {
+      "id": "sicherheit-04",
+      "unitId": "sicherheit",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Darf Firmenwissen (Dateien, Unterlagen, Internes) an Dritte gehen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein, es ist stets geheim zu halten"
+        },
+        {
+          "id": "b",
+          "text": "Ja, an Freunde und Familie"
+        },
+        {
+          "id": "c",
+          "text": "Ja, wenn es nicht als vertraulich markiert ist"
+        },
+        {
+          "id": "d",
+          "text": "Ja, nach Ende des Arbeitsverhältnisses"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Laut Geheimhaltungsvereinbarung ist Firmenwissen stets geheim zu halten.",
+      "source": "QM 2.4.3"
+    },
+    {
+      "id": "studioalltag-01",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Eine Lieferung kommt an. Was tust du zuerst?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mit dem Lieferschein auf Menge und Qualität kontrollieren"
+        },
+        {
+          "id": "b",
+          "text": "Sofort einräumen"
+        },
+        {
+          "id": "c",
+          "text": "Ungeöffnet in den Keller stellen"
+        },
+        {
+          "id": "d",
+          "text": "Foto an die Teamgruppe schicken"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Lieferungen immer mit Lieferschein auf Menge & Qualität prüfen, dann sortiert einräumen.",
+      "source": "QM 2.5.1"
+    },
+    {
+      "id": "studioalltag-02",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wann wird die Bestandsliste überprüft und mit den Verkäufen abgeglichen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Am Ende jedes Kalendermonats"
+        },
+        {
+          "id": "b",
+          "text": "Wöchentlich am Montag"
+        },
+        {
+          "id": "c",
+          "text": "Quartalsweise"
+        },
+        {
+          "id": "d",
+          "text": "Nur bei Inventur"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Monatlich, am Ende des Kalendermonats – Bedarf farbig markieren, Liste beim Herold an die GF.",
+      "source": "QM 2.5.2"
+    },
+    {
+      "id": "studioalltag-03",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wodurch werden Fehlbestände (z. B. Nutrition) ausgeglichen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Durch die Trinkgeldkasse"
+        },
+        {
+          "id": "b",
+          "text": "Durch den Studioleiter"
+        },
+        {
+          "id": "c",
+          "text": "Durch Gehaltsabzug"
+        },
+        {
+          "id": "d",
+          "text": "Gar nicht – sie werden abgeschrieben"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Fehlbestände müssen durch die Trinkgeldkasse ausgeglichen werden.",
+      "source": "QM 2.5.2"
+    },
+    {
+      "id": "studioalltag-04",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wer führt die Interessentenliste – und wie oft?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Jedes Teammitglied, täglich"
+        },
+        {
+          "id": "b",
+          "text": "Der Studioleiter, wöchentlich"
+        },
+        {
+          "id": "c",
+          "text": "Nur die Frühschicht"
+        },
+        {
+          "id": "d",
+          "text": "Die Geschäftsführung, monatlich"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die Interessentenliste wird täglich von jedem Teammitglied geführt („shit in – shit out“).",
+      "source": "QM 2.5.3"
+    },
+    {
+      "id": "studioalltag-05",
+      "unitId": "studioalltag",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was wird in der Interessentenliste eingetragen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Jeder Interessent mit vereinbartem Probetraining"
+        },
+        {
+          "id": "b",
+          "text": "Erscheinen und Ergebnis des Probetrainings"
+        },
+        {
+          "id": "c",
+          "text": "Ausführliche Info, falls kein Abschluss erfolgt ist"
+        },
+        {
+          "id": "d",
+          "text": "Die Bankverbindung des Interessenten"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Interessent, Erscheinen, Ergebnis – und ausführliche Info bei Nicht-Abschluss.",
+      "source": "QM 2.5.3"
+    },
+    {
+      "id": "studioalltag-06",
+      "unitId": "studioalltag",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was machst du mit einem Kassenzettel vom Supermarkt-Einkauf fürs Studio?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nummer und Standort-Kürzel vermerken"
+        },
+        {
+          "id": "b",
+          "text": "Scannen, hochladen und in die Kasse legen"
+        },
+        {
+          "id": "c",
+          "text": "Nach dem Foto wegwerfen"
+        },
+        {
+          "id": "d",
+          "text": "Bis Jahresende in deinem Fach sammeln"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Nummer + Standort-Kürzel drauf, scannen, hochladen, in die Kasse legen.",
+      "source": "QM 2.5.4"
+    },
+    {
+      "id": "studioalltag-07",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Bis wann sind alle Belege eines Monats zuzuordnen und festzuschreiben?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bis spätestens zum 3. des Folgemonats"
+        },
+        {
+          "id": "b",
+          "text": "Bis zum letzten Tag des Monats"
+        },
+        {
+          "id": "c",
+          "text": "Bis zum 10. des Folgemonats"
+        },
+        {
+          "id": "d",
+          "text": "Bis zum nächsten Herold"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bis spätestens 3. des Folgemonats zuordnen und bereitstellen (festschreiben).",
+      "source": "QM 2.5.4"
+    },
+    {
+      "id": "studioalltag-08",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wann werden Kassenabschlüsse gemacht?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Abends ein Kassenabschluss, nach der Frühschicht ein Zwischenabschluss"
+        },
+        {
+          "id": "b",
+          "text": "Nur einmal pro Woche"
+        },
+        {
+          "id": "c",
+          "text": "Nur am Monatsende"
+        },
+        {
+          "id": "d",
+          "text": "Nur wenn Bargeld eingenommen wurde"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Abends Kassenabschluss, nach der Frühschicht Zwischenabschluss – Kasse und Magicline vergleichen.",
+      "source": "QM 2.5.5"
+    },
+    {
+      "id": "studioalltag-09",
+      "unitId": "studioalltag",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Beim Kassenabschluss gibt es ein Problem, das du nicht lösen kannst. Was ist richtig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schriftlich notieren und in die Teamgruppe schreiben"
+        },
+        {
+          "id": "b",
+          "text": "Keinen Kassenabschluss erstellen und hochladen"
+        },
+        {
+          "id": "c",
+          "text": "Die Differenz in Magicline eintragen"
+        },
+        {
+          "id": "d",
+          "text": "Den Betrag aus eigener Tasche ausgleichen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Problem notieren, Teamgruppe informieren (Studioleitung & Domi analysieren am Folgetag) – keinen Abschluss hochladen.",
+      "source": "QM 2.5.5"
+    },
+    {
+      "id": "studioalltag-10",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Darf eine Kassendifferenz in Magicline eingetragen werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein, niemals"
+        },
+        {
+          "id": "b",
+          "text": "Ja, wenn sie unter 5 € liegt"
+        },
+        {
+          "id": "c",
+          "text": "Ja, mit Kommentar"
+        },
+        {
+          "id": "d",
+          "text": "Nur durch den Studioleiter"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Es darf nie eine Kassendifferenz in Magicline eingetragen werden – Vorgehen: Ordner „Abläufe Studioalltag“.",
+      "source": "QM 2.5.5"
+    },
+    {
+      "id": "studioalltag-11",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wann musst du beim Aufsperren spätestens im Studio sein?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mindestens 30 Minuten vor dem ersten Training"
+        },
+        {
+          "id": "b",
+          "text": "10 Minuten vor dem ersten Training"
+        },
+        {
+          "id": "c",
+          "text": "Pünktlich zum ersten Training"
+        },
+        {
+          "id": "d",
+          "text": "60 Minuten vor Öffnung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Pünktlich mindestens 30 Minuten vor dem ersten Training.",
+      "source": "QM 2.5.6"
+    },
+    {
+      "id": "studioalltag-12",
+      "unitId": "studioalltag",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Programme öffnest du beim Aufsperren am PC?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Magic Line"
+        },
+        {
+          "id": "b",
+          "text": "Tanita-Software"
+        },
+        {
+          "id": "c",
+          "text": "Interessentenliste"
+        },
+        {
+          "id": "d",
+          "text": "Spotify für die Musik"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Magic Line, Kalender, E-Mail, Interessentenliste, Tanita-Software. Musik: Bodystreet-Radio.",
+      "source": "QM 2.5.6"
+    },
+    {
+      "id": "studioalltag-13",
+      "unitId": "studioalltag",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gehört zum Aufsperren (Opening)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Werbemittel außen platzieren"
+        },
+        {
+          "id": "b",
+          "text": "Westen & Elektroden für die ersten Mitglieder befeuchten"
+        },
+        {
+          "id": "c",
+          "text": "Karaffen mit Obst und Wasser füllen"
+        },
+        {
+          "id": "d",
+          "text": "Spülmaschine voll machen und einschalten"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Spülmaschine wird beim Opening ausgeräumt – voll machen und einschalten gehört zum Closing.",
+      "source": "QM 2.5.6"
+    },
+    {
+      "id": "studioalltag-14",
+      "unitId": "studioalltag",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gehört zum Absperren (Closing)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kassenabschluss nach dem letzten Mitglied"
+        },
+        {
+          "id": "b",
+          "text": "Spülmaschine voll machen und einschalten"
+        },
+        {
+          "id": "c",
+          "text": "Werbemittel nach innen holen"
+        },
+        {
+          "id": "d",
+          "text": "Westen für morgen befeuchten"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Closing: Kasse, Mails, PC aus, Trolley, Spülmaschine an, auffüllen, saugen/wischen, Werbemittel rein, Fenster zu.",
+      "source": "QM 2.5.7"
+    },
+    {
+      "id": "studioalltag-15",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Eine E-Mail kann von den Anwesenden nicht beantwortet werden. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "In anderen Standorten nachfragen oder dem Studioleiter eine Aufgabe in den Kalender eintragen"
+        },
+        {
+          "id": "b",
+          "text": "Liegen lassen, bis der Studioleiter da ist"
+        },
+        {
+          "id": "c",
+          "text": "An Tobi weiterleiten"
+        },
+        {
+          "id": "d",
+          "text": "Löschen, wenn sie unwichtig wirkt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Andere Standorte fragen oder Aufgabe für Studioleiter/Stellvertretung in den Kalender.",
+      "source": "QM 2.5.8"
+    },
+    {
+      "id": "studioalltag-16",
+      "unitId": "studioalltag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie läuft der Austausch defekter Westen und Elektroden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Am Herold – bei dringenden Themen per Nachricht und Absprache mit der GF"
+        },
+        {
+          "id": "b",
+          "text": "Selbst beim Hersteller bestellen"
+        },
+        {
+          "id": "c",
+          "text": "Defekte Teile einfach weiter benutzen"
+        },
+        {
+          "id": "d",
+          "text": "Über das Nachbarstudio"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Austausch am Herold oder bei Dringendem per Nachricht/Absprache mit der Geschäftsführung.",
+      "source": "QM 2.5.9"
+    },
+    {
+      "id": "hygiene-02",
+      "unitId": "hygiene",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Womit reinigst du Möbel und die Polsterung der Loungestühle?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mit Wasser, Spülmittel oder trocken"
+        },
+        {
+          "id": "b",
+          "text": "Mit alkoholischem Reiniger"
+        },
+        {
+          "id": "c",
+          "text": "Mit Antikalk"
+        },
+        {
+          "id": "d",
+          "text": "Mit Scheuermilch"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Niemals alkoholische Reiniger – Wasser, Spülmittel oder trocken.",
+      "source": "QM 2.6"
+    },
+    {
+      "id": "hygiene-03",
+      "unitId": "hygiene",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Womit reinigst du Kunststofffächer und -teile am Trainingsgerät?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bodenreiniger in Wasser oder Wasser mit Spülmittel"
+        },
+        {
+          "id": "b",
+          "text": "Alkoholischer Desinfektionsreiniger"
+        },
+        {
+          "id": "c",
+          "text": "Glasreiniger mit Spiritus"
+        },
+        {
+          "id": "d",
+          "text": "Antikalk"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Kunststoff niemals mit alkoholischem Reiniger – Bodenreiniger in Wasser oder Spülmittelwasser.",
+      "source": "QM 2.6"
+    },
+    {
+      "id": "hygiene-04",
+      "unitId": "hygiene",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Womit reinigst du die Glasplatten an Trainingsgeräten und Workstation?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bad- oder Essigreiniger"
+        },
+        {
+          "id": "b",
+          "text": "Scheuermilch"
+        },
+        {
+          "id": "c",
+          "text": "Alkoholischer Reiniger"
+        },
+        {
+          "id": "d",
+          "text": "Nur trocken"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Glasplatten mit Bad- oder Essigreiniger.",
+      "source": "QM 2.6"
+    },
+    {
+      "id": "hygiene-05",
+      "unitId": "hygiene",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was ist nach möglichst jeder Benutzung durch den Kunden zu reinigen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Umkleidekabine"
+        },
+        {
+          "id": "b",
+          "text": "Dusche & Duschraum"
+        },
+        {
+          "id": "c",
+          "text": "Trainingsgerät & Trainingsfläche"
+        },
+        {
+          "id": "d",
+          "text": "Westen & Elektroden"
+        },
+        {
+          "id": "e",
+          "text": "Schaufenster"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Umkleide, Dusche, Trainingsgerät/-fläche, Westen & Elektroden – nach möglichst jeder Benutzung.",
+      "source": "QM 2.6.1"
+    },
+    {
+      "id": "hygiene-06",
+      "unitId": "hygiene",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Wie werden Westen und Elektroden gewaschen?",
+      "image": "/wissen/waschmaschine.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "20 bis max. 30 °C (Seideprogramm)"
+        },
+        {
+          "id": "b",
+          "text": "Ohne Schleuderprogramm"
+        },
+        {
+          "id": "c",
+          "text": "Nur mit speziellem Waschmittel"
+        },
+        {
+          "id": "d",
+          "text": "Mit Weichspüler für angenehmen Duft"
+        },
+        {
+          "id": "e",
+          "text": "60 °C gegen Bakterien"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Ohne Schleudern, ohne Weichspüler/Zusätze, spezielles Waschmittel, 20–30 °C (Seideprogramm).",
+      "source": "QM 2.6.2"
+    },
+    {
+      "id": "hygiene-07",
+      "unitId": "hygiene",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was wird vor jeder Westenwäsche gemacht?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der Waschmittelbehälter wird gereinigt"
+        },
+        {
+          "id": "b",
+          "text": "Die Elektroden werden abgeschnitten"
+        },
+        {
+          "id": "c",
+          "text": "Die Westen werden desinfiziert"
+        },
+        {
+          "id": "d",
+          "text": "Die Trommel wird vorgeheizt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Vor der Wäsche wird der Waschmittelbehälter gereinigt.",
+      "source": "QM 2.6.2"
+    },
+    {
+      "id": "hygiene-08",
+      "unitId": "hygiene",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum müssen Workstations immer trocken gehalten werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Sonst entstehen Wasserflecken und Kalk auf der Westenvorderseite"
+        },
+        {
+          "id": "b",
+          "text": "Wegen Stromschlaggefahr"
+        },
+        {
+          "id": "c",
+          "text": "Weil sonst die Elektroden schrumpfen"
+        },
+        {
+          "id": "d",
+          "text": "Weil der Boden sonst rutschig wird"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Nasse Workstations → Wasserflecken und Kalk auf der Westenvorderseite.",
+      "source": "QM 2.6.2"
+    },
+    {
+      "id": "hygiene-09",
+      "unitId": "hygiene",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Was gilt für die Lagerung von Westen und Elektroden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Keine Kabel umgeknickt oder auf dem Boden"
+        },
+        {
+          "id": "b",
+          "text": "Gurte und Straps so platzieren, dass sie gut trocknen"
+        },
+        {
+          "id": "c",
+          "text": "Klett ohne Verkleben in die Workstation legen"
+        },
+        {
+          "id": "d",
+          "text": "Westen zusammengefaltet in Kisten stapeln"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Ordentlich in Workstations, Kabel nicht geknickt/am Boden, gut trocknen lassen, Klett nicht verkleben.",
+      "source": "QM 2.6.2"
+    },
+    {
+      "id": "hygiene-10",
+      "unitId": "hygiene",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wer arbeitet den Putzplan ab?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der diensthabende Trainer – genau nach Anweisung"
+        },
+        {
+          "id": "b",
+          "text": "Eine Reinigungsfirma"
+        },
+        {
+          "id": "c",
+          "text": "Nur die Azubis"
+        },
+        {
+          "id": "d",
+          "text": "Der Studioleiter"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Der Putzplan ist vom diensthabenden Trainer genau nach Anweisung abzuarbeiten.",
+      "source": "QM 2.6.1"
+    },
+    {
+      "id": "hygiene-11",
+      "unitId": "hygiene",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie belädst du Waschmaschine und Trockner?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Möglichst voll, aber nicht vollgestopft"
+        },
+        {
+          "id": "b",
+          "text": "Immer nur halb voll"
+        },
+        {
+          "id": "c",
+          "text": "Egal, Hauptsache sauber"
+        },
+        {
+          "id": "d",
+          "text": "So voll wie irgend möglich"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Möglichst voll auslasten (Energie), aber nicht vollstopfen.",
+      "source": "QM 2.6.3"
+    },
+    {
+      "id": "faq-01",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Ein Mitglied hat um 10:30 Uhr Termin. Bis wann muss das Training spätestens begonnen haben?",
+      "image": "/wissen/uhr-termin.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "10:37 Uhr"
+        },
+        {
+          "id": "b",
+          "text": "10:35 Uhr"
+        },
+        {
+          "id": "c",
+          "text": "10:40 Uhr"
+        },
+        {
+          "id": "d",
+          "text": "10:45 Uhr"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Spätestens 7 Minuten nach der vollen oder halben Stunde muss das Training begonnen haben.",
+      "source": "QM 3.1.1"
+    },
+    {
+      "id": "faq-02",
+      "unitId": "faq",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied kommt zu spät. Was ist richtig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Optionen aufzeigen: verkürzt mittrainieren (wenn möglich) oder neuen Termin"
+        },
+        {
+          "id": "b",
+          "text": "Bei verkürzter Zeit den Impuls beider Trainierenden gleichschalten"
+        },
+        {
+          "id": "c",
+          "text": "Danach das Gerät wieder auf 20 Minuten stellen"
+        },
+        {
+          "id": "d",
+          "text": "Das Training einfach überziehen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Verkürzt (falls z. B. zwei Trainer da) oder neuer Termin; Impuls gleichschalten, danach wieder 20 Min.",
+      "source": "QM 3.1.1"
+    },
+    {
+      "id": "faq-03",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Ein Mitglied erscheint nicht zum Termin. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Prüfen, ob abgesagt/umgebucht wurde – sonst immer anrufen"
+        },
+        {
+          "id": "b",
+          "text": "Termin löschen und abwarten"
+        },
+        {
+          "id": "c",
+          "text": "Eine Mahnung schicken"
+        },
+        {
+          "id": "d",
+          "text": "Nichts, das ist Sache des Mitglieds"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erst prüfen (Absage/anderer Termin nicht ausgetragen?), sonst immer anrufen und nachfragen.",
+      "source": "QM 3.1.2"
+    },
+    {
+      "id": "faq-04",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied sagt seinen Wochentermin komplett ab. Wie reagierst du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Empfehlung generieren: „Wer vertritt dich diese Woche?“ (Urlaubsgutschein)"
+        },
+        {
+          "id": "b",
+          "text": "Termin einfach austragen"
+        },
+        {
+          "id": "c",
+          "text": "Auf die nächste Woche verschieben ohne Nachfrage"
+        },
+        {
+          "id": "d",
+          "text": "Eine Gebühr berechnen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Empfehlung generieren – Urlaubsgutschein nutzen.",
+      "source": "QM 3.1.3"
+    },
+    {
+      "id": "faq-05",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied will nur bei seinem Lieblingstrainer trainieren. Welches Argument passt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Abwechslung bringt neue, trainerspezifische Reize – und unser Preis ist nur in diesem Konzept möglich"
+        },
+        {
+          "id": "b",
+          "text": "Das ist laut AGB verboten"
+        },
+        {
+          "id": "c",
+          "text": "Der Lieblingstrainer hat keine Zeit mehr"
+        },
+        {
+          "id": "d",
+          "text": "Das kostet einen Aufpreis von 10 €"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Klassisches PT kostet 100–180 €/h; unser Preis-Leistungs-Verhältnis geht nur so – und Abwechslung = bessere Reize.",
+      "source": "QM 3.1.4"
+    },
+    {
+      "id": "faq-06",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied fragt: „Warum riechen die Westen so?“ Was ist die richtige Erklärung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Geruch von abgestandenem Wasser – kein Schweiß, keine Bakterien"
+        },
+        {
+          "id": "b",
+          "text": "Das sind Reste vom Desinfektionsmittel"
+        },
+        {
+          "id": "c",
+          "text": "Die Westen werden nur selten gewaschen"
+        },
+        {
+          "id": "d",
+          "text": "Das ist der Geruch der Elektronik"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Antibakterielle Elektroden; nur Wassergeruch (wie nasses Handtuch). Westen werden regelmäßig gewaschen und desinfiziert.",
+      "source": "QM 3.1.5"
+    },
+    {
+      "id": "faq-07",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Ein Mitglied hat zum ersten Mal seine Trainingskleidung vergessen. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ausnahmsweise kostenlos – Hinweis, dass Leihen normal 5,90 € kostet"
+        },
+        {
+          "id": "b",
+          "text": "Es muss 5,90 € zahlen"
+        },
+        {
+          "id": "c",
+          "text": "Training fällt aus"
+        },
+        {
+          "id": "d",
+          "text": "Es trainiert in Straßenkleidung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erstes Mal kostenlos mit freundlichem Hinweis auf 5,90 €.",
+      "source": "QM 3.1.6"
+    },
+    {
+      "id": "faq-08",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Dasselbe Mitglied vergisst die Kleidung ein zweites Mal. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "5,90 € verlangen und im DataPlus vermerken"
+        },
+        {
+          "id": "b",
+          "text": "Wieder kostenlos – Kulanz"
+        },
+        {
+          "id": "c",
+          "text": "10 € verlangen"
+        },
+        {
+          "id": "d",
+          "text": "Training absagen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ab dem zweiten Mal immer 5,90 € verlangen (DataPlus).",
+      "source": "QM 3.1.6"
+    },
+    {
+      "id": "faq-09",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie ist laut Handbuch im Durchschnitt das Verhältnis Ernährung zu Training für den Erfolg?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "70 % Ernährung, 30 % Training"
+        },
+        {
+          "id": "b",
+          "text": "50 % / 50 %"
+        },
+        {
+          "id": "c",
+          "text": "30 % Ernährung, 70 % Training"
+        },
+        {
+          "id": "d",
+          "text": "90 % Ernährung, 10 % Training"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Im Durchschnitt 70 % Ernährung, 30 % Training – individuell je nach Körper.",
+      "source": "QM 3.1.7"
+    },
+    {
+      "id": "faq-10",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Warum trainiert man bei uns im Schaufenster?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Transparenz – wir haben nichts zu verbergen"
+        },
+        {
+          "id": "b",
+          "text": "Weil kein anderer Platz da ist"
+        },
+        {
+          "id": "c",
+          "text": "Als Werbung für Passanten"
+        },
+        {
+          "id": "d",
+          "text": "Wegen des Tageslichts"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Transparenz: alles läuft sauber und gesund ab, niemand muss sich schämen.",
+      "source": "QM 3.1.9"
+    },
+    {
+      "id": "faq-11",
+      "unitId": "faq",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Warum trainiert man ohne Unterwäsche?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Zwei Stoffschichten erzeugen zu viel Widerstand – keine effektive Wirkung"
+        },
+        {
+          "id": "b",
+          "text": "Die Unterwäsche wäre nach dem Training nass"
+        },
+        {
+          "id": "c",
+          "text": "Weil der Hersteller es aus Hygienegründen vorschreibt"
+        },
+        {
+          "id": "d",
+          "text": "Damit die Weste enger sitzt"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Widerstand zu hoch + Wasser von Weste/Gurten macht Unterwäsche nass.",
+      "source": "QM 3.1.10"
+    },
+    {
+      "id": "faq-12",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welcher Abstand zwischen zwei EMS-Einheiten brachte laut Studie die größten Erfolge?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "5–7 Tage"
+        },
+        {
+          "id": "b",
+          "text": "1–2 Tage"
+        },
+        {
+          "id": "c",
+          "text": "2–3 Tage"
+        },
+        {
+          "id": "d",
+          "text": "10–14 Tage"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Superkompensation: größte Erfolge bei 5–7 Tagen Abstand.",
+      "source": "QM 3.1.11"
+    },
+    {
+      "id": "faq-13",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie viele Trainings pro Jahr sind unser Ziel?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "52"
+        },
+        {
+          "id": "b",
+          "text": "40"
+        },
+        {
+          "id": "c",
+          "text": "48"
+        },
+        {
+          "id": "d",
+          "text": "104"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ziel: 52 Trainings pro Jahr (auch im Urlaub mitdenken).",
+      "source": "QM 3.1.11"
+    },
+    {
+      "id": "faq-14",
+      "unitId": "faq",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Ein Mitglied will EMS mit anderem Training kombinieren. Was stimmt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ausdauer: sehr gut, mehrmals pro Woche – aber nicht am EMS-Tag (außer sehr gut trainiert)"
+        },
+        {
+          "id": "b",
+          "text": "Krafttraining: individuell durch einen erfahrenen Trainer beurteilen lassen"
+        },
+        {
+          "id": "c",
+          "text": "Krafttraining am selben Tag ist immer ideal"
+        },
+        {
+          "id": "d",
+          "text": "Ausdauertraining sollte komplett vermieden werden"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Ausdauer sehr gut (nicht am EMS-Tag), Krafttraining individuell beurteilen.",
+      "source": "QM 3.1.12"
+    },
+    {
+      "id": "faq-15",
+      "unitId": "faq",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Warum ist Krafttraining laut Handbuch die beste Möglichkeit abzunehmen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mehr Muskeln erhöhen den Grundumsatz – auch in Ruhe"
+        },
+        {
+          "id": "b",
+          "text": "Deutlich geringeres Jojo-Risiko"
+        },
+        {
+          "id": "c",
+          "text": "Erkrankungsrisiken sinken durch optimierte Skelettmuskulatur"
+        },
+        {
+          "id": "d",
+          "text": "Es verbrennt im Training mehr Kalorien als jede Ausdauereinheit"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Höherer Grundumsatz, gesündeste Form des Abnehmens, weniger Jojo-Effekt.",
+      "source": "QM 3.1.13"
+    },
+    {
+      "id": "faq-16",
+      "unitId": "faq",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Welche Institutionen werden im Handbuch mit Studien zur EMS-Effektivität genannt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Universität Bayreuth"
+        },
+        {
+          "id": "b",
+          "text": "Universität Erlangen-Nürnberg"
+        },
+        {
+          "id": "c",
+          "text": "Deutsche Sporthochschule Köln"
+        },
+        {
+          "id": "d",
+          "text": "Universität Hamburg"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Bayreuth (2002–03), Erlangen-Nürnberg (2009), DSHS Köln (2008), Herzklinik Bad Oeynhausen (2010).",
+      "source": "QM 3.1.15"
+    },
+    {
+      "id": "faq-17",
+      "unitId": "faq",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Belastet EMS-Training laut Handbuch die Gelenke?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein – anders als herkömmliches Training keine Gelenkbelastung"
+        },
+        {
+          "id": "b",
+          "text": "Ja, mehr als Krafttraining"
+        },
+        {
+          "id": "c",
+          "text": "Nur die Kniegelenke"
+        },
+        {
+          "id": "d",
+          "text": "Ja, wegen der Westen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "EMS stellt keine Belastung für die Gelenke dar.",
+      "source": "QM 3.1.15"
+    },
+    {
+      "id": "service-01",
+      "unitId": "service",
+      "type": "multi",
+      "difficulty": 1,
+      "prompt": "Wie begrüßt du Gäste im Studio?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Immer persönlich"
+        },
+        {
+          "id": "b",
+          "text": "Mit Namen, wenn bekannt"
+        },
+        {
+          "id": "c",
+          "text": "Mit Handschlag – nicht hinter dem Trolley stehen"
+        },
+        {
+          "id": "d",
+          "text": "Kurz winken vom Trolley aus"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Persönlich, lächeln, Namen nutzen, Handschlag – nicht hinter dem Trolley.",
+      "source": "QM 3.2.1"
+    },
+    {
+      "id": "service-02",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wann nimmst du das Studiotelefon ab?",
+      "image": "/wissen/telefon.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "Nach 2–3 Mal Klingeln"
+        },
+        {
+          "id": "b",
+          "text": "Sofort beim ersten Klingeln"
+        },
+        {
+          "id": "c",
+          "text": "Nach 5 Mal Klingeln"
+        },
+        {
+          "id": "d",
+          "text": "Erst wenn du fertig bist"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "2–3 x klingeln lassen, in Top-Zustand bringen, gerade hinstellen, lächeln.",
+      "source": "QM 3.2.2"
+    },
+    {
+      "id": "service-03",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Warum wartest du nach dem Abheben ca. 0,5 Sekunden, bevor du sprichst?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Sonst ist dein erstes Wort nicht hörbar"
+        },
+        {
+          "id": "b",
+          "text": "Damit der Anrufer zuerst spricht"
+        },
+        {
+          "id": "c",
+          "text": "Um professionell zu wirken"
+        },
+        {
+          "id": "d",
+          "text": "Damit die Aufnahme startet"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "0,5 Sekunden warten – sonst ist das erste Wort nicht hörbar.",
+      "source": "QM 3.2.2"
+    },
+    {
+      "id": "service-04",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie meldest du dich am Telefon?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "„Schönen guten Tag Standort XY, Sie sprechen mit (Vorname Nachname)!“"
+        },
+        {
+          "id": "b",
+          "text": "„Bodystreet, hallo?“"
+        },
+        {
+          "id": "c",
+          "text": "„Ja, bitte?“"
+        },
+        {
+          "id": "d",
+          "text": "„Guten Tag, wie kann ich helfen?“"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Standard: Schönen guten Tag Standort XY, Sie sprechen mit Vorname Nachname.",
+      "source": "QM 3.2.2"
+    },
+    {
+      "id": "service-05",
+      "unitId": "service",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gehört zur Verabschiedung am Telefon?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Für den Anruf bedanken"
+        },
+        {
+          "id": "b",
+          "text": "Namen verwenden und lächeln"
+        },
+        {
+          "id": "c",
+          "text": "Eine tolle Zeit wünschen – möglichst ein Muster durchbrechen"
+        },
+        {
+          "id": "d",
+          "text": "Möglichst kurz „Tschüss“ sagen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Bedanken, Namen, lächeln, tolle Zeit/Tag/Urlaub wünschen.",
+      "source": "QM 3.2.3"
+    },
+    {
+      "id": "service-06",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wo bist du in trainingsfreien Zeiten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Präsent auf der Trainingsfläche"
+        },
+        {
+          "id": "b",
+          "text": "Im Mitarbeiterraum"
+        },
+        {
+          "id": "c",
+          "text": "Im Büro am PC"
+        },
+        {
+          "id": "d",
+          "text": "In der Pause"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Kein Verstecken im Mitarbeiterraum – sofort ein lächelnder Trainer an der Tür.",
+      "source": "QM 3.2.4"
+    },
+    {
+      "id": "service-07",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "In welcher Reihenfolge bestätigst du einen Termin?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Wochentag – Datum – Uhrzeit"
+        },
+        {
+          "id": "b",
+          "text": "Datum – Uhrzeit – Wochentag"
+        },
+        {
+          "id": "c",
+          "text": "Uhrzeit – Datum – Wochentag"
+        },
+        {
+          "id": "d",
+          "text": "Datum – Wochentag – Uhrzeit"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Strategie: 1. Wochentag, 2. Datum, 3. Uhrzeit.",
+      "source": "QM 3.2.8 a"
+    },
+    {
+      "id": "service-08",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Bis wann sollten E-Mails und Anrufe spätestens beantwortet sein?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eine Stunde nach Eingang"
+        },
+        {
+          "id": "b",
+          "text": "Am selben Tag"
+        },
+        {
+          "id": "c",
+          "text": "Innerhalb von 24 Stunden"
+        },
+        {
+          "id": "d",
+          "text": "Zum Schichtende"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Spätestens eine Stunde nach Eingang.",
+      "source": "QM 3.2.8 b"
+    },
+    {
+      "id": "service-09",
+      "unitId": "service",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Eine Kündigung geht ein. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "(Post-)Eingangsdatum, Kürzel und Stempel auf der Kündigung notieren"
+        },
+        {
+          "id": "b",
+          "text": "Kündigungseingang in Magicline eintragen"
+        },
+        {
+          "id": "c",
+          "text": "Mitglied anrufen und die Kündigung ablehnen"
+        },
+        {
+          "id": "d",
+          "text": "Kündigung bis zum Herold liegen lassen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Datum, Kürzel, Stempel; Eingang in Magicline; weiteres Vorgehen: Ordner „Abläufe Studioalltag“.",
+      "source": "QM 3.2.8 c"
+    },
+    {
+      "id": "service-10",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Eine außerordentliche Anfrage kommt rein, das Studiomanagement ist nicht da. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Name, Kontaktdaten und Grund in der Aufgabenliste notieren und sagen, dass sich das Studiomanagement schnellstens meldet"
+        },
+        {
+          "id": "b",
+          "text": "Selbst entscheiden"
+        },
+        {
+          "id": "c",
+          "text": "Bitten, später nochmal anzurufen"
+        },
+        {
+          "id": "d",
+          "text": "Die Handynummer des Studioleiters herausgeben"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Freundlich verweisen, Daten + Grund schriftlich in die Aufgabenliste.",
+      "source": "QM 3.2.8 d"
+    },
+    {
+      "id": "service-11",
+      "unitId": "service",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was prüfst bzw. erledigst du täglich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eigenes Ablagefach"
+        },
+        {
+          "id": "b",
+          "text": "To-Do-Fach"
+        },
+        {
+          "id": "c",
+          "text": "Briefkasten leeren"
+        },
+        {
+          "id": "d",
+          "text": "Bestandsliste abgleichen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Ablagefach, To-Do-Fach, Post – täglich. Bestandsliste ist monatlich.",
+      "source": "QM 3.2.8 e"
+    },
+    {
+      "id": "service-12",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welches Wasser nutzt du zum Einsprühen in der kalten Jahreszeit?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Warmes Wasser"
+        },
+        {
+          "id": "b",
+          "text": "Kaltes Wasser"
+        },
+        {
+          "id": "c",
+          "text": "Destilliertes Wasser"
+        },
+        {
+          "id": "d",
+          "text": "Egal"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wasser bereits aufgefüllt, bevor das Mitglied umgezogen ist – in kalten Jahreszeiten warm.",
+      "source": "QM 3.2.9 b"
+    },
+    {
+      "id": "service-13",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was liest du vor jedem Training in Magic Line?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "DataPlus & BIF des Mitglieds"
+        },
+        {
+          "id": "b",
+          "text": "Nur den Vertrag"
+        },
+        {
+          "id": "c",
+          "text": "Die Kontoauszüge"
+        },
+        {
+          "id": "d",
+          "text": "Nichts, du fragst einfach"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Vor jedem Training aktuelle Infos zum Mitglied (DataPlus & BIF), Vermessungstermin, Westen-/Elektrodengrößen.",
+      "source": "QM 3.2.9 c/f"
+    },
+    {
+      "id": "service-14",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was tust du nach dem Training in Magic Line?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mitgliederinfos aktualisieren (BIF)"
+        },
+        {
+          "id": "b",
+          "text": "Nichts"
+        },
+        {
+          "id": "c",
+          "text": "Den nächsten Termin löschen"
+        },
+        {
+          "id": "d",
+          "text": "Die Rechnung schreiben"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Nach dem Training: Mitgliederinfos aktualisieren → BIF!",
+      "source": "QM 3.2.9 f"
+    },
+    {
+      "id": "service-15",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welche Aufteilung gilt im Training?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "80 % am Kunden, 20 % am Gerät"
+        },
+        {
+          "id": "b",
+          "text": "50 % / 50 %"
+        },
+        {
+          "id": "c",
+          "text": "20 % am Kunden, 80 % am Gerät"
+        },
+        {
+          "id": "d",
+          "text": "100 % am Gerät"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "80 % des Trainings am Kunden arbeiten, 20 % am Gerät.",
+      "source": "QM 3.2.10 b"
+    },
+    {
+      "id": "service-16",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wofür steht EVIC in der Trainingskommunikation?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eigenschaft, Vorteil, Identifikation, Check"
+        },
+        {
+          "id": "b",
+          "text": "Energie, Vitalität, Intensität, Coaching"
+        },
+        {
+          "id": "c",
+          "text": "Einstellung, Vertrauen, Interesse, Check"
+        },
+        {
+          "id": "d",
+          "text": "Eigenschaft, Verkauf, Interesse, Coaching"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "EVIC = Eigenschaft, Vorteil, Identifikation, Check.",
+      "source": "QM 3.2.10 c"
+    },
+    {
+      "id": "service-17",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was sind „versteckte Ziele“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ziele, die du siehst und der Kunde nicht kennt – z. B. X-Beine oder Bürohaltung"
+        },
+        {
+          "id": "b",
+          "text": "Ziele, die der Kunde geheim hält"
+        },
+        {
+          "id": "c",
+          "text": "Ziele aus dem Vertrag"
+        },
+        {
+          "id": "d",
+          "text": "Umsatzziele des Studios"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Fokus auf körperliche Besonderheiten, die der Kunde selbst nicht kennt.",
+      "source": "QM 3.2.10 d"
+    },
+    {
+      "id": "service-18",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ist Smalltalk während des Trainings okay?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein – zielführend kommunizieren; Smalltalk vor/nach dem Training"
+        },
+        {
+          "id": "b",
+          "text": "Ja, das lockert auf"
+        },
+        {
+          "id": "c",
+          "text": "Ja, wenn das Mitglied anfängt"
+        },
+        {
+          "id": "d",
+          "text": "Nur bei Stammkunden"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Keine Privatgespräche im Training – dafür ist die Zeit vor und nach dem Training da.",
+      "source": "QM 3.2.10 c"
+    },
+    {
+      "id": "service-19",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Im Training fällt eine Elektrode ab. Was ist der erste Schritt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die entsprechende Muskelgruppe auf 0 drehen"
+        },
+        {
+          "id": "b",
+          "text": "Elektrode sofort wieder andrücken"
+        },
+        {
+          "id": "c",
+          "text": "Training abbrechen"
+        },
+        {
+          "id": "d",
+          "text": "Gesamtintensität erhöhen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erst Muskelgruppe auf 0, Mitglied beruhigen.",
+      "source": "QM 3.2.10 f"
+    },
+    {
+      "id": "service-20",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welche Reihenfolge ist richtig, wenn eine Elektrode abfällt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Auf 0 drehen → beruhigen → abkabeln & neu befeuchten → anschließen & langsam hochdrehen"
+        },
+        {
+          "id": "b",
+          "text": "Abkabeln → auf 0 drehen → anschließen → beruhigen"
+        },
+        {
+          "id": "c",
+          "text": "Beruhigen → andrücken → weiter trainieren"
+        },
+        {
+          "id": "d",
+          "text": "Gerät ausschalten → neue Weste holen → neu starten"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "0 → beruhigen → abkabeln, Elektrode neu befeuchten → anschließen, langsam hochdrehen.",
+      "source": "QM 3.2.10 f"
+    },
+    {
+      "id": "service-21",
+      "unitId": "service",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Ein Walk-in kommt, du bist allein im Training. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Freundlich begrüßen wie immer"
+        },
+        {
+          "id": "b",
+          "text": "Kurz erklären, dass du gerade allein bist (Ausnahme)"
+        },
+        {
+          "id": "c",
+          "text": "Sagen, in wie vielen Minuten du bei ihm bist"
+        },
+        {
+          "id": "d",
+          "text": "Training unterbrechen und Walk-in beraten"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Begrüßen, Ausnahme erklären, Zeit nennen – will er nicht warten: Nummer + Wunschzeit für Rückruf.",
+      "source": "QM 3.2.10 f"
+    },
+    {
+      "id": "service-22",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie läuft die Abwesenheitsliste ab?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Montag morgens ausdrucken, Mo alle anrufen, Di die Übrigen – dann Liste vernichten"
+        },
+        {
+          "id": "b",
+          "text": "Freitags ausdrucken und per Mail anschreiben"
+        },
+        {
+          "id": "c",
+          "text": "Monatlich durchtelefonieren"
+        },
+        {
+          "id": "d",
+          "text": "Nur Mitglieder anrufen, die länger als 4 Wochen fehlen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "7-tägig: Mo ausdrucken & telefonieren, Di Rest, dann vernichten.",
+      "source": "QM 3.2.11 a"
+    },
+    {
+      "id": "service-23",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wer bleibt auf der Abwesenheitsliste und wird angerufen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Alle, die in der aktuellen KW weder einen Termin haben noch komplett abgesagt haben"
+        },
+        {
+          "id": "b",
+          "text": "Alle Mitglieder"
+        },
+        {
+          "id": "c",
+          "text": "Nur Mitglieder mit Kündigung"
+        },
+        {
+          "id": "d",
+          "text": "Nur Neukunden"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wer Termin hat oder abgesagt hat (Urlaub, Krankheit), wird gestrichen – der Rest wird angerufen.",
+      "source": "QM 3.2.11 a"
+    },
+    {
+      "id": "service-24",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie lautet die Formel für Begeisterung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Begeisterung = Erwartungshaltung + X"
+        },
+        {
+          "id": "b",
+          "text": "Begeisterung = Preis − Leistung"
+        },
+        {
+          "id": "c",
+          "text": "Begeisterung = Training × Ernährung"
+        },
+        {
+          "id": "d",
+          "text": "Begeisterung = Service + Rabatt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Begeisterung = Erwartungshaltung + X.",
+      "source": "QM 3"
+    },
+    {
+      "id": "service-25",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was prüfst du, bevor du eine neue Serviceleistung einführst?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ob sie für alle – rund 250 Mitglieder pro Woche – umsetzbar ist"
+        },
+        {
+          "id": "b",
+          "text": "Ob sie Geld bringt"
+        },
+        {
+          "id": "c",
+          "text": "Ob der Kollege sie gut findet"
+        },
+        {
+          "id": "d",
+          "text": "Ob sie in Instagram gut aussieht"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Services müssen multiplizierbar sein – wenn du anfängst, immer und mit jedem.",
+      "source": "QM 3"
+    },
+    {
+      "id": "service-26",
+      "unitId": "service",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was wollen Fans laut Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Unterhalten werden"
+        },
+        {
+          "id": "b",
+          "text": "Ernst genommen werden"
+        },
+        {
+          "id": "c",
+          "text": "Ein individuelles, auf sie abgestimmtes Produkt"
+        },
+        {
+          "id": "d",
+          "text": "Möglichst viele Rabatte"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "U. a. unterhalten, ernst genommen, Anerkennung, Spaß, Herzblut & Werte spüren, individuelles Produkt.",
+      "source": "QM 3.2.11"
+    },
+    {
+      "id": "service-27",
+      "unitId": "service",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Ein Mitglied war krank oder hat anhaltende Beschwerden. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Genesungskarte oder Anruf (je nach Beschwerden)"
+        },
+        {
+          "id": "b",
+          "text": "Nichts – Datenschutz"
+        },
+        {
+          "id": "c",
+          "text": "Sofort Ruhezeit eintragen"
+        },
+        {
+          "id": "d",
+          "text": "Eine Rechnung über verpasste Termine schicken"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Genesungskarte oder Anruf – Mitglied ist danach oft „sprachlos“.",
+      "source": "QM 3.2.11 b"
+    },
+    {
+      "id": "ems-01",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie viel Prozent der Muskelfasern werden beim EMS-Training angesprochen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Über 90 %"
+        },
+        {
+          "id": "b",
+          "text": "Etwa 50 %"
+        },
+        {
+          "id": "c",
+          "text": "Etwa 70 %"
+        },
+        {
+          "id": "d",
+          "text": "100 %"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Über 90 % der Muskelfasern, komplette Skelettmuskulatur.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-02",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "20 Minuten Training mit 4 s Impuls / 4 s Pause: Wie lange steht der Muskel unter Spannung?",
+      "image": "/wissen/ems-impuls.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "10 Minuten"
+        },
+        {
+          "id": "b",
+          "text": "5 Minuten"
+        },
+        {
+          "id": "c",
+          "text": "15 Minuten"
+        },
+        {
+          "id": "d",
+          "text": "20 Minuten"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bei 4 s an / 4 s aus steht der Muskel volle 10 Minuten unter Spannung.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-03",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was bedeuten 85 Hz?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "85 Kontraktionen pro Sekunde (Wechsel zwischen Plus und Minus)"
+        },
+        {
+          "id": "b",
+          "text": "85 Kontraktionen pro Minute"
+        },
+        {
+          "id": "c",
+          "text": "85 % Intensität"
+        },
+        {
+          "id": "d",
+          "text": "85 Impulse pro Training"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "85 Hz → 85 Kontraktionen pro Sekunde.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-04",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was beschreibt die Impulsbreite von 350 Mikrosekunden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Tiefe, mit der der Impuls in den Muskel geht"
+        },
+        {
+          "id": "b",
+          "text": "Die Dauer einer Trainingseinheit"
+        },
+        {
+          "id": "c",
+          "text": "Die Pause zwischen zwei Impulsen"
+        },
+        {
+          "id": "d",
+          "text": "Die Größe der Elektrode"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "350 µs Impulsbreite = Tiefe, mit der es in den Muskel geht.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-05",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viele Muskelkontraktionen entstehen ca. in einem Training?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "ca. 51.000"
+        },
+        {
+          "id": "b",
+          "text": "ca. 5.100"
+        },
+        {
+          "id": "c",
+          "text": "ca. 510.000"
+        },
+        {
+          "id": "d",
+          "text": "ca. 15.000"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ca. 51.000 Muskelkontraktionen.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-06",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ein Mitglied hat im Training Druck im Oberbauch („Schlag in den Magen“). Was ist die Ursache?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bei schwacher oberer Rückenmuskulatur wird der Impuls zum Zwerchfell weitergeleitet"
+        },
+        {
+          "id": "b",
+          "text": "Der Bauchregler ist zu hoch"
+        },
+        {
+          "id": "c",
+          "text": "Das Mitglied hat zu viel gegessen"
+        },
+        {
+          "id": "d",
+          "text": "Die Weste sitzt zu eng"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gefühl kommt ausschließlich vom oberen Rücken – ungefährlich, verschwindet mit Training.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-07",
+      "unitId": "ems",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Was tust du bei Druck im Oberbauch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Oberen Rücken (Regler 4) langsam aufbauen"
+        },
+        {
+          "id": "b",
+          "text": "Mitglied beruhigen: unangenehm, aber ungefährlich"
+        },
+        {
+          "id": "c",
+          "text": "Bauch (Regler 6) runterdrehen"
+        },
+        {
+          "id": "d",
+          "text": "Training sofort abbrechen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Regler 4 langsam aufbauen – NICHT den Bauch (Regler 6) runterdrehen, der ist unbeteiligt.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-08",
+      "unitId": "ems",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Schichten erhöhen den Widerstand zwischen Elektrode und Muskel (Ohmscher Widerstand)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Trainingskleidung"
+        },
+        {
+          "id": "b",
+          "text": "Bodylotion"
+        },
+        {
+          "id": "c",
+          "text": "Fettgewebe"
+        },
+        {
+          "id": "d",
+          "text": "Muskelmasse"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Elektrode – Trainingskleidung – Bodylotion – Fettgewebe – Muskeln.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-09",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wo spürt man den Impuls stärker?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Je trainierter eine Stelle ist, desto stärker"
+        },
+        {
+          "id": "b",
+          "text": "Je untrainierter, desto stärker"
+        },
+        {
+          "id": "c",
+          "text": "Überall gleich"
+        },
+        {
+          "id": "d",
+          "text": "Nur an den Beinen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Je trainierter eine Stelle, desto stärker spürt man dort den Impuls.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-10",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Probetraining: Welchen Borg-Wert peilst du für Beine und Po an?",
+      "image": "/wissen/borg-skala.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "8"
+        },
+        {
+          "id": "b",
+          "text": "5"
+        },
+        {
+          "id": "c",
+          "text": "6"
+        },
+        {
+          "id": "d",
+          "text": "10"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Beine & Po (größte Muskelgruppen): 8, Rest: 5–6.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-11",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Probetraining: Welchen Borg-Wert peilst du für die übrigen Muskelgruppen an?",
+      "image": "/wissen/borg-skala.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "5–6"
+        },
+        {
+          "id": "b",
+          "text": "3–4"
+        },
+        {
+          "id": "c",
+          "text": "7–8"
+        },
+        {
+          "id": "d",
+          "text": "9–10"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Rest: 5–6 auf der Borg-Skala (1–10).",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-12",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welches Programm wird in den ersten 6–12 Monaten genutzt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Basis – langsamer Anstieg der Impulse"
+        },
+        {
+          "id": "b",
+          "text": "Fortgeschritten"
+        },
+        {
+          "id": "c",
+          "text": "Impulsgewöhnung"
+        },
+        {
+          "id": "d",
+          "text": "Ausdauer"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Impulsgewöhnung beim Probetraining, Basis in den ersten 6–12 Monaten.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-13",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ab wann darf frühestens auf „Fortgeschritten“ umgestellt werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nach 6 Monaten – es sei denn, das Limit ist vorher erreicht"
+        },
+        {
+          "id": "b",
+          "text": "Nach 4 Wochen"
+        },
+        {
+          "id": "c",
+          "text": "Nach 12 Monaten"
+        },
+        {
+          "id": "d",
+          "text": "Sobald das Mitglied es möchte"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Fortgeschritten frühestens nach 6 Monaten (außer Limit vorher erreicht).",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-14",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was muss bei jedem Neueinsteiger vor dem ersten Training stattfinden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Anamnese mit schriftlicher Abfrage möglicher Kontraindikationen – unterschrieben von Kunde und Abfragendem"
+        },
+        {
+          "id": "b",
+          "text": "Eine Körpervermessung"
+        },
+        {
+          "id": "c",
+          "text": "Ein Belastungs-EKG"
+        },
+        {
+          "id": "d",
+          "text": "Ein Probetraining auf Maximum"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Schriftliche Anamnese, unterschrieben und archiviert; bei Auffälligkeiten erst nach ärztlicher Freigabe.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-15",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Das Mitglied konnte vor dem Training nicht essen. Was wird empfohlen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kohlenhydratreicher, nicht belastender Snack (≈ 250 kcal) ca. 2 h vorher"
+        },
+        {
+          "id": "b",
+          "text": "Proteinshake direkt vor dem Training"
+        },
+        {
+          "id": "c",
+          "text": "Nüchtern trainieren"
+        },
+        {
+          "id": "d",
+          "text": "Großes Mittagessen 30 min vorher"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wegen hoher metabolischer Belastung: KH-reicher Snack ≈ 250 kcal ca. 2 h vorher.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-16",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viel sollte das Mitglied rund ums Training trinken?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Je 500 ml vor, während und nach dem Training"
+        },
+        {
+          "id": "b",
+          "text": "Insgesamt 250 ml"
+        },
+        {
+          "id": "c",
+          "text": "1 Liter nur danach"
+        },
+        {
+          "id": "d",
+          "text": "Nichts während des Trainings"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erhöhte Flüssigkeitszufuhr (je 500 ml) vor/während/nach – gegen mögliche Nierenbelastung.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-17",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was gilt für das allererste Training bzw. Probetraining?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Niemals ausbelastend – egal wie fit oder motiviert das Mitglied ist"
+        },
+        {
+          "id": "b",
+          "text": "Ausbelastend, damit es den Effekt spürt"
+        },
+        {
+          "id": "c",
+          "text": "Ausbelastend nur bei Sportlern"
+        },
+        {
+          "id": "d",
+          "text": "Wie ein normales Training"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ein ausbelastendes Ersttraining führte in der Vergangenheit zu negativen gesundheitlichen Folgen.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-18",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ab wann darf frühestens die höchste Belastungsstufe („schwer bis schwer+“) trainiert werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nach 6–10 Wochen systematischen Trainings"
+        },
+        {
+          "id": "b",
+          "text": "Nach 2 Wochen"
+        },
+        {
+          "id": "c",
+          "text": "Nach 6 Monaten"
+        },
+        {
+          "id": "d",
+          "text": "Ab dem dritten Training"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Frühestens nach 6–10 Wochen; schmerzhafter Dauer-Tetanus ist generell zu vermeiden.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-19",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wie wird das Ersttraining laut Leitlinie aufgebaut?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "5 Min. Impulsgewöhnung, dann moderate Intensität („etwas schwer“)"
+        },
+        {
+          "id": "b",
+          "text": "Sofort 20 Min. mit hoher Intensität"
+        },
+        {
+          "id": "c",
+          "text": "10 Min. Maximaltest"
+        },
+        {
+          "id": "d",
+          "text": "Nur Impulsgewöhnung über 20 Min."
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Impulsgewöhnung über 5 Min., dann moderat und intermittierend.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-20",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welcher Grundsatz gilt immer – besonders beim Ersttraining?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Haltung vor Intensität"
+        },
+        {
+          "id": "b",
+          "text": "Intensität vor Haltung"
+        },
+        {
+          "id": "c",
+          "text": "Tempo vor Technik"
+        },
+        {
+          "id": "d",
+          "text": "Schmerz ist Fortschritt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Generell gilt immer: Haltung vor Intensität.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-21",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie oft darf Ganzkörper-EMS laut Leitlinie maximal trainiert werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eine Einheit pro Woche"
+        },
+        {
+          "id": "b",
+          "text": "Zwei Einheiten pro Woche"
+        },
+        {
+          "id": "c",
+          "text": "Täglich 10 Minuten"
+        },
+        {
+          "id": "d",
+          "text": "Dreimal pro Woche"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die Trainingshäufigkeit darf eine Einheit pro Woche nicht übersteigen.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-22",
+      "unitId": "ems",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Worauf soll das Mitglied vor dem Training verzichten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Alkohol"
+        },
+        {
+          "id": "b",
+          "text": "Drogen, Stimulanzien, Muskelrelaxantien"
+        },
+        {
+          "id": "c",
+          "text": "Erschöpfende Belastung"
+        },
+        {
+          "id": "d",
+          "text": "Einen kohlenhydratreichen Snack"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Nur in guter Verfassung und ohne Schmerzen; bei Fieber gar nicht trainieren.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-23",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Während des Trainings zeigt sich ein möglicher Kontraindikator. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Training sofort abbrechen"
+        },
+        {
+          "id": "b",
+          "text": "Intensität halbieren und weitermachen"
+        },
+        {
+          "id": "c",
+          "text": "Bis zum Ende durchziehen und dann fragen"
+        },
+        {
+          "id": "d",
+          "text": "Kollegen holen und weitertrainieren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bei möglichen Kontraindikatoren ist das Training sofort abzubrechen.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "ems-24",
+      "unitId": "ems",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Welche Ausdauer-Anpassungen schafft EMS laut Handbuch auch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kapillarisierung"
+        },
+        {
+          "id": "b",
+          "text": "Mehr Mitochondrien"
+        },
+        {
+          "id": "c",
+          "text": "Puls sinkt"
+        },
+        {
+          "id": "d",
+          "text": "Blutdruck steigt"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Kapillarisierung, Mitochondrien, Herzvolumen, VO2max, Puls und Blutdruck sinken.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-25",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welcher Anteil des Energieverbrauchs ist laut Handbuch der Grundumsatz?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "75 %"
+        },
+        {
+          "id": "b",
+          "text": "25 %"
+        },
+        {
+          "id": "c",
+          "text": "50 %"
+        },
+        {
+          "id": "d",
+          "text": "90 %"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "75 % Grundumsatz, 25 % tägliche Verbrennung (z. B. Sport).",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-26",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Warum betonst du beim Mitglied die Ernährung so stark?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Wir betreuen es nur 0,5 von 168 Stunden pro Woche"
+        },
+        {
+          "id": "b",
+          "text": "Weil wir Nutrition verkaufen wollen"
+        },
+        {
+          "id": "c",
+          "text": "Weil EMS allein nichts bringt"
+        },
+        {
+          "id": "d",
+          "text": "Weil es in den AGB steht"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "0,5 Stunden bei uns, 167,5 Stunden nicht bei uns.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "evi-01",
+      "unitId": "evi",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wofür steht EVI?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eigenschaft – Vorteil – Identifikation"
+        },
+        {
+          "id": "b",
+          "text": "Energie – Vitalität – Intensität"
+        },
+        {
+          "id": "c",
+          "text": "Einwand – Verkauf – Interesse"
+        },
+        {
+          "id": "d",
+          "text": "Eigenschaft – Verkauf – Information"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "EVI = Eigenschaft, Vorteil, Identifikation.",
+      "source": "QM 3.3.3"
+    },
+    {
+      "id": "evi-02",
+      "unitId": "evi",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Bandscheibenvorfall: Eigenschaft „kein Zusatzgewicht“. Welcher Vorteil passt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ein Muskelkorsett wird aufgebaut"
+        },
+        {
+          "id": "b",
+          "text": "Mehr Freizeit"
+        },
+        {
+          "id": "c",
+          "text": "Höherer Grundumsatz"
+        },
+        {
+          "id": "d",
+          "text": "Mehr Kalorienverbrauch"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bandscheibe: Muskelkorsett, oberflächliche & innere Muskulatur, Haltungskorrektur.",
+      "source": "QM 3.3.3"
+    },
+    {
+      "id": "evi-03",
+      "unitId": "evi",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Motiv „Keine Zeit“: Eigenschaft „20 Min. Training pro Woche“ – welcher Vorteil?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mehr Freizeit"
+        },
+        {
+          "id": "b",
+          "text": "Muskelkorsett"
+        },
+        {
+          "id": "c",
+          "text": "Gelenkschonend"
+        },
+        {
+          "id": "d",
+          "text": "Lockere Muskulatur"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Keine Zeit: mehr Freizeit, alle Muskeln trainiert, planbar.",
+      "source": "QM 3.3.3"
+    },
+    {
+      "id": "evi-04",
+      "unitId": "evi",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Eigenschaften nennt die EVI-Tabelle beim Motiv „Abnehmen“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Muskelaufbau"
+        },
+        {
+          "id": "b",
+          "text": "Ernährungstagebuch"
+        },
+        {
+          "id": "c",
+          "text": "Körpervermessung"
+        },
+        {
+          "id": "d",
+          "text": "Leistungsdiagnostik im Labor"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Abnehmen: Muskelaufbau, Nutrition, Ernährungstagebuch, Körpervermessung, PT, Rezepte.",
+      "source": "QM 3.3.3"
+    },
+    {
+      "id": "evi-05",
+      "unitId": "evi",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Motiv „Gelenkprobleme“ – welcher Vorteil passt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Gelenkschonend und Stärkung der Muskulatur um das Gelenk"
+        },
+        {
+          "id": "b",
+          "text": "Mehr Freizeit"
+        },
+        {
+          "id": "c",
+          "text": "Höherer Kalorienverbrauch"
+        },
+        {
+          "id": "d",
+          "text": "Schnellere Fettverbrennung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gelenkprobleme: gelenkschonend, Übungsauswahl/Haltung, Muskulatur ums Gelenk, Training trotz Problem möglich.",
+      "source": "QM 3.3.3"
+    },
+    {
+      "id": "evi-06",
+      "unitId": "evi",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welcher Satz leitet die Identifikation ein?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "„Das bedeutet für dich …“"
+        },
+        {
+          "id": "b",
+          "text": "„Das kostet dich …“"
+        },
+        {
+          "id": "c",
+          "text": "„Das musst du …“"
+        },
+        {
+          "id": "d",
+          "text": "„Laut Vertrag …“"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Beispiele: „Das bedeutet für dich…“, „Das ermöglicht dir…“, „Ist dir das wichtig?“",
+      "source": "QM 3.3.3"
+    },
+    {
+      "id": "kv-01",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie terminierst du eine Körpervermessung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Entsprechende Farbe wählen und 15 Minuten extra einplanen"
+        },
+        {
+          "id": "b",
+          "text": "Wie ein normales Training"
+        },
+        {
+          "id": "c",
+          "text": "30 Minuten extra"
+        },
+        {
+          "id": "d",
+          "text": "Nur außerhalb der Öffnungszeiten"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Entsprechende Farbe + 15 Min. extra.",
+      "source": "QM 3.4.1"
+    },
+    {
+      "id": "kv-02",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Mit welcher Frage holst du die Eigenreflexion des Mitglieds ab?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "„Was hast du denn selbst für ein Gefühl?“"
+        },
+        {
+          "id": "b",
+          "text": "„Hast du dich an den Plan gehalten?“"
+        },
+        {
+          "id": "c",
+          "text": "„Warum hast du zugenommen?“"
+        },
+        {
+          "id": "d",
+          "text": "„Willst du verlängern?“"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erst Selbsteinschätzung, dann z. B. Ernährung 1–10 bewerten lassen.",
+      "source": "QM 3.4.1"
+    },
+    {
+      "id": "kv-03",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie stehst du bei der Messung zum Mitglied?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Leicht seitlich – nie direkt frontal"
+        },
+        {
+          "id": "b",
+          "text": "Direkt frontal"
+        },
+        {
+          "id": "c",
+          "text": "Hinter dem Mitglied"
+        },
+        {
+          "id": "d",
+          "text": "Egal"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Grundsätzlich leicht seitlich, nie frontal knien oder stehen.",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "kv-04",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "An welchem Punkt misst du den Bauchumfang?",
+      "image": "/wissen/koerper-messpunkte.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "3"
+        },
+        {
+          "id": "b",
+          "text": "1"
+        },
+        {
+          "id": "c",
+          "text": "2"
+        },
+        {
+          "id": "d",
+          "text": "4"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bauch: direkt auf Bauchnabelhöhe anlegen und ausatmen lassen.",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "kv-05",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "An welchem Punkt misst du den Beinumfang?",
+      "image": "/wissen/koerper-messpunkte.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "4"
+        },
+        {
+          "id": "b",
+          "text": "5"
+        },
+        {
+          "id": "c",
+          "text": "3"
+        },
+        {
+          "id": "d",
+          "text": "2"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Beine: Füße geschlossen, Maßband direkt an der Po-Falte (ganz oben am Oberschenkel).",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "kv-06",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wie misst du die Brust?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Frauen: direkt an der Achselhöhe – Männer: auf der Brustwarze; jeweils ausatmen lassen"
+        },
+        {
+          "id": "b",
+          "text": "Bei allen unter der Brust, eingeatmet"
+        },
+        {
+          "id": "c",
+          "text": "Bei allen auf Achselhöhe, eingeatmet"
+        },
+        {
+          "id": "d",
+          "text": "Frauen auf Brustwarze, Männer an Achselhöhe"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Arme bleiben erhoben; Frauen Achselhöhe, Männer Brustwarze, ausatmen.",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "kv-07",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie misst du den Oberarm?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ellenbogen auf Schulterhöhe, Handflächen zum Körper, an der dicksten Stelle"
+        },
+        {
+          "id": "b",
+          "text": "Arm hängend, Mitte Oberarm"
+        },
+        {
+          "id": "c",
+          "text": "Arm angespannt, Bizeps"
+        },
+        {
+          "id": "d",
+          "text": "Ellenbogen gebeugt, direkt über dem Ellenbogen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ellenbogen Schulterhöhe, Handflächen zum Körper, dickste Stelle.",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "kv-08",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie misst du den Po?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "An der dicksten Stelle, Füße geschlossen, seitlich messen"
+        },
+        {
+          "id": "b",
+          "text": "Auf Hüftknochenhöhe"
+        },
+        {
+          "id": "c",
+          "text": "Mit gespreizten Beinen"
+        },
+        {
+          "id": "d",
+          "text": "Von hinten, Po angespannt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Po: dickste Stelle, Füße geschlossen nebeneinander, seitlich messen.",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "kv-09",
+      "unitId": "kv",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gilt auf der Tanita-Waage?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Gerade stehen"
+        },
+        {
+          "id": "b",
+          "text": "Griffe „normal“ festhalten, nichts anspannen"
+        },
+        {
+          "id": "c",
+          "text": "Arme leicht zur Seite abspreizen"
+        },
+        {
+          "id": "d",
+          "text": "Griffe so fest wie möglich drücken"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Füße platzieren, gerade stehen, Griffe normal halten, Arme leicht abspreizen.",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "kv-10",
+      "unitId": "kv",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was sagst/tust du nach der Körpervermessung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Hinweis: Alle Werte sind Richtwerte"
+        },
+        {
+          "id": "b",
+          "text": "Mitglied in die Verantwortung holen – wir sehen es nur 1x pro Woche"
+        },
+        {
+          "id": "c",
+          "text": "Empfehlungen generieren (z. B. VIP-Karte nachhaken)"
+        },
+        {
+          "id": "d",
+          "text": "100 % Genauigkeit zusichern"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Richtwerte, Eigenverantwortung, Vergleich alt/neu, Empfehlungen generieren.",
+      "source": "QM 3.4.3"
+    },
+    {
+      "id": "kv-11",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ab wann gibst du weiterführende Tipps – und wo notierst du sie?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ab der zweiten Vermessung, im DataPlus"
+        },
+        {
+          "id": "b",
+          "text": "Ab der ersten Vermessung, auf Papier"
+        },
+        {
+          "id": "c",
+          "text": "Ab der dritten Vermessung, im BIF"
+        },
+        {
+          "id": "d",
+          "text": "Nie, nur auf Nachfrage"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Weiterführende Tipps erst ab der zweiten Vermessung – im DataPlus notieren.",
+      "source": "QM 3.4.3"
+    },
+    {
+      "id": "kv-12",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Die Waage zeigt mehr Gewicht. Welche Erklärung steht im Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "1 g neue Muskelmasse bindet ca. 2,7 g Wasser"
+        },
+        {
+          "id": "b",
+          "text": "Das Mitglied hat sicher zu viel gegessen"
+        },
+        {
+          "id": "c",
+          "text": "Die Waage ist kaputt"
+        },
+        {
+          "id": "d",
+          "text": "Fett ist schwerer als Muskeln"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Muskelzuwachs + gesunde Wassereinlagerung (1 g Muskel ≈ 2,7 g Wasser).",
+      "source": "QM 3.4.4"
+    },
+    {
+      "id": "kv-13",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was gilt laut Handbuch als guter Wert für reine Fettreduktion pro Monat?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "2 kg"
+        },
+        {
+          "id": "b",
+          "text": "0,5 kg"
+        },
+        {
+          "id": "c",
+          "text": "5 kg"
+        },
+        {
+          "id": "d",
+          "text": "8 kg"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gute Werte = 2 kg reine Fettreduktion pro Monat.",
+      "source": "QM 3.4.4"
+    },
+    {
+      "id": "kv-14",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ab welchem Viszeralfett-Wert wird es kritisch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ab 12 – gerne an einen Arzt verweisen"
+        },
+        {
+          "id": "b",
+          "text": "Ab 5"
+        },
+        {
+          "id": "c",
+          "text": "Ab 20"
+        },
+        {
+          "id": "d",
+          "text": "Ab 30"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ab Wert 12 wird’s kritisch – an Arzt verweisen.",
+      "source": "QM 3.4.4"
+    },
+    {
+      "id": "kv-15",
+      "unitId": "kv",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wodurch lässt sich Viszeralfett laut Handbuch fast ausschließlich beeinflussen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Durch Ernährung"
+        },
+        {
+          "id": "b",
+          "text": "Durch EMS-Training"
+        },
+        {
+          "id": "c",
+          "text": "Durch Ausdauertraining"
+        },
+        {
+          "id": "d",
+          "text": "Durch Schlaf"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Viszeralfett ist fast nur durch Ernährung beeinflussbar.",
+      "source": "QM 3.4.4"
+    },
+    {
+      "id": "ernaehrung-01",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie viele Mahlzeiten pro Tag empfiehlt das Handbuch maximal zur Körperfettreduktion?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "3"
+        },
+        {
+          "id": "b",
+          "text": "5"
+        },
+        {
+          "id": "c",
+          "text": "2"
+        },
+        {
+          "id": "d",
+          "text": "6"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Maximal 3 Mahlzeiten, keine Zwischenmahlzeiten.",
+      "source": "QM 3.5 Tipp 1"
+    },
+    {
+      "id": "ernaehrung-02",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was zählt laut Handbuch NICHT als Mahlzeit?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schwarzer Kaffee"
+        },
+        {
+          "id": "b",
+          "text": "Kaugummi"
+        },
+        {
+          "id": "c",
+          "text": "Ein Apfel"
+        },
+        {
+          "id": "d",
+          "text": "Latte macchiato"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Alles außer schwarzem Kaffee/Tee und Wasser ist eine Mahlzeit – selbst Kaugummi.",
+      "source": "QM 3.5 Tipp 1"
+    },
+    {
+      "id": "ernaehrung-03",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "An welcher täglichen Eiweißmenge orientierst du dich grundsätzlich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "1,5 g pro kg Körpergewicht"
+        },
+        {
+          "id": "b",
+          "text": "0,8 g pro kg"
+        },
+        {
+          "id": "c",
+          "text": "3 g pro kg"
+        },
+        {
+          "id": "d",
+          "text": "50 g pauschal"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Grundsätzlich 1,5 g/kg Körpergewicht.",
+      "source": "QM 3.5 Tipp 2"
+    },
+    {
+      "id": "ernaehrung-04",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wie viel Eiweiß sollte eine 80-kg-Person laut Handbuch mindestens täglich essen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "120 g"
+        },
+        {
+          "id": "b",
+          "text": "80 g"
+        },
+        {
+          "id": "c",
+          "text": "160 g"
+        },
+        {
+          "id": "d",
+          "text": "64 g"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "80 kg × 1,5 g = 120 g.",
+      "source": "QM 3.5 Tipp 2"
+    },
+    {
+      "id": "ernaehrung-05",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ziel ist reiner Muskelaufbau. Welche Eiweißmenge nennt das Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "ca. 2 g pro kg Körpergewicht"
+        },
+        {
+          "id": "b",
+          "text": "1 g pro kg"
+        },
+        {
+          "id": "c",
+          "text": "1,5 g pro kg"
+        },
+        {
+          "id": "d",
+          "text": "4 g pro kg"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Typ 2 (Muskelmasse): ca. 2 g Eiweiß/kg.",
+      "source": "QM 3.5"
+    },
+    {
+      "id": "ernaehrung-06",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viel Eiweiß hat ungefähr ein Ei?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "7 g"
+        },
+        {
+          "id": "b",
+          "text": "2 g"
+        },
+        {
+          "id": "c",
+          "text": "12 g"
+        },
+        {
+          "id": "d",
+          "text": "20 g"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "1 Ei ≈ 7 g Eiweiß.",
+      "source": "QM 3.5 Tipp 2"
+    },
+    {
+      "id": "ernaehrung-07",
+      "unitId": "ernaehrung",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Welche Lebensmittel liefern laut Richtwerten ca. 20 g Eiweiß pro 100 g?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Fisch"
+        },
+        {
+          "id": "b",
+          "text": "Fleisch, Käse, Wurst"
+        },
+        {
+          "id": "c",
+          "text": "Gemüse"
+        },
+        {
+          "id": "d",
+          "text": "Nüsse"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Fisch & Fleisch/Käse/Wurst ≈ 20 g; Nüsse ≈ 15 g; Gemüse 3–5 g.",
+      "source": "QM 3.5 Tipp 2"
+    },
+    {
+      "id": "ernaehrung-08",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was soll das Mitglied direkt nach jedem Training konsumieren?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Einen Bodystreet Aminodrink"
+        },
+        {
+          "id": "b",
+          "text": "Einen Energydrink"
+        },
+        {
+          "id": "c",
+          "text": "Ein Bier"
+        },
+        {
+          "id": "d",
+          "text": "Nichts für 2 Stunden"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Direkt nach dem Training kann der Körper Eiweiß am besten verarbeiten – Aminodrink.",
+      "source": "QM 3.5 Tipp 2"
+    },
+    {
+      "id": "ernaehrung-09",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viel Wasser pro Tag empfiehlt das Handbuch mindestens?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "3 Liter"
+        },
+        {
+          "id": "b",
+          "text": "1 Liter"
+        },
+        {
+          "id": "c",
+          "text": "1,5 Liter"
+        },
+        {
+          "id": "d",
+          "text": "5 Liter"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Mindestens 3 Liter, am besten 30 Min. vor jeder Mahlzeit ca. 0,7 l.",
+      "source": "QM 3.5 Tipp 5"
+    },
+    {
+      "id": "ernaehrung-10",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viel Zucker pro Tag nennt das Handbuch als Maximum?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "50 g"
+        },
+        {
+          "id": "b",
+          "text": "25 g"
+        },
+        {
+          "id": "c",
+          "text": "100 g"
+        },
+        {
+          "id": "d",
+          "text": "10 g"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Achtung, zu viel Obst = viel Zucker; maximal 50 g/Tag.",
+      "source": "QM 3.5 Tipp 3"
+    },
+    {
+      "id": "ernaehrung-11",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viele Ballaststoffe pro Tag nennt das Handbuch als Tagesbedarf?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "30 g"
+        },
+        {
+          "id": "b",
+          "text": "10 g"
+        },
+        {
+          "id": "c",
+          "text": "50 g"
+        },
+        {
+          "id": "d",
+          "text": "100 g"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "30 g Ballaststoffe und 3–5 Portionen Obst pro Tag.",
+      "source": "QM 3.5 Tipp 3"
+    },
+    {
+      "id": "ernaehrung-12",
+      "unitId": "ernaehrung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Alternativen empfiehlt das Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Vollkornnudeln statt Nudeln"
+        },
+        {
+          "id": "b",
+          "text": "Süßkartoffeln statt Kartoffeln"
+        },
+        {
+          "id": "c",
+          "text": "Naturreis statt Reis"
+        },
+        {
+          "id": "d",
+          "text": "Weißbrot statt Vollkornbrot"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Nudeln→Vollkorn, Kartoffeln→Süßkartoffeln, Reis→Naturreis, Brot→weizenfrei (Quinoa, Paleo, Buchweizen).",
+      "source": "QM 3.5 Tipp 4"
+    },
+    {
+      "id": "ernaehrung-13",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie lange vor und nach dem Sport sollte nicht geraucht werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ca. 1 Stunde"
+        },
+        {
+          "id": "b",
+          "text": "10 Minuten"
+        },
+        {
+          "id": "c",
+          "text": "30 Minuten"
+        },
+        {
+          "id": "d",
+          "text": "4 Stunden"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ca. 1 Stunde vor und nach dem Sport nicht rauchen; wenn, dann erst nach dem Essen.",
+      "source": "QM 3.5 Tipp 7"
+    },
+    {
+      "id": "ernaehrung-14",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ein Hardgainer will zunehmen. Was empfiehlt das Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mehr essen – z. B. zwei zusätzliche flüssige Mahlzeiten (Shake) pro Tag"
+        },
+        {
+          "id": "b",
+          "text": "Weniger, aber häufiger essen"
+        },
+        {
+          "id": "c",
+          "text": "Nur Eiweißpulver"
+        },
+        {
+          "id": "d",
+          "text": "Intervallfasten 16:8"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Hardgainer: mehr essen, z. B. Shake aus Bananen, Mandelmilch, Eiweißpulver – 2 Portionen extra.",
+      "source": "QM 3.5"
+    },
+    {
+      "id": "ernaehrung-15",
+      "unitId": "ernaehrung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied isst gern Süßes. Welcher Tipp steht im Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Wenn schon Süßes, dann etwas Gesundes dazu – z. B. einen Apfel"
+        },
+        {
+          "id": "b",
+          "text": "Süßes komplett verbieten"
+        },
+        {
+          "id": "c",
+          "text": "Süßes nur nach dem Training"
+        },
+        {
+          "id": "d",
+          "text": "Dafür eine Mahlzeit weglassen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Besseres Verhältnis ungesund/gesund: z. B. Apfel oder drei Feigen dazu.",
+      "source": "QM 3.5 Tipp 6"
+    },
+    {
+      "id": "kontra-01",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Ein Mitglied hat Fieber bzw. grippale Symptome. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nicht trainieren – auf die Risiken hinweisen"
+        },
+        {
+          "id": "b",
+          "text": "Leicht trainieren"
+        },
+        {
+          "id": "c",
+          "text": "Normal trainieren mit mehr Pausen"
+        },
+        {
+          "id": "d",
+          "text": "Nur Impulsgewöhnung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Fieber/grippale Effekte: nicht trainieren.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-02",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied nimmt gerade Antibiotika oder Schmerzmittel. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kein Sport"
+        },
+        {
+          "id": "b",
+          "text": "Training mit halber Intensität"
+        },
+        {
+          "id": "c",
+          "text": "Training ohne Einschränkung"
+        },
+        {
+          "id": "d",
+          "text": "Nur Oberkörper trainieren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bei Einnahme von Schmerzmitteln oder Antibiotikum kein Sport.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-03",
+      "unitId": "kontra",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Das Blutdruckmessgerät zeigt 145/95 mmHg. Wie passt du das Training an?",
+      "image": "/wissen/blutdruck.svg",
+      "options": [
+        {
+          "id": "a",
+          "text": "Langsamer Start und langsamerer Übungswechsel"
+        },
+        {
+          "id": "b",
+          "text": "Keine Übungen mit Händen über Kopf / Kopf unter Herzhöhe"
+        },
+        {
+          "id": "c",
+          "text": "Viele Atempausen"
+        },
+        {
+          "id": "d",
+          "text": "Besonders intensiv, um den Blutdruck zu senken"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Bluthochdruck (>140/90): langsam starten, keine Überkopf-/Kopf-tief-Übungen, Atempausen, vor jedem Training messen.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-04",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ab welchem Wert spricht das Handbuch von Bluthochdruck?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Über 140/90 mmHg"
+        },
+        {
+          "id": "b",
+          "text": "Über 120/80 mmHg"
+        },
+        {
+          "id": "c",
+          "text": "Über 160/100 mmHg"
+        },
+        {
+          "id": "d",
+          "text": "Über 130/85 mmHg"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Herz-Kreislaufbeschwerden und Bluthochdruck: >140/90 mmHg.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-05",
+      "unitId": "kontra",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied hat Diabetes. Was tust du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schweregrad erfragen (Tabletten, Spritzen?)"
+        },
+        {
+          "id": "b",
+          "text": "Immer Traubenzucker oder süßes Getränk parat haben"
+        },
+        {
+          "id": "c",
+          "text": "Training komplett ablehnen"
+        },
+        {
+          "id": "d",
+          "text": "Nur Impulsgewöhnung durchführen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Diabetes: Schweregrad erfragen, Traubenzucker/süßes Getränk bereithalten.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-06",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Bauchwandhernie mit sichtbarer Beule – was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Zum Arzt – keine Belastung und kein Zug auf die Region"
+        },
+        {
+          "id": "b",
+          "text": "Normal trainieren, Bauch etwas runter"
+        },
+        {
+          "id": "c",
+          "text": "Nur Bauchregler aus"
+        },
+        {
+          "id": "d",
+          "text": "Mit Gürtel trainieren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bei sichtbarer Beule zum Arzt, keine Belastung/Zug auf die Region.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-07",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was gilt bei Skoliose?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Sehr stark auf die Haltung achten, nur kleinste Rotationsbewegungen"
+        },
+        {
+          "id": "b",
+          "text": "Viele Rotationsübungen zur Korrektur"
+        },
+        {
+          "id": "c",
+          "text": "Rücken komplett ausschalten"
+        },
+        {
+          "id": "d",
+          "text": "Keine Einschränkungen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Haltung, nur kleinste Rotationen – exakte Haltung evtl. nicht möglich.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-08",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was gilt bei Bandscheibenbeschwerden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "So wenig Belastung für die Wirbelsäule wie möglich – viel statisch & aufrecht, Korrektur statt Intensivierung"
+        },
+        {
+          "id": "b",
+          "text": "Intensivieren, um das Muskelkorsett zu stärken"
+        },
+        {
+          "id": "c",
+          "text": "Nur liegende Übungen"
+        },
+        {
+          "id": "d",
+          "text": "Rücken auf Maximum"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Keine Intensivierung, sondern Korrektur; viel statisch und aufrecht.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-09",
+      "unitId": "kontra",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Ein Mitglied hat Probleme mit der Halswirbelsäule. Was beachtest du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Keine Rotation oder Vorneigung von Kopf/Hals"
+        },
+        {
+          "id": "b",
+          "text": "Arme unter Schulterhöhe lassen"
+        },
+        {
+          "id": "c",
+          "text": "Kein Gegendruck"
+        },
+        {
+          "id": "d",
+          "text": "Überkopfübungen mit viel Zug"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "HWS: keine Rotation/Vorneigung, vorsichtiges Schultertraining, Arme unter Schulterhöhe, kein Gegendruck.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-10",
+      "unitId": "kontra",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Welche Übungen vermeidest du bei LWS-Problemen bzw. führst sie nur minimal aus?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ausfallschritte"
+        },
+        {
+          "id": "b",
+          "text": "Criss-Cross-Crunch"
+        },
+        {
+          "id": "c",
+          "text": "Bein hochziehen"
+        },
+        {
+          "id": "d",
+          "text": "Bauchspannung halten"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "LWS: wenig Zug auf Becken/unteren Rücken – aber unbedingt auf Bauchspannung achten (entlastet).",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-11",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was gilt bei Problemen mit der Brustwirbelsäule?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Keine Rotation des Oberkörpers, keine zu starke Krümmung"
+        },
+        {
+          "id": "b",
+          "text": "Viel Rotation zur Mobilisation"
+        },
+        {
+          "id": "c",
+          "text": "Nur Rückenregler hoch"
+        },
+        {
+          "id": "d",
+          "text": "Keine Einschränkung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "BWS: keine Rotation, keine zu starke Krümmung des Oberkörpers.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-12",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Ein Mitglied hat Tuberkulose. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Sofort zum Arzt, nicht trainieren"
+        },
+        {
+          "id": "b",
+          "text": "Mit Maske trainieren"
+        },
+        {
+          "id": "c",
+          "text": "Leichtes Training"
+        },
+        {
+          "id": "d",
+          "text": "Normal trainieren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Tuberkulose: sofort zum Arzt und nicht trainieren.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-13",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Aktuelle Tumorerkrankung – was gilt laut Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Gutartig: spricht nichts gegen Training – bösartig: zum Arzt, Region nicht trainieren, ärztlich bestätigen lassen"
+        },
+        {
+          "id": "b",
+          "text": "Immer normal trainieren"
+        },
+        {
+          "id": "c",
+          "text": "Immer Trainingsverbot"
+        },
+        {
+          "id": "d",
+          "text": "Nur Unterkörper trainieren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erst gut-/bösartig erfragen; bei bösartig Arzt & Region aussparen.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-14",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied ist schwanger. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schwangerschaft ist grundsätzlich eine Kontraindikation"
+        },
+        {
+          "id": "b",
+          "text": "Training mit halber Intensität"
+        },
+        {
+          "id": "c",
+          "text": "Nur Beine trainieren"
+        },
+        {
+          "id": "d",
+          "text": "Training bis zum 3. Monat erlaubt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Schwangerschaft ist grundsätzlich eine Kontraindikation zu unserer Trainingstechnologie.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "kontra-15",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was gilt bei Fibromyalgie?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Intensität sehr gering – Muskelaufbautraining ist aber sogar ein Muss"
+        },
+        {
+          "id": "b",
+          "text": "Trainingsverbot"
+        },
+        {
+          "id": "c",
+          "text": "Hohe Intensität zur Schmerzreduktion"
+        },
+        {
+          "id": "d",
+          "text": "Nur Dehnen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Schweregrad entscheidet; Intensität sehr gering (Gefahr kontraindizierter Reize).",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "kontra-16",
+      "unitId": "kontra",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Arteriosklerose mit Medikamenteneinnahme – wie gehst du vor?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schweregrad erfragen, behandeln wie Bluthochdruck, bei Unsicherheit ärztlich abklären"
+        },
+        {
+          "id": "b",
+          "text": "Normal trainieren"
+        },
+        {
+          "id": "c",
+          "text": "Trainingsverbot ohne Ausnahme"
+        },
+        {
+          "id": "d",
+          "text": "Nur Impulsgewöhnung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wie Bluthochdruck behandeln; bei Unsicherheit ärztlich abklären lassen.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "vertrag-01",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Mit welcher Frist erfolgt laut unseren AGB die SEPA-Vorabankündigung (Prenotification)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "2 Tage"
+        },
+        {
+          "id": "b",
+          "text": "14 Tage"
+        },
+        {
+          "id": "c",
+          "text": "7 Tage"
+        },
+        {
+          "id": "d",
+          "text": "1 Monat"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gesetzlich eigentlich 14 Tage – laut AGB auf 2 Tage verkürzt.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-02",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welcher Name erscheint bei der Abbuchung auf dem Konto des Mitglieds?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "BS New Fitness GmbH"
+        },
+        {
+          "id": "b",
+          "text": "Bodystreet GmbH"
+        },
+        {
+          "id": "c",
+          "text": "Magicline"
+        },
+        {
+          "id": "d",
+          "text": "Der Name des Studioleiters"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Immer „BS New Fitness GmbH“ – Mitglied darauf hinweisen.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-03",
+      "unitId": "vertrag",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was umfasst die Mandatsreferenznummer in der Regel?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die MG-Nummer"
+        },
+        {
+          "id": "b",
+          "text": "Die Gläubiger-ID"
+        },
+        {
+          "id": "c",
+          "text": "Eine Nummer für den Zahlungsgrund"
+        },
+        {
+          "id": "d",
+          "text": "Die IBAN des Studios"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Mandatsreferenz = Kennzeichen des Mitglieds: MG-Nr., Gläubiger-ID, Nummer für Zahlungsgrund.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-04",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied hat ein neues Konto. Was ist zu tun?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schriftlich mitteilen lassen, Scan in Magicline unter Dokumente hochladen"
+        },
+        {
+          "id": "b",
+          "text": "Telefonisch reicht"
+        },
+        {
+          "id": "c",
+          "text": "Neuen Vertrag abschließen"
+        },
+        {
+          "id": "d",
+          "text": "IBAN auf einen Zettel schreiben"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Neue Bankverbindung schriftlich; Scan in Magicline unter Dokumente.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-05",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Eine Lastschrift platzt. Was berechnen wir?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nur die Bankkosten von 10,00 € – keine weiteren Gebühren"
+        },
+        {
+          "id": "b",
+          "text": "25 € Bearbeitungsgebühr"
+        },
+        {
+          "id": "c",
+          "text": "Bankkosten + 5 € Gebühr"
+        },
+        {
+          "id": "d",
+          "text": "Nichts"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Offene Forderung + Bankgebühren werden in der Folgewoche erneut eingezogen; nur 10 € Bankkosten.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-06",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Auch nach der 3. Mahnung kommt kein Geld. Was passiert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kündigung zum Ende der Laufzeit, SEPA-Mandat sofort beendet, Gesamtforderung in Rechnung"
+        },
+        {
+          "id": "b",
+          "text": "Sofort Inkasso ohne Kündigung"
+        },
+        {
+          "id": "c",
+          "text": "Mitgliedschaft ruht automatisch"
+        },
+        {
+          "id": "d",
+          "text": "Vierte Mahnung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erst danach – ohne Zahlung – Abtretung an Inkasso; dann ist das Inkassobüro Ansprechpartner.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-07",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Kann eine Ruhezeit rückwirkend eingetragen werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein, niemals"
+        },
+        {
+          "id": "b",
+          "text": "Ja, mit Attest"
+        },
+        {
+          "id": "c",
+          "text": "Ja, bis 4 Wochen rückwirkend"
+        },
+        {
+          "id": "d",
+          "text": "Ja, nach Absprache mit dem Trainer"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ruhezeiten sind niemals rückwirkend möglich.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-08",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ein Mitglied bringt ein Attest über weniger als 4 Wochen Krankheit. Was passiert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ruhezeit mit Beitrag + Verlängerung der Mitgliedschaft um die Attestdauer zu 0,00 €"
+        },
+        {
+          "id": "b",
+          "text": "Beitragsfreie Ruhezeit"
+        },
+        {
+          "id": "c",
+          "text": "Nichts, unter 4 Wochen gibt es nichts"
+        },
+        {
+          "id": "d",
+          "text": "Rückerstattung der Beiträge"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die Trainings gehen nicht verloren – sie werden beitragsfrei hinten angehängt.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-09",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied geht 3 Monate beruflich ins Ausland. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ab 2 Monaten Ruhezeit möglich – mit schriftlicher Bestätigung des Arbeitgebers"
+        },
+        {
+          "id": "b",
+          "text": "Sofortiges Sonderkündigungsrecht"
+        },
+        {
+          "id": "c",
+          "text": "Ruhezeit erst ab 6 Monaten"
+        },
+        {
+          "id": "d",
+          "text": "Keine Möglichkeit"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ab 2 Monaten Ruhezeit; Voraussetzung ist eine schriftliche Arbeitgeberbestätigung.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-10",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Flextarif: Wie lang ist die Erstlaufzeit und wie wird gekündigt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mind. 8 Wochen – 4 Wochen zum Monatsende schriftlich, sonst +4 Wochen"
+        },
+        {
+          "id": "b",
+          "text": "4 Wochen – jederzeit mündlich"
+        },
+        {
+          "id": "c",
+          "text": "12 Monate – 3 Monate zum Laufzeitende"
+        },
+        {
+          "id": "d",
+          "text": "8 Wochen – 2 Wochen per WhatsApp"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Startdatum + 8 Wochen − 4 Wochen = letztmöglicher Kündigungstermin.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-11",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied zieht um und möchte kündigen. Was gilt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kein Rechtsanspruch – kulant nur bei Absprache zu Vertragsbeginn oder > 6 Monaten Mitgliedschaft, immer mit GF"
+        },
+        {
+          "id": "b",
+          "text": "Sofortiges Sonderkündigungsrecht"
+        },
+        {
+          "id": "c",
+          "text": "Kündigung mit 2 Wochen Frist"
+        },
+        {
+          "id": "d",
+          "text": "Nur mit Meldebescheinigung sofort"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Umzug ist planbar → kein Kündigungsgrund; Kulanz nur in Absprache mit der GF.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-12",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie lange ist bei Schwangerschaft laut AGB eine Ruhezeit möglich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Maximal 12 Monate"
+        },
+        {
+          "id": "b",
+          "text": "Maximal 6 Monate"
+        },
+        {
+          "id": "c",
+          "text": "Maximal 3 Monate"
+        },
+        {
+          "id": "d",
+          "text": "Unbegrenzt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Laut AGB max. 12 Monate; Datum der ersten Abbuchung danach schriftlich fixieren.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-13",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welche Lösung nennt das Handbuch bei Schwangerschaft als „noch intelligenter“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Mitgliedschaft auf eine andere Person übertragen (z. B. Partner, Freundin)"
+        },
+        {
+          "id": "b",
+          "text": "Sofort kündigen"
+        },
+        {
+          "id": "c",
+          "text": "Beitrag halbieren"
+        },
+        {
+          "id": "d",
+          "text": "Mitgliedschaft auf Nutrition umstellen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Übertragung auf eine andere Person für diesen Zeitraum.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-14",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Mitglied will mit Attest fristlos kündigen. Wie reagierst du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Attest und Schreiben erbitten, an die Studioleitung geben – keine Versprechen machen"
+        },
+        {
+          "id": "b",
+          "text": "Sofort bestätigen"
+        },
+        {
+          "id": "c",
+          "text": "Ablehnen, Atteste zählen nie"
+        },
+        {
+          "id": "d",
+          "text": "Selbst entscheiden"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Attest ist generell kein Kündigungsgrund; standardisierter Prozess; zuerst persönliches Gespräch suchen.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-15",
+      "unitId": "vertrag",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Warum muss der Interessent beim Probetraining die Kontraindikationen unterschreiben?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ohne Unterschrift auf dem Beratungsbogen kein gültiger Vertrag"
+        },
+        {
+          "id": "b",
+          "text": "Das Mitglied übernimmt die Verantwortung für bestehende Krankheiten"
+        },
+        {
+          "id": "c",
+          "text": "Damit wir die Daten verkaufen dürfen"
+        },
+        {
+          "id": "d",
+          "text": "Für die Krankenkasse"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Gesundheitsaufklärung ist Vertragsbestandteil; Trainer haftet dann nur bei grober Fahrlässigkeit.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-16",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ein Interessent will die Datenschutzbestimmungen nicht unterschreiben. Was sagst du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Daten gehen nur an Buchhaltung/Steuerberater, bleiben im Haus und werden nach Ende vernichtet"
+        },
+        {
+          "id": "b",
+          "text": "Ohne Unterschrift kein Probetraining – Punkt"
+        },
+        {
+          "id": "c",
+          "text": "Die Daten gehen nur an Bodystreet-Partner"
+        },
+        {
+          "id": "d",
+          "text": "Das ist nur eine Formalie, egal"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Beruhigen, rechtlich notwendig formuliert; Daten bleiben im Haus.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-17",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "„Warum muss ich ein Abo machen?“ – welches Argument steht im Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der günstige Preis ist kalkuliert inkl. 5–8 Ausfällen pro Jahr – und wir wollen regelmäßiges Training fördern"
+        },
+        {
+          "id": "b",
+          "text": "Weil es gesetzlich vorgeschrieben ist"
+        },
+        {
+          "id": "c",
+          "text": "Weil Barzahlung verboten ist"
+        },
+        {
+          "id": "d",
+          "text": "Weil es die Zentrale so will"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Discount-PT geht nur mit den Konditionen; Trainer müssen auch in den Ferien bezahlt werden.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "vertrag-18",
+      "unitId": "vertrag",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welchen Vorteil haben die Trainingssocken?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Keine Sportschuhe nötig, hygienisch und rutschfest"
+        },
+        {
+          "id": "b",
+          "text": "Sie verstärken den Impuls"
+        },
+        {
+          "id": "c",
+          "text": "Sie sind Pflicht laut Gesetz"
+        },
+        {
+          "id": "d",
+          "text": "Sie wärmen die Füße"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Kein Mitbringen sperriger Sportschuhe, hygienisch, rutschfest.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "ems-27",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was sind CK-Werte laut Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Transportenzyme, die Abfallstoffe zur Niere bringen"
+        },
+        {
+          "id": "b",
+          "text": "Hormone, die den Muskelaufbau steuern"
+        },
+        {
+          "id": "c",
+          "text": "Blutfettwerte"
+        },
+        {
+          "id": "d",
+          "text": "Mineralstoffe im Muskel"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "CK-Werte: Transportenzyme, die Abfallstoffe zur Niere bringen.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-28",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie hoch ist der normale CK-Wert laut Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "150–200"
+        },
+        {
+          "id": "b",
+          "text": "15–20"
+        },
+        {
+          "id": "c",
+          "text": "1.500–2.000"
+        },
+        {
+          "id": "d",
+          "text": "20.000"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Normwert: 150–200.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-29",
+      "unitId": "ems",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "In welche Bereiche lassen sich CK-Werte laut Handbuch aufgliedern?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Herz"
+        },
+        {
+          "id": "b",
+          "text": "Gehirn"
+        },
+        {
+          "id": "c",
+          "text": "Nieren"
+        },
+        {
+          "id": "d",
+          "text": "Muskeln"
+        },
+        {
+          "id": "e",
+          "text": "Leber"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "CK-Werte können aufgegliedert werden in: Herz, Gehirn, Nieren und Muskeln.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-30",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welcher CK-Wert wird laut Handbuch ca. nach einem EMS-Training erreicht?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "ca. 100.000"
+        },
+        {
+          "id": "b",
+          "text": "ca. 20.000"
+        },
+        {
+          "id": "c",
+          "text": "ca. 70.000"
+        },
+        {
+          "id": "d",
+          "text": "ca. 200"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Nach Krafttraining ca. 20.000, nach extremem Krafttraining ca. 70.000, nach EMS ca. 100.000.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-31",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ordne zu: Welcher CK-Wert gilt laut Handbuch nach normalem Krafttraining?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "ca. 20.000"
+        },
+        {
+          "id": "b",
+          "text": "ca. 70.000"
+        },
+        {
+          "id": "c",
+          "text": "ca. 100.000"
+        },
+        {
+          "id": "d",
+          "text": "ca. 150–200"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Krafttraining ca. 20.000 · extremes KT ca. 70.000 · EMS ca. 100.000.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-32",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was bedeutet laut Handbuch ein erhöhter CK-Wert nach dem EMS-Training?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Er ist vollkommen normal und zeigt die hohe Wirksamkeit des Trainings"
+        },
+        {
+          "id": "b",
+          "text": "Das Training war falsch eingestellt"
+        },
+        {
+          "id": "c",
+          "text": "Das Mitglied muss sofort zum Arzt"
+        },
+        {
+          "id": "d",
+          "text": "Der Wert ist ein Messfehler"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ein erhöhter CK-Wert nach EMS ist laut Handbuch vollkommen normal und zeigt die hohe Wirksamkeit.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-33",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Mit welcher Spannung arbeitet das EMS-Gerät laut Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "20 Volt"
+        },
+        {
+          "id": "b",
+          "text": "230 Volt"
+        },
+        {
+          "id": "c",
+          "text": "16–18 Volt"
+        },
+        {
+          "id": "d",
+          "text": "2 Volt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Spannung: 20 Volt.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "ems-34",
+      "unitId": "ems",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wie hoch ist die Stromstärke beim EMS-Training laut Handbuch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "16–18 mA"
+        },
+        {
+          "id": "b",
+          "text": "20 mA"
+        },
+        {
+          "id": "c",
+          "text": "1.000 mA"
+        },
+        {
+          "id": "d",
+          "text": "350 mA"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Stromstärke: 16–18 mA – zum Vergleich: eine Glühbirne ca. 1.000 mA.",
+      "source": "QM 3.3.1"
+    }
+  ]
+}

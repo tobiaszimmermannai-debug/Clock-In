@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "version": "2026.11.09",
+    "sources": [
+      "Qualitäts- und Prozesshandbuch 2026",
+      "Einarbeitung 2026"
+    ]
+  },
+  "items": [
+    {
+      "id": "werte",
+      "order": 1,
+      "title": "Werte & Organisation",
+      "source": "QM 1, 2.1",
+      "icon": "🏆",
+      "questionCount": 10
+    },
+    {
+      "id": "verhalten",
+      "order": 2,
+      "title": "Verhalten am Arbeitsplatz",
+      "source": "QM 2.2",
+      "icon": "👕",
+      "questionCount": 11
+    },
+    {
+      "id": "arbeitszeit",
+      "order": 3,
+      "title": "Arbeitszeit, Urlaub & Krankheit",
+      "source": "QM 2.3",
+      "icon": "🗓️",
+      "questionCount": 21
+    },
+    {
+      "id": "sicherheit",
+      "order": 4,
+      "title": "Sicherheit & Verschwiegenheit",
+      "source": "QM 2.4",
+      "icon": "🔑",
+      "questionCount": 4
+    },
+    {
+      "id": "studioalltag",
+      "order": 5,
+      "title": "Studioalltag: Kasse, Lager, Opening/Closing",
+      "source": "QM 2.5",
+      "icon": "🏪",
+      "questionCount": 16
+    },
+    {
+      "id": "hygiene",
+      "order": 6,
+      "title": "Hygiene & Westenpflege",
+      "source": "QM 2.6",
+      "icon": "🧽",
+      "questionCount": 10
+    },
+    {
+      "id": "faq",
+      "order": 7,
+      "title": "Mitglieder-FAQ",
+      "source": "QM 3.1",
+      "icon": "💬",
+      "questionCount": 17
+    },
+    {
+      "id": "service",
+      "order": 8,
+      "title": "Qualitätsstandards & 5-Sterne-Service",
+      "source": "QM 3.2",
+      "icon": "⭐",
+      "questionCount": 27
+    },
+    {
+      "id": "ems",
+      "order": 9,
+      "title": "EMS-Fakten & Miha-Leitlinien",
+      "source": "QM 3.3.1–3.3.2",
+      "icon": "⚡",
+      "questionCount": 34
+    },
+    {
+      "id": "evi",
+      "order": 10,
+      "title": "EVI-Argumentation",
+      "source": "QM 3.3.3",
+      "icon": "🎯",
+      "questionCount": 6
+    },
+    {
+      "id": "kv",
+      "order": 11,
+      "title": "Körpervermessung",
+      "source": "QM 3.4",
+      "icon": "📏",
+      "questionCount": 15
+    },
+    {
+      "id": "ernaehrung",
+      "order": 12,
+      "title": "Ernährung – Grundlagen",
+      "source": "QM 3.5",
+      "icon": "🥗",
+      "questionCount": 15
+    },
+    {
+      "id": "kontra",
+      "order": 13,
+      "title": "Kontraindikatoren",
+      "source": "QM 3.6",
+      "icon": "🩺",
+      "questionCount": 16
+    },
+    {
+      "id": "vertrag",
+      "order": 14,
+      "title": "Verträge, Zahlungen & Recht",
+      "source": "QM 3.7",
+      "icon": "📄",
+      "questionCount": 18
+    }
+  ]
+}

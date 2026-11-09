@@ -1,13 +1,12 @@
-// Reiter „Wissen“: Infos, Abläufe und Anleitungen fürs Team (Inhalte folgen)
-import { LeadingIcon, PageHeader, Row, Section } from "../components/ui";
+// Reiter „Wissen“: Einarbeitung im Duolingo-Stil (lädt Inhalte und Lernlogik erst beim Öffnen)
+import { lazy, Suspense } from "react";
+
+const WissenApp = lazy(() => import("./wissen/WissenApp"));
 
 export function Knowledge() {
   return (
-    <>
-      <PageHeader title="Wissen" subtitle="Abläufe, Infos und Anleitungen fürs Studio" />
-      <Section title="Bald hier">
-        <Row leading={<LeadingIcon name="book" />} title="Inhalte folgen" subtitle="Tobias und Dominik stellen hier gerade das Wissen zusammen." />
-      </Section>
-    </>
+    <Suspense fallback={<p className="muted">Lädt …</p>}>
+      <WissenApp />
+    </Suspense>
   );
 }

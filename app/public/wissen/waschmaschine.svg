@@ -1,0 +1,11 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 310' font-family='system-ui,-apple-system,Segoe UI,Roboto,sans-serif'><rect width='420' height='310' rx='16' fill='#f3f4f6'/>
+<rect x='110' y='30' width='200' height='230' rx='14' fill='#fff' stroke='#1f2937' stroke-width='3'/>
+<line x1='110' y1='80' x2='310' y2='80' stroke='#1f2937' stroke-width='2'/>
+<circle cx='210' cy='170' r='62' fill='#dbeafe' stroke='#1f2937' stroke-width='3'/>
+<path d='M160 180 q25 -20 50 0 t50 0' fill='none' stroke='#2563eb' stroke-width='3'/>
+<circle cx='150' cy='55' r='16' fill='#fff' stroke='#1f2937' stroke-width='2'/>
+<line x1='150' y1='55' x2='160' y2='45' stroke='#e30613' stroke-width='3'/>
+<g font-size='12' fill='#1f2937'>
+ <text x='180' y='50'>20° 30° 40° 60°</text><text x='180' y='70'>Schleudern: ?</text>
+</g>
+<text x='210' y='290' text-anchor='middle' fill='#6b7280' font-size='13'>Westen &amp; Elektroden waschen – welche Einstellung?</text></svg>

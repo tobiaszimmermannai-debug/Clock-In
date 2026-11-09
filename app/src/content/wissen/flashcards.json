@@ -1,0 +1,613 @@
+{
+  "meta": {
+    "version": "2026.11.09",
+    "sources": [
+      "Qualitäts- und Prozesshandbuch 2026",
+      "Einarbeitung 2026"
+    ]
+  },
+  "items": [
+    {
+      "id": "w1-gaeste-1",
+      "deckId": "w1-gaeste",
+      "front": "Wie begrüßt du jeden Gast?",
+      "back": "Persönlich, lächelnd, mit Namen und Handschlag – nicht hinter dem Trolley. Egal wer, auch der Postbote.",
+      "source": "QM 3.2.1"
+    },
+    {
+      "id": "w1-gaeste-2",
+      "deckId": "w1-gaeste",
+      "front": "Wo bist du, wenn gerade kein Training läuft?",
+      "back": "Präsent auf der Trainingsfläche. Betritt jemand das Studio, steht sofort ein lächelnder Trainer an der Tür.",
+      "source": "QM 3.2.4"
+    },
+    {
+      "id": "w1-gaeste-3",
+      "deckId": "w1-gaeste",
+      "front": "Mitglied kommt mit schlechter Laune – was ist dein Job?",
+      "back": "Zustandsveränderung: mit echtem Interesse und gutem eigenen Zustand ins Positive ziehen, sodass es mit einem Lächeln geht.",
+      "source": "QM 3.2.6"
+    },
+    {
+      "id": "w1-trainings-1",
+      "deckId": "w1-trainings",
+      "front": "Wie verteilst du deine Aufmerksamkeit im Training?",
+      "back": "80 % am Kunden, 20 % am Gerät. Eigene Haltung und Spannung immer auf bestem Niveau.",
+      "source": "QM 3.2.10 b"
+    },
+    {
+      "id": "w1-trainings-2",
+      "deckId": "w1-trainings",
+      "front": "EVIC – was ist das?",
+      "back": "Kommunikationsformel im Training: Eigenschaft, Vorteil, Identifikation, Check.",
+      "source": "QM 3.2.10 c"
+    },
+    {
+      "id": "w1-trainings-3",
+      "deckId": "w1-trainings",
+      "front": "Smalltalk im Training?",
+      "back": "Nein – zielführend und professionell. Privates vor und nach dem Training.",
+      "source": "QM 3.2.10 c"
+    },
+    {
+      "id": "w1-trainings-4",
+      "deckId": "w1-trainings",
+      "front": "Was sind versteckte Ziele?",
+      "back": "Ziele, die du siehst und der Kunde nicht kennt – z. B. X-Beine oder Bürohaltung.",
+      "source": "QM 3.2.10 d"
+    },
+    {
+      "id": "w1-vorbild-1",
+      "deckId": "w1-vorbild",
+      "front": "Wie trainierst du selbst?",
+      "back": "Wöchentlich bei einem Trainer – nie selbst steuern/intensivieren. Am besten parallel zu einem Mitglied, vorbildliche Haltung & Intensität.",
+      "source": "QM 2.2.7"
+    },
+    {
+      "id": "w1-vorbild-2",
+      "deckId": "w1-vorbild",
+      "front": "„Alle Trainer trainieren“ – was heißt das?",
+      "back": "Aufgabe in Woche 1 und 2: jeden Kollegen im Training erleben. Dabei gilt: Kleidung, Haltung und Auftreten wie ein Personal Trainer – du bist Vorbild.",
+      "source": "Einarbeitung W1/W2 / QM 2.2.7"
+    },
+    {
+      "id": "w1-schluessel-1",
+      "deckId": "w1-schluessel",
+      "front": "Wie bekommst du einen Studioschlüssel?",
+      "back": "Nur per Schlüsselübergabeprotokoll – mit Standort, Datum und Unterschrift von dir und dem Unternehmen.",
+      "source": "Einarbeitung S. 5 / QM 2.4.2"
+    },
+    {
+      "id": "w1-schluessel-2",
+      "deckId": "w1-schluessel",
+      "front": "Was bestätigst du bei der Schlüsselübergabe?",
+      "back": "Schlüssel sorgsam verwahren, Besitz nicht an Dritte weitergeben. Bei Verlust trägst du Verantwortung und Kosten für Ersatz und Schäden.",
+      "source": "Einarbeitung S. 5"
+    },
+    {
+      "id": "w1-schluessel-3",
+      "deckId": "w1-schluessel",
+      "front": "Wofür gilt die Foto-/Video-Einwilligung?",
+      "back": "Unternehmens-, Ausbildungs- und Öffentlichkeitsarbeit: Website, Instagram/Social Media, Print- und Werbemittel.",
+      "source": "Einarbeitung S. 5"
+    },
+    {
+      "id": "w1-schluessel-4",
+      "deckId": "w1-schluessel",
+      "front": "Kann ich die Foto-Einwilligung zurückziehen?",
+      "back": "Ja, jederzeit mit Wirkung für die Zukunft. Bereits veröffentlichte Beiträge/Werbemittel müssen nicht entfernt werden – auch nicht nach Ende des Arbeitsverhältnisses.",
+      "source": "Einarbeitung S. 5"
+    },
+    {
+      "id": "w1-regeln-1",
+      "deckId": "w1-regeln",
+      "front": "Handy während der Arbeit?",
+      "back": "Nur in Pausen. Sonst im Mitarbeiter-/Büroraum, lautlos.",
+      "source": "QM 2.2.5"
+    },
+    {
+      "id": "w1-regeln-2",
+      "deckId": "w1-regeln",
+      "front": "Rauchen – die Kernregeln?",
+      "back": "Nie vor dem Studio, nie in Trainerkleidung, nicht sichtbar. Danach Hände waschen, frischer Atem. Bis 30 Min. vor Kundenkontakt verboten.",
+      "source": "QM 2.2.2"
+    },
+    {
+      "id": "w1-regeln-3",
+      "deckId": "w1-regeln",
+      "front": "Studio-PC – was ist tabu?",
+      "back": "Private Nutzung, private Mails, Installationen/ZIP/EXE, nicht freigegebene Webseiten. In Mails nur PDFs öffnen.",
+      "source": "QM 2.2.4"
+    },
+    {
+      "id": "w1-regeln-4",
+      "deckId": "w1-regeln",
+      "front": "Krank – wie meldest du dich?",
+      "back": "So bald wie möglich bei der GF – spätestens am Folgetag bis 07:00 Uhr (sofern keine Frühschicht); wenn absehbar am Vortag bis 18 Uhr in die Teamgruppe. Attest ab Tag 2, binnen 3 Tagen an Domi.",
+      "source": "QM 2.3.6"
+    },
+    {
+      "id": "w1-westen-1",
+      "deckId": "w1-westen",
+      "front": "Wie wäschst du Westen & Elektroden?",
+      "back": "Waschmittelbehälter vorher reinigen. 20–max. 30 °C (Seideprogramm), ohne Schleudern, ohne Weichspüler/Zusätze, nur Spezialwaschmittel.",
+      "source": "QM 2.6.2"
+    },
+    {
+      "id": "w1-westen-2",
+      "deckId": "w1-westen",
+      "front": "Wie lagerst du Westen?",
+      "back": "Ordentlich in den Workstations; Kabel nicht geknickt/am Boden; Gurte & Straps zum Trocknen platzieren; Klett ohne Verkleben.",
+      "source": "QM 2.6.2"
+    },
+    {
+      "id": "w1-westen-3",
+      "deckId": "w1-westen",
+      "front": "Warum Workstations trocken halten?",
+      "back": "Sonst Wasserflecken und Kalk auf der Westenvorderseite.",
+      "source": "QM 2.6.2"
+    },
+    {
+      "id": "w1-westen-4",
+      "deckId": "w1-westen",
+      "front": "Westen kaputt – was nun?",
+      "back": "Beauftragten informieren. Austausch am Herold oder bei Dringendem per Nachricht/Absprache mit der GF.",
+      "source": "QM 2.5.9 / 2.6.2"
+    },
+    {
+      "id": "w1-prioritaeten-1",
+      "deckId": "w1-prioritaeten",
+      "front": "Was liegt bereit, bevor das Mitglied umgezogen ist?",
+      "back": "Trainingskarte am Gerät, Westen & Elektroden in passender Größe, Einsprühwasser (im Winter warm), DataPlus & BIF gelesen.",
+      "source": "QM 3.2.9 / 3.2.10 a"
+    },
+    {
+      "id": "w1-prioritaeten-2",
+      "deckId": "w1-prioritaeten",
+      "front": "Nasser Boden?",
+      "back": "Trainingsfläche ggf. wischen, nasse Stellen v. a. an Workstation/Einsprühstation sofort trocken legen.",
+      "source": "QM 3.2.9 a"
+    },
+    {
+      "id": "w1-prioritaeten-3",
+      "deckId": "w1-prioritaeten",
+      "front": "Was ist 5-Sterne-Service bei Getränken?",
+      "back": "Wasser vor und nach dem Training reichen – am besten die Lieblingssorte. Nach dem Duschen steht der gekühlte Aminodrink bereit.",
+      "source": "QM 3.2.9 g"
+    },
+    {
+      "id": "w1-prioritaeten-4",
+      "deckId": "w1-prioritaeten",
+      "front": "Umkleide & Dusche?",
+      "back": "Nach möglichst jeder Benutzung reinigen; vor dem Duschen des Mitglieds rauswischen, Handtuch liegt schon bereit.",
+      "source": "QM 2.6.1 / 3.2.9"
+    },
+    {
+      "id": "w1-ws-korrektur-1",
+      "deckId": "w1-ws-korrektur",
+      "front": "Was hat immer Vorrang?",
+      "back": "Haltung vor Intensität – beim Ersttraining ganz besonders.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "w1-ws-korrektur-2",
+      "deckId": "w1-ws-korrektur",
+      "front": "Bandscheibenbeschwerden: intensivieren oder korrigieren?",
+      "back": "Korrigieren! Keine Intensivierung, viel statisch und aufrecht, wenig Belastung für die Wirbelsäule.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "w1-ws-korrektur-3",
+      "deckId": "w1-ws-korrektur",
+      "front": "Elektrode fällt ab – Ablauf?",
+      "back": "Muskelgruppe auf 0 → Mitglied beruhigen → abkabeln, Elektrode neu befeuchten → anschließen, langsam hochdrehen.",
+      "source": "QM 3.2.10 f"
+    },
+    {
+      "id": "w1-ws-korrektur-4",
+      "deckId": "w1-ws-korrektur",
+      "front": "Druck im Oberbauch – was drehst du?",
+      "back": "Oberen Rücken (Regler 4) langsam aufbauen. NICHT den Bauch (Regler 6) runter – der ist unbeteiligt.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "w2-opening-1",
+      "deckId": "w2-opening",
+      "front": "Opening: wann da – und die ersten Schritte?",
+      "back": "Mind. 30 Min. vor erstem Training. Sicherungen/Licht an, Bodystreet-Radio, PC mit Magic Line, Kalender, Mail, Interessentenliste, Tanita.",
+      "source": "QM 2.5.6"
+    },
+    {
+      "id": "w2-opening-2",
+      "deckId": "w2-opening",
+      "front": "Opening: was noch?",
+      "back": "AB abhören, Mails beantworten, Werbemittel raus, lüften, Sauberkeit checken, Komfort-Service-Boxen, Spülmaschine ausräumen, Wäsche prüfen, Sprühflaschen, Karaffen, Westen für erste Mitglieder befeuchten.",
+      "source": "QM 2.5.6"
+    },
+    {
+      "id": "w2-opening-3",
+      "deckId": "w2-opening",
+      "front": "Closing: Ablauf?",
+      "back": "Kassenabschluss nach letztem Mitglied, Mails erledigt, PC aus, Telefon laden, Trolley aufräumen, Spülmaschine an, Produkte & Komfort-Boxen auffüllen, saugen & wischen, Licht/Sicherung aus, Werbemittel rein, Fenster zu, absperren.",
+      "source": "QM 2.5.7"
+    },
+    {
+      "id": "w2-opening-4",
+      "deckId": "w2-opening",
+      "front": "Was gilt zusätzlich bei Opening & Closing?",
+      "back": "Immer auch die studiointerne Checkliste prüfen und erledigen.",
+      "source": "QM 2.5.6 / 2.5.7"
+    },
+    {
+      "id": "w2-telefon-1",
+      "deckId": "w2-telefon",
+      "front": "Wie nimmst du ab?",
+      "back": "Nach 2–3x Klingeln, gerade stehen, lächeln, 0,5 Sek. warten: „Schönen guten Tag Standort XY, Sie sprechen mit Vorname Nachname!“",
+      "source": "QM 3.2.2"
+    },
+    {
+      "id": "w2-telefon-2",
+      "deckId": "w2-telefon",
+      "front": "Wie beendest du ein Telefonat?",
+      "back": "Bedanken, Namen nutzen, lächeln, tolle Zeit/Tag/Urlaub wünschen – Muster durchbrechen.",
+      "source": "QM 3.2.3"
+    },
+    {
+      "id": "w2-telefon-3",
+      "deckId": "w2-telefon",
+      "front": "Wie schnell beantwortest du Mails & Anrufe?",
+      "back": "Spätestens 1 Stunde nach Eingang. Mails bei jedem Arbeitsbeginn checken, AB morgens abhören.",
+      "source": "QM 3.2.8 b"
+    },
+    {
+      "id": "w2-telefon-4",
+      "deckId": "w2-telefon",
+      "front": "Mail, die keiner beantworten kann?",
+      "back": "In anderen Standorten fragen oder dem Studioleiter eine Aufgabe in den Kalender eintragen. Kurze Zwischenantwort: „XY ist nicht im Haus, du bekommst schnellstmöglich Antwort.“",
+      "source": "QM 2.5.8 / 3.2.8 b"
+    },
+    {
+      "id": "w2-magicline-1",
+      "deckId": "w2-magicline",
+      "front": "Was ist vor jedem Training in Magic Line zu tun?",
+      "back": "Mitgliederinfos lesen (DataPlus & BIF), Vermessungstermin checken, Westen-/Elektrodengrößen herausfinden.",
+      "source": "QM 3.2.9 c/f"
+    },
+    {
+      "id": "w2-magicline-2",
+      "deckId": "w2-magicline",
+      "front": "Und nach dem Training?",
+      "back": "Mitgliederinfos aktualisieren → BIF!",
+      "source": "QM 3.2.9 f"
+    },
+    {
+      "id": "w2-kasse-1",
+      "deckId": "w2-kasse",
+      "front": "Wann werden Kassenabschlüsse gemacht?",
+      "back": "Abends Kassenabschluss, nach der Frühschicht Zwischenabschluss. Kasse und Magicline vergleichen.",
+      "source": "QM 2.5.5"
+    },
+    {
+      "id": "w2-kasse-2",
+      "deckId": "w2-kasse",
+      "front": "Fehlbetrag in der Kasse?",
+      "back": "Diensthabende Schicht prüft sofort und korrigiert erkannte Fehler. Nie eine Differenz in Magicline eintragen – Vorgehen im Ordner „Abläufe Studioalltag“.",
+      "source": "QM 2.5.5"
+    },
+    {
+      "id": "w2-kasse-3",
+      "deckId": "w2-kasse",
+      "front": "Problem nicht lösbar?",
+      "back": "Schriftlich notieren, in die Teamgruppe schreiben (Studioleitung & Domi am Folgetag) – keinen Kassenabschluss erstellen/hochladen.",
+      "source": "QM 2.5.5"
+    },
+    {
+      "id": "w2-terminierung-1",
+      "deckId": "w2-terminierung",
+      "front": "Wie bestätigst du einen Termin?",
+      "back": "Immer: 1. Wochentag, 2. Datum, 3. Uhrzeit.",
+      "source": "QM 3.2.8 a"
+    },
+    {
+      "id": "w2-terminierung-2",
+      "deckId": "w2-terminierung",
+      "front": "Walk-in kommt, du bist allein im Training?",
+      "back": "Freundlich begrüßen, erklären, dass das eine Ausnahme ist, sagen in wie vielen Minuten du da bist. Will er nicht warten: Telefonnummer + Wunschzeit für Rückruf notieren.",
+      "source": "QM 3.2.10 f"
+    },
+    {
+      "id": "w2-terminierung-3",
+      "deckId": "w2-terminierung",
+      "front": "Wohin trägst du jeden Interessenten mit Probetraining ein?",
+      "back": "In die Interessentenliste – inkl. Erscheinen, Ergebnis und ausführlicher Info bei Nicht-Abschluss.",
+      "source": "QM 2.5.3"
+    },
+    {
+      "id": "w2-ws-verletzung-1",
+      "deckId": "w2-ws-verletzung",
+      "front": "Was ist die PECH-Regel?",
+      "back": "Erstversorgung bei stumpfen Sportverletzungen: Pause, Eis (Kühlen), Compression, Hochlagern.",
+      "source": "Web: apotheken.de / Pharmazeutische Zeitung"
+    },
+    {
+      "id": "w2-ws-verletzung-2",
+      "deckId": "w2-ws-verletzung",
+      "front": "Prellung, Verstauchung, Zerrung – Unterschied?",
+      "back": "Prellung: Stoß/Schlag aufs Gewebe. Verstauchung (Distorsion): Gelenk überdehnt/verdreht. Zerrung: Muskel/Sehne durch Überlastung oder plötzliche Bewegung überdehnt.",
+      "source": "Web: medikamente-per-klick.de / wissen.de"
+    },
+    {
+      "id": "w2-ws-verletzung-3",
+      "deckId": "w2-ws-verletzung",
+      "front": "Wann gilt PECH NICHT?",
+      "back": "Bei offenen Wunden, Blutungen oder Fehlstellungen. Kälte nie direkt auf die Haut (Tuch dazwischen).",
+      "source": "Web: runnersworld.de / medikamente-per-klick.de"
+    },
+    {
+      "id": "w2-ws-verletzung-4",
+      "deckId": "w2-ws-verletzung",
+      "front": "Wann zum Arzt?",
+      "back": "Bei starken Schmerzen, deutlicher Schwellung, Bluterguss, Instabilität oder Bewegungseinschränkung – oder wenn es nach ~2 Tagen nicht besser wird.",
+      "source": "Web: medikamente-per-klick.de / dr-gumpert.de"
+    },
+    {
+      "id": "w3-buchen-1",
+      "deckId": "w3-buchen",
+      "front": "Käufe & Verkäufe in ML buchen",
+      "back": "Inhalt fehlt in den Unterlagen – Ablauf vom Studioleiter ergänzen. Bekannt: Mitarbeiter zahlen den Selbstkostenpreis, nur Eigenverbrauch; Leihkleidung 5,90 € über DataPlus.",
+      "source": "QM 2.3.8 / 3.1.6"
+    },
+    {
+      "id": "w3-hardfacts-1",
+      "deckId": "w3-hardfacts",
+      "front": "Warum reichen 20 Minuten pro Woche?",
+      "back": "Über 90 % der Muskelfasern, ganze Skelettmuskulatur, 4 s Impuls / 4 s Pause = 10 Min. unter Spannung, ca. 51.000 Kontraktionen.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "w3-hardfacts-2",
+      "deckId": "w3-hardfacts",
+      "front": "85 Hz und 350 µs?",
+      "back": "85 Hz = 85 Kontraktionen pro Sekunde. 350 µs Impulsbreite = Tiefe, mit der der Impuls in den Muskel geht.",
+      "source": "QM 3.3.1"
+    },
+    {
+      "id": "w3-hardfacts-3",
+      "deckId": "w3-hardfacts",
+      "front": "Welche Studien nennst du?",
+      "back": "Uni Bayreuth (2002–03), Uni Erlangen-Nürnberg (2009), Deutsche Sporthochschule Köln (2008), Herzklinik Bad Oeynhausen (2010).",
+      "source": "QM 3.1.15"
+    },
+    {
+      "id": "w3-hardfacts-4",
+      "deckId": "w3-hardfacts",
+      "front": "Was heißt „Strahlenschutz“ beim EMS-Trainer?",
+      "back": "EMS fällt unter die NiSV (Verordnung zum Schutz vor nichtionisierender Strahlung). Seit 01.01.2023 darf nur anwenden, wer die „Fachkunde EMF“ nachweist; Fortbildung alle 5 Jahre.",
+      "source": "Web: BSA-Akademie (NiSV)"
+    },
+    {
+      "id": "w3-hardfacts-5",
+      "deckId": "w3-hardfacts",
+      "front": "Konkurrenten",
+      "back": "Inhalt fehlt in den Unterlagen – Wettbewerber im Umkreis vom Studioleiter ergänzen.",
+      "source": "Einarbeitung W3"
+    },
+    {
+      "id": "w3-abwesenheit-1",
+      "deckId": "w3-abwesenheit",
+      "front": "Was ist die Abwesenheitsliste?",
+      "back": "Mo früh Mitgliederliste drucken, alle mit Termin oder Absage in der KW streichen, Rest anrufen: Vermissen mitteilen, an Ziel erinnern, Termin vereinbaren.",
+      "source": "QM 3.2.11 a"
+    },
+    {
+      "id": "w3-abwesenheit-2",
+      "deckId": "w3-abwesenheit",
+      "front": "Wann wird telefoniert – und dann?",
+      "back": "Montag alle, Dienstag die Übrigen nochmal. Danach Liste vernichten.",
+      "source": "QM 3.2.11 a"
+    },
+    {
+      "id": "w3-beschwerde-1",
+      "deckId": "w3-beschwerde",
+      "front": "Grundhaltung bei einer Beschwerde?",
+      "back": "Beschwerde = Chance. Freundlich bleiben, auch wenn das Mitglied aufgebracht ist; ehrliches Interesse und konsequente Ehrlichkeit.",
+      "source": "Web: selbststaendigkeit.de / QM 3.2.7"
+    },
+    {
+      "id": "w3-beschwerde-2",
+      "deckId": "w3-beschwerde",
+      "front": "Ablauf im Gespräch?",
+      "back": "Ausreden lassen & aktiv zuhören → bedanken → Verständnis/Bedauern zeigen (ggf. entschuldigen) → Lösung anbieten oder Wunsch erfragen → bearbeiten → dokumentieren.",
+      "source": "Web: Springer (Beschwerdemanagement Praxis)"
+    },
+    {
+      "id": "w3-beschwerde-3",
+      "deckId": "w3-beschwerde",
+      "front": "Was, wenn du es nicht sofort lösen kannst?",
+      "back": "Sagen, wann und wie es gelöst wird. Außerordentliches ans Studiomanagement: Name, Kontaktdaten, Grund in die Aufgabenliste.",
+      "source": "Web: fonio.ai / QM 3.2.8 d"
+    },
+    {
+      "id": "w3-ws-mitgliedschaft-1",
+      "deckId": "w3-ws-mitgliedschaft",
+      "front": "Ruhezeit rückwirkend?",
+      "back": "Niemals. Attest < 4 Wochen: Ruhezeit mit Beitrag + Verlängerung um die Attestdauer zu 0,00 €.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "w3-ws-mitgliedschaft-2",
+      "deckId": "w3-ws-mitgliedschaft",
+      "front": "Ausland, Schwangerschaft – Ruhezeit?",
+      "back": "Ausland ab 2 Monaten mit Arbeitgeberbestätigung. Schwangerschaft max. 12 Monate (oder Mitgliedschaft übertragen).",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "w3-ws-mitgliedschaft-3",
+      "deckId": "w3-ws-mitgliedschaft",
+      "front": "Flextarif kündigen?",
+      "back": "Erstlaufzeit mind. 8 Wochen; 4 Wochen zum Monatsende schriftlich. Start + 8 Wo − 4 Wo = letzter Termin, sonst +4 Wochen.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "w3-ws-mitgliedschaft-4",
+      "deckId": "w3-ws-mitgliedschaft",
+      "front": "Umzug oder Attest = Kündigung?",
+      "back": "Umzug: kein Rechtsanspruch (Kulanz nur mit GF). Attest: generell kein Kündigungsgrund – an Studioleitung, keine Versprechen.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "w3-ws-mitgliedschaft-5",
+      "deckId": "w3-ws-mitgliedschaft",
+      "front": "Rücklastschrift?",
+      "back": "Erneuter Einzug in der Folgewoche + 10 € Bankkosten. Nach 3. Mahnung: Kündigung zum Laufzeitende, Mandat endet, Gesamtforderung; danach Inkasso.",
+      "source": "QM 3.7"
+    },
+    {
+      "id": "w4-bestand-1",
+      "deckId": "w4-bestand",
+      "front": "Lieferung kommt?",
+      "back": "Mit Lieferschein auf Menge & Qualität prüfen, ordentlich einräumen, ggf. Bestandsbeauftragten informieren.",
+      "source": "QM 2.5.1"
+    },
+    {
+      "id": "w4-bestand-2",
+      "deckId": "w4-bestand",
+      "front": "Monatliche Bestandsliste?",
+      "back": "Ende Kalendermonat prüfen, mit Verkäufen der Studiosoftware abgleichen, Bedarf farbig markieren, Studiomanager gibt sie beim Herold an die GF.",
+      "source": "QM 2.5.2"
+    },
+    {
+      "id": "w4-bestand-3",
+      "deckId": "w4-bestand",
+      "front": "Einkauf im Supermarkt?",
+      "back": "Möglichst wenige Kassenzettel; Nummer + Standort-Kürzel drauf, scannen, hochladen, in die Kasse. Bis 3. des Folgemonats festschreiben.",
+      "source": "QM 2.5.4"
+    },
+    {
+      "id": "w4-akquise-1",
+      "deckId": "w4-akquise",
+      "front": "VIP-Karte nach der Körpervermessung?",
+      "back": "Nachhaken, ob die VIP-Einladung schon weitergegeben wurde – z. B. „Und, hast du … deine Karte schon gegeben?“",
+      "source": "QM 3.4.3"
+    },
+    {
+      "id": "w4-akquise-2",
+      "deckId": "w4-akquise",
+      "front": "Mitglied sagt die Woche ab?",
+      "back": "Empfehlung generieren: „Wer vertritt dich diese Woche?“ – Urlaubsgutschein.",
+      "source": "QM 3.1.3"
+    },
+    {
+      "id": "w4-akquise-3",
+      "deckId": "w4-akquise",
+      "front": "DAs & Ehemalige",
+      "back": "Inhalt fehlt in den Unterlagen – Vorgehen vom Studioleiter ergänzen.",
+      "source": "Einarbeitung W4"
+    },
+    {
+      "id": "w4-ws-kv-1",
+      "deckId": "w4-ws-kv",
+      "front": "Vor der KV?",
+      "back": "Mit Farbe + 15 Min. extra terminieren, Anwesenheiten & letzte Vermessung prüfen, Eigenreflexion: „Was hast du selbst für ein Gefühl?“",
+      "source": "QM 3.4.1"
+    },
+    {
+      "id": "w4-ws-kv-2",
+      "deckId": "w4-ws-kv",
+      "front": "Wie misst du Bauch, Po, Beine?",
+      "back": "Bauch auf Nabelhöhe (ausatmen). Po an dickster Stelle, Füße geschlossen, seitlich. Beine direkt an der Po-Falte.",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "w4-ws-kv-3",
+      "deckId": "w4-ws-kv",
+      "front": "Arme & Brust?",
+      "back": "Ellenbogen auf Schulterhöhe, Handflächen zum Körper, dickste Stelle. Brust: Frauen Achselhöhe, Männer Brustwarze, ausatmen.",
+      "source": "QM 3.4.2"
+    },
+    {
+      "id": "w4-ws-kv-4",
+      "deckId": "w4-ws-kv",
+      "front": "Nach der KV?",
+      "back": "Werte = Richtwerte. Eigenverantwortung betonen, alt/neu vergleichen, Empfehlungen generieren, Tipps ab 2. KV im DataPlus.",
+      "source": "QM 3.4.3"
+    },
+    {
+      "id": "w4-ws-kv-5",
+      "deckId": "w4-ws-kv",
+      "front": "Mehr Gewicht/Umfang trotz Training?",
+      "back": "Muskelaufbau: 1 g Muskel bindet ca. 2,7 g Wasser; Fett wird nach außen geschoben. Reguliert sich über höheren Verbrauch.",
+      "source": "QM 3.4.4"
+    },
+    {
+      "id": "w5-kuendigung-1",
+      "deckId": "w5-kuendigung",
+      "front": "Kündigung geht ein – was tust du?",
+      "back": "(Post-)Eingangsdatum, Kürzel und Stempel notieren, Kündigungseingang in Magicline eintragen, weiter laut Ordner „Abläufe Studioalltag“.",
+      "source": "QM 3.2.8 c"
+    },
+    {
+      "id": "w5-kuendigung-2",
+      "deckId": "w5-kuendigung",
+      "front": "Und danach?",
+      "back": "Kollegen immer informieren.",
+      "source": "Einarbeitung W5"
+    },
+    {
+      "id": "w5-chaos-1",
+      "deckId": "w5-chaos",
+      "front": "Chaostraining & Videoanalyse",
+      "back": "Inhalt fehlt in den Unterlagen – Ablauf vom Studioleiter ergänzen.",
+      "source": "Einarbeitung W5"
+    },
+    {
+      "id": "w5-ws-kontra-1",
+      "deckId": "w5-ws-kontra",
+      "front": "Was ist Pflicht vor dem ersten Training?",
+      "back": "Schriftliche Anamnese der Kontraindikationen, unterschrieben von Kunde und Trainer, archiviert. Bei Auffälligkeiten erst nach ärztlicher Freigabe.",
+      "source": "QM 3.3.2"
+    },
+    {
+      "id": "w5-ws-kontra-2",
+      "deckId": "w5-ws-kontra",
+      "front": "Absolute vs. relative Kontraindikation?",
+      "back": "Absolut: kein EMS-Training. Relativ: nur nach ärztlicher Abklärung/Freigabe. Die Norm DIN 33961-5 legt beide Listen fest.",
+      "source": "Web: German Journal of Sports Medicine / DSSV"
+    },
+    {
+      "id": "w5-ws-kontra-3",
+      "deckId": "w5-ws-kontra",
+      "front": "Beispiele absolute Kontraindikationen (DSSV-Liste)?",
+      "back": "Akute Erkrankungen/Infekte, kürzliche OPs, Schwangerschaft, Herzschrittmacher/elektrische Implantate, Herzrhythmusstörungen, Epilepsie, Blutungsneigung, Alkohol-/Drogeneinfluss.",
+      "source": "Web: DSSV-Erklärung EMS-Training"
+    },
+    {
+      "id": "w5-ws-kontra-4",
+      "deckId": "w5-ws-kontra",
+      "front": "Bluthochdruck > 140/90?",
+      "back": "Langsamer Start, keine Hände über Kopf / Kopf unter Herz, langsamer Übungswechsel, viele Atempausen, vor jedem Training messen.",
+      "source": "QM 3.6"
+    },
+    {
+      "id": "w5-ws-kontra-5",
+      "deckId": "w5-ws-kontra",
+      "front": "Hinweis zu Unterschieden",
+      "back": "Unser Handbuch erlaubt bei manchen Diagnosen angepasstes Training (z. B. Diabetes, gutartiger Tumor) – die DSSV-Liste nennt sie absolut. Im Zweifel: ärztlich abklären und Studioleitung fragen.",
+      "source": "QM 3.6 vs. Web: DSSV"
+    },
+    {
+      "id": "w6-verantwortung-1",
+      "deckId": "w6-verantwortung",
+      "front": "Was passiert in Woche 6?",
+      "back": "Eigenen Aufgabenbereich im Studio übernehmen und allen vorstellen; eigenen Workshop übernehmen.",
+      "source": "Einarbeitung W6"
+    },
+    {
+      "id": "w6-verantwortung-2",
+      "deckId": "w6-verantwortung",
+      "front": "Wie geht es nach Woche 6 weiter?",
+      "back": "Stärken & Schwächen der letzten Wochen zusammenfassen, passende Übungen/Times/Workshops bis inkl. Woche 10 fest in Magic Line einplanen.",
+      "source": "Einarbeitung W6"
+    }
+  ]
+}

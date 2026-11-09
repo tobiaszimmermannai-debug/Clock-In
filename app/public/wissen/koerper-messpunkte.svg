@@ -1,0 +1,27 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 460' font-family='system-ui,-apple-system,Segoe UI,Roboto,sans-serif'><rect width='420' height='460' rx='16' fill='#f3f4f6'/>
+<g fill='#d1d5db' stroke='#1f2937' stroke-width='2'>
+ <circle cx='200' cy='48' r='26'/>
+ <path d='M170 80 h60 l28 12 l22 110 l-16 4 l-24 -92 l-4 70 l6 72 h-104 l6 -72 l-4 -70 l-24 92 l-16 -4 l22 -110 z'/>
+ <path d='M158 276 l-4 150 h22 l20 -150 z M242 276 l4 150 h-22 l-20 -150 z'/>
+</g>
+<g stroke='#2563eb' stroke-width='3' stroke-dasharray='6 4'>
+ <line x1='150' y1='112' x2='250' y2='112'/>
+ <line x1='158' y1='178' x2='242' y2='178'/>
+ <line x1='158' y1='212' x2='242' y2='212'/>
+ <line x1='204' y1='284' x2='250' y2='284'/>
+ <line x1='212' y1='340' x2='246' y2='340'/>
+</g>
+<g fill='#e30613'>
+ <circle cx='270' cy='112' r='14'/><circle cx='262' cy='178' r='14'/><circle cx='262' cy='212' r='14'/>
+ <circle cx='268' cy='284' r='14'/><circle cx='264' cy='340' r='14'/>
+</g>
+<g fill='#fff' font-size='16' font-weight='700' text-anchor='middle'>
+ <text x='270' y='118'>1</text><text x='262' y='184'>2</text><text x='262' y='218'>3</text>
+ <text x='268' y='290'>4</text><text x='264' y='346'>5</text>
+</g>
+<g fill='#1f2937' font-size='13'>
+ <text x='292' y='116'>Brust / Achselhöhe</text><text x='284' y='182'>unter den Rippen</text>
+ <text x='284' y='216'>Höhe Bauchnabel</text><text x='290' y='282'>Oberschenkel</text><text x='290' y='298'>ganz oben</text>
+ <text x='286' y='344'>Oberschenkel Mitte</text>
+</g>
+<text x='200' y='448' text-anchor='middle' fill='#6b7280' font-size='12'>Messpunkte 1–5 (Vorderansicht)</text></svg>
