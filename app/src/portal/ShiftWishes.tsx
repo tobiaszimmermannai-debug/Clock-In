@@ -7,7 +7,7 @@ import { berlinDate, fmtLongDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { portalDb } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
-import { SLOT_LABEL, SLOTS, type Slot, type SlotTime, slotTime, type Wish, wishRange } from "../lib/wishes";
+import { SLOT_LABEL, SLOTS, type Slot, type SlotTime, type Wish, wishRange } from "../lib/wishes";
 import type { Me } from "./PortalApp";
 
 /** Eigene Wünsche ab heute (offen und abgelehnt) – fürs Portal */
@@ -109,17 +109,13 @@ function WishSheet(props: { me: Me; locations: Location[]; slots: SlotTime[]; on
         </select>
       </Field>
       <div className="wish-slots" role="group" aria-label="Lage">
-        {SLOTS.map((s) => {
-          const t = slotTime(props.slots, studio, s);
-          return (
-            <button key={s} type="button" className="wish-slot" aria-pressed={slot === s} onClick={() => setSlot(s)}>
-              {SLOT_LABEL[s]}
-              {t && <small>{t.starts}–{t.ends}</small>}
-            </button>
-          );
-        })}
+        {SLOTS.map((s) => (
+          <button key={s} type="button" className="wish-slot" aria-pressed={slot === s} onClick={() => setSlot(s)}>
+            {SLOT_LABEL[s]}
+          </button>
+        ))}
       </div>
-      <p className="muted small">Die Zeiten der Lagen sind fest hinterlegt. Die Studioleitung entscheidet über den Wunsch.</p>
+      <p className="muted small">Die genauen Zeiten legt die Studioleitung beim Eintragen fest.</p>
       {error && <Notice tone="error">{error}</Notice>}
     </Sheet>
   );
