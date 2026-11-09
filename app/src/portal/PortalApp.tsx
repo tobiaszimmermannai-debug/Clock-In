@@ -18,6 +18,7 @@ import { Stamp } from "./Stamp";
 import { MyWishes } from "./ShiftWishes";
 import { PcUnlock } from "./PcUnlock";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { Plan as AdminPlan } from "../admin/Plan";
 import { Knowledge } from "./Knowledge";
 import { QrLoginConfirm } from "./QrLoginConfirm";
 import { Swap } from "./Swap";
@@ -163,11 +164,17 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
   );
 }
 
-// Dienstplan mit Schichttausch (früher eigener Reiter „Tausch“)
+// Dienstplan mit Schichttausch; Studioleitung plant hier direkt (normale Anmeldung, ohne QR-Code und ohne Timer)
 function Plan(props: { me: Me; locations: Location[]; colleagues: Colleague[] }) {
   const canSwap = props.me.time_tracking !== false;
-  const [mode, setMode] = useState<"plan" | "swap">("plan");
+  const isLead = props.me.role === "manager";
+  const [mode, setMode] = useState<"plan" | "edit" | "swap">(isLead ? "edit" : "plan");
   const [view, setView] = useState<"list" | "calendar">("list");
+  const modes = [
+    ...(isLead ? [{ id: "edit" as const, label: "Planen" }] : []),
+    { id: "plan" as const, label: isLead ? "Ansehen" : "Dienstplan" },
+    ...(canSwap ? [{ id: "swap" as const, label: "Schichttausch" }] : []),
+  ];
   return (
     <>
       <PageHeader
@@ -177,13 +184,14 @@ function Plan(props: { me: Me; locations: Location[]; colleagues: Colleague[] })
             options={[{ id: "list", label: "Liste" }, { id: "calendar", label: "Kalender" }]} />
         ) : undefined}
       />
-      {canSwap && (
-        <Segmented label="Bereich" value={mode} onChange={setMode} fill
-          options={[{ id: "plan", label: "Dienstplan" }, { id: "swap", label: "Schichttausch" }]} />
+      {modes.length > 1 && <Segmented label="Bereich" value={mode} onChange={setMode} fill options={modes} />}
+      {mode === "edit" && isLead ? (
+        <AdminPlan profile={{ id: props.me.id, first_name: props.me.first_name, last_name: props.me.last_name, role: "manager" }} db={portalDb} embedded />
+      ) : mode === "swap" && canSwap ? (
+        <Swap me={props.me} colleagues={props.colleagues} locations={props.locations} embedded />
+      ) : (
+        <PlanView me={props.me} locations={props.locations} view={view} />
       )}
-      {mode === "swap" && canSwap
-        ? <Swap me={props.me} colleagues={props.colleagues} locations={props.locations} embedded />
-        : <PlanView me={props.me} locations={props.locations} view={view} />}
     </>
   );
 }

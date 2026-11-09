@@ -43,12 +43,8 @@ export function AdminApp() {
     if (!profile || (profile.role !== "admin" && profile.role !== "manager")) {
       return setPhase({ kind: "denied", text: "Die Verwaltung ist nur für Studioleitung und Admins." });
     }
-    // Regel: Studioleitung meldet sich an externen Geräten nur per QR-Code mit dem Stempel-Handy an (gilt 12 Std.)
-    if (profile.role === "manager") {
-      if (isQrSession(data.session)) return setPhase({ kind: "ready", profile, mfa: false });
-      await adminDb.auth.signOut({ scope: "local" });
-      return setPhase({ kind: "login", qr: true, error: "Studioleitung: Bitte per QR-Code mit deinem Stempel-Handy anmelden." });
-    }
+    // Studioleitung: Passwort oder (freiwillig) QR-Code mit dem Stempel-Handy – QR-Pflicht und Timer nur am Studio-PC
+    if (profile.role === "manager" && isQrSession(data.session)) return setPhase({ kind: "ready", profile, mfa: false });
 
     const { data: aal } = await adminDb.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aal?.currentLevel === "aal2") return setPhase({ kind: "ready", profile, mfa: true });
@@ -145,11 +141,11 @@ export function AuthLayout(props: { title: string; text: string; children: React
 
 // Studioleitung: QR-Code (Standard); Tobias & Dominik: Passwort + 2FA
 function LoginChoice(props: { error?: string; qr?: boolean; onDone: () => void }) {
-  const [mode, setMode] = useState<"qr" | "password">(props.qr === false ? "password" : "qr");
+  const [mode, setMode] = useState<"qr" | "password">(props.qr ? "qr" : "password");
   return (
     <div className="stack">
       <Segmented label="Anmeldung" value={mode} onChange={setMode} fill
-        options={[{ id: "qr", label: "Studioleitung (QR)" }, { id: "password", label: "Admin (Passwort)" }]} />
+        options={[{ id: "password", label: "Passwort" }, { id: "qr", label: "QR-Code (Stempel-Handy)" }]} />
       {props.error && <Notice tone="warn">{props.error}</Notice>}
       {mode === "qr" ? <QrLogin onDone={props.onDone} /> : <Login onDone={props.onDone} />}
     </div>

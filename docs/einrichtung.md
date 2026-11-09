@@ -240,10 +240,9 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
 - **Wissen:** Reiter „Wissen“ im Portal – Lernpfad mit 14 Lektionen (220 Fragen aus dem QM-Handbuch), Blitzi-Karteikarten
   (Einarbeitung Woche 1–6), Blitzrunde (60 s), Wiederholung nach Leitner, Serie und Tagesziel (30 XP). Inhalte liegen in
   `app/src/content/wissen/` (neue Fragen mit neuen IDs ergänzen, bestehende IDs nie ändern), Übersicht: `docs/wissen-fragen-und-loesungen.md`.
-- **Anmeldung Studioleitung (Regel):** An externen Geräten (z. B. privater PC) meldet sich die Studioleitung in der
-  Verwaltung (`#/admin`) nur per QR-Code an: Code mit dem registrierten Stempel-Handy scannen (Stempeln → Scannen) →
-  „Am PC anmelden“. Gilt 12 Std. Am Stempel-Handy selbst: „Mit diesem Handy anmelden“. Funktion `qr-login` (Verify JWT an).
-  Admins (Tobias/Dominik) weiter mit Passwort + 2FA. Studio-PC: eigene Freigabe wie bisher.
+- **Studioleitung plant am Handy:** Im Mitarbeiter-Portal → Dienstplan → „Planen“ – normale Anmeldung, ohne QR-Code und ohne
+  Timer. QR-Code und automatisches Sperren nach 5 Min. gibt es nur am Studio-PC. In der Verwaltung (`#/admin`) meldet sich die
+  Studioleitung mit Passwort an (QR-Code mit dem Stempel-Handy optional, Funktion `qr-login`).
 - **Tagesaufgaben nach dem Einchecken:** Nach „Kommen“ (und einmal am Tag beim Öffnen) zeigt Clock-In die 3 Plätze
   für Tagesaufgaben. Wer schon etwas im Kopf hat, tippt es ein → „Anfragen“: Die Aufgabe landet in der Team-Liste des
   Studios, die Studioleitung bekommt die Freigabe per Telegram. Leitungen tragen direkt ein. Kurze Anleitung ist eingebaut.

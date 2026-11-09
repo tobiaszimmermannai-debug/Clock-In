@@ -8,6 +8,7 @@
 // Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
 // Unter dem Tag: „Noch ohne Schicht“ – eigene Leute ohne Eintrag; planen oder (nur Vollzeit) auf frei setzen.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ReactNode } from "react";
 import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
 import { type PlanShift, ShiftRow, blockRange, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
@@ -123,7 +124,8 @@ function useHelpRequests() {
 }
 
 // db: andere Verbindung (Studio-PC); onlyStudio: nur dieses Studio planen (Heimatstudio der Studioleitung am PC)
-export function Plan({ profile, db: client, onlyStudio }: { profile: Profile; db?: SupabaseClient; onlyStudio?: string }) {
+// embedded: im Handy-Portal der Studioleitung (dort steht der Seitenkopf schon) – nur die Umschalter zeigen
+export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: Profile; db?: SupabaseClient; onlyStudio?: string; embedded?: boolean }) {
   db = client ?? adminDb;
   const today = berlinDate();
   const [start, setStart] = useState(weekStart(today));
@@ -171,7 +173,7 @@ export function Plan({ profile, db: client, onlyStudio }: { profile: Profile; db
   if (locations.length === 0) {
     return (
       <>
-        <PageHeader title="Dienstplan" />
+        <PlanHead embedded={embedded} title="Dienstplan" />
         <Notice tone="warn">Dir ist noch kein Studio zugeordnet. Bitte Tobias oder Dominik fragen.</Notice>
       </>
     );
@@ -288,7 +290,7 @@ export function Plan({ profile, db: client, onlyStudio }: { profile: Profile; db
   if (view === "all") {
     return (
       <>
-        <PageHeader title="Dienstplan" subtitle="Alle Studios" actions={viewSwitch} />
+        <PlanHead embedded={embedded} title="Dienstplan" subtitle="Alle Studios" actions={viewSwitch} />
         <WeekNav start={start} onChange={goWeek} />
         {error && <Notice tone="error">{error}</Notice>}
         {flash && <Notice tone="ok">{flash}</Notice>}
@@ -310,7 +312,7 @@ export function Plan({ profile, db: client, onlyStudio }: { profile: Profile; db
 
   return (
     <>
-      <PageHeader title="Dienstplan" subtitle={locations.length === 1 ? `Studio ${studioName}` : undefined} actions={viewSwitch} />
+      <PlanHead embedded={embedded} title="Dienstplan" subtitle={locations.length === 1 ? `Studio ${studioName}` : undefined} actions={viewSwitch} />
       {locations.length > 1 && <StudioFilter all={false} locations={locations} value={studio} onChange={setStudio} />}
       <WeekNav start={start} onChange={goWeek} />
       <DayStrip start={start} value={day} onChange={(d) => { setDay(d); setFlash(undefined); }} counts={counts} />
@@ -1062,4 +1064,9 @@ function EditShift(props: {
       {error && <Notice tone="error">{error}</Notice>}
     </Sheet>
   );
+}
+
+function PlanHead(props: { embedded?: boolean; title: string; subtitle?: string; actions?: ReactNode }) {
+  if (!props.embedded) return <PageHeader title={props.title} subtitle={props.subtitle} actions={props.actions} />;
+  return props.actions ? <div className="plan-embedded-actions">{props.actions}</div> : null;
 }
