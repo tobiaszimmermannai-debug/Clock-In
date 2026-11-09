@@ -39,7 +39,7 @@ async function upcomingShifts(userId: string): Promise<MyShift[]> {
   return (data ?? []) as unknown as MyShift[];
 }
 
-export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Location[] }) {
+export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Location[]; /** im Dienstplan-Reiter: ohne eigenen Seitenkopf */ embedded?: boolean }) {
   const [shifts, setShifts] = useState<MyShift[]>([]);
   const [requests, setRequests] = useState<Request[]>([]);
   const [draft, setDraft] = useState<{ shift: MyShift; cross: boolean } | null>(null);
@@ -74,7 +74,7 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
 
   return (
     <>
-      <PageHeader title="Schicht tauschen" />
+      {!props.embedded && <PageHeader title="Schicht tauschen" />}
       {message && <Notice tone="ok">{message}</Notice>}
 
       <Section title="Meine nächsten Schichten" footer="Tausch im eigenen Studio – „Anderes Studio“ braucht die Zustimmung beider Studioleitungen.">

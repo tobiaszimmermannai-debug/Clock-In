@@ -52,7 +52,7 @@ function Start() {
   return (
     <AuthLayout title="Clock-In" text="Wie möchtest du die App nutzen?">
       <div className="list">
-        <Row leading={<LeadingIcon name="phone" />} title="Mitarbeiter-Login" subtitle="Stempeln, Stunden, Dienstplan, Tausch" chevron onClick={go("#/portal")} />
+        <Row leading={<LeadingIcon name="phone" />} title="Mitarbeiter-Login" subtitle="Stempeln, Stunden, Dienstplan, Wissen" chevron onClick={go("#/portal")} />
         <Row leading={<LeadingIcon name="tablet" />} title="Tablet im Studio einrichten" subtitle="Zeigt den QR-Code zum Stempeln" chevron onClick={go("#/kiosk")} />
         <Row leading={<LeadingIcon name="monitor" />} title="PC im Studio als Terminal" subtitle="Anfragen – Tobias oder Dominik geben frei" chevron onClick={go("#/kiosk/pc")} />
         <Row leading={<LeadingIcon name="shield" />} title="Verwaltung" subtitle="Studioleitung und Geschäftsführung" chevron onClick={go("#/admin")} />

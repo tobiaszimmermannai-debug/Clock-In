@@ -17,6 +17,7 @@ import { Hours } from "./Hours";
 import { Stamp } from "./Stamp";
 import { MyWishes } from "./ShiftWishes";
 import { PcUnlock } from "./PcUnlock";
+import { Knowledge } from "./Knowledge";
 import { Swap } from "./Swap";
 import { useWishes } from "../lib/wishes";
 
@@ -32,12 +33,12 @@ export type Me = {
 };
 export type Colleague = { id: string; first_name: string; last_name: string; home_location_id: string | null };
 
-type Tab = "stamp" | "hours" | "plan" | "swap" | "tasks" | "account";
+type Tab = "stamp" | "hours" | "plan" | "knowledge" | "tasks" | "account";
 const TABS: ShellTab<Tab>[] = [
   { id: "stamp", label: "Stempeln", icon: "qr" },
   { id: "hours", label: "Stunden", icon: "clock" },
   { id: "plan", label: "Dienstplan", icon: "calendar" },
-  { id: "swap", label: "Tausch", icon: "swap" },
+  { id: "knowledge", label: "Wissen", icon: "book" },
   { id: "tasks", label: "Aufgaben", icon: "tasks" },
   { id: "account", label: "Konto", icon: "user" },
 ];
@@ -94,7 +95,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string }) {
     const meData = profile.data as unknown as Me;
     setMe(meData);
     // Ohne Zeiterfassung: kein Stempeln/Stunden/Tausch – direkt zu den Aufgaben
-    if (meData.time_tracking === false) setTab((t) => (t === "stamp" || t === "hours" || t === "swap" ? "tasks" : t));
+    if (meData.time_tracking === false) setTab((t) => (t === "stamp" || t === "hours" ? "tasks" : t));
     setColleagues((people.data ?? []) as Colleague[]);
     setLocations((locs.data ?? []) as Location[]);
     registerStudios((locs.data ?? []) as Location[]);
@@ -119,7 +120,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string }) {
     <Shell
       title="Clock-In"
       subtitle={`${me.first_name} ${me.last_name}`}
-      tabs={me.time_tracking === false ? TABS.filter((t) => t.id === "plan" || t.id === "tasks" || t.id === "account") : TABS}
+      tabs={me.time_tracking === false ? TABS.filter((t) => t.id === "plan" || t.id === "knowledge" || t.id === "tasks" || t.id === "account") : TABS}
       current={tab}
       onTab={setTab}
       full={tab === "tasks"}
@@ -138,8 +139,8 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string }) {
         />
       )}
       {tab === "hours" && <Hours me={me} />}
-      {tab === "plan" && <Plan me={me} locations={locations} />}
-      {tab === "swap" && <Swap me={me} colleagues={colleagues} locations={locations} />}
+      {tab === "plan" && <Plan me={me} locations={locations} colleagues={colleagues} />}
+      {tab === "knowledge" && <Knowledge />}
       {tab === "tasks" && <Tasks db={portalDb} />}
       {tab === "account" && <Account me={me} onLogout={logout} />}
       {showReminder && tab !== "tasks" && (
@@ -159,21 +160,39 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string }) {
   );
 }
 
-function Plan(props: { me: Me; locations: Location[] }) {
-  const [start, setStart] = useState(weekStart(berlinDate()));
-  const [studio, setStudio] = useState("");
+// Dienstplan mit Schichttausch (früher eigener Reiter „Tausch“)
+function Plan(props: { me: Me; locations: Location[]; colleagues: Colleague[] }) {
+  const canSwap = props.me.time_tracking !== false;
+  const [mode, setMode] = useState<"plan" | "swap">("plan");
   const [view, setView] = useState<"list" | "calendar">("list");
-  const { shifts, error, blockOf } = useWeekShifts(portalDb, start);
-  const wishes = useWishes(portalDb, start);
   return (
     <>
       <PageHeader
         title="Dienstplan"
-        actions={
+        actions={mode === "plan" ? (
           <Segmented label="Ansicht" value={view} onChange={setView}
             options={[{ id: "list", label: "Liste" }, { id: "calendar", label: "Kalender" }]} />
-        }
+        ) : undefined}
       />
+      {canSwap && (
+        <Segmented label="Bereich" value={mode} onChange={setMode} fill
+          options={[{ id: "plan", label: "Dienstplan" }, { id: "swap", label: "Schichttausch" }]} />
+      )}
+      {mode === "swap" && canSwap
+        ? <Swap me={props.me} colleagues={props.colleagues} locations={props.locations} embedded />
+        : <PlanView me={props.me} locations={props.locations} view={view} />}
+    </>
+  );
+}
+
+function PlanView(props: { me: Me; locations: Location[]; view: "list" | "calendar" }) {
+  const [start, setStart] = useState(weekStart(berlinDate()));
+  const [studio, setStudio] = useState("");
+  const { view } = props;
+  const { shifts, error, blockOf } = useWeekShifts(portalDb, start);
+  const wishes = useWishes(portalDb, start);
+  return (
+    <>
       {view === "list" && <StudioFilter locations={props.locations} value={studio} onChange={setStudio} />}
       <WeekNav start={start} onChange={setStart} />
       {error && <Notice tone="error">{error}</Notice>}
