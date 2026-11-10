@@ -79,7 +79,7 @@ const SHEET_TITLE: Record<Category, string> = {
 };
 type Vacation = { user_id: string; allowance: number | null; taken: number; planned: number };
 type HelpRequest = { id: string; location_id: string; starts_at: string; ends_at: string; note: string | null; location: { name: string } | null };
-type SheetState = { shift?: PlanShift; category?: Category; requestId?: string; userId?: string; wish?: Wish };
+type SheetState = { shift?: PlanShift; category?: Category; requestId?: string; userId?: string; wish?: Wish; times?: { from: string; to: string } };
 // Gutschrift zur Anzeige: minutes = Dauer des Eintrags, share = Anteil am Tag (Krank ab Uhrzeit)
 type Credit = { minutes?: number; trainee: boolean };
 type CreditOf = (userId: string, minutes: number, share: number) => Credit;
@@ -278,6 +278,27 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
       canSick={canSick(shift)}
       creditOf={creditOf} onClose={() => setSheet(null)} onSaved={done} />
   );
+  const addSheet = sheet && !sheet.shift ? (
+        <AddShift
+          day={day}
+          studio={studio}
+          studioName={studioName}
+          locations={allLocations}
+          canPlanAt={(id) => isAdmin || managed.has(id)}
+          people={people}
+          taken={taken}
+          sickCandidates={sickCandidates}
+          helpRequests={help.requests.filter((r) => r.location_id !== studio && berlinDate(r.starts_at) === day)}
+          initialCategory={sheet.category}
+          initialRequestId={sheet.requestId}
+          initialUserId={sheet.userId}
+          initialTimes={sheet.times}
+          wishHint={sheet.wish ? `Wunsch: ${SLOT_LABEL[sheet.wish.slot]} – die Zeit legst du selbst fest.` : undefined}
+          creditOf={creditOf}
+          onClose={() => setSheet(null)}
+          onSaved={(t) => void savedWithWish(t)}
+        />
+  ) : null;
   const viewSwitch = (
     <Segmented
       label="Ansicht"
@@ -302,9 +323,18 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
           canEdit={canEdit}
           blockOf={blockOf}
           onSelect={(s) => setSheet({ shift: s })}
+          canCreate={(id) => isAdmin || managed.has(id)}
+          onCreate={(r) => {
+            // gezogener Bereich → normales Eintragen-Fenster (Studio der Spalte, Zeit vorbelegt, Person wählen)
+            setStudio(r.locationId);
+            setDay(r.day);
+            setFlash(undefined);
+            setSheet({ category: "work", times: { from: r.from, to: r.to } });
+          }}
           wishes={wishes.wishes.filter((w) => w.status === "open")}
           slots={wishes.slots}
         />
+        {addSheet}
         {sheet?.shift && editSheet(sheet.shift)}
       </>
     );
@@ -371,26 +401,7 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
         </Section>
       )}
 
-      {sheet && !sheet.shift && (
-        <AddShift
-          day={day}
-          studio={studio}
-          studioName={studioName}
-          locations={allLocations}
-          canPlanAt={(id) => isAdmin || managed.has(id)}
-          people={people}
-          taken={taken}
-          sickCandidates={sickCandidates}
-          helpRequests={help.requests.filter((r) => r.location_id !== studio && berlinDate(r.starts_at) === day)}
-          initialCategory={sheet.category}
-          initialRequestId={sheet.requestId}
-          initialUserId={sheet.userId}
-          wishHint={sheet.wish ? `Wunsch: ${SLOT_LABEL[sheet.wish.slot]} – die Zeit legst du selbst fest.` : undefined}
-          creditOf={creditOf}
-          onClose={() => setSheet(null)}
-          onSaved={(t) => void savedWithWish(t)}
-        />
-      )}
+      {addSheet}
       {sheet?.shift && editSheet(sheet.shift)}
     </>
   );
@@ -522,6 +533,8 @@ function AddShift(props: {
   initialCategory?: Category;
   initialRequestId?: string;
   initialUserId?: string;
+  /** im Kalender gezogener Zeitraum */
+  initialTimes?: { from: string; to: string };
   /** Schichtwunsch als Hinweis (keine Zeiten vorgegeben) */
   wishHint?: string;
   creditOf: CreditOf;
@@ -535,8 +548,8 @@ function AddShift(props: {
   const [target, setTarget] = useState(otherStudios[0]?.id ?? "");
   const [note, setNote] = useState("");
   const [userId, setUserId] = useState(props.initialUserId ?? "");
-  const [from, setFrom] = useState(lastTimes.from);
-  const [to, setTo] = useState(lastTimes.to);
+  const [from, setFrom] = useState(props.initialTimes?.from ?? lastTimes.from);
+  const [to, setTo] = useState(props.initialTimes?.to ?? lastTimes.to);
   const [acqStudio, setAcqStudio] = useState(props.studio);
   // Erster Teil bei zwei Zeiten (Herold, Splitschicht, Schule/Prüfung)
   const [firstFrom, setFirstFrom] = useState(lastHerold.from);

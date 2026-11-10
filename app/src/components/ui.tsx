@@ -191,9 +191,9 @@ export function WeekNav(props: { start: string; onChange: (start: string) => voi
       <button type="button" className="icon-btn" aria-label="Nächste Woche" onClick={() => props.onChange(addDays(props.start, 7))}>
         <Icon name="chevronRight" size={20} />
       </button>
-      {props.start !== current && (
-        <button type="button" className="btn btn-outline btn-sm weeknav-today" onClick={() => props.onChange(current)}>Heute</button>
-      )}
+      {/* Platz immer reserviert: sonst verrutscht der Pfeil nach dem ersten Klick und der zweite trifft „Heute“ */}
+      <button type="button" className="btn btn-outline btn-sm weeknav-today" disabled={props.start === current}
+        style={props.start === current ? { visibility: "hidden" } : undefined} onClick={() => props.onChange(current)}>Heute</button>
     </div>
   );
 }

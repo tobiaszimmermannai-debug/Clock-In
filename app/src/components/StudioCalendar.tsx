@@ -1,7 +1,7 @@
 // Dienstplan aller Studios im Kalender-Stil: Woche (Einträge je Tag) oder Tag (Zeitachse, Spalte je Studio).
 // Jede Schicht erscheint in der Farbe ihres Studios, mit Name und Uhrzeit; Akquise gestreift.
 // Krank/Urlaub/Schule/Frei: in der Woche als durchgehender Balken über die Tage (wie im Google Kalender).
-import { type CSSProperties, type MouseEvent, useEffect, useState } from "react";
+import { type CSSProperties, type MouseEvent, type PointerEvent, useEffect, useState } from "react";
 import { addDays, berlinDate, berlinTime, dayOfMonth, rangeLabel, weekdayShort } from "../lib/dates";
 import { studioColor } from "../lib/studios";
 import { type Location, SHIFT_TYPE_LABEL, studioShort } from "../lib/types";
@@ -81,6 +81,10 @@ export function StudioCalendar(props: {
   canEdit?: (shift: PlanShift) => boolean;
   onSelect?: (shift: PlanShift) => void;
   blockOf?: (id: string) => AbsenceBlock | undefined;
+  /** PC: im Tagesraster mit der Maus ziehen → neue Schicht (Studio = Spalte, Zeit = gezogener Bereich) */
+  onCreate?: (range: { day: string; locationId: string; from: string; to: string }) => void;
+  /** In welchen Studio-Spalten darf gezogen werden? (Standard: alle) */
+  canCreate?: (locationId: string) => boolean;
   /** offene Schichtwünsche – gestrichelt, „Wunsch“ + früh/mittel/spät */
   wishes?: Wish[];
   slots?: SlotTime[];
@@ -91,6 +95,14 @@ export function StudioCalendar(props: {
   const [day, setDay] = useState(today);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const nowMin = useNowMinutes();
+  // Ziehen im Tagesraster: Spalte + Start/Ende in Minuten (auf 15 Min. gerastert)
+  const [drag, setDrag] = useState<{ col: string; a: number; b: number } | null>(null);
+  useEffect(() => {
+    if (!drag) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setDrag(null);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [drag]);
 
   // Wochenwechsel: Tag auf heute bzw. Montag setzen
   useEffect(() => {
@@ -176,6 +188,35 @@ export function StudioCalendar(props: {
   const y = (min: number) => ((min - from * 60) / 60) * hourPx;
   const hasAllDay = columns.some((c) => c.allDay.length > 0);
 
+  // --- Ziehen (nur Maus/Stift – am Handy bleibt Wischen = Scrollen) ---
+  const SNAP = 15;
+  const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+  const minuteAt = (e: PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const raw = from * 60 + ((e.clientY - r.top) / hourPx) * 60;
+    return Math.min(to * 60, Math.max(from * 60, Math.round(raw / SNAP) * SNAP));
+  };
+  const creatable = (col: string) => !!props.onCreate && (props.canCreate?.(col) ?? true);
+  const dragStart = (col: string, e: PointerEvent<HTMLDivElement>) => {
+    if (!creatable(col) || e.button !== 0 || e.pointerType === "touch" || e.target !== e.currentTarget) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const m = minuteAt(e);
+    setDrag({ col, a: m, b: m });
+  };
+  const dragMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (!drag) return;
+    const m = minuteAt(e);
+    if (m !== drag.b) setDrag({ ...drag, b: m });
+  };
+  const dragEnd = () => {
+    if (!drag) return;
+    const lo = Math.min(drag.a, drag.b);
+    const hi = Math.max(drag.a, drag.b);
+    setDrag(null);
+    // 24:00 gibt es als Uhrzeit nicht → 23:59
+    if (hi - lo >= SNAP) props.onCreate?.({ day, locationId: drag.col, from: hhmm(lo), to: hi >= 24 * 60 ? "23:59" : hhmm(hi) });
+  };
+
   return (
     <div className="stack">
       {anyWishes && <p className="cal-wish-note">{WISH_NOTICE}</p>}
@@ -210,6 +251,13 @@ export function StudioCalendar(props: {
           )}
         </div>
       </div>
+      {props.onCreate && !narrow && (
+        <p className="muted small cal-drag-hint">
+          {mode === "day"
+            ? "Tipp: Im Raster mit der Maus ziehen, um eine Schicht einzutragen (wie im Google Kalender)."
+            : "Tipp: In der Ansicht „Tag“ kannst du Schichten mit der Maus ins Raster ziehen."}
+        </p>
+      )}
       {mode === "day" && (
         <DayStrip start={props.start} value={day} onChange={setDay}
           counts={Object.fromEntries(days.map((d) => [d, onDay(d).filter((s) => s.shift_type === "work").length]))} />
@@ -312,7 +360,14 @@ export function StudioCalendar(props: {
               ))}
             </div>
             {columns.map((c) => (
-              <div key={c.key} className="cal-col" style={{ height, "--hour": `${hourPx}px` } as CSSProperties}>
+              <div key={c.key} className={`cal-col${creatable(c.key) ? " is-creatable" : ""}`}
+                style={{ height, "--hour": `${hourPx}px`, ...(c.color ? { "--studio": c.color } : {}) } as CSSProperties}
+                onPointerDown={(e) => dragStart(c.key, e)} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={() => setDrag(null)}>
+                {drag?.col === c.key && (
+                  <div className="cal-ghost" style={{ top: y(Math.min(drag.a, drag.b)), height: Math.max(y(Math.max(drag.a, drag.b)) - y(Math.min(drag.a, drag.b)), 4) }}>
+                    {hhmm(Math.min(drag.a, drag.b))}–{hhmm(Math.max(drag.a, drag.b))}
+                  </div>
+                )}
                 {layout(c.items).map(({ shift: s, lane, lanes }) => {
                   const top = y(minutesOf(s.starts_at));
                   const h = Math.max(y(endMinutes(s)) - top, 20);
