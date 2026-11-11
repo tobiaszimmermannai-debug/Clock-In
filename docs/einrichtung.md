@@ -130,6 +130,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 41. `supabase/migrations/20261109090000_shift_wish_no_times.sql` (Schichtwunsch annehmen: Leitung trägt die Zeit selbst ein, Wunsch nur als Hinweis)
 42. `supabase/migrations/20261110090000_qr_login.sql` (Studioleitung meldet sich in der Verwaltung per QR-Code mit dem Stempel-Handy an – danach Funktion `qr-login` deployen)
 43. `supabase/migrations/20261111090000_wissen.sql` (Reiter „Wissen“: Lernfortschritt für Lektionen, Blitzi-Karteikarten, Blitzrunde)
+44. `supabase/migrations/20261111100000_notes_guest_scheduled.sql` (Aufgaben: Aushilfe zählt auch laut Dienstplan – Reiter am PC des Gaststudios schon vor dem Einstempeln)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
