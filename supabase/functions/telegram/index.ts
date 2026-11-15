@@ -1111,7 +1111,13 @@ async function decideSwap(cq: CallbackQuery, admin: Admin, approve: boolean, id:
     .eq("id", id)
     .eq("status", "pending")
     .select("id");
-  if (error) return await alreadyDone(cq, error.message.replace(/^Schichttausch: /, ""));
+  if (error) {
+    // Überschneidung im Dienstplan verständlich melden (Antrag bleibt offen)
+    const text = error.code === "23P01"
+      ? "Tausch nicht möglich: Eine der Personen hat zu dieser Zeit schon einen Eintrag im Dienstplan."
+      : error.message.replace(/^Schichttausch: /, "");
+    return await alreadyDone(cq, text);
+  }
   if (!updated?.length) {
     const { data: swap } = await supabase
       .from("swap_requests")
