@@ -39,6 +39,7 @@ const PATHS = {
   qr: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3" /></>,
   wifi: <path d="M5 12.6a11 11 0 0 1 14 0M1.5 9a16 16 0 0 1 21 0M8.5 16.1a6 6 0 0 1 7 0M12 20h.01" />,
   book: <><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2.5Z" /><path d="M6 21h13M9 7h6M9 11h6" /></>,
+  bell: <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10.3 20a2 2 0 0 0 3.4 0" />,
   tasks: <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="m7.5 12 3 3 6-6.5" /></>,
 } satisfies Record<string, ReactNode>;
 

@@ -39,6 +39,7 @@ Notes-Repo ändern und per `npm run sync:clockin` übernehmen.
    ohne Grund. „Krank“ bleibt wie bisher (Freigabe). Offene alte „slow“-Einträge per Migration auf rejected.
 
 ## Paket 3 – Komfort
+**Stand 16.11.: erledigt** – Migration `20261119090000_notifications.sql`. Offen: Ziehen zum Anlegen in der Wochenansicht; Aufgaben-Zahl auf der Startseite.
 1. **Startseite „Heute“** (`portal/Stamp.tsx`): Karte mit nächster Schicht (Tag, Zeit, Studio), Stempelstatus,
    offenen Aufgaben (Anzahl), Resturlaub; QR-Knopf bleibt oben.
 2. **Navigation**: 5 Reiter (Stempeln, Stunden, Dienstplan, Wissen, Aufgaben); „Konto“ als Avatar oben rechts im Kopf (`Shell.tsx`).

@@ -24,6 +24,8 @@ import { QrLoginConfirm } from "./QrLoginConfirm";
 import { Swap } from "./Swap";
 import { useWishes } from "../lib/wishes";
 import { approvers, loadApprovers } from "../lib/approvers";
+import { everyWhileVisible } from "../lib/visibility";
+import { Inbox, unreadCount } from "./Inbox";
 
 export type Me = {
   id: string;
@@ -37,14 +39,13 @@ export type Me = {
 };
 export type Colleague = { id: string; first_name: string; last_name: string; home_location_id: string | null };
 
-type Tab = "stamp" | "hours" | "plan" | "knowledge" | "tasks" | "account";
+type Tab = "stamp" | "hours" | "plan" | "knowledge" | "tasks" | "account" | "inbox";
 const TABS: ShellTab<Tab>[] = [
   { id: "stamp", label: "Stempeln", icon: "qr" },
   { id: "hours", label: "Stunden", icon: "clock" },
   { id: "plan", label: "Dienstplan", icon: "calendar" },
   { id: "knowledge", label: "Wissen", icon: "book" },
   { id: "tasks", label: "Aufgaben", icon: "tasks" },
-  { id: "account", label: "Konto", icon: "user" },
 ];
 
 // stampToken: QR-Code vom Tablet, wenn die App über die Kamera-App geöffnet wurde (#/s/<code>)
@@ -78,6 +79,14 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
   }, [props.stampToken]);
   const [error, setError] = useState<string>();
   const [offline, setOffline] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const refreshUnread = useCallback(() => void unreadCount().then(setUnread), []);
+  // Mitteilungen: beim Start und alle 2 Min., solange die App sichtbar ist
+  useEffect(() => {
+    if (!me) return;
+    refreshUnread();
+    return everyWhileVisible(refreshUnread, 120_000);
+  }, [me, refreshUnread]);
 
   const load = useCallback(async () => {
     const { data } = await portalDb.auth.getSession();
@@ -139,7 +148,11 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
     <Shell
       title="Clock-In"
       subtitle={`${me.first_name} ${me.last_name}`}
-      tabs={me.time_tracking === false ? TABS.filter((t) => t.id === "plan" || t.id === "knowledge" || t.id === "tasks" || t.id === "account") : TABS}
+      tabs={me.time_tracking === false ? TABS.filter((t) => t.id === "plan" || t.id === "knowledge" || t.id === "tasks") : TABS}
+      headTabs={[
+        { id: "inbox", label: "Mitteilungen", icon: "bell", badge: unread || undefined },
+        { id: "account", label: "Konto", icon: "user" },
+      ]}
       current={tab}
       onTab={setTab}
       full={tab === "tasks"}
@@ -152,6 +165,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
           token={token}
           onOpenVacation={() => setTab("account")}
           onOpenTasks={() => setTab("tasks")}
+          onOpenPlan={() => setTab("plan")}
           onTokenUsed={() => {
             setToken(undefined);
             location.replace("#/portal"); // Code nicht erneut verwenden (Neuladen, Zurück-Taste)
@@ -163,6 +177,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
       {tab === "knowledge" && <Knowledge />}
       {tab === "tasks" && <ErrorBoundary label="Aufgaben"><Tasks db={portalDb} /></ErrorBoundary>}
       {tab === "account" && <Account me={me} onLogout={logout} />}
+      {tab === "inbox" && <Inbox onRead={refreshUnread} onOpenPlan={() => setTab("plan")} />}
       {showReminder && tab !== "tasks" && (
         <Sheet title="Deine Aufgaben heute" onClose={closeReminder}>
           <TaskReminder

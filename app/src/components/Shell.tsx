@@ -11,6 +11,8 @@ export function Shell<T extends string>(props: {
   current: T;
   onTab: (id: T) => void;
   onLogout?: () => void;
+  /** Nebenbereiche (z. B. Mitteilungen, Konto): am Handy als Symbole oben rechts, am PC unten in der Seitenleiste */
+  headTabs?: ShellTab<T>[];
   /** Inhalt ohne Rand und Maximalbreite (Aufgaben-Bereich mit eigener Seitenleiste) */
   full?: boolean;
   children: ReactNode;
@@ -42,6 +44,17 @@ export function Shell<T extends string>(props: {
             {!!t.badge && <span className="tab-badge">{t.badge}</span>}
           </button>
         ))}
+        {!!props.headTabs?.length && (
+          <div className="tabbar-foot">
+            {props.headTabs.map((t) => (
+              <button key={t.id} type="button" className="tab" aria-current={props.current === t.id ? "page" : undefined} onClick={() => props.onTab(t.id)}>
+                <Icon name={t.icon} size={22} />
+                <span>{t.label}</span>
+                {!!t.badge && <span className="tab-badge">{t.badge}</span>}
+              </button>
+            ))}
+          </div>
+        )}
         {props.onLogout && (
           <div className="tabbar-foot">
             <button type="button" className="tab" onClick={props.onLogout}>
@@ -55,6 +68,12 @@ export function Shell<T extends string>(props: {
         <header className="topbar">
           {brand}
           <span className="spacer" />
+          {props.headTabs?.map((t) => (
+            <button key={t.id} type="button" className={`icon-btn head-tab${props.current === t.id ? " is-current" : ""}`} aria-label={t.label} onClick={() => props.onTab(t.id)}>
+              <Icon name={t.icon} size={22} />
+              {!!t.badge && <span className="tab-badge">{t.badge}</span>}
+            </button>
+          ))}
           {props.onLogout && (
             <button type="button" className="icon-btn" aria-label="Abmelden" onClick={props.onLogout}>
               <Icon name="logout" size={20} />

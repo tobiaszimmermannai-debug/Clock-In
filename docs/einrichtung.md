@@ -135,6 +135,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 46. `supabase/migrations/20261116090000_notes_fair_points.sql` (Aufgaben: Gutschrift behält ihr erstes Datum, Team-Wertung nur mit Anwesenden – danach Funktion `aufgaben` neu deployen)
 47. `supabase/migrations/20261117090000_approver_names.sql` (Name der Freigeber einstellbar: rule_settings.approver_names)
 48. `supabase/migrations/20261118090000_swap_accept_stamp_fixes.sql` (Tausch braucht Zustimmung der angefragten Person, „wenig los“ = Minusstunden ohne Freigabe, Stempel-Sicherungen, stündliche Aufgaben werden nachgeholt – danach Funktion `telegram` neu deployen)
+49. `supabase/migrations/20261119090000_notifications.sql` (Mitteilungen im Portal (Glocke): Tausch, Dienstplan-Änderungen, Entscheidungen)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und

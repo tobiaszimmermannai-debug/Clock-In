@@ -701,3 +701,10 @@ input.switch:checked { background: var(--accent); }
 }
 .cal-drag-hint { margin: 0; }
 .weeknav-today:disabled { pointer-events: none; }
+
+/* Nebenbereiche oben rechts (Mitteilungen, Konto) */
+.head-tab { position: relative; min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.head-tab.is-current { color: var(--accent); background: var(--accent-soft); }
+.head-tab .tab-badge { top: 2px; left: auto; right: 0; }
+.inbox-item.is-new .list-row-title::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.plan-warnings { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; }

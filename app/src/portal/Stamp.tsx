@@ -11,9 +11,9 @@ import { type Notice as ShiftNote, relevantShift, shiftNotice } from "../lib/shi
 import { type EarlyReason, type StampCheck, StampError, parseToken, stamp, stampCheck } from "../lib/stamp";
 import { currentState, validateAction, type WorkState } from "../lib/status";
 import { portalDb } from "../lib/supabase";
-import { fmtHM } from "../lib/dates";
+import { addDays, berlinDate, berlinTime, fmtDay, fmtHM } from "../lib/dates";
 import { fmtClock } from "../lib/time";
-import { DEFAULT_RULES, EVENT_LABEL, type EventType, type LogEntry, type RuleSettings, type Shift, studioShort } from "../lib/types";
+import { DEFAULT_RULES, EVENT_LABEL, type EventType, type LogEntry, type RuleSettings, type Shift, SHIFT_TYPE_LABEL, type ShiftType, studioShort } from "../lib/types";
 import { parsePcToken } from "./PcUnlock";
 import { parseQrLoginToken } from "../lib/qrLogin";
 import type { Me } from "./PortalApp";
@@ -63,10 +63,47 @@ function errorPhase(e: unknown): Phase {
     : { kind: "error", text: "Keine Verbindung. Bitte Internet prüfen." };
 }
 
+// „Heute“: die nächsten eigenen Einträge im Dienstplan auf einen Blick
+type Upcoming = { id: string; shift_type: ShiftType; starts_at: string; ends_at: string; location: { name: string } | null };
+
+function Today(props: { meId: string; onOpenPlan?: () => void; onOpenTasks?: () => void }) {
+  const [list, setList] = useState<Upcoming[]>();
+  useEffect(() => {
+    void portalDb
+      .from("shifts")
+      .select("id, shift_type, starts_at, ends_at, location:locations(name)")
+      .eq("user_id", props.meId)
+      .gte("ends_at", new Date().toISOString())
+      .order("starts_at")
+      .limit(2)
+      .then(({ data, error }) => setList(error ? [] : ((data ?? []) as unknown as Upcoming[])));
+  }, [props.meId]);
+  if (!list) return null;
+  const today = berlinDate();
+  const label = (s: Upcoming) => {
+    const day = berlinDate(s.starts_at);
+    const when = day === today ? "Heute" : day === addDays(today, 1) ? "Morgen" : fmtDay(day);
+    return s.shift_type === "work"
+      ? `${when} · ${berlinTime(s.starts_at)}–${berlinTime(s.ends_at)}`
+      : `${when} · ${SHIFT_TYPE_LABEL[s.shift_type]}`;
+  };
+  return (
+    <Section title="Als Nächstes">
+      {list.length === 0 && <Row leading={<LeadingIcon name="calendar" />} title="Keine Schicht eingetragen" subtitle="Im Dienstplan steht für dich nichts an." chevron={!!props.onOpenPlan} onClick={props.onOpenPlan} />}
+      {list.map((s) => (
+        <Row key={s.id} leading={<LeadingIcon name="calendar" />} title={label(s)}
+          subtitle={s.shift_type === "work" ? studioShort(s.location?.name ?? "") : undefined}
+          chevron={!!props.onOpenPlan} onClick={props.onOpenPlan} />
+      ))}
+      {props.onOpenTasks && <Row leading={<LeadingIcon name="tasks" />} title="Meine Aufgaben" subtitle="3 Tagesaufgaben – offen, erledigt, anfragen" chevron onClick={props.onOpenTasks} />}
+    </Section>
+  );
+}
+
 // Nur das eigene Handy stempelt (prüft auch der Server) – nicht Studio-PC oder -Tablet
 const IS_PHONE = typeof navigator === "undefined" || !navigator.userAgent || /mobi|iphone|ipod/i.test(navigator.userAgent);
 
-export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void; onOpenTasks?: () => void }) {
+export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void; onOpenTasks?: () => void; onOpenPlan?: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [status, setStatus] = useState<{ state: WorkState; since?: string }>();
   const onTokenUsed = useRef(props.onTokenUsed);
@@ -291,6 +328,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
           <Notice tone="warn">Stempeln geht nur mit deinem eigenen Handy – nicht am PC oder Tablet.</Notice>
         )}
       </div>
+      <Today meId={props.me.id} onOpenPlan={props.onOpenPlan} onOpenTasks={props.onOpenTasks} />
       <VacationRow meId={props.me.id} onOpen={props.onOpenVacation} />
       <Section title="So geht's" footer={`Kein Handy dabei oder Probleme? Bitte ${approvers()} anrufen.`}>
         <Row leading={<LeadingIcon name="wifi" />} title="Mit dem Studio-WLAN verbinden" subtitle="Mobile Daten am besten ausschalten" />

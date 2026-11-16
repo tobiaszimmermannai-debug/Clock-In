@@ -15,6 +15,7 @@ import { type PlanShift, ShiftRow, blockRange, isHelpShift, isSickSwap, useWeekS
 import { Avatar, DayStrip, Empty, Field, Icon, Notice, PageHeader, Row, Section, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
 import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtHM, fmtLongDay, isSunday, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
+import { planWarnings } from "../lib/planChecks";
 import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
 import { SLOT_LABEL, useWishes, type Wish, WISH_NOTICE } from "../lib/wishes";
@@ -144,6 +145,8 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
   const help = useHelpRequests();
   const wishes = useWishes(db, start);
   const [deciding, setDeciding] = useState<string | null>(null);
+  const [undo, setUndo] = useState<Record<string, unknown> | null>(null);
+  const [copy, setCopy] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -222,7 +225,30 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
   // Wer an diesem Tag schon irgendwo eingetragen ist, kann nicht erneut gewählt werden
   const taken = new Set(shifts.filter((s) => berlinDate(s.starts_at) === day).map((s) => s.user_id));
 
+  // Gelöschten Eintrag wieder anlegen (10 Sek. lang angeboten)
+  async function restore() {
+    if (!undo) return;
+    const row = Object.fromEntries(UNDO_COLUMNS.filter((k) => k in undo).map((k) => [k, undo[k]]));
+    setUndo(null);
+    const { error } = await db.from("shifts").insert(row);
+    if (error) return setFailure(dbMessage(error));
+    setFlash("Eintrag wiederhergestellt.");
+    void reload();
+  }
+  const flashNotice = flash && (
+    <Notice tone="ok">
+      {flash}
+      {undo && <> <button type="button" className="btn btn-plain btn-sm" onClick={() => void restore()}>Rückgängig</button></>}
+    </Notice>
+  );
+  // Hinweise zur Woche (Ruhezeit, lange Tage, Wochenstunden) für die Leute dieses Studios – kein Verbot
+  const warnings = planWarnings(
+    shifts,
+    people.filter((p) => p.home_location_id === studio).map((p) => ({ ...p, weekly_target_minutes: p.employment_details?.weekly_target_minutes })),
+  );
+
   const done = (text: string) => {
+    setUndo(null);
     setSheet(null);
     setFailure(undefined);
     setFlash(text);
@@ -277,7 +303,14 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
   const editSheet = (shift: PlanShift) => (
     <EditShift shift={shift} canPlanNormal={isAdmin || managed.has(shift.location_id ?? "") || managed.has(shift.user?.home_location_id ?? "")}
       canSick={canSick(shift)}
-      creditOf={creditOf} onClose={() => setSheet(null)} onSaved={done} />
+      creditOf={creditOf} onClose={() => setSheet(null)}
+      onSaved={(text, deleted) => {
+        done(text);
+        if (deleted) {
+          setUndo(deleted);
+          window.setTimeout(() => setUndo((u) => (u === deleted ? null : u)), 10_000);
+        }
+      }} />
   );
   const addSheet = sheet && !sheet.shift ? (
         <AddShift
@@ -315,7 +348,7 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
         <PlanHead embedded={embedded} title="Dienstplan" subtitle="Alle Studios" actions={viewSwitch} />
         <WeekNav start={start} onChange={goWeek} />
         {error && <Notice tone="error">{error}</Notice>}
-        {flash && <Notice tone="ok">{flash}</Notice>}
+        {flashNotice}
         {helpBoard}
         <StudioCalendar
           start={start}
@@ -348,7 +381,7 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
       <WeekNav start={start} onChange={goWeek} />
       <DayStrip start={start} value={day} onChange={(d) => { setDay(d); setFlash(undefined); }} counts={counts} />
       {error && <Notice tone="error">{error}</Notice>}
-      {flash && <Notice tone="ok">{flash}</Notice>}
+      {flashNotice}
       {helpBoard}
 
       <Section title={fmtLongDay(day)} aside={<span>{dayEntries.length} {dayEntries.length === 1 ? "Eintrag" : "Einträge"}</span>}>
@@ -366,7 +399,20 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
       <button type="button" className="btn btn-primary btn-block" onClick={() => setSheet({})}>
         <Icon name="plus" size={20} /> Eintragen
       </button>
+      <button type="button" className="btn btn-outline btn-block" onClick={() => { setFlash(undefined); setCopy(true); }}>
+        Vorwoche kopieren
+      </button>
       {failure && <Notice tone="error">{failure}</Notice>}
+      {warnings.length > 0 && (
+        <details className="panel explain">
+          <summary>⚠️ {warnings.length} {warnings.length === 1 ? "Hinweis" : "Hinweise"} zu dieser Woche</summary>
+          <ul className="muted small plan-warnings">{warnings.map((w) => <li key={w}>{w}</li>)}</ul>
+        </details>
+      )}
+      {copy && (
+        <CopyWeek start={start} studio={studio} studioName={studioName} shifts={shifts} people={people}
+          onClose={() => setCopy(false)} onDone={(text) => { setCopy(false); done(text); }} />
+      )}
 
       {openWishes.length > 0 && (
         <Section title="Schichtwünsche" aside={<span>{dayWishes.length} heute · {openWishes.length} diese Woche</span>}
@@ -409,6 +455,84 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
 }
 
 // Offene Anfragen: eigenes Studio → zurückziehen, andere Studios → Aushilfe stellen
+const UNDO_COLUMNS = ["user_id", "location_id", "shift_type", "starts_at", "ends_at", "note", "is_acquisition", "is_herold",
+  "credit_by_time", "credit_share", "from_shift", "import_source"];
+
+type PrevShift = { id: string; user_id: string; starts_at: string; ends_at: string; note: string | null; is_acquisition: boolean; is_herold: boolean };
+
+// Arbeitsschichten der Vorwoche in diese Woche übernehmen (gleicher Wochentag, gleiche Uhrzeit).
+// Wer an dem Tag schon etwas eingetragen hat (Schicht, Urlaub, Schule …), wird übersprungen.
+function CopyWeek(props: {
+  start: string; studio: string; studioName: string; shifts: PlanShift[]; people: Staffer[];
+  onClose: () => void; onDone: (text: string) => void;
+}) {
+  const [prev, setPrev] = useState<PrevShift[]>();
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const from = addDays(props.start, -7);
+
+  useEffect(() => {
+    void db
+      .from("shifts")
+      .select("id, user_id, starts_at, ends_at, note, is_acquisition, is_herold")
+      .eq("location_id", props.studio)
+      .eq("shift_type", "work")
+      .gte("starts_at", berlinToISO(from))
+      .lt("starts_at", berlinToISO(props.start))
+      .order("starts_at")
+      .then(({ data, error }) => (error ? setError(dbMessage(error)) : setPrev((data ?? []) as PrevShift[])));
+  }, [from, props.start, props.studio]);
+
+  const busyDays = new Set(props.shifts.map((s) => `${s.user_id}|${berlinDate(s.starts_at)}`));
+  const plan = (prev ?? [])
+    .filter((s) => !(s.note ?? "").startsWith("Aushilfsschicht"))  // automatisch entstanden (ohne Planung eingestempelt)
+    .map((s) => ({ s, day: addDays(berlinDate(s.starts_at), 7), person: props.people.find((p) => p.id === s.user_id) }));
+  const todo = plan.filter((x) => x.person && employedOn(x.person, x.day) && !busyDays.has(`${x.s.user_id}|${x.day}`));
+  const skipped = plan.length - todo.length;
+
+  async function run() {
+    setBusy(true);
+    let ok = 0;
+    let failed = 0;
+    for (const { s, day } of todo) {
+      const { error } = await db.from("shifts").insert({
+        user_id: s.user_id, location_id: props.studio, shift_type: "work",
+        starts_at: berlinToISO(day, berlinTime(s.starts_at)), ends_at: berlinToISO(day, berlinTime(s.ends_at)),
+        note: s.note, is_acquisition: s.is_acquisition, is_herold: s.is_herold,
+      });
+      if (error) failed++;
+      else ok++;
+    }
+    setBusy(false);
+    props.onDone(`${ok} ${ok === 1 ? "Schicht" : "Schichten"} aus der Vorwoche übernommen${skipped + failed ? `, ${skipped + failed} übersprungen` : ""}.`);
+  }
+
+  return (
+    <Sheet
+      title="Vorwoche kopieren"
+      subtitle={`Studio ${props.studioName} · ${fmtDay(from)} → ${fmtDay(props.start)}`}
+      onClose={props.onClose}
+      footer={<button type="button" className="btn btn-primary" disabled={busy || !todo.length} onClick={() => void run()}>{busy ? "Kopiert …" : `${todo.length} übernehmen`}</button>}
+    >
+      {error && <Notice tone="error">{error}</Notice>}
+      {!error && prev === undefined && <p className="list-empty">Lädt …</p>}
+      {prev && (
+        <>
+          <p>
+            <strong>{todo.length}</strong> {todo.length === 1 ? "Schicht wird" : "Schichten werden"} mit gleichem Wochentag und gleicher Uhrzeit eingetragen.
+            {skipped > 0 && <> <strong>{skipped}</strong> übersprungen (Person hat an dem Tag schon einen Eintrag oder ist nicht mehr da).</>}
+          </p>
+          <p className="muted small">Nur Arbeitsschichten in diesem Studio. Urlaub, Schule, Krank und Frei werden nicht kopiert. Danach kannst du jede Schicht einzeln ändern.</p>
+          {todo.slice(0, 40).map(({ s, day, person }) => (
+            <Row key={s.id} title={person ? fullName(person) : "?"} subtitle={fmtDay(day)}
+              trailing={<span className="num">{berlinTime(s.starts_at)}–{berlinTime(s.ends_at)}</span>} />
+          ))}
+        </>
+      )}
+    </Sheet>
+  );
+}
+
 function HelpBoard(props: {
   requests: HelpRequest[];
   isOwn: (locationId: string) => boolean;
@@ -954,7 +1078,8 @@ function EditShift(props: {
   canSick: boolean;
   creditOf: CreditOf;
   onClose: () => void;
-  onSaved: (text: string) => void;
+  /** deleted: der gelöschte Eintrag (für „Rückgängig“) */
+  onSaved: (text: string, deleted?: Record<string, unknown> | null) => void;
 }) {
   const s = props.shift;
   const isWork = s.shift_type === "work";
@@ -992,10 +1117,12 @@ function EditShift(props: {
 
   async function remove() {
     setBusy(true);
+    // vollständigen Eintrag merken, damit „Rückgängig“ ihn genau so wieder anlegen kann
+    const { data: full } = await db.from("shifts").select("*").eq("id", s.id).maybeSingle();
     const { error } = await db.from("shifts").delete().eq("id", s.id);
     setBusy(false);
     if (error) return setError(dbMessage(error));
-    props.onSaved(`Eintrag von ${name} gelöscht.`);
+    props.onSaved(`Eintrag von ${name} gelöscht.`, full as Record<string, unknown> | null);
   }
 
   // ganzer Tag pauschal, Krank statt Schicht mit der Schichtdauer
