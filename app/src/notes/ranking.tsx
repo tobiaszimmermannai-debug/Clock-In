@@ -42,7 +42,8 @@ export default function WeeklyRanking(props: { db: SupabaseClient; userKey: stri
         store.blitziProfiles().catch(() => []),
         store.workDays(since).catch(() => null),
       ]);
-      if (!cancelled) setData({ teams: teamLeaderboard(events, members, studios, info.from, info.to), events, members, profiles, workDays, me });
+      const active = await store.weekActive(info.from, info.to).catch(() => null);
+      if (!cancelled) setData({ teams: teamLeaderboard(events, members, studios, info.from, info.to, active), events, members, profiles, workDays, me });
     })().catch(() => props.onClose());
     return () => {
       cancelled = true;

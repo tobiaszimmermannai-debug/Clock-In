@@ -158,15 +158,25 @@ export type TeamRow = {
 };
 
 /**
- * Team-Wertung: Wochenpunkte aller Personen eines Studios ÷ Anzahl dieser Personen. So hat jedes Studio die
+ * Team-Wertung: Wochenpunkte aller Personen eines Studios ÷ Anzahl dieser Personen (wer die ganze Woche fehlt –
+ * Urlaub, krank, Schule – zählt nicht mit, wenn „active“ bekannt ist). So hat jedes Studio die
  * gleichen Chancen, egal wie viele dort arbeiten. Gleichstand: mehr Aufgaben je Person, dann Studio-Name.
  * Studios ohne Punkte stehen hinten.
  */
-export function teamLeaderboard(completions: Completion[], members: Member[], studios: Studio[], fromDay: string, toDay?: string): TeamRow[] {
+export function teamLeaderboard(
+  completions: Completion[],
+  members: Member[],
+  studios: Studio[],
+  fromDay: string,
+  toDay?: string,
+  /** Wer im Zeitraum gearbeitet hat: nur diese (und wer Punkte hat) zählen als Teiler. Ohne Angabe: alle. */
+  active?: Iterable<string> | null,
+): TeamRow[] {
   const rows = leaderboard(completions, members, fromDay, toDay);
   const byUser = new Map(rows.map((r) => [r.member.id, r]));
+  const here = active ? new Set(active) : null;
   const out = studios.map((studio) => {
-    const team = teamMembers(members, studio.id);
+    const team = teamMembers(members, studio.id).filter((m) => !here || here.has(m.id) || byUser.has(m.id));
     const points = team.reduce((s, m) => s + (byUser.get(m.id)?.points ?? 0), 0);
     const count = team.reduce((s, m) => s + (byUser.get(m.id)?.count ?? 0), 0);
     const n = team.length;
@@ -223,7 +233,7 @@ const LINES: Record<Mood, string[]> = {
 /** Spruch passend zur Stimmung; variant wechselt beim Antippen */
 export function speech(mood: Mood, s: MyStats, open: number, variant = 0): string {
   const list = LINES[mood];
-  const day = Number(new Date().toISOString().slice(8, 10));
+  const day = new Date().getDate();
   const line = list[(day + variant) % list.length];
   return line
     .replace("{streak}", String(s.streak))

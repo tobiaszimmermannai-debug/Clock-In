@@ -955,15 +955,17 @@ function leaderboard(completions, members, fromDay, toDay) {
 /** Wer zählt für ein Studio: Heimatstudio, keine Geräte-Konten, keine Admins */
 const teamMembers = (members, studioId) => members.filter((m) => !m.device && m.role !== "admin" && m.studioId === studioId);
 /**
-* Team-Wertung: Wochenpunkte aller Personen eines Studios ÷ Anzahl dieser Personen. So hat jedes Studio die
+* Team-Wertung: Wochenpunkte aller Personen eines Studios ÷ Anzahl dieser Personen (wer die ganze Woche fehlt –
+* Urlaub, krank, Schule – zählt nicht mit, wenn „active“ bekannt ist). So hat jedes Studio die
 * gleichen Chancen, egal wie viele dort arbeiten. Gleichstand: mehr Aufgaben je Person, dann Studio-Name.
 * Studios ohne Punkte stehen hinten.
 */
-function teamLeaderboard(completions, members, studios, fromDay, toDay) {
+function teamLeaderboard(completions, members, studios, fromDay, toDay, active) {
 	const rows = leaderboard(completions, members, fromDay, toDay);
 	const byUser = new Map(rows.map((r) => [r.member.id, r]));
+	const here = active ? new Set(active) : null;
 	const out = studios.map((studio) => {
-		const team = teamMembers(members, studio.id);
+		const team = teamMembers(members, studio.id).filter((m) => !here || here.has(m.id) || byUser.has(m.id));
 		const points = team.reduce((s, m) => s + (byUser.get(m.id)?.points ?? 0), 0);
 		const count = team.reduce((s, m) => s + (byUser.get(m.id)?.count ?? 0), 0);
 		const n = team.length;
@@ -1513,7 +1515,11 @@ async function buildRanking(db, day) {
 		});
 	}
 	const studioName = (id) => studios.find((s) => s.id === id)?.name ?? "Ohne Studio";
-	return rankingText(leaderboard(events, members, info.from, info.to), info, studioName, teamLeaderboard(events, members, studios, info.from, info.to));
+	const active = await db.rpc("note_week_active", {
+		p_from: info.from,
+		p_to: info.to
+	}).catch(() => null);
+	return rankingText(leaderboard(events, members, info.from, info.to), info, studioName, teamLeaderboard(events, members, studios, info.from, info.to, Array.isArray(active) ? active : null));
 }
 async function manualReminder(cfg, db, b) {
 	const day = /^\d{4}-\d{2}-\d{2}$/.test(b.day ?? "") ? b.day : berlinNow().day;

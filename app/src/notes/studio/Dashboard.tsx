@@ -14,6 +14,7 @@ import { fmtAvg, leaderboard, teamLeaderboard, weekStart } from "../gamification
 import { allTasks, byDue, doneAtOf, tasksOf, type TaskItem } from "../gamification/tasks";
 import { STUDIO_TASKS } from "../routes";
 import { useNotes } from "../state";
+import { useWeekActive } from "../gamification/useWeekActive";
 import type { Member } from "../types";
 import { addDays, shortId, storageGet, storageSet, today } from "../util";
 import { isoWeek, periodLabel, periodOf, periodRange } from "./period";
@@ -42,6 +43,7 @@ export function StudioDashboard() {
   const studioId = notes.access.admin && !pc ? (chosen ?? ownStudio ?? notes.locations[0]?.id ?? null) : ownStudio;
   const [tab, setTab] = useState("team");
   const ranking = lastWeek(today());
+  const lastActive = useWeekActive(ranking.from, ranking.to);
   const [podium, setPodium] = useState(() => {
     // Studio-PC: montags einmal am Tag automatisch
     const monday = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Berlin", weekday: "short" }).format(new Date()) === "Mon";
@@ -122,7 +124,7 @@ export function StudioDashboard() {
       </div>
     );
   }
-  const teams = teamLeaderboard(notes.completions, notes.members, notes.locations, ranking.from, ranking.to);
+  const teams = teamLeaderboard(notes.completions, notes.members, notes.locations, ranking.from, ranking.to, lastActive);
   const heroes = (sid: string) => {
     const board = leaderboard(notes.completions, notes.members, ranking.from, ranking.to);
     return board
@@ -237,7 +239,8 @@ function TeamSceneSide(props: { studioId: string; people: Member[]; items: TaskI
 function RankingTab(props: { studioId: string }) {
   const notes = useNotes();
   const from = weekStart(today());
-  const teams = teamLeaderboard(notes.completions, notes.members, notes.locations, from);
+  const active = useWeekActive(from);
+  const teams = teamLeaderboard(notes.completions, notes.members, notes.locations, from, undefined, active);
   const board = leaderboard(notes.completions, notes.members, from);
   const mine = notes.members
     .filter((m) => !m.device && m.role !== "admin" && m.studioId === props.studioId)

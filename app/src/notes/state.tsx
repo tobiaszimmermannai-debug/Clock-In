@@ -241,11 +241,13 @@ export function NotesProvider(props: {
   const [commentsOpen, setCommentsOpenState] = useState(() => storageGet<boolean>("aun-comments", false));
   const toastSeq = useRef(0);
 
+  const toastRef = useRef<((text: string) => void) | null>(null);
   const toast = useCallback((text: string, action?: Toast["action"]) => {
     const id = ++toastSeq.current;
     setToasts((t) => [...t.slice(-2), { id, text, action }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), action ? 7000 : 4000);
   }, []);
+  toastRef.current = toast;
   const dismissToast = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
   const enqueue = useCallback((id: string, job: () => Promise<void>) => {
@@ -669,11 +671,33 @@ export function NotesProvider(props: {
   }
 
   // Gutschrift: an die Zuständigen, sonst an die handelnde Person. 1 Punkt je Aufgabe, höchstens 3 pro Tag
+  // Gutschrift sicher speichern: bei Netzfehler bis zu 4 Versuche; klappt es nicht, Hinweis statt stillem Verlust.
+  // Danach den Stand vom Server holen (dort steht das gültige Datum – erneut abgehakt behält das erste).
+  const saveCompletion = useCallback(
+    async (pageId: string, userIds: string[], points: number, done: boolean) => {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          await store.setCompletion(pageId, userIds, points, done);
+          break;
+        } catch {
+          if (attempt >= 3) {
+            toastRef.current?.("Punkte konnten nicht gespeichert werden – bitte Internet prüfen und die Aufgabe noch einmal abhaken.");
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        }
+      }
+      const since = new Date(Date.now() - HISTORY_DAYS * 864e5).toISOString();
+      store.completions(since).then(setCompletions).catch(() => undefined);
+    },
+    [store],
+  );
+
   const recordCompletion = useCallback(
     (row: PageMeta, schema: DbSchema, done: boolean) => {
       if (!done) {
         setCompletions((c) => c.filter((x) => x.pageId !== row.id));
-        store.setCompletion(row.id, [], 0, false).catch(() => undefined);
+        void saveCompletion(row.id, [], 0, false);
         return;
       }
       const people = membersRef.current.filter((m) => !m.device);
@@ -716,9 +740,9 @@ export function NotesProvider(props: {
         }
         return next;
       });
-      for (const a of added) store.setCompletion(row.id, [a.userId], a.points, true).catch(() => undefined);
+      void saveCompletion(row.id, added.map((a) => a.userId), 1, true);
     },
-    [store],
+    [saveCompletion],
   );
 
   const updatePage = useCallback(

@@ -55,6 +55,10 @@ export class LocalStore implements NotesStore {
     storageSet(`${this.key}-events`, [...rest, ...keep, ...added]);
   }
 
+  async weekActive() {
+    return null;
+  }
+
   async workDays() {
     return null;
   }

@@ -205,6 +205,11 @@ export class SupabaseStore implements NotesStore {
     return String(data);
   }
 
+  async weekActive(fromDay: string, toDay: string): Promise<string[] | null> {
+    const { data, error } = await this.db.rpc("note_week_active", { p_from: fromDay, p_to: toDay });
+    return error ? null : ((data ?? []) as string[]);
+  }
+
   async workDays(sinceIso: string): Promise<Record<string, string[]> | null> {
     const since = sinceIso.slice(0, 10);
     const team = await this.db.rpc("note_team_work_days", { p_since: since });

@@ -1,6 +1,7 @@
 // Blitzi-Karte (Stimmung, Serie, Akku, Wochenpunkte), Rangliste und Feier nach erledigten Aufgaben
 import { useState } from "react";
 import { useNotes } from "../state";
+import { useWeekActive } from "./useWeekActive";
 import type { Completion, Member } from "../types";
 import { Modal } from "../ui/Popover";
 import { today } from "../util";
@@ -146,7 +147,8 @@ const MEDALS = ["🥇", "🥈", "🥉"];
 /** Live-Team-Rangliste dieser Woche: Punkteschnitt je Studio (gleiche Chancen für jedes Studio) */
 export function Leaderboard(props: { highlight?: string; limit?: number; studioId?: string | null; title?: string }) {
   const notes = useNotes();
-  const rows = teamLeaderboard(notes.completions, notes.members, notes.locations, weekStart(today()));
+  const active = useWeekActive(weekStart(today()));
+  const rows = teamLeaderboard(notes.completions, notes.members, notes.locations, weekStart(today()), undefined, active);
   const mine = props.studioId ?? notes.members.find((m) => m.id === props.highlight)?.studioId ?? null;
   const max = Math.max(0.1, ...rows.map((r) => r.avg));
   return (

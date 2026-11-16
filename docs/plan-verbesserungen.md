@@ -80,6 +80,8 @@ Heimatstudios stimmt zu/lehnt ab → Dominik gibt frei (Tobi bekommt nur Info pe
    `docs/wissen-fragen-und-loesungen.md` ergänzen, `wissen.test.ts` prüft Konsistenz (eindeutige IDs, korrekte Optionen).
 
 ## Paket 6 – Aufgaben: Punkte, Serie, Blitzi (Notes-Repo, danach `sync:clockin`)
+**Stand 16.11.: erledigt sind 1, 2, 4, 6 (Tagesanzeige) und die Siegerehrung (Treppchen blieb leer, wenn das Gerät
+Animationen abschaltet) – Migration `20261116090000_notes_fair_points.sql`. Offen: 3 (eine Quelle für Punkte) und 5 (Akku-Reserve).**
 Zuerst je Punkt einen Test schreiben, der den Fehler zeigt (`gamification/stats.test.ts`, `server/aufgaben.test.ts`).
 1. **Abhaken → wieder öffnen → abhaken**: Die Gutschrift wird gelöscht und mit neuem Datum neu angelegt
    (`state.tsx` `recordCompletion`). Damit hält eine einzige Aufgabe die Serie täglich am Leben und alte Punkte wandern

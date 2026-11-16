@@ -262,6 +262,8 @@ export interface NotesStore {
   decideFocus(pageId: string, userId: string, ok: boolean): Promise<string>;
   /** Arbeitstage je Person (eigene und die betreuter Personen); null = unbekannt */
   workDays(sinceIso: string): Promise<Record<string, string[]> | null>;
+  /** Wer hat im Zeitraum gearbeitet (Teiler der Team-Wertung)? null = unbekannt (ältere Datenbank) */
+  weekActive(fromDay: string, toDay: string): Promise<string[] | null>;
   /** IDs der Seiten, deren Inhalt den Suchbegriff enthält */
   search(query: string): Promise<string[]>;
   favorites(): Promise<string[]>;

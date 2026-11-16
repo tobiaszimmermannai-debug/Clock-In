@@ -84,7 +84,7 @@ Für welche Themen ist Domi verantwortlich?
 - ✅ **Zahlungsverkehr**
 - Marketing und Design
 - Inkasso
-> Domi: Zahlungsverkehr, Urlaubsplanung und Finanzbuchhaltung – nicht die Lohnbuchhaltung.
+> Domi: Zahlungsverkehr (Mitgliedsbeiträge einziehen, erstatten …) und Urlaubsplanung. Die Lohnbuchhaltung macht ein externes Unternehmen (DATEV Arbeitnehmer online).
 
 **werte-08** · S2 🔢 · _QM Geschäftsführung_  
 Für welche Themen ist Tobi verantwortlich?  
