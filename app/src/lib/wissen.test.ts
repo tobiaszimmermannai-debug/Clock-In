@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CARDS, composeLesson, DECKS, isCorrect, nextProgress, type ProgressMap, QUESTIONS, streakOf, UNITS, unlockedUnits, weekXp } from "./wissen";
+import { CARDS, composeLesson, DECKS, earnsXp, isCorrect, levelOf, nextProgress, type ProgressMap, QUESTIONS, streakOf, TOPICS, topicOf, UNITS, unlockedUnits, weekXp, xpForLevel } from "./wissen";
 
 describe("Wissen-Inhalte", () => {
   it("alle richtigen Antworten existieren, IDs eindeutig, Units und Decks passen", () => {
@@ -54,5 +54,36 @@ describe("Lernlogik", () => {
     ];
     expect(streakOf(days, now)).toBe(3);
     expect(weekXp(days, now)).toBe(50);
+  });
+});
+
+describe("Faire Punkte und Level", () => {
+  const now = new Date("2026-11-10T10:00:00Z");
+  it("falsch = 0; neu richtig = Punkte; gleich nochmal = Übung ohne Punkte", () => {
+    expect(earnsXp(undefined, false, now)).toBe(false);
+    expect(earnsXp(undefined, true, now)).toBe(true);
+    const a = nextProgress(undefined, "x", "question", true, now); // Box 2, fällig morgen
+    expect(earnsXp(a, true, now)).toBe(false);
+    expect(nextProgress(a, "x", "question", true, now).box).toBe(2); // Übung ändert die Stufe nicht
+  });
+  it("absichtlich falsch und wieder richtig bringt keine neuen Punkte", () => {
+    const a = nextProgress(undefined, "x", "question", true, now); // Bestmarke 2
+    const wrong = nextProgress(a, "x", "question", false, now); // Box 1, sofort fällig
+    expect(wrong.best_box).toBe(2);
+    expect(earnsXp(wrong, true, now)).toBe(false); // wieder Box 2 – schon erreicht
+    const later = new Date("2026-11-12T10:00:00Z");
+    const again = nextProgress(wrong, "x", "question", true, now); // Box 2
+    expect(earnsXp(again, true, later)).toBe(true); // fällig und Box 3 = neue Bestmarke
+  });
+  it("Level: 0 XP = Level 1, 100 = 2, 300 = 3; Fortschritt zum nächsten", () => {
+    expect(levelOf(0)).toMatchObject({ level: 1, title: "Starter", next: 100 });
+    expect(levelOf(99).level).toBe(1);
+    expect(levelOf(100).level).toBe(2);
+    expect(levelOf(300)).toMatchObject({ level: 3, into: 0 });
+    expect(levelOf(xpForLevel(10))).toMatchObject({ level: 10, title: "Profi" });
+    expect(levelOf(450).pct).toBe(50);
+  });
+  it("jede Unit gehört zu einem bekannten Thema; jedes Thema hat eine eigene erste offene Unit", () => {
+    for (const u of UNITS) expect(TOPICS.some((t) => t.id === topicOf(u)), u.id).toBe(true);
   });
 });

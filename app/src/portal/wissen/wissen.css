@@ -111,3 +111,15 @@
 @keyframes wi-pop { from { transform: scale(.4); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .wi *, .wi { animation: none !important; transition: none !important; } }
 .wi-sound { margin-left: auto; align-self: flex-start; width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--surface); box-shadow: 0 0 0 1px var(--line); font-size: 20px; cursor: pointer; }
+
+/* Level + Themenwahl */
+.wi-level { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.wi-level-badge { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 1.2rem; color: #1b1400; background: linear-gradient(180deg, #ffe680, #ffc928); box-shadow: 0 3px 0 #c99a00; }
+.wi-level-main { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.wi-level.is-up { animation: wi-levelup 1.6s ease-out; }
+@keyframes wi-levelup { 0% { box-shadow: 0 0 0 1px var(--line), 0 0 0 0 rgba(255, 201, 40, .7); } 60% { box-shadow: 0 0 0 1px #ffc928, 0 0 0 14px rgba(255, 201, 40, 0); } 100% { box-shadow: 0 0 0 1px var(--line); } }
+.wi-topics { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 10px; }
+.wi-topic { display: grid; gap: 2px; justify-items: start; text-align: left; padding: 12px; border-radius: 16px; border: 0; background: var(--surface); color: inherit; box-shadow: 0 0 0 1px var(--line); cursor: pointer; min-width: 0; }
+.wi-topic b { overflow-wrap: anywhere; }
+.wi-topic.is-on { box-shadow: 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.wi-topic-icon { font-size: 1.4rem; }

@@ -4,9 +4,12 @@
 import decksJson from "../content/wissen/decks.json";
 import cardsJson from "../content/wissen/flashcards.json";
 import questionsJson from "../content/wissen/questions.json";
+import topicsJson from "../content/wissen/topics.json";
 import unitsJson from "../content/wissen/units.json";
 
-export type Unit = { id: string; order: number; title: string; source: string; icon: string; questionCount: number };
+/** Thema (Kapitel) im Wissen – z. B. Einarbeitung, Strahlenschutz (NiSV). Units ohne topicId gehören zur Einarbeitung. */
+export type Topic = { id: string; order: number; title: string; icon: string; description: string };
+export type Unit = { id: string; order: number; title: string; source: string; icon: string; questionCount: number; topicId?: string };
 export type Option = { id: string; text: string };
 export type Question = {
   id: string;
@@ -23,7 +26,11 @@ export type Question = {
 export type Deck = { id: string; week: number; title: string; kind: "aufgabe" | "uebung" | "workshop"; needsContent: boolean; cardCount: number };
 export type Flashcard = { id: string; deckId: string; front: string; back: string; source: string };
 
+export const DEFAULT_TOPIC = "einarbeitung";
+export const TOPICS = ([...topicsJson.items] as Topic[]).sort((a, b) => a.order - b.order);
 export const UNITS = ([...unitsJson.items] as Unit[]).sort((a, b) => a.order - b.order);
+export const topicOf = (u: Unit) => u.topicId ?? DEFAULT_TOPIC;
+export const unitsOf = (topicId: string) => UNITS.filter((u) => topicOf(u) === topicId);
 export const QUESTIONS = questionsJson.items as Question[];
 export const DECKS = decksJson.items as Deck[];
 export const CARDS = cardsJson.items as Flashcard[];
@@ -40,20 +47,36 @@ export const PERFECT_BONUS = 10;
 export const CARD_XP = 5;
 
 export type ItemType = "question" | "card";
-export type Progress = { item_id: string; item_type: ItemType; box: number; due_at: string; times_correct: number; times_wrong: number };
+/** best_box: höchste je erreichte Stufe – Punkte gibt es nur für eine neue Bestmarke */
+export type Progress = { item_id: string; item_type: ItemType; box: number; best_box?: number; due_at: string; times_correct: number; times_wrong: number };
 export type ProgressMap = Map<string, Progress>;
 
 // ---------------- Leitner ----------------
 /** Tage bis zur nächsten Fälligkeit je Box (Box 1 = sofort / nächste Sitzung) */
 export const BOX_DAYS: Record<number, number> = { 1: 0, 2: 1, 3: 3, 4: 7, 5: 14, 6: 30 };
 
+/** Gleiche Regel wie in der Datenbank (wissen_answer): richtig, aber noch nicht wieder fällig = reine Übung */
+const isPractice = (prev: Progress | undefined, correct: boolean, now: Date) =>
+  correct && !!prev && new Date(prev.due_at).getTime() > now.getTime();
+
+/**
+ * Bringt diese Antwort Punkte? Nur richtig + neu oder fällig + neue Bestmarke. Falsch = 0, Wiederholen derselben
+ * Frage (auch nach absichtlich falscher Antwort) = 0. Verbindlich entscheidet die Datenbank.
+ */
+export function earnsXp(prev: Progress | undefined, correct: boolean, now = new Date()): boolean {
+  if (!correct || isPractice(prev, correct, now)) return false;
+  return Math.min(6, (prev?.box ?? 1) + 1) > (prev?.best_box ?? 0);
+}
+
 export function nextProgress(prev: Progress | undefined, id: string, type: ItemType, correct: boolean, now = new Date()): Progress {
+  if (isPractice(prev, correct, now)) return { ...prev!, times_correct: prev!.times_correct + 1 };
   const box = correct ? Math.min(6, (prev?.box ?? 1) + 1) : 1;
   const due = new Date(now.getTime() + BOX_DAYS[box] * 864e5);
   return {
     item_id: id,
     item_type: type,
     box,
+    best_box: Math.max(prev?.best_box ?? 0, correct ? box : 0),
     due_at: due.toISOString(),
     times_correct: (prev?.times_correct ?? 0) + (correct ? 1 : 0),
     times_wrong: (prev?.times_wrong ?? 0) + (correct ? 0 : 1),
@@ -78,24 +101,29 @@ export const unitRing = (unitId: string, progress: ProgressMap) => share(unitId,
 
 /** Freigeschaltet: Unit 1 immer; Unit n+1, wenn in Unit n ≥ 80 % der Fragen mindestens Box 2 haben */
 export function unlockedUnits(progress: ProgressMap): Set<string> {
-  const open = new Set<string>();
-  UNITS.forEach((u, i) => {
-    if (i === 0 || share(UNITS[i - 1].id, progress, 2) >= UNLOCK_SHARE) open.add(u.id);
-    else return;
-  });
-  // Lücken schließen: nach der ersten gesperrten Unit ist alles gesperrt
+  // je Thema eine eigene Kette: die erste Unit ist offen, nach der ersten gesperrten ist der Rest gesperrt
   const result = new Set<string>();
-  for (const u of UNITS) {
-    if (!open.has(u.id)) break;
-    result.add(u.id);
+  for (const t of TOPICS) {
+    const list = unitsOf(t.id);
+    for (let i = 0; i < list.length; i++) {
+      if (i > 0 && share(list[i - 1].id, progress, 2) < UNLOCK_SHARE) break;
+      result.add(list[i].id);
+    }
   }
   return result;
 }
 
-/** Aktuelle Unit: die letzte freigeschaltete */
-export function currentUnit(progress: ProgressMap): Unit {
+/** Aktuelle Unit eines Themas: die letzte freigeschaltete */
+export function currentUnit(progress: ProgressMap, topicId = DEFAULT_TOPIC): Unit | undefined {
   const open = unlockedUnits(progress);
-  return [...UNITS].reverse().find((u) => open.has(u.id)) ?? UNITS[0];
+  const list = unitsOf(topicId);
+  return [...list].reverse().find((u) => open.has(u.id)) ?? list[0];
+}
+
+/** Meisterschaft eines Themas: Anteil der Fragen in Stufe ≥ 4 */
+export function topicMastery(topicId: string, progress: ProgressMap): number {
+  const list = unitsOf(topicId).flatMap((u) => questionsOf(u.id));
+  return list.length ? list.filter((q) => (progress.get(q.id)?.box ?? 0) >= 4).length / list.length : 0;
 }
 
 /** Fällige Wiederholungen (nur schon gesehene Fragen) aus freigeschalteten Units */
@@ -170,3 +198,24 @@ export function weekXp(days: DayXp[], now = new Date()): number {
 
 export const WEEK_TITLES: Record<number, string> = { 1: "Woche 1", 2: "Woche 2", 3: "Woche 3", 4: "Woche 4", 5: "Woche 5", 6: "Woche 6" };
 export const DECK_KIND: Record<Deck["kind"], string> = { aufgabe: "Aufgabe", uebung: "Übung", workshop: "Workshop" };
+
+// ---------------- Level ----------------
+/** Gesamt-XP, die für ein Level nötig sind: Level 1 = 0, 2 = 100, 3 = 300, 4 = 600 … (50 · (n−1) · n) */
+export const xpForLevel = (level: number) => 50 * (level - 1) * level;
+
+const LEVEL_TITLES: [number, string][] = [[1, "Starter"], [5, "Kenner"], [10, "Profi"], [15, "Experte"], [20, "Meister"]];
+
+export type LevelInfo = { level: number; title: string; into: number; need: number; pct: number; next: number };
+
+/** Level zu den Gesamt-XP: aktueller Stand und Weg zum nächsten Level */
+export function levelOf(xpTotal: number): LevelInfo {
+  const xp = Math.max(0, Math.floor(xpTotal));
+  let level = Math.floor((1 + Math.sqrt(1 + (4 * xp) / 50)) / 2);
+  while (xpForLevel(level + 1) <= xp) level++;
+  while (level > 1 && xpForLevel(level) > xp) level--;
+  const base = xpForLevel(level);
+  const need = xpForLevel(level + 1) - base;
+  let title = LEVEL_TITLES[0][1];
+  for (const [from, t] of LEVEL_TITLES) if (level >= from) title = t;
+  return { level, title, into: xp - base, need, pct: Math.round(((xp - base) / need) * 100), next: xpForLevel(level + 1) - xp };
+}

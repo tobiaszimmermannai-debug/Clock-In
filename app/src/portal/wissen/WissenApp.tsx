@@ -6,14 +6,15 @@ import { Notice } from "../../components/ui";
 import { isMuted, setMuted, sounds } from "../../lib/sounds";
 import { portalDb } from "../../lib/supabase";
 import {
-  BLITZ_SECONDS, CARD_XP, CARDS, composeLesson, currentUnit, DAILY_GOAL_XP, type DayXp, DECK_KIND, type Deck, DECKS, dueCards,
-  dueQuestions, type Flashcard, isCorrect, type ItemType, LESSON_SIZE, nextProgress, PERFECT_BONUS, type Progress, type ProgressMap,
-  type Question, QUESTIONS, questionsOf, shuffle, streakOf, todayXp, type Unit, unitRing, UNITS, unlockedUnits, weekXp, XP_BY_DIFFICULTY,
+  BLITZ_SECONDS, CARD_XP, CARDS, composeLesson, currentUnit, DAILY_GOAL_XP, type DayXp, DECK_KIND, type Deck, DECKS, DEFAULT_TOPIC, dueCards,
+  dueQuestions, earnsXp, type Flashcard, isCorrect, type ItemType, LESSON_SIZE, levelOf, nextProgress, PERFECT_BONUS, type Progress, type ProgressMap,
+  type Question, QUESTIONS, questionsOf, shuffle, streakOf, todayXp, topicMastery, TOPICS, type Unit, unitRing, unitsOf, unlockedUnits, weekXp, XP_BY_DIFFICULTY,
 } from "../../lib/wissen";
 import { Blitzi } from "../../notes/gamification/Blitzi";
 
 type Mode = "lesson" | "review" | "blitzi" | "blitzrunde";
-type Save = (input: { id: string; type: ItemType; correct: boolean; mode: Mode; xp: number; answer?: string[]; leitner: boolean }) => void;
+/** xp: was die App anzeigt (0, wenn es keine Punkte gibt); base: Punktwert der Frage/Karte für die Datenbank */
+type Save = (input: { id: string; type: ItemType; correct: boolean; mode: Mode; xp: number; base: number; answer?: string[]; leitner: boolean }) => void;
 
 // ---------------- Daten ----------------
 function useWissen() {
@@ -22,6 +23,7 @@ function useWissen() {
   const [days, setDays] = useState<DayXp[]>([]);
   const [error, setError] = useState<string>();
   const [ready, setReady] = useState(false);
+  const [xpTotal, setXpTotal] = useState(0);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -31,10 +33,12 @@ function useWissen() {
     setUid(me);
     if (!me) return setReady(true);
     const since = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
-    const [p, d] = await Promise.all([
-      portalDb.from("wissen_item_progress").select("item_id, item_type, box, due_at, times_correct, times_wrong").eq("user_id", me),
+    const [p, d, profile] = await Promise.all([
+      portalDb.from("wissen_item_progress").select("*").eq("user_id", me),
       portalDb.from("wissen_daily_xp").select("day, xp, answers").eq("user_id", me).gte("day", since),
+      portalDb.from("wissen_profile").select("xp_total").eq("user_id", me).maybeSingle(),
     ]);
+    setXpTotal(Number((profile.data as { xp_total?: number } | null)?.xp_total ?? 0));
     if (p.error || d.error) setError("Lernstand konnte nicht geladen werden – ist das Wissen-Update in der Datenbank eingespielt?");
     setProgress(new Map(((p.data ?? []) as Progress[]).map((r) => [r.item_id, r])));
     setDays(((d.data ?? []) as { day: string; xp: number; answers: number }[]).map((r) => ({ day: r.day, xp: r.xp, active: r.answers > 0 })));
@@ -53,22 +57,27 @@ function useWissen() {
         const hit = list.find((x) => x.day === day);
         return hit ? list.map((x) => (x.day === day ? { ...x, xp: x.xp + input.xp, active: true } : x)) : [...list, { day, xp: input.xp, active: true }];
       });
-      if (input.leitner) {
+      setXpTotal((x) => x + input.xp);
+      const bonus = input.id.startsWith("bonus:");
+      // Wiederholung derselben Frage innerhalb einer Lektion: reine Übung, wird nicht gespeichert
+      if (!input.leitner && !bonus) return;
+      if (!bonus) {
         const next = nextProgress(progressRef.current.get(input.id), input.id, input.type, input.correct);
         setProgress((m) => new Map(m).set(input.id, next));
-        void portalDb.from("wissen_item_progress").upsert({ user_id: uid, ...next, last_seen_at: new Date().toISOString() }).then(({ error }) => {
-          if (error) setError(`Speichern fehlgeschlagen: ${error.message}`);
-        });
       }
+      // Punkte und Lernstufe setzt die Datenbank (wissen_answer) – die App zeigt nur an
       void portalDb
-        .from("wissen_attempts")
-        .insert({ user_id: uid, item_id: input.id, item_type: input.type, correct: input.correct, answer: input.answer ?? null, mode: input.mode, xp_earned: input.xp })
-        .then(({ error }) => error && setError(`Speichern fehlgeschlagen: ${error.message}`));
+        .rpc("wissen_answer", { p_item: input.id, p_type: input.type, p_correct: input.correct, p_mode: input.mode, p_answer: input.answer ?? null, p_xp: input.base })
+        .then(({ data, error }) => {
+          if (error) return setError(`Speichern fehlgeschlagen: ${error.message}`);
+          const r = data as { xp: number; xp_total: number } | null;
+          if (r && typeof r.xp_total === "number") setXpTotal(r.xp_total);
+        });
     },
     [uid],
   );
 
-  return { ready, error, progress, days, save };
+  return { ready, error, progress, days, xpTotal, save };
 }
 
 // ---------------- Startseite ----------------
@@ -101,6 +110,7 @@ export default function WissenApp() {
 function Home(props: {
   progress: ProgressMap;
   days: DayXp[];
+  xpTotal: number;
   error?: string;
   onLesson: (u: Unit) => void;
   onReview: () => void;
@@ -109,7 +119,37 @@ function Home(props: {
 }) {
   const { progress, days } = props;
   const open = unlockedUnits(progress);
-  const current = currentUnit(progress);
+  // Thema (Kapitel): Auswahl wird am Gerät gemerkt
+  const [topicId, setTopicId] = useState(() => {
+    try {
+      const saved = localStorage.getItem("clockin-wissen-topic");
+      return saved && TOPICS.some((t) => t.id === saved) ? saved : DEFAULT_TOPIC;
+    } catch {
+      return DEFAULT_TOPIC;
+    }
+  });
+  const pickTopic = (id: string) => {
+    setTopicId(id);
+    try {
+      localStorage.setItem("clockin-wissen-topic", id);
+    } catch {
+      // egal
+    }
+  };
+  const topic = TOPICS.find((t) => t.id === topicId) ?? TOPICS[0];
+  const units = unitsOf(topic.id);
+  const current = currentUnit(progress, topic.id);
+  const level = levelOf(props.xpTotal);
+  // Level-Aufstieg feiern (nur wenn das Level während der Sitzung steigt)
+  const lastLevel = useRef(level.level);
+  const [levelUp, setLevelUp] = useState<number>();
+  useEffect(() => {
+    if (level.level > lastLevel.current && lastLevel.current > 0 && props.xpTotal > 0) {
+      setLevelUp(level.level);
+      sounds.finish();
+    }
+    lastLevel.current = level.level;
+  }, [level.level, props.xpTotal]);
   const due = dueQuestions(progress).length;
   const dueC = dueCards(progress).length;
   const streak = streakOf(days);
@@ -134,6 +174,15 @@ function Home(props: {
       </header>
       {props.error && <Notice tone="warn">{props.error}</Notice>}
 
+      <div className={`wi-level${levelUp ? " is-up" : ""}`} onAnimationEnd={() => setLevelUp(undefined)}>
+        <span className="wi-level-badge" aria-hidden>{level.level}</span>
+        <div className="wi-level-main">
+          <b>Level {level.level} · {level.title}{levelUp ? " – aufgestiegen! 🎉" : ""}</b>
+          <span className="wi-goal"><span style={{ width: `${level.pct}%` }} /></span>
+          <span className="muted small">{props.xpTotal} XP gesamt · noch {level.next} XP bis Level {level.level + 1}</span>
+        </div>
+      </div>
+
       <div className="wi-stats">
         <div className="wi-stat"><b>🔥 {streak}</b><span>{streak === 1 ? "Tag Serie" : "Tage Serie"}</span></div>
         <div className="wi-stat is-wide">
@@ -144,8 +193,24 @@ function Home(props: {
         <div className="wi-stat"><b>{weekXp(days)}</b><span>XP diese Woche</span></div>
       </div>
 
+      {TOPICS.length > 1 && (
+        <div className="wi-topics" role="tablist" aria-label="Thema">
+          {TOPICS.map((t) => (
+            <button key={t.id} type="button" role="tab" aria-selected={t.id === topic.id} className={`wi-topic${t.id === topic.id ? " is-on" : ""}`} onClick={() => pickTopic(t.id)}>
+              <span className="wi-topic-icon" aria-hidden>{t.icon}</span>
+              <b>{t.title}</b>
+              <span className="muted small">{unitsOf(t.id).length ? `${Math.round(topicMastery(t.id, progress) * 100)} % gemeistert` : "Inhalte folgen"}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="wi-actions">
-        <button type="button" className="wi-btn is-primary" onClick={() => props.onLesson(current)}>▶ Weiterlernen: {current.title}</button>
+        {current ? (
+          <button type="button" className="wi-btn is-primary" onClick={() => props.onLesson(current)}>▶ Weiterlernen: {current.title}</button>
+        ) : (
+          <Notice tone="info">{topic.title}: Die Fragen zu diesem Thema werden gerade eingepflegt.</Notice>
+        )}
         <div className="wi-actions-row">
           <button type="button" className="wi-btn" disabled={!due} onClick={props.onReview}>🔁 Wiederholen{due ? ` (${due} fällig)` : ""}</button>
           <button type="button" className="wi-btn is-blitz" onClick={props.onBlitz}>⚡ Blitzrunde · {BLITZ_SECONDS} s</button>
@@ -154,10 +219,10 @@ function Home(props: {
 
       <h2 className="wi-h2">Lernpfad</h2>
       <ol className="wi-path">
-        {UNITS.map((u, i) => {
+        {units.map((u, i) => {
           const unlocked = open.has(u.id);
           const ring = unitRing(u.id, progress);
-          const isCurrent = u.id === current.id;
+          const isCurrent = u.id === current?.id;
           return (
             <li key={u.id} className={`wi-node${unlocked ? "" : " is-locked"}${isCurrent ? " is-current" : ""}`} style={{ "--shift": `${[0, 38, 56, 38, 0, -38, -56, -38][i % 8]}px` } as CSSProperties}>
               <button type="button" disabled={!unlocked} onClick={() => props.onLesson(u)} aria-label={`${u.title}${unlocked ? "" : " (gesperrt)"}`}>
@@ -172,7 +237,10 @@ function Home(props: {
           );
         })}
       </ol>
-      <p className="muted small wi-hint">Nächste Lektion wird frei, wenn du 80 % der Fragen der vorigen mindestens einmal richtig hattest.</p>
+      <p className="muted small wi-hint">
+        Nächste Lektion wird frei, wenn du 80 % der Fragen der vorigen mindestens einmal richtig hattest.
+        Punkte gibt es für neue und fällige Fragen – falsche Antworten und reines Wiederholen bringen keine.
+      </p>
 
       <h2 className="wi-h2">⚡ Blitzi-Karteikarten {dueC > 0 && <span className="wi-due">{dueC} fällig</span>}</h2>
       <div className="wi-weeks">
@@ -299,6 +367,8 @@ function Lesson(props: { mode: "lesson" | "review"; title: string; questions: Qu
   const [first, setFirst] = useState<Map<string, boolean>>(new Map());
   const [solved, setSolved] = useState<Set<string>>(new Set());
   const [xp, setXp] = useState(0);
+  const [earned, setEarned] = useState(0);
+  const [bonus, setBonus] = useState(false);
   const [done, setDone] = useState(false);
   const total = props.questions.length;
 
@@ -314,27 +384,35 @@ function Lesson(props: { mode: "lesson" | "review"; title: string; questions: Qu
     const perfect = [...first.values()].every(Boolean);
     return (
       <Finish title={perfect ? "Fehlerfrei! 🎉" : "Lektion geschafft!"} xp={xp}
-        lines={[`${[...first.values()].filter(Boolean).length} von ${total} beim ersten Versuch richtig`, ...(perfect ? [`+${PERFECT_BONUS} XP Bonus für null Fehler`] : [])]}
+        lines={[
+          `${[...first.values()].filter(Boolean).length} von ${total} beim ersten Versuch richtig`,
+          ...(bonus ? [`+${PERFECT_BONUS} XP Bonus für null Fehler`] : []),
+          ...(xp === 0 ? ["Übungsrunde: Diese Fragen kannst du schon – Punkte gibt es wieder für neue oder fällige Fragen."] : []),
+        ]}
         onClose={props.onClose} />
     );
   }
   const q = QUESTIONS.find((x) => x.id === queue[pos])!;
   const checked = (ok: boolean, chosen: string[]) => {
     const isFirst = !first.has(q.id);
-    const gain = isFirst && ok ? XP_BY_DIFFICULTY[q.difficulty] : 0;
+    const base = XP_BY_DIFFICULTY[q.difficulty];
+    const gain = isFirst && earnsXp(props.progress.get(q.id), ok) ? base : 0;
     if (isFirst) setFirst((m) => new Map(m).set(q.id, ok));
-    props.save({ id: q.id, type: "question", correct: ok, mode: props.mode, xp: gain, answer: chosen, leitner: isFirst });
+    if (gain) setEarned((n) => n + 1);
+    props.save({ id: q.id, type: "question", correct: ok, mode: props.mode, xp: gain, base, answer: chosen, leitner: isFirst });
     setXp((x) => x + gain);
     if (ok) setSolved((s) => new Set(s).add(q.id));
     else setQueue((list) => [...list, q.id]); // falsch → ans Ende, bis es sitzt
   };
   const next = () => {
     if (pos + 1 < queue.length) return setPos(pos + 1);
-    const perfect = [...first.values()].every(Boolean);
+    // Bonus nur, wenn mindestens 5 Fragen dieser Runde Punkte gebracht haben (nicht fürs reine Wiederholen)
+    const perfect = [...first.values()].every(Boolean) && earned >= 5;
     if (perfect) {
-      props.save({ id: `bonus:${props.mode}`, type: "question", correct: true, mode: props.mode, xp: PERFECT_BONUS, leitner: false });
+      props.save({ id: `bonus:${props.mode}`, type: "question", correct: true, mode: props.mode, xp: PERFECT_BONUS, base: PERFECT_BONUS, leitner: false });
       setXp((x) => x + PERFECT_BONUS);
     }
+    setBonus(perfect);
     setDone(true);
   };
   return (
@@ -380,10 +458,10 @@ function DeckRun(props: { deck: Deck; progress: ProgressMap; save: Save; onClose
   const card = CARDS.find((c) => c.id === queue[pos])!;
   const answer = (ok: boolean) => {
     const isFirst = !seen.has(card.id);
-    const gain = ok && !known.has(card.id) ? CARD_XP : 0;
+    const gain = isFirst && earnsXp(props.progress.get(card.id), ok) ? CARD_XP : 0;
     setSeen((s) => new Set(s).add(card.id));
     if (ok) setKnown((s) => new Set(s).add(card.id));
-    props.save({ id: card.id, type: "card", correct: ok, mode: "blitzi", xp: gain, leitner: isFirst || !ok });
+    props.save({ id: card.id, type: "card", correct: ok, mode: "blitzi", xp: gain, base: CARD_XP, leitner: isFirst });
     setXp((x) => x + gain);
     if (!ok) setQueue((list) => [...list, card.id]);
     setPos(pos + 1);
@@ -410,7 +488,9 @@ function blitzPool(progress: ProgressMap): BlitzItem[] {
   ]);
   const seen = new Set<string>();
   const out: BlitzItem[] = [];
-  for (const it of [...shuffle([...dueQ, ...dueC]), ...more]) {
+  // erst Fälliges, dann Neues (bringt Punkte), danach alles Übrige zum Üben
+  const isNew = (it: BlitzItem) => !progress.has(it.kind === "q" ? it.q.id : it.c.id);
+  for (const it of [...shuffle([...dueQ, ...dueC]), ...more.filter(isNew), ...more.filter((x) => !isNew(x))]) {
     const id = it.kind === "q" ? it.q.id : it.c.id;
     if (!seen.has(id)) (seen.add(id), out.push(it));
   }
@@ -433,8 +513,9 @@ function BlitzRound(props: { progress: ProgressMap; save: Save; onClose: () => v
   }
   const it = pool[pos];
   const next = () => setPos((p) => p + 1);
-  const scored = (id: string, type: ItemType, ok: boolean, gain: number, answer?: string[]) => {
-    props.save({ id, type, correct: ok, mode: "blitzrunde", xp: gain, answer, leitner: true });
+  const scored = (id: string, type: ItemType, ok: boolean, base: number, answer?: string[]) => {
+    const gain = earnsXp(props.progress.get(id), ok) ? base : 0;
+    props.save({ id, type, correct: ok, mode: "blitzrunde", xp: gain, base, answer, leitner: true });
     setXp((x) => x + gain);
     if (ok) setRight((r) => r + 1);
   };
@@ -444,9 +525,9 @@ function BlitzRound(props: { progress: ProgressMap; save: Save; onClose: () => v
       <p className="wi-run-title">⚡ Blitzrunde · {right} richtig · ⚡ {xp} XP</p>
       {it.kind === "q" ? (
         <QuestionCard key={`q-${pos}`} q={it.q} quick onNext={next}
-          onChecked={(ok, chosen) => scored(it.q.id, "question", ok, ok ? XP_BY_DIFFICULTY[it.q.difficulty] : 0, chosen)} />
+          onChecked={(ok, chosen) => scored(it.q.id, "question", ok, XP_BY_DIFFICULTY[it.q.difficulty], chosen)} />
       ) : (
-        <FlipCard key={`c-${pos}`} card={it.c} onAnswer={(ok) => (scored(it.c.id, "card", ok, ok ? CARD_XP : 0), next())} />
+        <FlipCard key={`c-${pos}`} card={it.c} onAnswer={(ok) => (scored(it.c.id, "card", ok, CARD_XP), next())} />
       )}
     </div>
   );

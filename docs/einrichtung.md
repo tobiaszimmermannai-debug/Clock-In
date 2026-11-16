@@ -137,6 +137,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 48. `supabase/migrations/20261118090000_swap_accept_stamp_fixes.sql` (Tausch braucht Zustimmung der angefragten Person, „wenig los“ = Minusstunden ohne Freigabe, Stempel-Sicherungen, stündliche Aufgaben werden nachgeholt – danach Funktion `telegram` neu deployen)
 49. `supabase/migrations/20261119090000_notifications.sql` (Mitteilungen im Portal (Glocke): Tausch, Dienstplan-Änderungen, Entscheidungen)
 50. `supabase/migrations/20261120090000_vacation_requests.sql` (Urlaubsantrag: Mitarbeiter → Studioleitung → Freigeber (rule_settings.vacation_approver_user_id, sonst Admin „Domi…“) – danach Funktion `telegram` neu deployen)
+51. `supabase/migrations/20261121090000_wissen_fair_xp.sql` (Wissen: Punkte vergibt die Datenbank (keine Punkte für falsche Antworten und reines Wiederholen), Gesamt-XP für das Level)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
@@ -246,7 +247,7 @@ Gesendet wird über denselben Bot wie die Stempeluhr (Klicks auf die Aufgaben-Kn
 - **Prestige:** Auf Stufe 30 ein Item aus 100 wählen, Blitzi startet bei 1; beim ersten Mal Spitzname.
 - **Wissen:** Reiter „Wissen“ im Portal – Lernpfad mit 14 Lektionen (220 Fragen aus dem QM-Handbuch), Blitzi-Karteikarten
   (Einarbeitung Woche 1–6), Blitzrunde (60 s), Wiederholung nach Leitner, Serie und Tagesziel (30 XP). Inhalte liegen in
-  `app/src/content/wissen/` (neue Fragen mit neuen IDs ergänzen, bestehende IDs nie ändern), Übersicht: `docs/wissen-fragen-und-loesungen.md`.
+  `app/src/content/wissen/` (neue Fragen mit neuen IDs ergänzen, bestehende IDs nie ändern) – Themen (Kapitel) stehen in `topics.json`, eine Unit gehört über `topicId` zu einem Thema (ohne Angabe: Einarbeitung), Übersicht: `docs/wissen-fragen-und-loesungen.md`.
 - **Studioleitung plant am Handy:** Im Mitarbeiter-Portal → Dienstplan → „Planen“ – normale Anmeldung, ohne QR-Code und ohne
   Timer. QR-Code und automatisches Sperren nach 5 Min. gibt es nur am Studio-PC. In der Verwaltung (`#/admin`) meldet sich die
   Studioleitung mit Passwort an (QR-Code mit dem Stempel-Handy optional, Funktion `qr-login`).

@@ -1,0 +1,7 @@
+{
+  "meta": { "version": "2026.11.16" },
+  "items": [
+    { "id": "einarbeitung", "order": 1, "title": "Einarbeitung", "icon": "🏋️", "description": "Qualitäts- und Prozesshandbuch, Einarbeitung Woche 1–6" },
+    { "id": "nisv", "order": 2, "title": "Strahlenschutz (NiSV)", "icon": "⚡", "description": "Fachkunde für EMS: Recht, Technik, Risiken, Beratung" }
+  ]
+}

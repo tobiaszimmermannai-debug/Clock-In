@@ -66,6 +66,7 @@ Heimatstudios stimmt zu/lehnt ab → Dominik gibt frei (Tobi bekommt nur Info pe
 - Telegram: an Leitung (Knöpfe), dann an Dominik (Knöpfe) und Tobi (Info); Mitteilung an Mitarbeiter bei jeder Entscheidung.
 
 ## Paket 5 – Wissen: Punkte, Level, Thema NiSV
+**Stand 16.11.: Punkte 1–3 erledigt** – Migration `20261121090000_wissen_fair_xp.sql`. Regel: XP nur für richtig + neu/fällig + neue beste Stufe (`best_box`). Thema „Strahlenschutz (NiSV)“ ist angelegt (`topics.json`), Fragen fehlen noch (Material kam nicht an): Units mit `"topicId": "nisv"` in `units.json`, Fragen wie gewohnt in `questions.json`. Offen: Wochen-Rangliste Wissen.
 1. **Punkte fair**: XP vergibt der Server (RPC `wissen_answer(item, type, correct, mode, answer)`), App schickt kein XP mehr.
    Regeln: falsch = 0; richtig = XP nur, wenn die Frage neu oder fällig ist (Leitner `due_at <= now`); nicht fällige
    Wiederholung = 0 XP (Üben bleibt erlaubt, „Übung – keine Punkte“ anzeigen). Blitzrunde zieht nur neue/fällige;
