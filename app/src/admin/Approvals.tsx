@@ -1,11 +1,12 @@
 // Offene Freigaben: Nachträge und Überstunden (Admin), Schichttausch (beteiligte Studioleitung oder Admin)
 import { useCallback, useEffect, useState } from "react";
-import { Avatar, Empty, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
+import { Avatar, Empty, Field, Notice, PageHeader, Pill, Row, Section, Sheet } from "../components/ui";
 import { berlinDate, berlinTime, fmtDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
 import { EVENT_LABEL, type EventType, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
+import { approvers } from "../lib/approvers";
 
 type Person = { first_name: string; last_name: string } | null;
 type Booking = {
@@ -52,6 +53,10 @@ export function Approvals({ profile }: { profile: Profile }) {
   const [early, setEarly] = useState<Booking[]>([]);
   const [swaps, setSwaps] = useState<SwapRow[]>([]);
   const [message, setMessage] = useState<{ tone: "ok" | "info" | "error"; text: string }>();
+  const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState<string>();
+  // Ablehnen: erst kurz nach dem Grund fragen (schützt auch vor Vertippen)
+  const [reject, setReject] = useState<{ kind: "booking" | "overtime" | "swap"; id: string; title: string }>();
 
   const load = useCallback(async () => {
     const [b, o, s, e] = await Promise.all([
@@ -68,6 +73,8 @@ export function Approvals({ profile }: { profile: Profile }) {
         .order("created_at"),
       adminDb.from("time_logs").select(BOOKING_SELECT).eq("early_status", "pending").order("recorded_at"),
     ]);
+    const failed = b.error ?? o.error ?? s.error ?? e.error;
+    setLoadError(failed ? `Freigaben konnten nicht geladen werden: ${dbMessage(failed)}` : undefined);
     setEarly((e.data ?? []) as unknown as Booking[]);
     setBookings((b.data ?? []) as unknown as Booking[]);
     setOvertime((o.data ?? []) as unknown as Booking[]);
@@ -78,15 +85,23 @@ export function Approvals({ profile }: { profile: Profile }) {
     void load();
   }, [load]);
 
-  async function decide(kind: "booking" | "overtime" | "swap", id: string, approve: boolean) {
+  async function decide(kind: "booking" | "overtime" | "swap", id: string, approve: boolean, note?: string) {
+    if (busy) return;
+    setBusy(true);
+    const reason = note?.trim() || null;
     const result = kind === "swap"
-      ? await adminDb.from("swap_requests").update({ status: approve ? "approved" : "rejected" }).eq("id", id).select("status").maybeSingle()
+      ? await adminDb.from("swap_requests").update({ status: approve ? "approved" : "rejected", ...(reason ? { decision_note: reason } : {}) }).eq("id", id).select("status").maybeSingle()
       : await adminDb
         .from("time_logs")
-        .update(kind === "booking" ? { approval_status: approve ? "approved" : "rejected" } : { overtime_status: approve ? "approved" : "rejected" })
+        .update({
+          ...(kind === "booking" ? { approval_status: approve ? "approved" : "rejected" } : { overtime_status: approve ? "approved" : "rejected" }),
+          ...(reason ? { review_note: reason } : {}),
+        })
         .eq("id", id)
         .select("id")
         .maybeSingle();
+    setBusy(false);
+    setReject(undefined);
     if (result.error) {
       setMessage({ tone: "error", text: dbMessage(result.error) });
     } else if (kind === "swap" && approve && (result.data as { status: string } | null)?.status === "pending") {
@@ -97,13 +112,29 @@ export function Approvals({ profile }: { profile: Profile }) {
     void load();
   }
 
+  // Alle eines Abschnitts freigeben (nur Admin: Nachträge bzw. Überstunden)
+  async function approveAll(kind: "booking" | "overtime", ids: string[]) {
+    if (busy || !ids.length) return;
+    setBusy(true);
+    const { error } = await adminDb
+      .from("time_logs")
+      .update(kind === "booking" ? { approval_status: "approved" } : { overtime_status: "approved" })
+      .in("id", ids);
+    setBusy(false);
+    setMessage(error ? { tone: "error", text: dbMessage(error) } : { tone: "ok", text: `${ids.length} freigegeben.` });
+    void load();
+  }
+
   // Früher gegangen: krank (Rest als Krank) / bis Schichtende anrechnen / ablehnen (Minusstunden)
   async function decideEarly(id: string, decision: EarlyDecision) {
+    if (busy) return;
+    setBusy(true);
     const { error } = await adminDb.rpc("decide_early_leave", { p_log_id: id, p_decision: decision });
     setMessage(error ? { tone: "error", text: dbMessage(error) } : {
       tone: "ok",
       text: decision === "sick" ? "Ab dem Gehen als krank angerechnet." : decision === "approved" ? "Bis Schichtende angerechnet." : "Abgelehnt – es zählt nur die gearbeitete Zeit.",
     });
+    setBusy(false);
     void load();
   }
 
@@ -115,17 +146,22 @@ export function Approvals({ profile }: { profile: Profile }) {
     <>
       <PageHeader title="Freigaben" />
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
-      {empty && (
+      {loadError && (
+        <Notice tone="error">
+          {loadError} <button type="button" className="btn btn-plain btn-sm" onClick={() => void load()}>Erneut versuchen</button>
+        </Notice>
+      )}
+      {empty && !loadError && (
         <div className="panel">
           <Empty icon="checkCircle" title="Alles erledigt">Keine offenen Freigaben.</Empty>
         </div>
       )}
 
       {bookings.length > 0 && (
-        <Section title="Nachträge" aside={<span>{bookings.length}</span>}
+        <Section title="Nachträge" aside={<SectionAside count={bookings.length} enabled={isAdmin && bookings.length > 1} busy={busy} onAll={() => void approveAll("booking", bookings.map((x) => x.id))} />}
           footer={isAdmin
             ? "Bei „Ausstempeln vergessen“ ablehnen und die echte Gehzeit unter Zeiten nachtragen. „Anderes Handy“ freigeben = Handy wird für die Person gemerkt."
-            : "Nachträge geben nur Tobias oder Dominik frei."}>
+            : `Nachträge geben nur ${approvers()} frei.`}>
           {bookings.map((b) => (
             <div key={b.id} className="list-item">
               <Row
@@ -140,15 +176,15 @@ export function Approvals({ profile }: { profile: Profile }) {
                   {b.device_unverified ? "anderes Handy" : SOURCE_PILL[b.source] ?? `von ${b.creator?.first_name ?? "?"}`}
                 </Pill>}
               />
-              <Decision enabled={isAdmin} onDecide={(ok) => void decide("booking", b.id, ok)} />
+              <Decision enabled={isAdmin} busy={busy} onDecide={(ok) => (ok ? void decide("booking", b.id, true) : setReject({ kind: "booking", id: b.id, title: name(b.user) }))} />
             </div>
           ))}
         </Section>
       )}
 
       {overtime.length > 0 && (
-        <Section title="Überstunden" aside={<span>{overtime.length}</span>}
-          footer={!isAdmin ? "Überstunden geben nur Tobias oder Dominik frei." : undefined}>
+        <Section title="Überstunden" aside={<SectionAside count={overtime.length} enabled={isAdmin && overtime.length > 1} busy={busy} onAll={() => void approveAll("overtime", overtime.map((x) => x.id))} />}
+          footer={!isAdmin ? `Überstunden geben nur ${approvers()} frei.` : undefined}>
           {overtime.map((o) => {
             const minutes = o.shift ? Math.floor((Date.parse(o.recorded_at) - Date.parse(o.shift.ends_at)) / 60_000) : 0;
             return (
@@ -158,7 +194,7 @@ export function Approvals({ profile }: { profile: Profile }) {
                   title={`${name(o.user)} · ${minutes} Min.`}
                   subtitle={`${studioShort(o.location?.name ?? "")} · Schichtende ${o.shift ? berlinTime(o.shift.ends_at) : "?"} · gegangen ${when(o.recorded_at)}`}
                 />
-                <Decision enabled={isAdmin} onDecide={(ok) => void decide("overtime", o.id, ok)} />
+                <Decision enabled={isAdmin} busy={busy} onDecide={(ok) => (ok ? void decide("overtime", o.id, true) : setReject({ kind: "overtime", id: o.id, title: name(o.user) }))} />
               </div>
             );
           })}
@@ -167,7 +203,7 @@ export function Approvals({ profile }: { profile: Profile }) {
 
       {early.length > 0 && (
         <Section title="Früher gegangen" aside={<span>{early.length}</span>}
-          footer={isAdmin ? "Ohne Freigabe zählt nur die gearbeitete Zeit (Minusstunden)." : "Entscheiden Tobias oder Dominik (auch per Telegram)."}>
+          footer={isAdmin ? "Ohne Freigabe zählt nur die gearbeitete Zeit (Minusstunden)." : `Entscheiden ${approvers()} (auch per Telegram).`}>
           {early.map((e) => {
             const minutes = e.shift ? Math.max(0, Math.round((Date.parse(e.shift.ends_at) - Date.parse(e.recorded_at)) / 60_000)) : 0;
             return (
@@ -182,12 +218,12 @@ export function Approvals({ profile }: { profile: Profile }) {
                 />
                 {isAdmin && (
                   <div className="list-actions indent">
-                    <button type="button" className="btn btn-outline btn-sm" onClick={() => void decideEarly(e.id, "rejected")}>Ablehnen</button>
+                    <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => void decideEarly(e.id, "rejected")}>Ablehnen</button>
                     {e.early_reason !== "slow" && (
-                      <button type="button" className="btn btn-outline btn-sm" onClick={() => void decideEarly(e.id, "sick")}>Krank anrechnen</button>
+                      <button type="button" className="btn btn-outline btn-sm" disabled={busy} onClick={() => void decideEarly(e.id, "sick")}>Krank anrechnen</button>
                     )}
                     {e.early_reason !== "sick" && (
-                      <button type="button" className="btn btn-primary btn-sm" onClick={() => void decideEarly(e.id, "approved")}>Bis Schichtende</button>
+                      <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void decideEarly(e.id, "approved")}>Bis Schichtende</button>
                     )}
                   </div>
                 )}
@@ -215,22 +251,54 @@ export function Approvals({ profile }: { profile: Profile }) {
                   }
                   trailing={s.is_cross_studio && <Pill tone="warn">2 Studios · {approvals}/2</Pill>}
                 />
-                <Decision enabled onDecide={(ok) => void decide("swap", s.id, ok)} />
+                <Decision enabled busy={busy} onDecide={(ok) => (ok ? void decide("swap", s.id, true) : setReject({ kind: "swap", id: s.id, title: `${name(s.requester)} → ${name(s.target)}` }))} />
               </div>
             );
           })}
         </Section>
       )}
+      {reject && (
+        <Sheet
+          title="Ablehnen"
+          subtitle={reject.title}
+          onClose={() => setReject(undefined)}
+          footer={<button type="submit" form="reject-form" className="btn btn-danger-solid" disabled={busy}>Ablehnen</button>}
+        >
+          <form
+            id="reject-form"
+            className="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void decide(reject.kind, reject.id, false, String(new FormData(e.currentTarget).get("reason") ?? ""));
+            }}
+          >
+            <Field label="Grund (optional)" hint="Sieht die Person in der App.">
+              <input id="reject-reason" name="reason" maxLength={200} placeholder="z. B. bitte echte Zeit nachtragen lassen" autoFocus />
+            </Field>
+          </form>
+        </Sheet>
+      )}
     </>
   );
 }
 
-function Decision(props: { enabled: boolean; onDecide: (approve: boolean) => void }) {
+function SectionAside(props: { count: number; enabled: boolean; busy: boolean; onAll: () => void }) {
+  return (
+    <span>
+      {props.count}
+      {props.enabled && (
+        <button type="button" className="btn btn-plain btn-sm" disabled={props.busy} onClick={props.onAll}>Alle freigeben</button>
+      )}
+    </span>
+  );
+}
+
+function Decision(props: { enabled: boolean; busy?: boolean; onDecide: (approve: boolean) => void }) {
   if (!props.enabled) return null;
   return (
     <div className="list-actions indent">
-      <button type="button" className="btn btn-outline btn-sm" onClick={() => props.onDecide(false)}>Ablehnen</button>
-      <button type="button" className="btn btn-primary btn-sm" onClick={() => props.onDecide(true)}>Freigeben</button>
+      <button type="button" className="btn btn-outline btn-sm" disabled={props.busy} onClick={() => props.onDecide(false)}>Ablehnen</button>
+      <button type="button" className="btn btn-primary btn-sm" disabled={props.busy} onClick={() => props.onDecide(true)}>Freigeben</button>
     </div>
   );
 }

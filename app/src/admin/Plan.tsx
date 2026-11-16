@@ -25,6 +25,7 @@ import {
   type ShiftType, studioShort,
 } from "../lib/types";
 import type { Profile } from "./AdminApp";
+import { approvers } from "../lib/approvers";
 
 // Verbindung für alle Planungs-Zugriffe: Verwaltung (adminDb) oder Studio-PC nach QR-Freigabe der Studioleitung.
 // Es gibt immer nur einen Dienstplan auf dem Bildschirm, darum genügt eine Modul-Variable.
@@ -174,7 +175,7 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
     return (
       <>
         <PlanHead embedded={embedded} title="Dienstplan" />
-        <Notice tone="warn">Dir ist noch kein Studio zugeordnet. Bitte Tobias oder Dominik fragen.</Notice>
+        <Notice tone="warn">Dir ist noch kein Studio zugeordnet. Bitte {approvers()} fragen.</Notice>
       </>
     );
   }

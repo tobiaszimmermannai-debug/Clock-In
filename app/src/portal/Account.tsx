@@ -5,6 +5,7 @@ import { existingPhoneKey, sha256Hex } from "../lib/stamp";
 import { portalDb } from "../lib/supabase";
 import type { Me } from "./PortalApp";
 import { VacationSection } from "./Vacation";
+import { approvers } from "../lib/approvers";
 
 export function Account(props: { me: Me; onLogout: () => void }) {
   // null = kein Handy registriert; sonst Datum und ob es dieses Handy ist
@@ -47,7 +48,7 @@ export function Account(props: { me: Me; onLogout: () => void }) {
 
       <VacationSection meId={props.me.id} />
 
-      <Section title="Stempel-Handy" footer="Mit einem anderen Handy oder Browser gestempelt? Dann wartet die Buchung auf Freigabe durch Tobias oder Dominik – danach wird es erkannt.">
+      <Section title="Stempel-Handy" footer={`Mit einem anderen Handy oder Browser gestempelt? Dann wartet die Buchung auf Freigabe durch ${approvers()} – danach wird es erkannt.`}>
         {phone === undefined && <p className="list-empty">Lädt …</p>}
         {phone === null && (
           <Row leading={<LeadingIcon name="phone" />} title="Noch nicht registriert" subtitle="Wird beim ersten Stempeln automatisch registriert" />

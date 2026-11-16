@@ -133,6 +133,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 44. `supabase/migrations/20261111100000_notes_guest_scheduled.sql` (Aufgaben: Aushilfe zählt auch laut Dienstplan – Reiter am PC des Gaststudios schon vor dem Einstempeln)
 45. `supabase/migrations/20261115090000_swap_overlap_check.sql` (Schichttausch: Überschneidung schon beim Antrag verständlich melden – danach Funktion `telegram` neu deployen)
 46. `supabase/migrations/20261116090000_notes_fair_points.sql` (Aufgaben: Gutschrift behält ihr erstes Datum, Team-Wertung nur mit Anwesenden – danach Funktion `aufgaben` neu deployen)
+47. `supabase/migrations/20261117090000_approver_names.sql` (Name der Freigeber einstellbar: rule_settings.approver_names)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und

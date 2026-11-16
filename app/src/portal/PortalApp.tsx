@@ -23,6 +23,7 @@ import { Knowledge } from "./Knowledge";
 import { QrLoginConfirm } from "./QrLoginConfirm";
 import { Swap } from "./Swap";
 import { useWishes } from "../lib/wishes";
+import { approvers, loadApprovers } from "../lib/approvers";
 
 export type Me = {
   id: string;
@@ -76,6 +77,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
     setTab("stamp");
   }, [props.stampToken]);
   const [error, setError] = useState<string>();
+  const [offline, setOffline] = useState(false);
 
   const load = useCallback(async () => {
     const { data } = await portalDb.auth.getSession();
@@ -89,7 +91,11 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
         .maybeSingle(),
       portalDb.from("users").select("id, first_name, last_name, home_location_id").eq("is_active", true).order("first_name"),
       portalDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
+      loadApprovers(portalDb),
     ]);
+    // Netzfehler ≠ „kein Mitarbeiter“: angemeldet bleiben und erneut versuchen lassen
+    if (profile.error) return setOffline(true);
+    setOffline(false);
     if (!profile.data) {
       await portalDb.auth.signOut();
       setError("Für dieses Konto ist kein Mitarbeiter hinterlegt.");
@@ -111,6 +117,16 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
   // Erinnerung an offene Aufgaben: einmal am Tag beim Öffnen (nicht mitten im Stempeln per QR)
   const showReminder = Boolean(me) && !props.stampToken && !props.pcToken && !props.qrToken && reminderDay !== berlinDate();
 
+  if (offline && !me) {
+    return (
+      <AuthLayout title="Clock-In" text="Keine Verbindung">
+        <div className="panel form">
+          <Notice tone="error">Deine Daten konnten nicht geladen werden. Bitte Internet prüfen – du bleibst angemeldet.</Notice>
+          <button type="button" className="btn btn-primary" onClick={() => void load()}>Erneut versuchen</button>
+        </div>
+      </AuthLayout>
+    );
+  }
   if (me === undefined) return <div className="screen center muted">Lädt …</div>;
   if (me === null) return <PortalLogin error={error} onDone={load} />;
 
@@ -245,7 +261,7 @@ function PortalLogin(props: { error?: string; onDone: () => void }) {
         {error && <Notice tone="error">{error}</Notice>}
         <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? "Anmelden …" : "Anmelden"}</button>
       </form>
-      <p className="auth-foot muted">Zugangsdaten bekommst du von Tobias oder Dominik.</p>
+      <p className="auth-foot muted">Zugangsdaten bekommst du von {approvers()}.</p>
     </AuthLayout>
   );
 }

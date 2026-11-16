@@ -12,6 +12,7 @@ type Request = {
   id: string;
   status: "pending" | "approved" | "rejected" | "cancelled";
   reason: string | null;
+  decision_note?: string | null;
   is_cross_studio: boolean;
   approved_own_by: string | null;
   approved_other_by: string | null;
@@ -44,18 +45,20 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
   const [requests, setRequests] = useState<Request[]>([]);
   const [draft, setDraft] = useState<{ shift: MyShift; cross: boolean } | null>(null);
   const [message, setMessage] = useState<string>();
+  const [loadError, setLoadError] = useState<string>();
 
   const load = useCallback(async () => {
     setShifts(await upcomingShifts(props.me.id));
-    const { data } = await portalDb
+    const { data, error } = await portalDb
       .from("swap_requests")
-      .select(`id, status, reason, is_cross_studio, approved_own_by, approved_other_by, requester_id,
+      .select(`id, status, reason, decision_note, is_cross_studio, approved_own_by, approved_other_by, requester_id,
         requester:users!swap_requests_requester_id_fkey(first_name, last_name),
         target:users!swap_requests_target_user_id_fkey(first_name, last_name),
         requester_shift:shifts!swap_requests_requester_shift_id_fkey(id, starts_at, ends_at, location_id, location:locations(name)),
         target_shift:shifts!swap_requests_target_shift_id_fkey(id, starts_at, ends_at, location_id, location:locations(name))`)
       .order("created_at", { ascending: false })
       .limit(30);
+    setLoadError(error ? `Anträge konnten nicht geladen werden: ${dbMessage(error)}` : undefined);
     setRequests((data ?? []) as unknown as Request[]);
   }, [props.me.id]);
 
@@ -76,6 +79,7 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
     <>
       {!props.embedded && <PageHeader title="Schicht tauschen" />}
       {message && <Notice tone="ok">{message}</Notice>}
+      {loadError && <Notice tone="error">{loadError}</Notice>}
 
       <Section title="Meine nächsten Schichten" footer="Tausch im eigenen Studio – „Anderes Studio“ braucht die Zustimmung beider Studioleitungen.">
         {shifts.length === 0 && <p className="list-empty">Keine Schichten in den nächsten 5 Wochen.</p>}
@@ -115,6 +119,7 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
                     Abgabe: {shiftText(r.requester_shift)}
                     {r.target_shift && <><br />Dafür: {shiftText(r.target_shift)}</>}
                     {r.reason && <><br />„{r.reason}“</>}
+                    {r.status === "rejected" && r.decision_note && <><br />Abgelehnt: {r.decision_note}</>}
                   </>
                 }
                 trailing={<StatusPill status={r.status} cross={r.is_cross_studio} approvals={approvals} />}

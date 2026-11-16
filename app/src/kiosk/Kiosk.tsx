@@ -15,6 +15,7 @@ import { kioskDb } from "../lib/supabase";
 import { berlinHour } from "../lib/visibility";
 import { fmtClock, fmtClockSec, fmtDate } from "../lib/time";
 import { EVENT_LABEL, type EventType, type KioskDevice, type Location, studioShort } from "../lib/types";
+import { approvers } from "../lib/approvers";
 
 export type KioskSession = { device: KioskDevice; location: Location };
 
@@ -125,7 +126,7 @@ export function Kiosk(props: { session: KioskSession; onReset: () => void }) {
             <div className="kiosk-qr-off">
               <Icon name="wifi" size={48} />
               <strong>Stempeln gerade nicht möglich</strong>
-              <span>{problem} Bitte Tobias oder Dominik anrufen.</span>
+              <span>{problem} Bitte {approvers()} anrufen.</span>
             </div>
           ) : token ? (
             <QrCode text={stampUrl(token)} label="QR-Code zum Stempeln" />

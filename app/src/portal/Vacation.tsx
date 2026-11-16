@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { LeadingIcon, Row, Section } from "../components/ui";
 import { berlinDate, berlinToISO, fmtDay, vacationRanges } from "../lib/dates";
 import { portalDb } from "../lib/supabase";
+import { approvers } from "../lib/approvers";
 
 export type MyVacation = { user_id: string; allowance: number | null; taken: number; planned: number };
 
@@ -34,7 +35,7 @@ export function VacationCard(props: { year: number; vacation: MyVacation | null 
           <span className="stat-diff muted">{fmt(v.taken)} genommen · {fmt(v.planned)} eingetragen</span>
         </>
       ) : (
-        <span className="stat-diff muted">Urlaubsanspruch noch nicht hinterlegt – bitte Tobias oder Dominik fragen.</span>
+        <span className="stat-diff muted">Urlaubsanspruch noch nicht hinterlegt – bitte {approvers()} fragen.</span>
       )}
     </div>
   );
@@ -61,11 +62,15 @@ export function VacationSection(props: { meId: string }) {
 
   const left = vacation ? vacationLeft(vacation) : null;
   const ranges = vacationRanges(upcoming);
+  // ab Oktober auch das nächste Jahr zeigen (Urlaub fürs Folgejahr wird dann schon geplant)
+  const showNext = Number(today.slice(5, 7)) >= 10;
+  const next = useMyVacation(props.meId, year + 1);
+  const nextLeft = showNext && next ? vacationLeft(next) : null;
   return (
     <Section title={`Mein Urlaub ${year}`} footer="Urlaub trägt deine Studioleitung im Dienstplan ein.">
       {vacation === undefined && <p className="list-empty">Lädt …</p>}
       {vacation !== undefined && (!vacation || left === null) && (
-        <Row title="Urlaubsanspruch noch nicht hinterlegt" subtitle="Bitte Tobias oder Dominik fragen." />
+        <Row title="Urlaubsanspruch noch nicht hinterlegt" subtitle={`Bitte ${approvers()} fragen.`} />
       )}
       {vacation && left !== null && (
         <>
@@ -74,6 +79,10 @@ export function VacationSection(props: { meId: string }) {
           <Row title="Genommen" trailing={<span className="num">{days(vacation.taken)}</span>} />
           <Row title="Eingetragen (kommt noch)" trailing={<span className="num">{days(vacation.planned)}</span>} />
         </>
+      )}
+      {next && nextLeft !== null && (
+        <Row title={`Resturlaub ${year + 1}`} subtitle={`Anspruch ${fmt(Number(next.allowance))} · eingetragen ${fmt(next.taken + next.planned)}`}
+          trailing={<span className={`num${nextLeft < 0 ? " text-danger" : ""}`}>{days(nextLeft)}</span>} />
       )}
       {ranges.slice(0, 6).map((r) => (
         <Row key={r.from} title={r.from === r.to ? fmtDay(r.from) : `${fmtDay(r.from)} – ${fmtDay(r.to)}`}

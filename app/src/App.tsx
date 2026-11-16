@@ -7,6 +7,7 @@ import { isConfigured, SESSION_KEYS } from "./lib/supabase";
 import { parsePcToken } from "./portal/PcUnlock";
 import { parseQrLoginToken } from "./lib/qrLogin";
 import { PortalApp } from "./portal/PortalApp";
+import { approvers } from "./lib/approvers";
 
 function useHash() {
   const [hash, setHash] = useState(location.hash);
@@ -56,7 +57,7 @@ function Start() {
       <div className="list">
         <Row leading={<LeadingIcon name="phone" />} title="Mitarbeiter-Login" subtitle="Stempeln, Stunden, Dienstplan, Wissen" chevron onClick={go("#/portal")} />
         <Row leading={<LeadingIcon name="tablet" />} title="Tablet im Studio einrichten" subtitle="Zeigt den QR-Code zum Stempeln" chevron onClick={go("#/kiosk")} />
-        <Row leading={<LeadingIcon name="monitor" />} title="PC im Studio als Terminal" subtitle="Anfragen – Tobias oder Dominik geben frei" chevron onClick={go("#/kiosk/pc")} />
+        <Row leading={<LeadingIcon name="monitor" />} title="PC im Studio als Terminal" subtitle={`Anfragen – ${approvers()} geben frei`} chevron onClick={go("#/kiosk/pc")} />
         <Row leading={<LeadingIcon name="shield" />} title="Verwaltung" subtitle="Studioleitung und Geschäftsführung" chevron onClick={go("#/admin")} />
       </div>
     </AuthLayout>

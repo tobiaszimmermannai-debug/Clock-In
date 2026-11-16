@@ -8,6 +8,7 @@ import { kioskLoginEmail, staffLoginEmail } from "../lib/config";
 import { clearAll } from "../lib/db";
 import { kioskDb, tempClient } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
+import { approvers } from "../lib/approvers";
 
 const STORE = "clockin-terminal-request";
 const POLL_MS = 10_000;
@@ -176,8 +177,8 @@ export function TerminalWait(props: { request: StoredRequest; onReady: () => voi
     <AuthLayout
       title={status === "rejected" ? "Anfrage abgelehnt" : "Warte auf Freigabe …"}
       text={status === "rejected"
-        ? "Tobias oder Dominik haben die Anfrage abgelehnt."
-        : `PC als Terminal für ${props.request.studio}. Tobias oder Dominik geben per Telegram frei – danach startet der QR-Code hier automatisch.`}
+        ? `${approvers()} haben die Anfrage abgelehnt.`
+        : `PC als Terminal für ${props.request.studio}. ${approvers()} geben per Telegram frei – danach startet der QR-Code hier automatisch.`}
     >
       {error && <Notice tone="warn">{error}</Notice>}
       {status !== "rejected" && <div className="terminal-wait" aria-hidden="true" />}

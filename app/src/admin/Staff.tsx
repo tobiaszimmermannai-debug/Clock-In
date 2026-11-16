@@ -7,6 +7,7 @@ import { registerStudios, studioColor } from "../lib/studios";
 import { adminDb } from "../lib/supabase";
 import { type Location, ROLE_LABEL, type Role, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
+import { approvers } from "../lib/approvers";
 
 export type Person = {
   id: string;
@@ -336,7 +337,7 @@ function VacationSection(props: { vacation?: VacationInfo; year: number; isAdmin
     return (
       <Section title={`Urlaub ${props.year}`}>
         <Row title="Noch kein Urlaubsanspruch hinterlegt"
-          subtitle={props.isAdmin ? "Team → Urlaub → Person antippen." : "Tobias oder Dominik tragen den Anspruch ein."} />
+          subtitle={props.isAdmin ? "Team → Urlaub → Person antippen." : `${approvers()} tragen den Anspruch ein.`} />
       </Section>
     );
   }

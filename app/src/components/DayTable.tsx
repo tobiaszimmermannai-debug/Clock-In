@@ -15,7 +15,7 @@ export type DaySummary = {
   overtime_approved_minutes: number;
   open_session: boolean;
 };
-export type Stamp = { id?: string; event_type: string; recorded_at: string; approval_status: string; source?: string; location_id?: string | null };
+export type Stamp = { id?: string; event_type: string; recorded_at: string; approval_status: string; source?: string; location_id?: string | null; review_note?: string | null };
 
 const STAMP_LABEL: Record<string, string> = { clock_in: "Kommen", break_start: "Pause", break_end: "zurück", clock_out: "Gehen" };
 const SOURCE_HINT: Record<string, string> = { manual: " ✍️", auto_checkout: " 🤖", offline_sync: " 📶" };
@@ -51,7 +51,7 @@ export function DayTable(props: { days: DaySummary[]; stamps: Stamp[]; onEdit?: 
                       {i > 0 && " · "}
                       {STAMP_LABEL[s.event_type]} {berlinTime(s.recorded_at)}
                       {SOURCE_HINT[s.source ?? ""] ?? ""}
-                      {s.approval_status === "pending" ? " (wartet)" : s.approval_status === "rejected" ? " (abgelehnt)" : ""}
+                      {s.approval_status === "pending" ? " (wartet)" : s.approval_status === "rejected" ? ` (abgelehnt${s.review_note ? `: ${s.review_note}` : ""})` : ""}
                     </span>
                   ))}
                 </span>

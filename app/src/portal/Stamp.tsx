@@ -18,6 +18,7 @@ import { parsePcToken } from "./PcUnlock";
 import { parseQrLoginToken } from "../lib/qrLogin";
 import type { Me } from "./PortalApp";
 import { VacationRow } from "./Vacation";
+import { approvers } from "../lib/approvers";
 
 
 type Context = { shifts: Shift[]; rules: RuleSettings };
@@ -176,7 +177,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         <div className="panel stamp-hero">
           <span className="stamp-hero-icon"><Icon name="clock" size={34} /></span>
           <h2>{phase.minutes ? `${fmtHM(phase.minutes)} Std. vor Schichtende` : "Warum gehst du früher?"}</h2>
-          <p className="muted">Warum gehst du früher? Tobias oder Dominik geben frei – sonst zählen die fehlenden Stunden als Minusstunden.</p>
+          <p className="muted">Warum gehst du früher? {approvers()} geben frei – sonst zählen die fehlenden Stunden als Minusstunden.</p>
           <div className="early-actions">
             <button type="button" className="btn btn-outline btn-block btn-lg" disabled={phase.busy} onClick={() => void book(p, "clock_out", "slow")}>
               📉 Wenig los / weniger Trainings
@@ -202,7 +203,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         {c.unverified && (
           <Notice tone="warn">
             Dieses Handy bzw. dieser Browser ist für dich noch nicht freigegeben. Du kannst trotzdem stempeln –
-            die Buchung zählt, sobald Tobias oder Dominik sie freigeben. Tipp: immer in der Clock-In-App über
+            die Buchung zählt, sobald {approvers()} sie freigeben. Tipp: immer in der Clock-In-App über
             „Stempeln → Scannen“ stempeln.
           </Notice>
         )}
@@ -250,10 +251,10 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         {phase.note && <Notice tone={phase.note.tone}>{phase.note.text}</Notice>}
         {phase.registered && <Notice tone="ok">Dieses Handy ist jetzt dein Stempel-Handy.</Notice>}
         {phase.pending && (
-          <Notice tone="warn">Gespeichert – wartet auf Freigabe durch Tobias oder Dominik (anderes Handy/Browser).</Notice>
+          <Notice tone="warn">Gespeichert – wartet auf Freigabe durch {approvers()} (anderes Handy/Browser).</Notice>
         )}
         {phase.early && (
-          <Notice tone="warn">Früher gegangen – Tobias oder Dominik entscheiden, wie die restliche Zeit zählt. Gute Besserung, falls du krank bist!</Notice>
+          <Notice tone="warn">Früher gegangen – {approvers()} entscheiden, wie die restliche Zeit zählt. Gute Besserung, falls du krank bist!</Notice>
         )}
         {phase.event === "clock_in" && <WeeklyPodium db={portalDb} userKey={props.me.id} />}
         {(phase.event === "clock_in" || phase.event === "break_start") && props.onOpenTasks && (
@@ -288,7 +289,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         )}
       </div>
       <VacationRow meId={props.me.id} onOpen={props.onOpenVacation} />
-      <Section title="So geht's" footer="Kein Handy dabei oder Probleme? Bitte Tobias oder Dominik anrufen.">
+      <Section title="So geht's" footer={`Kein Handy dabei oder Probleme? Bitte ${approvers()} anrufen.`}>
         <Row leading={<LeadingIcon name="wifi" />} title="Mit dem Studio-WLAN verbinden" subtitle="Mobile Daten am besten ausschalten" />
         <Row leading={<LeadingIcon name="qr" />} title="QR-Code am Tablet oder PC scannen" subtitle="Am besten hier mit „Scannen“ – dann erkennt das System dein Handy sicher" />
         <Row leading={<LeadingIcon name="checkCircle" />} title="Kommen, Pause oder Gehen wählen" />

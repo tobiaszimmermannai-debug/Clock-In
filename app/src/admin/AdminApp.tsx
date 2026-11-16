@@ -17,6 +17,7 @@ import { Staff } from "./Staff";
 import { Tablets } from "./Tablets";
 import { Times } from "./Times";
 import { Vacations } from "./Vacations";
+import { loadApprovers } from "../lib/approvers";
 
 export type Profile = { id: string; first_name: string; last_name: string; role: Role };
 
@@ -35,11 +36,13 @@ export function AdminApp() {
     const { data } = await adminDb.auth.getSession();
     if (!data.session) return setPhase({ kind: "login" });
 
-    const { data: profile } = await adminDb
+    const { data: profile, error: profileError } = await adminDb
       .from("users")
       .select("id, first_name, last_name, role")
       .eq("auth_user_id", data.session.user.id)
       .maybeSingle<Profile>();
+    if (profileError) return setPhase({ kind: "denied", text: "Keine Verbindung – deine Daten konnten nicht geladen werden. Bitte Internet prüfen und die Seite neu laden." });
+    void loadApprovers(adminDb);
     if (!profile || (profile.role !== "admin" && profile.role !== "manager")) {
       return setPhase({ kind: "denied", text: "Die Verwaltung ist nur für Studioleitung und Admins." });
     }

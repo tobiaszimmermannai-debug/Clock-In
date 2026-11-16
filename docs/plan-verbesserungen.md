@@ -6,6 +6,7 @@ Artefakt „Jetzt“-Kasten aktualisieren, Cowork-Prompt für den Nutzer. Aufgab
 Notes-Repo ändern und per `npm run sync:clockin` übernehmen.
 
 ## Paket 1 – Fehler beheben (fast nur App)
+**Stand 16.11.: erledigt** (Ladefehler sichtbar in Freigaben, Tausch, Stunden; übrige Stellen folgen bei Gelegenheit. „Rückgängig“ bei Freigaben ersetzt durch Ablehnen-Sheet mit Grund.)
 1. **Portal-Abmeldung bei Netzfehler** (`portal/PortalApp.tsx` `load`): nur abmelden, wenn die Abfrage ohne Fehler
    leer ist; bei Fehler Hinweis „Keine Verbindung“ + „Erneut versuchen“. Gleiches Muster in `admin/AdminApp.tsx` prüfen.
 2. **Meine Stunden** (`portal/Hours.tsx`, `components/DayTable.tsx`):

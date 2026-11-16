@@ -7404,4 +7404,12 @@ revoke execute on function private.note_task_events_first() from public, anon, a
 revoke execute on function public.note_week_active(date, date) from public, anon;
 grant execute on function public.note_week_active(date, date) to authenticated, service_role;
 
+-- =============================================================================
+-- Clock-In · Wer gibt frei? Name einstellbar statt fest im Text
+-- =============================================================================
+-- Die App zeigte überall fest „Tobias oder Dominik“. Der Text steht jetzt in rule_settings.approver_names
+-- (Supabase → Table Editor → rule_settings) und kann dort geändert werden. (Mehrfach ausführbar.)
+-- =============================================================================
+alter table public.rule_settings add column if not exists approver_names text not null default 'Tobias oder Dominik';
+
 select '✅ Clock-In Datenbank eingerichtet' as status, count(*) as studios from public.locations;

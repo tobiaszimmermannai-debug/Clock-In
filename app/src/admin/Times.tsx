@@ -8,6 +8,7 @@ import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
 import { EVENT_LABEL, type EventType, type Location, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
+import { approvers } from "../lib/approvers";
 
 type Staffer = {
   id: string;
@@ -94,7 +95,7 @@ export function Times({ profile }: { profile: Profile }) {
     form.reset();
     setEntry(false);
     setError(undefined);
-    setMessage(isAdmin ? "Nachtrag gespeichert." : "Nachtrag gespeichert – wartet auf Freigabe durch Tobias oder Dominik.");
+    setMessage(isAdmin ? "Nachtrag gespeichert." : `Nachtrag gespeichert – wartet auf Freigabe durch ${approvers()}.`);
     void load();
   }
 
@@ -151,7 +152,7 @@ export function Times({ profile }: { profile: Profile }) {
             <p className="muted small">
               {isAdmin
                 ? "Rückwirkend, sofort gültig – z. B. nach einem Anruf (kein Handy dabei). Ganzen Tag korrigieren: Tag in der Liste antippen."
-                : "Nur mit Freischaltung durch einen Admin; der Nachtrag wartet auf Freigabe durch Tobias oder Dominik."}
+                : `Nur mit Freischaltung durch einen Admin; der Nachtrag wartet auf Freigabe durch ${approvers()}.`}
             </p>
             <div className="grid-2">
               <Field label="Buchung">

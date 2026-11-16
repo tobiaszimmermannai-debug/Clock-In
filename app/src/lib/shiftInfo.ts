@@ -2,6 +2,7 @@
 // Verbindlich rechnet die Regel-Engine in der Datenbank (work_day_summary).
 import { fmtClock, HOUR, MINUTE } from "./time";
 import { DEFAULT_RULES, type EventType, type RuleSettings, type Shift } from "./types";
+import { approvers } from "./approvers";
 
 export type Notice = { tone: "info" | "warn"; text: string };
 
@@ -52,7 +53,7 @@ export function shiftNotice(
       if (over > rules.overtime_threshold_minutes) {
         return {
           tone: "info",
-          text: `Schichtende war ${fmtClock(shift.ends_at)}. Die ${over} Min. Überstunden zählen erst nach Freigabe durch Tobias oder Dominik.`,
+          text: `Schichtende war ${fmtClock(shift.ends_at)}. Die ${over} Min. Überstunden zählen erst nach Freigabe durch ${approvers()}.`,
         };
       }
       if (t < end - MINUTE) return { tone: "info", text: `Geplantes Schichtende: ${fmtClock(shift.ends_at)}.` };
