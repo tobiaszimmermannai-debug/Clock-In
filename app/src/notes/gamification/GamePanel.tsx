@@ -70,7 +70,7 @@ export function EvolutionModal(props: { stage: number; prestige: number; items: 
         <p className="nk-muted nk-evo-help">
           Jeder Tag deiner Serie schaltet eine Stufe frei – vom gemütlichen Sofa-Blitzi bis zum Muskelpaket. Reißt die Serie,
           fängt Blitzi wieder bei Stufe 1 an. Nur Arbeitstage zählen – freie Tage, Samstage ohne Schicht, Schule, Urlaub
-          und Krank unterbrechen die Serie nie. Auf Stufe {MAX_STAGE} wählst du ein Item aus 100 (Prestige): Es bleibt für immer,
+          und Krank unterbrechen die Serie nie. Akku-Reserve: Ein verpasster Arbeitstag pro Woche wird überbrückt. Auf Stufe {MAX_STAGE} wählst du ein Item aus 100 (Prestige): Es bleibt für immer,
           und Blitzi startet wieder bei Stufe 1. Beim ersten Mal bekommt Blitzi einen Spitznamen.
         </p>
       </div>
@@ -122,7 +122,9 @@ export function BlitziCard(props: { member: Member; open: number }) {
         <div className="nk-game-stats">
           <div className="nk-stat">
             <span className="nk-stat-value">⚡ {stats.streak}</span>
-            <span className="nk-stat-label">{stats.streak === 1 ? "Tag Serie" : "Tage Serie"}</span>
+            <span className="nk-stat-label" title="Akku-Reserve: Ein verpasster Arbeitstag pro Woche bricht die Serie nicht.">
+              {stats.streak === 1 ? "Tag Serie" : "Tage Serie"} · {stats.reserve ? "🔋 Reserve bereit" : "🪫 Reserve verbraucht"}
+            </span>
           </div>
           <div className="nk-stat is-wide">
             <Energy value={Math.min(stats.today, stats.goal)} goal={stats.goal} />

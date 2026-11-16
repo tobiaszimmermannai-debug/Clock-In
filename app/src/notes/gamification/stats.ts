@@ -69,16 +69,27 @@ export function daysFor(all: Record<string, string[]> | null, userId: string): s
 /**
  * Serie: Tage mit mindestens einer erledigten Aufgabe, rückwärts ab heute.
  * Heute zählt mit, bricht die Serie aber noch nicht. "Neutrale" Tage (frei, Sonntag) werden übersprungen.
+ * Mit reserve überbrückt die Akku-Reserve je Kalenderwoche einen verpassten Arbeitstag.
  */
-export function streakOf(active: Set<string>, today: string, isNeutral: (day: string) => boolean, maxDays = 180): number {
+export function streakOf(active: Set<string>, today: string, isNeutral: (day: string) => boolean, maxDays = 180, reserve = false): number {
   let streak = active.has(today) ? 1 : 0;
   let day = today;
+  // Akku-Reserve: je Kalenderwoche überbrückt sie EINEN verpassten Arbeitstag (zählt nicht mit, bricht aber nicht)
+  const used = new Set<string>();
   for (let i = 0; i < maxDays; i++) {
     day = addDays(day, -1);
     if (active.has(day)) streak++;
-    else if (!isNeutral(day)) break;
+    else if (isNeutral(day)) continue;
+    else if (reserve && !used.has(weekStart(day))) used.add(weekStart(day));
+    else break;
   }
   return streak;
+}
+
+/** Ist die Akku-Reserve dieser Woche noch da? (kein verpasster Arbeitstag seit Montag, heute zählt noch nicht) */
+export function reserveLeft(active: Set<string>, today: string, isNeutral: (day: string) => boolean): boolean {
+  for (let day = weekStart(today); day < today; day = addDays(day, 1)) if (!active.has(day) && !isNeutral(day)) return false;
+  return true;
 }
 
 export type MyStats = {
@@ -87,6 +98,8 @@ export type MyStats = {
   week: number;
   weekPoints: number;
   streak: number;
+  /** Akku-Reserve dieser Woche noch nicht verbraucht */
+  reserve: boolean;
   goal: number;
   goalReached: boolean;
 };
@@ -108,13 +121,15 @@ export function myStats(userId: string, completions: Completion[], opts: { today
     return worked ? !worked.has(day) : wd === 6;
   };
   const goal = opts.goal ?? DAILY_GOAL;
+  const activeDays = new Set(mine.map((c) => dayOf(c.doneAt)));
   const points = pointsByDay(all, week).get(userId);
   return {
     today: todays.length,
     todayPoints: points?.get(opts.today) ?? 0,
     week: weeks.length,
     weekPoints: sum(points),
-    streak: streakOf(new Set(mine.map((c) => dayOf(c.doneAt))), opts.today, neutral),
+    streak: streakOf(activeDays, opts.today, neutral, 180, true),
+    reserve: reserveLeft(activeDays, opts.today, neutral),
     goal,
     goalReached: todays.length >= goal,
   };

@@ -29,7 +29,7 @@ export default function Feierabend(props: { db: SupabaseClient; onDone: () => vo
       const profile = profiles.find((p) => p.userId === me.id) ?? null;
       const blitzi = blitziInfo(me.id, events, days?.[me.id] ?? null, today(), profile);
       if (!cancelled) setData({ name: me.name, first: blitzi.nickname ?? me.name.split(" ")[0], blitzi });
-    })().catch(() => !cancelled && setData({ name: "", first: "", blitzi: { stage: 1, streak: 0, prestige: 0, items: [], nickname: null, stats: { today: 0, todayPoints: 0, week: 0, weekPoints: 0, streak: 0, goal: 3, goalReached: false } } }));
+    })().catch(() => !cancelled && setData({ name: "", first: "", blitzi: { stage: 1, streak: 0, prestige: 0, items: [], nickname: null, stats: { today: 0, todayPoints: 0, week: 0, weekPoints: 0, streak: 0, reserve: true, goal: 3, goalReached: false } } }));
     return () => {
       cancelled = true;
     };
