@@ -7607,7 +7607,7 @@
       "options": [
         {
           "id": "a",
-          "text": "230 Volt Wechselspannung"
+          "text": "230/240 Volt Wechselspannung"
         },
         {
           "id": "b",
@@ -7625,8 +7625,8 @@
       "correct": [
         "a"
       ],
-      "explanation": "Im Haushalt: 230 V Wechselspannung.",
-      "source": "IST 1.10"
+      "explanation": "Im Haushalt: 230/240 V Wechselspannung.",
+      "source": "IST 1.10, Lösung 1.8"
     },
     {
       "id": "nisv-physik-23",

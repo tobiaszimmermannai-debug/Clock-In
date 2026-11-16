@@ -2067,7 +2067,7 @@ Decks mit ⚠️ = Thema steht im Einarbeitungsbogen, Inhalt fehlt in den Unterl
 
 ## Teil 3 – Strahlenschutz (NiSV) · Quelle: IST-Studieninstitut „EMS/GEMS“ (02/2026)
 
-> Fehler im Skript, die bewusst **nicht** übernommen wurden: Formelzeichen und Einheit des Widerstands sind vertauscht (richtig: Formelzeichen R, Einheit Ohm Ω); Haushaltsspannung einmal 230 V, einmal 240 V (richtig: 230 V).
+> Fehler im Skript, die bewusst **nicht** übernommen wurden: Formelzeichen und Einheit des Widerstands sind vertauscht (richtig: Formelzeichen R, Einheit Ohm Ω). Haushaltsspannung: wie im Skript als 230/240 V.
 
 
 ### N1. 🔌 Strom & Physik (IST 1)
@@ -2241,13 +2241,13 @@ Was kennzeichnet Wechselstrom?
 - Er fließt nur in Wasser
 > Beim Wechselstrom kehrt sich die Flussrichtung immer wieder um.
 
-**nisv-physik-22** · S1 · _IST 1.10_  
+**nisv-physik-22** · S1 · _IST 1.10, Lösung 1.8_  
 Welche Spannung hat die normale Haushaltssteckdose?  
-- ✅ **230 Volt Wechselspannung**
+- ✅ **230/240 Volt Wechselspannung**
 - 12 Volt Gleichspannung
 - 400 Volt Gleichspannung
 - 1.000 Volt Wechselspannung
-> Im Haushalt: 230 V Wechselspannung.
+> Im Haushalt: 230/240 V Wechselspannung.
 
 **nisv-physik-23** · S2 · _IST 1.3_  
 Mit welcher Frequenz arbeitet das Stromnetz im Alltag?  
