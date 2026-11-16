@@ -1,9 +1,10 @@
 {
   "meta": {
-    "version": "2026.11.09",
+    "version": "2026.11.16",
     "sources": [
       "Qualitäts- und Prozesshandbuch 2026",
-      "Einarbeitung 2026"
+      "Einarbeitung 2026",
+      "IST-Studieninstitut: EMS/GEMS (02/2026)"
     ]
   },
   "items": [
@@ -6942,6 +6943,6479 @@
       ],
       "explanation": "Stromstärke: 16–18 mA – zum Vergleich: eine Glühbirne ca. 1.000 mA.",
       "source": "QM 3.3.1"
+    },
+    {
+      "id": "nisv-physik-01",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "In welcher Einheit wird die elektrische Stromstärke angegeben?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ampere (A)"
+        },
+        {
+          "id": "b",
+          "text": "Volt (V)"
+        },
+        {
+          "id": "c",
+          "text": "Watt (W)"
+        },
+        {
+          "id": "d",
+          "text": "Ohm (Ω)"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Stromstärke: Formelzeichen I, Einheit Ampere.",
+      "source": "IST 1.6"
+    },
+    {
+      "id": "nisv-physik-02",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "In welcher Einheit wird die elektrische Spannung angegeben?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Volt (V)"
+        },
+        {
+          "id": "b",
+          "text": "Ampere (A)"
+        },
+        {
+          "id": "c",
+          "text": "Hertz (Hz)"
+        },
+        {
+          "id": "d",
+          "text": "Watt (W)"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Spannung: Formelzeichen U, Einheit Volt.",
+      "source": "IST 1.7"
+    },
+    {
+      "id": "nisv-physik-03",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "In welcher Einheit wird die elektrische Leistung angegeben?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Watt (W)"
+        },
+        {
+          "id": "b",
+          "text": "Volt (V)"
+        },
+        {
+          "id": "c",
+          "text": "Ampere (A)"
+        },
+        {
+          "id": "d",
+          "text": "Ohm (Ω)"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Leistung: Formelzeichen P, Einheit Watt.",
+      "source": "IST 1.9"
+    },
+    {
+      "id": "nisv-physik-04",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welches Formelzeichen hat die Stromstärke?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "I"
+        },
+        {
+          "id": "b",
+          "text": "U"
+        },
+        {
+          "id": "c",
+          "text": "P"
+        },
+        {
+          "id": "d",
+          "text": "R"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "I = Stromstärke, U = Spannung, P = Leistung, R = Widerstand.",
+      "source": "IST 1.6"
+    },
+    {
+      "id": "nisv-physik-05",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welches Formelzeichen hat die Spannung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "U"
+        },
+        {
+          "id": "b",
+          "text": "I"
+        },
+        {
+          "id": "c",
+          "text": "V"
+        },
+        {
+          "id": "d",
+          "text": "S"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die Spannung hat das Formelzeichen U, die Einheit heißt Volt (V).",
+      "source": "IST 1.7"
+    },
+    {
+      "id": "nisv-physik-06",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Formelzeichen und Einheit des elektrischen Widerstands?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Formelzeichen R, Einheit Ohm (Ω)"
+        },
+        {
+          "id": "b",
+          "text": "Formelzeichen Ω, Einheit R"
+        },
+        {
+          "id": "c",
+          "text": "Formelzeichen W, Einheit Watt"
+        },
+        {
+          "id": "d",
+          "text": "Formelzeichen I, Einheit Ampere"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Widerstand: Formelzeichen R, Einheit Ohm mit dem Zeichen Ω. (Im Skript sind beide vertauscht.)",
+      "source": "IST 1.8"
+    },
+    {
+      "id": "nisv-physik-07",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie lautet das Ohm’sche Gesetz?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "U = R · I"
+        },
+        {
+          "id": "b",
+          "text": "P = R · I"
+        },
+        {
+          "id": "c",
+          "text": "I = U · R"
+        },
+        {
+          "id": "d",
+          "text": "U = P · I"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Spannung = Widerstand × Stromstärke. Kennt man zwei Größen, lässt sich die dritte berechnen.",
+      "source": "IST 1.8"
+    },
+    {
+      "id": "nisv-physik-08",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie berechnet man die elektrische Leistung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "P = U · I"
+        },
+        {
+          "id": "b",
+          "text": "P = U / I"
+        },
+        {
+          "id": "c",
+          "text": "P = R · I"
+        },
+        {
+          "id": "d",
+          "text": "P = U + I"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Leistung = Spannung × Stromstärke.",
+      "source": "IST 1.9"
+    },
+    {
+      "id": "nisv-physik-09",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Eine 60-W-Lampe hängt an 230 V. Wie viel Strom fließt ungefähr?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Etwa 0,25 A"
+        },
+        {
+          "id": "b",
+          "text": "Etwa 2,5 A"
+        },
+        {
+          "id": "c",
+          "text": "Etwa 25 A"
+        },
+        {
+          "id": "d",
+          "text": "Etwa 4 A"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "I = P / U = 60 W / 230 V ≈ 0,26 A, also rund 250 mA.",
+      "source": "IST 1.9"
+    },
+    {
+      "id": "nisv-physik-10",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist elektrischer Strom?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die gerichtete Bewegung freier Ladungsträger (Elektronen oder Ionen)"
+        },
+        {
+          "id": "b",
+          "text": "Der Höhenunterschied zwischen zwei Punkten"
+        },
+        {
+          "id": "c",
+          "text": "Ein Hindernis für Ladungen"
+        },
+        {
+          "id": "d",
+          "text": "Die Wärme in einem Kabel"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Strom fließt, wenn sich freie Ladungsträger gezielt in eine Richtung bewegen.",
+      "source": "IST 1.6"
+    },
+    {
+      "id": "nisv-physik-11",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welche Ladung haben Elektronen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Negativ"
+        },
+        {
+          "id": "b",
+          "text": "Positiv"
+        },
+        {
+          "id": "c",
+          "text": "Neutral"
+        },
+        {
+          "id": "d",
+          "text": "Je nach Atom unterschiedlich"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Elektronen sind negativ geladen, der Atomkern ist positiv.",
+      "source": "IST 1.5"
+    },
+    {
+      "id": "nisv-physik-12",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist ein Ion?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ein Atom mit mehr Elektronen als Protonen oder umgekehrt – also elektrisch geladen"
+        },
+        {
+          "id": "b",
+          "text": "Ein elektrisch neutrales Atom"
+        },
+        {
+          "id": "c",
+          "text": "Ein Teil des Atomkerns ohne Ladung"
+        },
+        {
+          "id": "d",
+          "text": "Eine Einheit für Strom"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Stimmen Protonen und Elektronen nicht überein, ist das Atom geladen – ein Ion.",
+      "source": "IST 1.5"
+    },
+    {
+      "id": "nisv-physik-13",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was passt im Fluss-Vergleich zur Spannung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der Höhenunterschied, den das Wasser hinunterfließt"
+        },
+        {
+          "id": "b",
+          "text": "Die Wassermenge"
+        },
+        {
+          "id": "c",
+          "text": "Die Steine im Flussbett"
+        },
+        {
+          "id": "d",
+          "text": "Die Fließrichtung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Spannung = Höhenunterschied, Stromstärke = Wassermenge, Widerstand = Hindernisse.",
+      "source": "IST 1.7"
+    },
+    {
+      "id": "nisv-physik-14",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was passt im Fluss-Vergleich zur Stromstärke?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Wassermenge, die fließt"
+        },
+        {
+          "id": "b",
+          "text": "Der Höhenunterschied"
+        },
+        {
+          "id": "c",
+          "text": "Die Länge des Flusses"
+        },
+        {
+          "id": "d",
+          "text": "Die Wassertemperatur"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Je mehr Wasser fließt, desto höher die Stromstärke.",
+      "source": "IST 1.6"
+    },
+    {
+      "id": "nisv-physik-15",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was passt im Fluss-Vergleich zum Widerstand?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Hindernisse wie Steine, Bewuchs und Biegungen"
+        },
+        {
+          "id": "b",
+          "text": "Der Höhenunterschied"
+        },
+        {
+          "id": "c",
+          "text": "Die Wassermenge"
+        },
+        {
+          "id": "d",
+          "text": "Das Meer am Ende"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Alles, was den Fluss bremst, entspricht dem Widerstand.",
+      "source": "IST 1.8"
+    },
+    {
+      "id": "nisv-physik-16",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was entscheidet vor allem, wie gefährlich Strom für den Menschen ist?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Stromstärke"
+        },
+        {
+          "id": "b",
+          "text": "Allein die Spannung"
+        },
+        {
+          "id": "c",
+          "text": "Die Farbe des Kabels"
+        },
+        {
+          "id": "d",
+          "text": "Die Länge des Kabels"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Entscheidend ist, wie viel Strom fließt. Ein Funke an der Türklinke hat tausende Volt, ist aber harmlos.",
+      "source": "IST 1.7, 1.11"
+    },
+    {
+      "id": "nisv-physik-17",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Warum ist der Schlag an der Türklinke nach dem Teppich trotz mehrerer tausend Volt harmlos?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Weil dabei kaum Strom fließt"
+        },
+        {
+          "id": "b",
+          "text": "Weil die Spannung zu niedrig ist"
+        },
+        {
+          "id": "c",
+          "text": "Weil Türklinken isoliert sind"
+        },
+        {
+          "id": "d",
+          "text": "Weil es Gleichstrom ist"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Hohe Spannung, aber keine nennenswerte Stromstärke – deshalb kein Schaden.",
+      "source": "IST 1.11"
+    },
+    {
+      "id": "nisv-physik-18",
+      "unitId": "nisv-physik",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Materialien leiten Strom gut?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kupfer"
+        },
+        {
+          "id": "b",
+          "text": "Wasser"
+        },
+        {
+          "id": "c",
+          "text": "Gummi"
+        },
+        {
+          "id": "d",
+          "text": "Trockene Luft"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Metalle wie Kupfer und Wasser leiten gut. Gummi, Kunststoff und trockene Luft isolieren.",
+      "source": "IST 1.6"
+    },
+    {
+      "id": "nisv-physik-19",
+      "unitId": "nisv-physik",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Materialien eignen sich zum Isolieren von Kabeln?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Gummi"
+        },
+        {
+          "id": "b",
+          "text": "Kunststoff"
+        },
+        {
+          "id": "c",
+          "text": "Kupfer"
+        },
+        {
+          "id": "d",
+          "text": "Salzwasser"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Isolatoren leiten nicht: Gummi, Kunststoffe, trockene Luft.",
+      "source": "IST 1.6"
+    },
+    {
+      "id": "nisv-physik-20",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welchen Strom liefert eine Batterie?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Gleichstrom"
+        },
+        {
+          "id": "b",
+          "text": "Wechselstrom"
+        },
+        {
+          "id": "c",
+          "text": "Hochfrequenzstrom"
+        },
+        {
+          "id": "d",
+          "text": "Drehstrom"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Aus einer Batterie kommt immer Gleichstrom.",
+      "source": "IST 1.10"
+    },
+    {
+      "id": "nisv-physik-21",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was kennzeichnet Wechselstrom?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Er ändert ständig Größe und Richtung"
+        },
+        {
+          "id": "b",
+          "text": "Er fließt immer gleich stark in eine Richtung"
+        },
+        {
+          "id": "c",
+          "text": "Er kommt nur aus Batterien"
+        },
+        {
+          "id": "d",
+          "text": "Er fließt nur in Wasser"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Beim Wechselstrom kehrt sich die Flussrichtung immer wieder um.",
+      "source": "IST 1.10"
+    },
+    {
+      "id": "nisv-physik-22",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welche Spannung hat die normale Haushaltssteckdose?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "230/240 Volt Wechselspannung"
+        },
+        {
+          "id": "b",
+          "text": "12 Volt Gleichspannung"
+        },
+        {
+          "id": "c",
+          "text": "400 Volt Gleichspannung"
+        },
+        {
+          "id": "d",
+          "text": "1.000 Volt Wechselspannung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Im Haushalt: 230/240 V Wechselspannung.",
+      "source": "IST 1.10, Lösung 1.8"
+    },
+    {
+      "id": "nisv-physik-23",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Mit welcher Frequenz arbeitet das Stromnetz im Alltag?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "50 Hz"
+        },
+        {
+          "id": "b",
+          "text": "1.000 Hz"
+        },
+        {
+          "id": "c",
+          "text": "5 Hz"
+        },
+        {
+          "id": "d",
+          "text": "100 kHz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Das Netz arbeitet mit 50 Hz – also im Niederfrequenzbereich.",
+      "source": "IST 1.3"
+    },
+    {
+      "id": "nisv-physik-24",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welcher Frequenzbereich gilt als Niederfrequenz?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "1 bis 1.000 Hz"
+        },
+        {
+          "id": "b",
+          "text": "1.000 bis 100.000 Hz"
+        },
+        {
+          "id": "c",
+          "text": "100 kHz bis 300 GHz"
+        },
+        {
+          "id": "d",
+          "text": "Über 1 Million Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Niederfrequenz: 1–1.000 Hz, also bis zu 1.000 Impulse pro Sekunde.",
+      "source": "IST 1.3"
+    },
+    {
+      "id": "nisv-physik-25",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum eignet sich Niederfrequenz für EMS?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Sie ähnelt den körpereigenen Nervenimpulsen"
+        },
+        {
+          "id": "b",
+          "text": "Sie erwärmt das Gewebe"
+        },
+        {
+          "id": "c",
+          "text": "Sie ist nicht spürbar"
+        },
+        {
+          "id": "d",
+          "text": "Sie wirkt nur auf die Haut"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Niederfrequente Ströme liegen in dem Bereich, den das neuromuskuläre System umsetzen kann.",
+      "source": "IST 1.3"
+    },
+    {
+      "id": "nisv-physik-26",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "In welchem Bereich hört der Mensch Töne?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Etwa 16 bis 20.000 Hz"
+        },
+        {
+          "id": "b",
+          "text": "1 bis 100 Hz"
+        },
+        {
+          "id": "c",
+          "text": "20.000 bis 100.000 Hz"
+        },
+        {
+          "id": "d",
+          "text": "Über 1 MHz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Hörbarer Schall (Tonfrequenz): ca. 16–20.000 Hz.",
+      "source": "IST Lösung 1.1"
+    },
+    {
+      "id": "nisv-physik-27",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Warum ist „Hochfrequenz“ schwer eindeutig zu definieren?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Physik, Elektrotechnik, Akustik und Medizin setzen die Grenze unterschiedlich"
+        },
+        {
+          "id": "b",
+          "text": "Weil sie nicht messbar ist"
+        },
+        {
+          "id": "c",
+          "text": "Weil es sie nur im Weltall gibt"
+        },
+        {
+          "id": "d",
+          "text": "Weil sie gesetzlich verboten ist"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Mediziner sprechen schon ab 1 kHz von Hochfrequenz, Elektrotechniker ab 20 kHz, oft gilt 100 kHz–300 GHz.",
+      "source": "IST 1.4"
+    },
+    {
+      "id": "nisv-physik-28",
+      "unitId": "nisv-physik",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gehört zur sicheren Nutzung elektrischer Geräte im Studio?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Tägliche Sichtkontrolle durch den Anwender"
+        },
+        {
+          "id": "b",
+          "text": "Beschädigte Kabel oder Stecker sofort stilllegen"
+        },
+        {
+          "id": "c",
+          "text": "Kleine Schäden selbst reparieren"
+        },
+        {
+          "id": "d",
+          "text": "Defekte ignorieren, solange es noch geht"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Sichtkontrolle ist Pflicht. Bei Schäden Gerät stilllegen – nie selbst reparieren oder ignorieren.",
+      "source": "IST 1.11"
+    },
+    {
+      "id": "nisv-physik-29",
+      "unitId": "nisv-physik",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was ist für die elektrische Sicherheit regelmäßig nötig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Elektroprüfungen der Geräte"
+        },
+        {
+          "id": "b",
+          "text": "Prüfung von Sicherungen und FI-Schutzschalter"
+        },
+        {
+          "id": "c",
+          "text": "Gerät nur bei Defekt anschauen"
+        },
+        {
+          "id": "d",
+          "text": "Kabel jährlich austauschen, egal in welchem Zustand"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Regelmäßige Elektroprüfungen und Kontrolle der Schutzmaßnahmen – Details regeln VDE und Hersteller.",
+      "source": "IST 1.11"
+    },
+    {
+      "id": "nisv-physik-30",
+      "unitId": "nisv-physik",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Warum fließt beim Berühren der Steckdose Strom durch den Körper?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Ladung fließt vom höheren Potenzial (230 V) zur Erde (0 V), mit der wir meist Kontakt haben"
+        },
+        {
+          "id": "b",
+          "text": "Weil der Körper selbst Strom erzeugt"
+        },
+        {
+          "id": "c",
+          "text": "Weil Steckdosen Gleichstrom liefern"
+        },
+        {
+          "id": "d",
+          "text": "Weil Luft gut leitet"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Strom fließt vom höheren zum niedrigeren Potenzial. Gute Gummisohlen können das verhindern.",
+      "source": "IST 1.11"
+    },
+    {
+      "id": "nisv-geschichte-01",
+      "unitId": "nisv-geschichte",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wer zeigte mit Froschschenkeln, dass elektrische Impulse Muskeln zucken lassen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Luigi Galvani"
+        },
+        {
+          "id": "b",
+          "text": "Georg Simon Ohm"
+        },
+        {
+          "id": "c",
+          "text": "Niels Bohr"
+        },
+        {
+          "id": "d",
+          "text": "Ernest Rutherford"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Galvani (18. Jh.) legte damit die Grundlage für bioelektrische Prozesse.",
+      "source": "IST 2.2.1"
+    },
+    {
+      "id": "nisv-geschichte-02",
+      "unitId": "nisv-geschichte",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wann begann man EMS im Leistungssport zu erforschen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "In den 1960er- und 1970er-Jahren"
+        },
+        {
+          "id": "b",
+          "text": "Im 18. Jahrhundert"
+        },
+        {
+          "id": "c",
+          "text": "Erst nach 2010"
+        },
+        {
+          "id": "d",
+          "text": "In den 1920er-Jahren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Vor allem in der Sowjetunion und der DDR.",
+      "source": "IST 2.2.2"
+    },
+    {
+      "id": "nisv-geschichte-03",
+      "unitId": "nisv-geschichte",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wo wurde EMS im Leistungssport zuerst intensiv erforscht?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "In der Sowjetunion und der DDR"
+        },
+        {
+          "id": "b",
+          "text": "In Japan"
+        },
+        {
+          "id": "c",
+          "text": "In Brasilien"
+        },
+        {
+          "id": "d",
+          "text": "In Australien"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Dort galt EMS als Ergänzung zum Kraft- und Athletiktraining.",
+      "source": "IST 2.2.2"
+    },
+    {
+      "id": "nisv-geschichte-04",
+      "unitId": "nisv-geschichte",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ermöglichte in den 2000er-Jahren den Weg zum EMS-Fitnesstraining?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ganzkörper-EMS-Systeme mit Westen, Gurten oder Anzügen"
+        },
+        {
+          "id": "b",
+          "text": "Batteriebetriebene Klebepads"
+        },
+        {
+          "id": "c",
+          "text": "Hochfrequenz-Geräte"
+        },
+        {
+          "id": "d",
+          "text": "Magnetfeld-Liegen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Mehrere Muskelgruppen gleichzeitig – in rund 20 Minuten.",
+      "source": "IST 2.2.3"
+    },
+    {
+      "id": "nisv-geschichte-05",
+      "unitId": "nisv-geschichte",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wofür wurde Elektrostimulation ursprünglich vor allem genutzt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "In der Medizin und Rehabilitation"
+        },
+        {
+          "id": "b",
+          "text": "Im Bodybuilding"
+        },
+        {
+          "id": "c",
+          "text": "In der Kosmetik"
+        },
+        {
+          "id": "d",
+          "text": "In der Unterhaltung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Z. B. gegen Muskelschwund nach Verletzungen, Operationen oder bei neurologischen Erkrankungen.",
+      "source": "IST 2.2.1–2.2.2"
+    },
+    {
+      "id": "nisv-geschichte-06",
+      "unitId": "nisv-geschichte",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Hersteller machten EMS ab den 2010er-Jahren international bekannt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "miha bodytec"
+        },
+        {
+          "id": "b",
+          "text": "XBody"
+        },
+        {
+          "id": "c",
+          "text": "Technogym"
+        },
+        {
+          "id": "d",
+          "text": "Peloton"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Seit den 2010ern boomt EMS – u. a. durch miha bodytec und XBody.",
+      "source": "IST 2.2.4"
+    },
+    {
+      "id": "nisv-geschichte-07",
+      "unitId": "nisv-geschichte",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wofür wird EMS bei älteren Menschen erforscht?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Zur Vorbeugung von Sarkopenie (altersbedingtem Muskelschwund)"
+        },
+        {
+          "id": "b",
+          "text": "Gegen Haarausfall"
+        },
+        {
+          "id": "c",
+          "text": "Zur Senkung des Cholesterins ohne Training"
+        },
+        {
+          "id": "d",
+          "text": "Gegen Kurzsichtigkeit"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Sarkopenie-Prävention ist ein aktuelles Forschungsfeld.",
+      "source": "IST 2.2.5"
+    },
+    {
+      "id": "nisv-geschichte-08",
+      "unitId": "nisv-geschichte",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie ordnet das Skript EMS im Verhältnis zum klassischen Training ein?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Als wertvolle Ergänzung, kein Ersatz"
+        },
+        {
+          "id": "b",
+          "text": "Als vollständiger Ersatz"
+        },
+        {
+          "id": "c",
+          "text": "Als reine Therapie"
+        },
+        {
+          "id": "d",
+          "text": "Als Wellness ohne Trainingseffekt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "EMS ergänzt klassisches Training – besonders für Menschen mit wenig Zeit oder Einschränkungen.",
+      "source": "IST 2.1"
+    },
+    {
+      "id": "nisv-geschichte-09",
+      "unitId": "nisv-geschichte",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Warum ist EMS besonders zeiteffizient?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Viele Muskelgruppen werden gleichzeitig aktiviert"
+        },
+        {
+          "id": "b",
+          "text": "Auch tiefer liegende Muskelfasern werden erreicht"
+        },
+        {
+          "id": "c",
+          "text": "Weil man nicht schwitzt"
+        },
+        {
+          "id": "d",
+          "text": "Weil keine Pausen nötig sind"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Gleichzeitige, intensive Aktivierung – schon ~20 Minuten setzen einen starken Reiz.",
+      "source": "IST 2.1, Lösung 2.2"
+    },
+    {
+      "id": "nisv-geschichte-10",
+      "unitId": "nisv-geschichte",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Für welche Zielgruppen ist EMS laut Skript besonders interessant?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Menschen mit wenig Zeit"
+        },
+        {
+          "id": "b",
+          "text": "Reha-Patienten"
+        },
+        {
+          "id": "c",
+          "text": "Sportler als gezielte Ergänzung"
+        },
+        {
+          "id": "d",
+          "text": "Schwangere"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Zeitknappe, Reha und Sportler. Schwangerschaft ist eine absolute Kontraindikation.",
+      "source": "IST 2.6.6"
+    },
+    {
+      "id": "nisv-geschichte-11",
+      "unitId": "nisv-geschichte",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was war ein Meilenstein der frühen rehabilitativen Elektrostimulation (Liberson 1961)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ein System gegen den Fallfuß nach Halbseitenlähmung"
+        },
+        {
+          "id": "b",
+          "text": "Der erste EMS-Anzug"
+        },
+        {
+          "id": "c",
+          "text": "Das erste Heimgerät"
+        },
+        {
+          "id": "d",
+          "text": "Die erste EMS-Studiokette"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Funktionelle Elektrostimulation zur Korrektur des „Foot Drop“.",
+      "source": "IST 2.2.2"
+    },
+    {
+      "id": "nisv-geschichte-12",
+      "unitId": "nisv-geschichte",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was zeichnet moderne EMS-Systeme aus?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kabellose, individuell steuerbare Systeme"
+        },
+        {
+          "id": "b",
+          "text": "Verknüpfung mit Apps und Trainingsplänen"
+        },
+        {
+          "id": "c",
+          "text": "Nur noch stationäre Großgeräte"
+        },
+        {
+          "id": "d",
+          "text": "Kein Einsatz mehr in der Reha"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Heute: kabellos, App-gesteuert, auch in Reha und Leistungssport.",
+      "source": "IST 2.2.5"
+    },
+    {
+      "id": "nisv-wirkung-01",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Worauf wirkt der EMS-Reiz in erster Linie?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Auf die Nerven der Muskulatur"
+        },
+        {
+          "id": "b",
+          "text": "Direkt auf jede Muskelfaser"
+        },
+        {
+          "id": "c",
+          "text": "Auf die Knochen"
+        },
+        {
+          "id": "d",
+          "text": "Auf das Fettgewebe"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Nervenfasern haben eine niedrigere Reizschwelle als die Muskelfasermembran – der Reiz läuft über den Nerv.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-02",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist der „motor point“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der Übergang vom Nerv in den Muskel – dort genügt am wenigsten Strom"
+        },
+        {
+          "id": "b",
+          "text": "Der Mittelpunkt der Elektrode"
+        },
+        {
+          "id": "c",
+          "text": "Der Knopf zum Starten"
+        },
+        {
+          "id": "d",
+          "text": "Der schmerzhafteste Punkt am Muskel"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Am motor point ist die Impedanz niedrig: wenig Strom, starke Kontraktion, wenig Schmerz.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-03",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Warum ist der motor point am leichtesten zu reizen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Sehr hohe Dichte an Natriumkanälen und damit niedrige Impedanz"
+        },
+        {
+          "id": "b",
+          "text": "Weil dort die Haut am dicksten ist"
+        },
+        {
+          "id": "c",
+          "text": "Weil dort kein Nerv verläuft"
+        },
+        {
+          "id": "d",
+          "text": "Weil dort am meisten Fett liegt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Viele Natriumkanäle → niedriger Widerstand → leicht stimulierbar.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-04",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie werden motorische Einheiten bei willentlicher Bewegung aktiviert (Henneman)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Erst kleine (Typ I), mit mehr Kraft dann große (Typ II)"
+        },
+        {
+          "id": "b",
+          "text": "Alle gleichzeitig"
+        },
+        {
+          "id": "c",
+          "text": "Erst große, dann kleine"
+        },
+        {
+          "id": "d",
+          "text": "Zufällig"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Größenprinzip nach Henneman: von klein/ausdauernd zu groß/kräftig.",
+      "source": "IST 2.4, 2.5.1"
+    },
+    {
+      "id": "nisv-wirkung-05",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie rekrutiert EMS die motorischen Einheiten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kleine und große Einheiten nahezu gleichzeitig"
+        },
+        {
+          "id": "b",
+          "text": "Nur Typ-I-Fasern"
+        },
+        {
+          "id": "c",
+          "text": "Nach dem Größenprinzip"
+        },
+        {
+          "id": "d",
+          "text": "Nur die Fasern an der Oberfläche"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "EMS hebelt das Größenprinzip aus: simultane, nicht-selektive Rekrutierung.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-06",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist ein Vorteil der gleichzeitigen Rekrutierung durch EMS?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kräftige Typ-II-Fasern werden schon bei geringer Last mittrainiert"
+        },
+        {
+          "id": "b",
+          "text": "Man ermüdet langsamer"
+        },
+        {
+          "id": "c",
+          "text": "Es gibt keinen Muskelkater"
+        },
+        {
+          "id": "d",
+          "text": "Der Kreislauf wird nicht belastet"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Hochschwellige Fasern arbeiten früh mit – auch ohne schwere Gewichte.",
+      "source": "IST 2.5.2"
+    },
+    {
+      "id": "nisv-wirkung-07",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Warum ermüdet der Muskel bei EMS schneller?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Es gibt keine ruhenden Fasern, die ermüdete Fasern ablösen könnten"
+        },
+        {
+          "id": "b",
+          "text": "Weil der Strom den Muskel kühlt"
+        },
+        {
+          "id": "c",
+          "text": "Weil weniger Fasern arbeiten"
+        },
+        {
+          "id": "d",
+          "text": "Weil das Herz langsamer schlägt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Willentlich wechseln sich Fasern ab. Unter EMS arbeiten alle parallel.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-08",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Bis zu welchem Anteil der Maximalkraft werden willentlich nach und nach alle motorischen Einheiten rekrutiert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Etwa 50 % der isometrischen Maximalkraft"
+        },
+        {
+          "id": "b",
+          "text": "Etwa 10 %"
+        },
+        {
+          "id": "c",
+          "text": "Etwa 90 %"
+        },
+        {
+          "id": "d",
+          "text": "Erst bei 100 %"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Danach steigt die Kraft über eine höhere Erregungsfrequenz.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-09",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welche Faserart ist ausdauernd und wird willentlich zuerst aktiviert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Typ I (slow-twitch)"
+        },
+        {
+          "id": "b",
+          "text": "Typ II (fast-twitch)"
+        },
+        {
+          "id": "c",
+          "text": "Typ IIx"
+        },
+        {
+          "id": "d",
+          "text": "Glatte Muskulatur"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Typ I: klein, ausdauernd, zuerst aktiv. Typ II: groß, kräftig, später.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-10",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wie verändert sich der Stoffwechsel unter EMS?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Höherer Energieumsatz und höhere Laktatwerte als ohne EMS"
+        },
+        {
+          "id": "b",
+          "text": "Weniger Sauerstoffverbrauch"
+        },
+        {
+          "id": "c",
+          "text": "Kein Unterschied"
+        },
+        {
+          "id": "d",
+          "text": "Nur Fettverbrennung, kein Laktat"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Glykolytische Typ-II-Fasern arbeiten früh mit → mehr anaerobe Energie, mehr Laktat.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-11",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was zeigte sich bei isometrischer Beinarbeit mit EMS bei niedriger Stimulation (Banerjee 2005)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Sauerstoffaufnahme verdreifachte sich"
+        },
+        {
+          "id": "b",
+          "text": "Die Herzfrequenz sank"
+        },
+        {
+          "id": "c",
+          "text": "Der Laktatwert fiel auf null"
+        },
+        {
+          "id": "d",
+          "text": "Kein messbarer Effekt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Selbst bei niedriger Stärke steigt die metabolische Belastung deutlich.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-wirkung-12",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Mit welchen Frequenzen arbeitet klassisches EMS-Training?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Niederfrequent, maximal etwa 150 Hz"
+        },
+        {
+          "id": "b",
+          "text": "Mittelfrequent, 1.000–100.000 Hz"
+        },
+        {
+          "id": "c",
+          "text": "Hochfrequent, im MHz-Bereich"
+        },
+        {
+          "id": "d",
+          "text": "Nur mit 1 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Niederfrequenz-Bereich, beim EMS-Training bis max. ca. 150 Hz.",
+      "source": "IST 2.3"
+    },
+    {
+      "id": "nisv-wirkung-13",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wofür wird mittelfrequenter Reizstrom (TENS) vor allem eingesetzt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Zur Schmerzbehandlung"
+        },
+        {
+          "id": "b",
+          "text": "Zum Muskelaufbau im EMS-Studio"
+        },
+        {
+          "id": "c",
+          "text": "Zur Fettverbrennung"
+        },
+        {
+          "id": "d",
+          "text": "Zum Aufwärmen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Mittelfrequente Impulse reizen Nerven, sind aber zu kurz für Muskelkontraktionen.",
+      "source": "IST 2.3"
+    },
+    {
+      "id": "nisv-wirkung-14",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was ist die Wedensky-Hemmung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bei Dauerreizung über ca. 2.000 Hz reagieren Nerv bzw. Endplatte nicht mehr – die Kontraktion lässt nach"
+        },
+        {
+          "id": "b",
+          "text": "Ein Not-Aus am Gerät"
+        },
+        {
+          "id": "c",
+          "text": "Die Hemmung des Muskels durch Kälte"
+        },
+        {
+          "id": "d",
+          "text": "Ein anderes Wort für Muskelkater"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ermüdung der motorischen Endplatte bei hochfrequenter Dauerreizung bis zur Blockade.",
+      "source": "IST 2.3"
+    },
+    {
+      "id": "nisv-wirkung-15",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was beschreibt der Gildemeister-Effekt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mehrere Impulse summieren sich, bis die Reizschwelle erreicht ist"
+        },
+        {
+          "id": "b",
+          "text": "Jeder Impuls löst sofort eine Kontraktion aus"
+        },
+        {
+          "id": "c",
+          "text": "Die Haut wird warm"
+        },
+        {
+          "id": "d",
+          "text": "Muskeln wachsen über Nacht"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Summation: im Mittelfrequenzbereich depolarisiert jede Periode etwas mehr.",
+      "source": "IST 2.3"
+    },
+    {
+      "id": "nisv-wirkung-16",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was bedeutet „periodensynchrone Reizung“ im Niederfrequenzbereich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Jeder ausreichend starke Impuls löst ein Aktionspotenzial aus – im Takt der Frequenz"
+        },
+        {
+          "id": "b",
+          "text": "Nur jeder zehnte Impuls wirkt"
+        },
+        {
+          "id": "c",
+          "text": "Der Muskel entspannt sich bei jedem Impuls"
+        },
+        {
+          "id": "d",
+          "text": "Impulse wirken nur nachts"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Aktionspotenziale entstehen im gleichen Rhythmus wie die Stromfrequenz.",
+      "source": "IST 2.3"
+    },
+    {
+      "id": "nisv-wirkung-17",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welche Wirkung haben Frequenzen von etwa 5–20 Hz?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schütteln/Vibrieren, Entspannung und Aktivierung der Muskelpumpe"
+        },
+        {
+          "id": "b",
+          "text": "Maximaler Muskelaufbau"
+        },
+        {
+          "id": "c",
+          "text": "Blockade der Nerven"
+        },
+        {
+          "id": "d",
+          "text": "Schmerzbehandlung wie TENS"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "„Schüttelfrequenzen“ – fördern Rückfluss von Venenblut und Lymphe.",
+      "source": "IST 2.3"
+    },
+    {
+      "id": "nisv-wirkung-18",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welcher Bereich steigert den Tonus der Skelettmuskulatur und wird in der Reha zum Kräftigen empfohlen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "30–50 Hz, etwa 50 Hz"
+        },
+        {
+          "id": "b",
+          "text": "0–5 Hz"
+        },
+        {
+          "id": "c",
+          "text": "100–200 Hz"
+        },
+        {
+          "id": "d",
+          "text": "Über 1.000 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ca. 50 Hz für die Muskelkräftigung in der Reha.",
+      "source": "IST 2.3"
+    },
+    {
+      "id": "nisv-wirkung-19",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie wirken Frequenzen über 100–200 Hz?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eher entspannend auf Nervensystem und Muskulatur"
+        },
+        {
+          "id": "b",
+          "text": "Maximal kräftigend"
+        },
+        {
+          "id": "c",
+          "text": "Gefäßverengend"
+        },
+        {
+          "id": "d",
+          "text": "Gar nicht"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Hohe Frequenzen dämpfen den Sympathikus und senken den Muskeltonus.",
+      "source": "IST 2.3"
+    },
+    {
+      "id": "nisv-wirkung-20",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie oft pro Woche wird EMS laut Vergleichstabelle empfohlen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "1–2 Einheiten"
+        },
+        {
+          "id": "b",
+          "text": "5–6 Einheiten"
+        },
+        {
+          "id": "c",
+          "text": "Täglich"
+        },
+        {
+          "id": "d",
+          "text": "Einmal im Monat"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wegen der hohen Intensität reichen 1–2 Einheiten pro Woche.",
+      "source": "IST 2.6.6"
+    },
+    {
+      "id": "nisv-wirkung-21",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welche Trainingsdauer reicht beim EMS laut Vergleichstabelle?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "15–25 Minuten"
+        },
+        {
+          "id": "b",
+          "text": "45–90 Minuten"
+        },
+        {
+          "id": "c",
+          "text": "5 Minuten"
+        },
+        {
+          "id": "d",
+          "text": "2 Stunden"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Klassisches Krafttraining: 45–90 Min., EMS: 15–25 Min.",
+      "source": "IST 2.6.6"
+    },
+    {
+      "id": "nisv-wirkung-22",
+      "unitId": "nisv-wirkung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Womit steuert man die Intensität beim EMS – im Unterschied zum Krafttraining?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Stromstärke"
+        },
+        {
+          "id": "b",
+          "text": "Frequenz"
+        },
+        {
+          "id": "c",
+          "text": "Impulsbreite"
+        },
+        {
+          "id": "d",
+          "text": "Hantelgewicht"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "EMS: Stromstärke, Frequenz, Impulsbreite, Zeit. Krafttraining: Last, Wiederholungen, Sätze, Pausen.",
+      "source": "IST 2.5.2"
+    },
+    {
+      "id": "nisv-wirkung-23",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie gilt das Prinzip der Spezifität beim EMS?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Der Körper passt sich an Elektrodenlage und Impulsparameter an – mit Bewegung kombiniert steigt der Übertrag"
+        },
+        {
+          "id": "b",
+          "text": "EMS wirkt immer gleich, egal wie"
+        },
+        {
+          "id": "c",
+          "text": "Nur Bauchmuskeln passen sich an"
+        },
+        {
+          "id": "d",
+          "text": "Spezifität gibt es bei EMS nicht"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Kombiniert man EMS mit funktionellen Bewegungen, wird es alltags- und sportnäher.",
+      "source": "IST 2.6.3"
+    },
+    {
+      "id": "nisv-wirkung-24",
+      "unitId": "nisv-wirkung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Trainingsprinzipien gelten für EMS und klassisches Krafttraining gleichermaßen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Reizschwelle"
+        },
+        {
+          "id": "b",
+          "text": "Superkompensation"
+        },
+        {
+          "id": "c",
+          "text": "Individualisierung"
+        },
+        {
+          "id": "d",
+          "text": "Gewichtssteigerung um 10 % pro Woche"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Gleiche biologische Anpassungsgesetze, andere Belastungssteuerung.",
+      "source": "IST 2.6"
+    },
+    {
+      "id": "nisv-wirkung-25",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie variiert man das EMS-Training (Prinzip der Variation)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Durch verschiedene Programme, z. B. Kraft, Ausdauer, Regeneration"
+        },
+        {
+          "id": "b",
+          "text": "Durch andere Musik"
+        },
+        {
+          "id": "c",
+          "text": "Nur durch längere Einheiten"
+        },
+        {
+          "id": "d",
+          "text": "Gar nicht, immer gleich trainieren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Kraft: höhere Frequenz, lange Pausen. Ausdauer: niedriger, kürzere Pausen. Regeneration: sanft.",
+      "source": "IST 2.6.5"
+    },
+    {
+      "id": "nisv-wirkung-26",
+      "unitId": "nisv-wirkung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was gilt bei EMS für den Bereich der Kraftreize laut Prinzip der Reizschwelle?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Meist 50–85 Hz"
+        },
+        {
+          "id": "b",
+          "text": "1–5 Hz"
+        },
+        {
+          "id": "c",
+          "text": "500–1.000 Hz"
+        },
+        {
+          "id": "d",
+          "text": "Über 2.000 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Anpassung über Intensität, Frequenz (meist 50–85 Hz), Impulsbreite und Zeit.",
+      "source": "IST 2.6.1"
+    },
+    {
+      "id": "nisv-recht-01",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wofür steht NiSV?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Verordnung zum Schutz vor schädlichen Wirkungen nichtionisierender Strahlung bei der Anwendung am Menschen"
+        },
+        {
+          "id": "b",
+          "text": "Nationale indikationsbezogene Sportverordnung"
+        },
+        {
+          "id": "c",
+          "text": "Normierte internationale Sicherheitsvorschrift"
+        },
+        {
+          "id": "d",
+          "text": "Nichtmedizinische Sportversicherung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die NiSV regelt nichtmedizinische Anwendungen nichtionisierender Strahlung am Menschen.",
+      "source": "IST 3.8"
+    },
+    {
+      "id": "nisv-recht-02",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Fällt Ganzkörper-EMS (WB-EMS) unter die NiSV?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ja, seit Inkrafttreten der NiSV (2020)"
+        },
+        {
+          "id": "b",
+          "text": "Nein, nur Laser"
+        },
+        {
+          "id": "c",
+          "text": "Nur in Kliniken"
+        },
+        {
+          "id": "d",
+          "text": "Nur bei Geräten über 100 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "EMS-Studios sind unmittelbar an die NiSV gebunden.",
+      "source": "IST 3.8"
+    },
+    {
+      "id": "nisv-recht-03",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Auf welchem Gesetz basiert die NiSV?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Strahlenschutzgesetz (StrlSchG)"
+        },
+        {
+          "id": "b",
+          "text": "Medizinproduktegesetz"
+        },
+        {
+          "id": "c",
+          "text": "Arbeitszeitgesetz"
+        },
+        {
+          "id": "d",
+          "text": "Infektionsschutzgesetz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die NiSV ist Teil des deutschen Strahlenschutzrechts.",
+      "source": "IST 3.8"
+    },
+    {
+      "id": "nisv-recht-04",
+      "unitId": "nisv-recht",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Anwendungen fallen außer EMS unter die NiSV?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Laser"
+        },
+        {
+          "id": "b",
+          "text": "Ultraschall"
+        },
+        {
+          "id": "c",
+          "text": "Magnetfelder"
+        },
+        {
+          "id": "d",
+          "text": "Röntgen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "NiSV = nichtionisierend. Röntgen ist ionisierende Strahlung.",
+      "source": "IST 3.8.1"
+    },
+    {
+      "id": "nisv-recht-05",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was brauchen Trainer, die WB-EMS anwenden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eine anerkannte NiSV-Fachkunde"
+        },
+        {
+          "id": "b",
+          "text": "Nur einen Erste-Hilfe-Kurs"
+        },
+        {
+          "id": "c",
+          "text": "Ein Medizinstudium"
+        },
+        {
+          "id": "d",
+          "text": "Nichts Besonderes"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ohne Fachkunde-Nachweis darf kein EMS-Training angeboten werden.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-06",
+      "unitId": "nisv-recht",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was umfasst die NiSV-Fachkunde?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Theorie: Wirkung, Risiken, Kontraindikationen"
+        },
+        {
+          "id": "b",
+          "text": "Praxis: sicherer Umgang mit dem Gerät"
+        },
+        {
+          "id": "c",
+          "text": "Nur Verkaufstraining"
+        },
+        {
+          "id": "d",
+          "text": "Nur die Gerätebedienung"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Theoretisches Wissen und praktische Kenntnisse gehören zusammen.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-07",
+      "unitId": "nisv-recht",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Pflichten haben EMS-Anbieter laut NiSV?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Fachkunde"
+        },
+        {
+          "id": "b",
+          "text": "Aufklärung und Anamnese"
+        },
+        {
+          "id": "c",
+          "text": "Dokumentation"
+        },
+        {
+          "id": "d",
+          "text": "Gerätesicherheit"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Die vier Pflichten: Fachkunde, Aufklärung/Anamnese, Dokumentation, Gerätesicherheit.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-08",
+      "unitId": "nisv-recht",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was muss vor Beginn des Trainings passieren?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eine umfassende Anamnese"
+        },
+        {
+          "id": "b",
+          "text": "Aufklärung über Wirkungen, Risiken und Nebenwirkungen"
+        },
+        {
+          "id": "c",
+          "text": "Schriftliches Einverständnis einholen"
+        },
+        {
+          "id": "d",
+          "text": "Ein Vertrag über 24 Monate"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Anamnese, Aufklärung und schriftliches, dokumentiertes Einverständnis.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-09",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "In welcher Form ist das Einverständnis einzuholen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schriftlich und dokumentiert"
+        },
+        {
+          "id": "b",
+          "text": "Mündlich reicht"
+        },
+        {
+          "id": "c",
+          "text": "Per Handschlag"
+        },
+        {
+          "id": "d",
+          "text": "Gar nicht nötig"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Schriftlich – das dient der Nachvollziehbarkeit und rechtlichen Absicherung.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-10",
+      "unitId": "nisv-recht",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was wird bei jeder EMS-Anwendung dokumentiert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Datum"
+        },
+        {
+          "id": "b",
+          "text": "Dauer"
+        },
+        {
+          "id": "c",
+          "text": "Intensität"
+        },
+        {
+          "id": "d",
+          "text": "Besondere Vorkommnisse"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Jede Anwendung: Datum, Dauer, Intensität und Besonderheiten.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-11",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wozu dient die Dokumentation?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nachvollziehbarkeit und rechtlicher Schutz des Betreibers"
+        },
+        {
+          "id": "b",
+          "text": "Nur für Werbung"
+        },
+        {
+          "id": "c",
+          "text": "Für die Steuer"
+        },
+        {
+          "id": "d",
+          "text": "Sie ist freiwillig und ohne Zweck"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Dokumentation schützt Kunden und Betreiber.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-12",
+      "unitId": "nisv-recht",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gilt für die Geräte laut NiSV?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Sie müssen den Sicherheitsanforderungen entsprechen"
+        },
+        {
+          "id": "b",
+          "text": "Sie müssen regelmäßig geprüft und gewartet werden"
+        },
+        {
+          "id": "c",
+          "text": "Prüfung nur bei Kaufpreis über 10.000 €"
+        },
+        {
+          "id": "d",
+          "text": "Geräte dürfen selbst umgebaut werden"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Betreiber lassen Geräte regelmäßig prüfen und warten.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-13",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wer darf EMS-Training durchführen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Geschultes nichtärztliches Personal mit NiSV-Fachkunde"
+        },
+        {
+          "id": "b",
+          "text": "Nur Ärztinnen und Ärzte"
+        },
+        {
+          "id": "c",
+          "text": "Jeder ohne Schulung"
+        },
+        {
+          "id": "d",
+          "text": "Nur Physiotherapeuten"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ärzten vorbehalten sind z. B. invasive Laserbehandlungen – EMS nicht.",
+      "source": "IST 3.8.3"
+    },
+    {
+      "id": "nisv-recht-14",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welche Anwendungen behält die NiSV Ärzten vor?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Z. B. invasive Laserbehandlungen und Eingriffe in tiefere Hautschichten"
+        },
+        {
+          "id": "b",
+          "text": "EMS-Training"
+        },
+        {
+          "id": "c",
+          "text": "Körpervermessung"
+        },
+        {
+          "id": "d",
+          "text": "Ernährungsberatung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "EMS darf geschultes Fachpersonal mit Fachkunde anwenden.",
+      "source": "IST 3.8.3"
+    },
+    {
+      "id": "nisv-recht-15",
+      "unitId": "nisv-recht",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Folgen drohen bei Verstößen gegen die NiSV?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bußgelder oder Auflagen"
+        },
+        {
+          "id": "b",
+          "text": "Untersagung des Betriebs"
+        },
+        {
+          "id": "c",
+          "text": "Haftung bei Gesundheitsschäden"
+        },
+        {
+          "id": "d",
+          "text": "Nur eine mündliche Verwarnung"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Verstöße können teuer werden – bis zur Schließung.",
+      "source": "IST 3.8.4"
+    },
+    {
+      "id": "nisv-recht-16",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wer darf nach DIN 33961-5 nur nach ärztlicher Abklärung oder gar nicht trainieren?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Personen mit Kontraindikationen"
+        },
+        {
+          "id": "b",
+          "text": "Alle über 40"
+        },
+        {
+          "id": "c",
+          "text": "Alle Frauen"
+        },
+        {
+          "id": "d",
+          "text": "Nur Profisportler"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Kontraindikationen werden in der Anamnese abgefragt.",
+      "source": "IST 3.8.2"
+    },
+    {
+      "id": "nisv-recht-17",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was bringt die NiSV den Studios laut Skript – neben mehr Verantwortung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mehr Professionalität und eine klare Legitimation durch nachweisbaren Qualitätsstandard"
+        },
+        {
+          "id": "b",
+          "text": "Weniger Kunden"
+        },
+        {
+          "id": "c",
+          "text": "Weniger Dokumentation"
+        },
+        {
+          "id": "d",
+          "text": "Steuervorteile"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wer die Vorschriften einhält, kann hohe Qualität nachweisen.",
+      "source": "IST 3.8.5"
+    },
+    {
+      "id": "nisv-recht-18",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welche Norm regelt die Kontraindikationen für EMS?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "DIN 33961-5"
+        },
+        {
+          "id": "b",
+          "text": "DIN 18040"
+        },
+        {
+          "id": "c",
+          "text": "ISO 9001"
+        },
+        {
+          "id": "d",
+          "text": "DIN EN 1176"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "DIN 33961-5 – darauf verweisen Skript und NiSV-Praxis.",
+      "source": "IST 3.7"
+    },
+    {
+      "id": "nisv-recht-19",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ist reines „Passiv-EMS“ ohne Bewegung laut Skript fachlich vertretbar?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein – EMS-Einheiten sollen individuell und übungsbasiert sein"
+        },
+        {
+          "id": "b",
+          "text": "Ja, das ist der Standard"
+        },
+        {
+          "id": "c",
+          "text": "Nur für Anfänger"
+        },
+        {
+          "id": "d",
+          "text": "Nur bei Profis"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "DIN 33961-5 und NiSV betonen übungsbasiertes Training.",
+      "source": "IST 4.2"
+    },
+    {
+      "id": "nisv-recht-20",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie schnell müssen Trainer das Bedienfeld erreichen können?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Innerhalb von einer Sekunde (max. ca. 120 cm Abstand)"
+        },
+        {
+          "id": "b",
+          "text": "Innerhalb von 10 Sekunden"
+        },
+        {
+          "id": "c",
+          "text": "Innerhalb einer Minute"
+        },
+        {
+          "id": "d",
+          "text": "Es reicht, wenn eine Fernbedienung in der Nähe liegt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bedienelemente und Abschaltung müssen jederzeit sofort erreichbar sein.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-recht-21",
+      "unitId": "nisv-recht",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was müssen auch die Trainierenden wissen bzw. können?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Wie man abschaltet"
+        },
+        {
+          "id": "b",
+          "text": "Das Gerät innerhalb einer Sekunde erreichen"
+        },
+        {
+          "id": "c",
+          "text": "Das Programm selbst umstellen"
+        },
+        {
+          "id": "d",
+          "text": "Die Elektroden reparieren"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Auch Kunden müssen die Abschaltung kennen und erreichen.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-recht-22",
+      "unitId": "nisv-recht",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was muss für Trainer immer eindeutig erkennbar sein?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Welcher Kunde an welchem Gerät angeschlossen ist"
+        },
+        {
+          "id": "b",
+          "text": "Der Kontostand des Kunden"
+        },
+        {
+          "id": "c",
+          "text": "Die Marke der Kleidung"
+        },
+        {
+          "id": "d",
+          "text": "Die Raumtemperatur"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Klare Zuordnung Kunde ↔ Gerät verhindert Fehlbedienung.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-ausruestung-01",
+      "unitId": "nisv-ausruestung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Aufgaben erfüllt die EMS-Bekleidung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Leitfähigkeit zwischen Haut und Elektroden"
+        },
+        {
+          "id": "b",
+          "text": "Hautverträglichkeit und Komfort"
+        },
+        {
+          "id": "c",
+          "text": "Hygiene"
+        },
+        {
+          "id": "d",
+          "text": "Passform, damit Elektroden gut anliegen"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Die Kleidung ist die Schnittstelle zwischen Haut, Elektroden und Gerät.",
+      "source": "IST 3.1.1"
+    },
+    {
+      "id": "nisv-ausruestung-02",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Welche drei Schichten hat das EMS-Schichtsystem?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Basisschicht, Elektrodenschicht, (optional) Außenschicht"
+        },
+        {
+          "id": "b",
+          "text": "Haut, Fett, Muskel"
+        },
+        {
+          "id": "c",
+          "text": "Unterhemd, Pulli, Jacke"
+        },
+        {
+          "id": "d",
+          "text": "Gurt, Kabel, Gerät"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Basis (Unterwäsche), Elektroden (Weste/Gurte/Anzug), Außenschicht nur optional.",
+      "source": "IST 3.2"
+    },
+    {
+      "id": "nisv-ausruestung-03",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wozu dient die Basisschicht?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Hygiene, Schweißaufnahme, weniger Hautreizungen"
+        },
+        {
+          "id": "b",
+          "text": "Sie leitet den Strom ab"
+        },
+        {
+          "id": "c",
+          "text": "Sie ersetzt die Elektroden"
+        },
+        {
+          "id": "d",
+          "text": "Sie hält warm im Winter"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Dünne, enge Funktionswäsche – nach jedem Training gewaschen.",
+      "source": "IST 3.2.1"
+    },
+    {
+      "id": "nisv-ausruestung-04",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was ist das Kernstück des EMS-Equipments?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Elektrodenschicht (Weste, Gurte, Anzug)"
+        },
+        {
+          "id": "b",
+          "text": "Die Außenschicht"
+        },
+        {
+          "id": "c",
+          "text": "Die Schuhe"
+        },
+        {
+          "id": "d",
+          "text": "Das Handtuch"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Hier sitzen die Elektroden an den großen Muskelgruppen.",
+      "source": "IST 3.2.2"
+    },
+    {
+      "id": "nisv-ausruestung-05",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum werden die Elektroden angefeuchtet?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Für einen guten Stromfluss"
+        },
+        {
+          "id": "b",
+          "text": "Zum Kühlen"
+        },
+        {
+          "id": "c",
+          "text": "Damit sie nicht rutschen"
+        },
+        {
+          "id": "d",
+          "text": "Aus hygienischen Gründen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Feuchte Elektroden leiten besser – die Stimulation wirkt gleichmäßig.",
+      "source": "IST 3.2.2"
+    },
+    {
+      "id": "nisv-ausruestung-06",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum soll die Bekleidung eng anliegen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Lockere Kleidung verschlechtert die Leitfähigkeit"
+        },
+        {
+          "id": "b",
+          "text": "Wegen der Optik"
+        },
+        {
+          "id": "c",
+          "text": "Damit man mehr schwitzt"
+        },
+        {
+          "id": "d",
+          "text": "Damit sie schneller trocknet"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Elektroden müssen nah am Muskel liegen.",
+      "source": "IST 3.2.4, 3.2.6"
+    },
+    {
+      "id": "nisv-ausruestung-07",
+      "unitId": "nisv-ausruestung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was soll man beim Waschen der Westen vermeiden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Aggressive Waschmittel"
+        },
+        {
+          "id": "b",
+          "text": "Weichspüler"
+        },
+        {
+          "id": "c",
+          "text": "Wasser"
+        },
+        {
+          "id": "d",
+          "text": "Herstellerangaben"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Beides kann die Leitfähigkeit beeinträchtigen.",
+      "source": "IST 3.2.5"
+    },
+    {
+      "id": "nisv-ausruestung-08",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was ist für jedes Mitglied Pflicht?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Eigene Unterwäsche (Basisschicht)"
+        },
+        {
+          "id": "b",
+          "text": "Eigene Weste"
+        },
+        {
+          "id": "c",
+          "text": "Eigenes Gerät"
+        },
+        {
+          "id": "d",
+          "text": "Eigene Elektroden"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Westen teilen sich viele – deshalb trägt jeder seine persönliche Basisschicht.",
+      "source": "IST 3.2.5"
+    },
+    {
+      "id": "nisv-ausruestung-09",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wann werden Westen und Elektroden gereinigt bzw. desinfiziert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nach jedem Training"
+        },
+        {
+          "id": "b",
+          "text": "Einmal pro Woche"
+        },
+        {
+          "id": "c",
+          "text": "Einmal im Monat"
+        },
+        {
+          "id": "d",
+          "text": "Nur wenn sie riechen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gemeinsam genutzte Ausrüstung → nach jeder Einheit reinigen.",
+      "source": "IST 3.2.5"
+    },
+    {
+      "id": "nisv-ausruestung-10",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum regelmäßig die Elektrodenflächen prüfen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Beschädigte Elektroden stimulieren ungleichmäßig"
+        },
+        {
+          "id": "b",
+          "text": "Wegen der Farbe"
+        },
+        {
+          "id": "c",
+          "text": "Damit sie neu aussehen"
+        },
+        {
+          "id": "d",
+          "text": "Das ist nicht nötig"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Schäden führen zu ungleichmäßiger Stimulation.",
+      "source": "IST 3.2.6"
+    },
+    {
+      "id": "nisv-ausruestung-11",
+      "unitId": "nisv-ausruestung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Eigenschaften braucht EMS-Bekleidung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Elastizität"
+        },
+        {
+          "id": "b",
+          "text": "Atmungsaktivität"
+        },
+        {
+          "id": "c",
+          "text": "Pflegeleichtigkeit und Langlebigkeit"
+        },
+        {
+          "id": "d",
+          "text": "Wasserdicht und isolierend"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Dazu Leitfähigkeit – aber sicher nicht isolierend.",
+      "source": "IST 3.2.4"
+    },
+    {
+      "id": "nisv-ausruestung-12",
+      "unitId": "nisv-ausruestung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Gerätetypen unterscheidet das Skript?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Medizinische Geräte"
+        },
+        {
+          "id": "b",
+          "text": "Studio-/Ganzkörpergeräte (Whole Body EMS)"
+        },
+        {
+          "id": "c",
+          "text": "Kabellose Wearables"
+        },
+        {
+          "id": "d",
+          "text": "Heimgeräte mit Pads"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Vier Typen – mit unterschiedlicher Intensität, Steuerung und Einsatzort.",
+      "source": "IST 3.3"
+    },
+    {
+      "id": "nisv-ausruestung-13",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was kennzeichnet Whole-Body-EMS-Studiogeräte?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mehrere Muskelgruppen gleichzeitig über Westen/Gurte"
+        },
+        {
+          "id": "b",
+          "text": "Ein einzelnes Klebepad"
+        },
+        {
+          "id": "c",
+          "text": "Nur Schmerztherapie"
+        },
+        {
+          "id": "d",
+          "text": "Nur zu Hause nutzbar"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ganzkörper: viele Muskelgruppen parallel.",
+      "source": "IST 3.3.2"
+    },
+    {
+      "id": "nisv-ausruestung-14",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was gilt für Heimgeräte mit Klebepads meist?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kompakt, für einzelne Muskelgruppen, begrenzte Intensität"
+        },
+        {
+          "id": "b",
+          "text": "Leistungsstärker als Studiogeräte"
+        },
+        {
+          "id": "c",
+          "text": "Nur für Kliniken"
+        },
+        {
+          "id": "d",
+          "text": "Mit integrierter Weste"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Für gezielte Bereiche wie Bauch oder Arme, eher schwächer.",
+      "source": "IST 3.3.4"
+    },
+    {
+      "id": "nisv-ausruestung-15",
+      "unitId": "nisv-ausruestung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Kriterien sind bei der Geräteauswahl wichtig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Anzahl der Kanäle"
+        },
+        {
+          "id": "b",
+          "text": "Einstellbare Stromparameter"
+        },
+        {
+          "id": "c",
+          "text": "Sicherheitsmechanismen"
+        },
+        {
+          "id": "d",
+          "text": "Wartung, Hygiene und Service"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Dazu Bedienung, kabelgebunden/kabellos, Kompatibilität und Kosten.",
+      "source": "IST 3.4"
+    },
+    {
+      "id": "nisv-ausruestung-16",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist der Zielkonflikt bei kabellosen Geräten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mehr Bewegungsfreiheit gegen Signalstabilität"
+        },
+        {
+          "id": "b",
+          "text": "Preis gegen Farbe"
+        },
+        {
+          "id": "c",
+          "text": "Gewicht gegen Geruch"
+        },
+        {
+          "id": "d",
+          "text": "Es gibt keinen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Kabelgebunden: stabil. Kabellos: frei beweglich.",
+      "source": "IST 3.4"
+    },
+    {
+      "id": "nisv-ausruestung-17",
+      "unitId": "nisv-ausruestung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Sicherheitsmechanismen sollte ein Gerät haben?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Begrenzung der Stromstärke"
+        },
+        {
+          "id": "b",
+          "text": "Abschaltung bei Fehlern"
+        },
+        {
+          "id": "c",
+          "text": "Not-Aus"
+        },
+        {
+          "id": "d",
+          "text": "Automatische Steigerung auf Maximum"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Moderne Geräte haben Begrenzungen und Not-Aus.",
+      "source": "IST 3.4, 3.5.1"
+    },
+    {
+      "id": "nisv-ausruestung-18",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welcher Hersteller gilt als Pionier des Ganzkörper-EMS und ist in vielen Studien vertreten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "miha bodytec"
+        },
+        {
+          "id": "b",
+          "text": "Visionbody"
+        },
+        {
+          "id": "c",
+          "text": "EasyMotionSkin"
+        },
+        {
+          "id": "d",
+          "text": "Symbiont"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Vor allem stationäre Studiosysteme, international etabliert.",
+      "source": "IST 3.4.1"
+    },
+    {
+      "id": "nisv-ausruestung-19",
+      "unitId": "nisv-ausruestung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Werte gelten laut Sicherheitskapitel als üblich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Frequenz meist 20–100 Hz"
+        },
+        {
+          "id": "b",
+          "text": "Impulsbreite meist 200–400 µs"
+        },
+        {
+          "id": "c",
+          "text": "Frequenz 5.000 Hz"
+        },
+        {
+          "id": "d",
+          "text": "Impulsbreite 5 Sekunden"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Stromstärke wird individuell angepasst und bleibt weit unter schädlichen Werten.",
+      "source": "IST 3.5.1"
+    },
+    {
+      "id": "nisv-ausruestung-20",
+      "unitId": "nisv-ausruestung",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welche Stromart fließt beim EMS durch die Muskulatur?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Niederfrequenter Wechselstrom"
+        },
+        {
+          "id": "b",
+          "text": "Hochfrequenter Gleichstrom"
+        },
+        {
+          "id": "c",
+          "text": "Hochspannung aus dem Netz"
+        },
+        {
+          "id": "d",
+          "text": "Mikrowellen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Über die Elektroden fließt niederfrequenter Wechselstrom.",
+      "source": "IST 3.5.1"
+    },
+    {
+      "id": "nisv-ausruestung-21",
+      "unitId": "nisv-ausruestung",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Was gehört organisatorisch zur Vorbereitung jeder Einheit?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Passende Funktionskleidung"
+        },
+        {
+          "id": "b",
+          "text": "Elektroden richtig positionieren und befeuchten"
+        },
+        {
+          "id": "c",
+          "text": "Gerät auf Funktion und Hygiene prüfen"
+        },
+        {
+          "id": "d",
+          "text": "Lautstarke Musik"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Dazu ein ruhiges, störungsfreies Umfeld mit passender Temperatur.",
+      "source": "IST 4.1.3"
+    },
+    {
+      "id": "nisv-risiken-01",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist eine Rhabdomyolyse?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Zerfall von Muskelgewebe mit Freisetzung von Myoglobin"
+        },
+        {
+          "id": "b",
+          "text": "Eine Hautrötung"
+        },
+        {
+          "id": "c",
+          "text": "Ein Muskelkrampf"
+        },
+        {
+          "id": "d",
+          "text": "Eine Gelenkentzündung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gefahr bei Überlastung – besonders bei Einsteigern oder falscher Steuerung.",
+      "source": "IST 3.6.1"
+    },
+    {
+      "id": "nisv-risiken-02",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wer ist für eine Rhabdomyolyse besonders gefährdet?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Einsteiger mit zu intensivem Start"
+        },
+        {
+          "id": "b",
+          "text": "Erfahrene Kunden mit leichtem Training"
+        },
+        {
+          "id": "c",
+          "text": "Kunden, die viel trinken"
+        },
+        {
+          "id": "d",
+          "text": "Kunden mit Funktionswäsche"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Zu intensive Einstiege ohne Gewöhnung treiben die CK-Werte hoch.",
+      "source": "IST 3.6.1, 4.4"
+    },
+    {
+      "id": "nisv-risiken-03",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welches Organ kann bei sehr hohen CK-Werten geschädigt werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Nieren"
+        },
+        {
+          "id": "b",
+          "text": "Die Augen"
+        },
+        {
+          "id": "c",
+          "text": "Die Lunge"
+        },
+        {
+          "id": "d",
+          "text": "Die Haut"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bei Rhabdomyolyse droht eine Nierenschädigung.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-risiken-04",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was ist die häufigste, meist harmlose Nebenwirkung?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Hautrötungen oder -reizungen an den Elektroden"
+        },
+        {
+          "id": "b",
+          "text": "Knochenbrüche"
+        },
+        {
+          "id": "c",
+          "text": "Haarausfall"
+        },
+        {
+          "id": "d",
+          "text": "Sehstörungen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Meist vorübergehend. Zu hohe Intensität oder schlechte Elektrodenpflege verstärken sie.",
+      "source": "IST 3.6.2"
+    },
+    {
+      "id": "nisv-risiken-05",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie wirkt EMS auf Herz und Kreislauf?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Herzfrequenz und Blutdruck können steigen"
+        },
+        {
+          "id": "b",
+          "text": "Der Blutdruck sinkt immer"
+        },
+        {
+          "id": "c",
+          "text": "Keine Wirkung"
+        },
+        {
+          "id": "d",
+          "text": "Das Herz bleibt kurz stehen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Deshalb sind Herz-Kreislauf-Erkrankungen abzuklären.",
+      "source": "IST 3.6.3"
+    },
+    {
+      "id": "nisv-risiken-06",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie geht man mit ängstlichen Kunden um?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Behutsam heranführen und gut kommunizieren"
+        },
+        {
+          "id": "b",
+          "text": "Gleich hoch einstellen, damit sie sich gewöhnen"
+        },
+        {
+          "id": "c",
+          "text": "Nicht ansprechen"
+        },
+        {
+          "id": "d",
+          "text": "Training absagen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Manche empfinden Impulse als beängstigend – Ruhe und Erklärung helfen.",
+      "source": "IST 3.6.3"
+    },
+    {
+      "id": "nisv-risiken-07",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist der Unterschied zwischen absoluter und relativer Kontraindikation?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Absolut = kein EMS; relativ = nur eingeschränkt oder nach ärztlicher Abklärung"
+        },
+        {
+          "id": "b",
+          "text": "Absolut = ärztliche Abklärung; relativ = kein EMS"
+        },
+        {
+          "id": "c",
+          "text": "Beides heißt: kein EMS"
+        },
+        {
+          "id": "d",
+          "text": "Beides ist nur eine Empfehlung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Relative Kontraindikationen lassen Spielraum, z. B. Ausschluss einzelner Körperregionen.",
+      "source": "IST 3.7"
+    },
+    {
+      "id": "nisv-risiken-08",
+      "unitId": "nisv-risiken",
+      "type": "multi",
+      "difficulty": 1,
+      "prompt": "Welche dieser Punkte sind absolute Kontraindikationen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Herzschrittmacher"
+        },
+        {
+          "id": "b",
+          "text": "Defibrillator"
+        },
+        {
+          "id": "c",
+          "text": "Hirnschrittmacher"
+        },
+        {
+          "id": "d",
+          "text": "Bluthochdruck, gut eingestellt"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Elektrische Implantate schließen EMS aus.",
+      "source": "IST 3.7.2"
+    },
+    {
+      "id": "nisv-risiken-09",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Darf eine Schwangere EMS trainieren?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nein – Schwangerschaft ist eine absolute Kontraindikation"
+        },
+        {
+          "id": "b",
+          "text": "Ja, mit halber Stärke"
+        },
+        {
+          "id": "c",
+          "text": "Ja, nur im ersten Drittel"
+        },
+        {
+          "id": "d",
+          "text": "Ja, wenn sie es möchte"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Schwangerschaft gilt meist in allen Trimestern als absolute Kontraindikation.",
+      "source": "IST 3.7.2"
+    },
+    {
+      "id": "nisv-risiken-10",
+      "unitId": "nisv-risiken",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche akuten Zustände schließen EMS aus?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Fieber, Erkältung, Grippe"
+        },
+        {
+          "id": "b",
+          "text": "Akute Thrombose oder Embolie"
+        },
+        {
+          "id": "c",
+          "text": "Leichter Muskelkater"
+        },
+        {
+          "id": "d",
+          "text": "Müdigkeit"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Akute Infekte und Thrombose/Embolie sind absolute Kontraindikationen.",
+      "source": "IST 3.7.2"
+    },
+    {
+      "id": "nisv-risiken-11",
+      "unitId": "nisv-risiken",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Erkrankungen sind absolute Kontraindikationen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Fortgeschrittene Herzinsuffizienz (NYHA III–IV)"
+        },
+        {
+          "id": "b",
+          "text": "Epilepsie mit unkontrollierten Anfällen"
+        },
+        {
+          "id": "c",
+          "text": "Schwere Durchblutungsstörungen / arterielle Verschlusskrankheit"
+        },
+        {
+          "id": "d",
+          "text": "Leichte Herzinsuffizienz (NYHA I–II)"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "NYHA I–II ist relativ, III–IV absolut.",
+      "source": "IST 3.7.1–3.7.2"
+    },
+    {
+      "id": "nisv-risiken-12",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie werden fortgeschrittene Tumorerkrankungen eingeordnet?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "In der Regel Ausschluss (absolut), abhängig von ärztlicher Freigabe"
+        },
+        {
+          "id": "b",
+          "text": "Kein Problem"
+        },
+        {
+          "id": "c",
+          "text": "Nur relative Kontraindikation ohne Arzt"
+        },
+        {
+          "id": "d",
+          "text": "Nur Bauchgurt weglassen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Fortgeschrittene Tumorerkrankungen führen in der Regel zum Ausschluss.",
+      "source": "IST 3.7.2"
+    },
+    {
+      "id": "nisv-risiken-13",
+      "unitId": "nisv-risiken",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche dieser Punkte sind relative Kontraindikationen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bluthochdruck (v. a. schlecht eingestellt)"
+        },
+        {
+          "id": "b",
+          "text": "Diabetes mellitus"
+        },
+        {
+          "id": "c",
+          "text": "Schilddrüsenstörungen"
+        },
+        {
+          "id": "d",
+          "text": "Herzschrittmacher"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Relativ: Training nur angepasst oder nach ärztlicher Abklärung.",
+      "source": "IST 3.7.1"
+    },
+    {
+      "id": "nisv-risiken-14",
+      "unitId": "nisv-risiken",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche neurologischen Erkrankungen sind relative Kontraindikationen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Multiple Sklerose"
+        },
+        {
+          "id": "b",
+          "text": "Epilepsie, stabil und behandelt"
+        },
+        {
+          "id": "c",
+          "text": "Epilepsie mit unkontrollierten Anfällen"
+        },
+        {
+          "id": "d",
+          "text": "Keine"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Unkontrollierte Anfälle sind absolut, stabile Epilepsie relativ.",
+      "source": "IST 3.7.1"
+    },
+    {
+      "id": "nisv-risiken-15",
+      "unitId": "nisv-risiken",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Beschwerden am Bewegungsapparat sind relative Kontraindikationen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Frische Verletzungen wie Muskelfaserriss"
+        },
+        {
+          "id": "b",
+          "text": "Akute oder chronische Rückenschmerzen"
+        },
+        {
+          "id": "c",
+          "text": "Arthrose"
+        },
+        {
+          "id": "d",
+          "text": "Leichter Muskelkater"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Training anpassen oder ärztlich abklären lassen.",
+      "source": "IST 3.7.1"
+    },
+    {
+      "id": "nisv-risiken-16",
+      "unitId": "nisv-risiken",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche weiteren Faktoren sind relative Kontraindikationen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bestimmte Medikamente wie Betablocker"
+        },
+        {
+          "id": "b",
+          "text": "Hautprobleme im Elektrodenbereich"
+        },
+        {
+          "id": "c",
+          "text": "Zustand nach Operation (Wundheilung)"
+        },
+        {
+          "id": "d",
+          "text": "Eine neue Frisur"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Medikamente, Haut und frische OPs immer abfragen.",
+      "source": "IST 3.7.1"
+    },
+    {
+      "id": "nisv-risiken-17",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Leichte Herzinsuffizienz (NYHA I–II) ist …",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "eine relative Kontraindikation"
+        },
+        {
+          "id": "b",
+          "text": "eine absolute Kontraindikation"
+        },
+        {
+          "id": "c",
+          "text": "kein Thema"
+        },
+        {
+          "id": "d",
+          "text": "ein Grund für doppelte Intensität"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erst ab NYHA III–IV absolut.",
+      "source": "IST 3.7.1"
+    },
+    {
+      "id": "nisv-risiken-18",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wozu dient die Abfrage relativer Kontraindikationen vor allem?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Akute Beschwerden erfassen und Belastung sowie Übungen anpassen"
+        },
+        {
+          "id": "b",
+          "text": "Kunden abweisen"
+        },
+        {
+          "id": "c",
+          "text": "Den Preis berechnen"
+        },
+        {
+          "id": "d",
+          "text": "Werbung planen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "So lässt sich das Training an die aktuelle Belastbarkeit anpassen.",
+      "source": "IST 3.7"
+    },
+    {
+      "id": "nisv-risiken-19",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ein Kunde hat einen frischen Muskelfaserriss im Oberschenkel. Was ist richtig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Relative Kontraindikation: Region aussparen bzw. ärztlich abklären"
+        },
+        {
+          "id": "b",
+          "text": "Absolute Kontraindikation für immer"
+        },
+        {
+          "id": "c",
+          "text": "Kein Problem, normal trainieren"
+        },
+        {
+          "id": "d",
+          "text": "Gerade dort stärker stimulieren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Relative Kontraindikationen können einzelne Körperregionen ausschließen.",
+      "source": "IST 3.7"
+    },
+    {
+      "id": "nisv-risiken-20",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Ein Kunde nimmt Betablocker. Worauf achtest du?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Herzfrequenz reagiert schwächer – Belastung nicht nur am Puls messen, ggf. ärztlich abklären"
+        },
+        {
+          "id": "b",
+          "text": "Betablocker spielen keine Rolle"
+        },
+        {
+          "id": "c",
+          "text": "Intensität verdoppeln"
+        },
+        {
+          "id": "d",
+          "text": "Er darf nie trainieren"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Betablocker sind eine relative Kontraindikation und dämpfen die Herzfrequenzreaktion.",
+      "source": "IST 3.7.1, 4.1.2"
+    },
+    {
+      "id": "nisv-risiken-21",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie hoch ist der CK-Ruhewert im Blut ungefähr?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Etwa 145 (Frauen) bis 170 U/l (Männer)"
+        },
+        {
+          "id": "b",
+          "text": "Etwa 1.000 U/l"
+        },
+        {
+          "id": "c",
+          "text": "Etwa 28.000 U/l"
+        },
+        {
+          "id": "d",
+          "text": "Etwa 5 U/l"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Referenzbereich nach IFCC, individuell verschieden.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-risiken-22",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist Kreatinkinase (CK)?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ein Enzym, das bei Schädigung von Muskelzellen ins Blut gelangt"
+        },
+        {
+          "id": "b",
+          "text": "Ein Hormon für Muskelwachstum"
+        },
+        {
+          "id": "c",
+          "text": "Ein Vitamin"
+        },
+        {
+          "id": "d",
+          "text": "Ein Stromparameter am Gerät"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wichtigster Blutwert, um Muskelschäden einzuschätzen.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-risiken-23",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welche CK-Werte wurden nach ausbelastendem Ganzkörper-EMS gemessen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Über 28.000 U/l"
+        },
+        {
+          "id": "b",
+          "text": "Höchstens 200 U/l"
+        },
+        {
+          "id": "c",
+          "text": "Etwa 500 U/l"
+        },
+        {
+          "id": "d",
+          "text": "Unter dem Ruhewert"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ausbelastende Ganzkörper-EMS kann extreme CK-Werte auslösen.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-risiken-24",
+      "unitId": "nisv-risiken",
+      "type": "multi",
+      "difficulty": 3,
+      "prompt": "Was erhöht die CK-Werte zusätzlich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Viel Oberkörpermuskulatur im Einsatz"
+        },
+        {
+          "id": "b",
+          "text": "Hohes Trainingsvolumen"
+        },
+        {
+          "id": "c",
+          "text": "Schnelle Bewegungen"
+        },
+        {
+          "id": "d",
+          "text": "Exzentrische Belastung"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Alle vier Punkte treffen auch bei EMS zu.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-risiken-25",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was ist der „repeated bout effect“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nach der ersten Einheit gewöhnt sich der Muskel – sehr hohe CK-Werte treten danach kaum mehr auf"
+        },
+        {
+          "id": "b",
+          "text": "Der Muskel wird bei jeder Einheit schwächer"
+        },
+        {
+          "id": "c",
+          "text": "Man muss jede Übung doppelt machen"
+        },
+        {
+          "id": "d",
+          "text": "Ein Stromfehler am Gerät"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Die Gewöhnung tritt schon nach einer Einheit ein und hält bis zu sechs Monate.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-risiken-26",
+      "unitId": "nisv-risiken",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wie lange hält der „repeated bout effect“ etwa an?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bis zu sechs Monate"
+        },
+        {
+          "id": "b",
+          "text": "Einen Tag"
+        },
+        {
+          "id": "c",
+          "text": "Eine Woche"
+        },
+        {
+          "id": "d",
+          "text": "Lebenslang"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Nach längerer Pause also wieder vorsichtig einsteigen.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-anamnese-01",
+      "unitId": "nisv-anamnese",
+      "type": "multi",
+      "difficulty": 1,
+      "prompt": "Wozu dient die Anamnese?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kontraindikationen erkennen"
+        },
+        {
+          "id": "b",
+          "text": "Entscheiden, ob Training möglich ist oder ein Arzt gefragt werden muss"
+        },
+        {
+          "id": "c",
+          "text": "Einen individuellen Trainingsplan erstellen"
+        },
+        {
+          "id": "d",
+          "text": "Den Kunden zum Kauf überreden"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Sie ist Grundlage für sicheres Training – und rechtlich Pflicht.",
+      "source": "IST 4.1.1"
+    },
+    {
+      "id": "nisv-anamnese-02",
+      "unitId": "nisv-anamnese",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Bereiche gehören in die Anamnese?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Gesundheitsdaten und Lebensstil"
+        },
+        {
+          "id": "b",
+          "text": "Kontraindikationen und Medikamente"
+        },
+        {
+          "id": "c",
+          "text": "Sport- und EMS-Erfahrung"
+        },
+        {
+          "id": "d",
+          "text": "Ziele und Motive"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Strukturiert und nach einheitlichem Schema, mit standardisiertem Bogen.",
+      "source": "IST 4.1.2"
+    },
+    {
+      "id": "nisv-anamnese-03",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Womit wird die Anamnese durchgeführt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mit einem standardisierten Anamnesebogen"
+        },
+        {
+          "id": "b",
+          "text": "Frei aus dem Gedächtnis"
+        },
+        {
+          "id": "c",
+          "text": "Nur per WhatsApp"
+        },
+        {
+          "id": "d",
+          "text": "Gar nicht schriftlich"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ein einheitlicher Bogen sorgt dafür, dass nichts vergessen wird.",
+      "source": "IST 4.1.2"
+    },
+    {
+      "id": "nisv-anamnese-04",
+      "unitId": "nisv-anamnese",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Medikamente werden typischerweise abgefragt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Betablocker"
+        },
+        {
+          "id": "b",
+          "text": "Blutverdünner"
+        },
+        {
+          "id": "c",
+          "text": "Insulin"
+        },
+        {
+          "id": "d",
+          "text": "Hustenbonbons"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Mögliche Wechselwirkungen mit dem Training bewerten.",
+      "source": "IST 4.1.2"
+    },
+    {
+      "id": "nisv-anamnese-05",
+      "unitId": "nisv-anamnese",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Ziele nennt das Skript für die Zieldefinition?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Gewichtsreduktion"
+        },
+        {
+          "id": "b",
+          "text": "Muskelaufbau"
+        },
+        {
+          "id": "c",
+          "text": "Rehabilitation/Prävention"
+        },
+        {
+          "id": "d",
+          "text": "Beschwerdelinderung, z. B. Rücken"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Dazu Leistungssteigerung. Klare Ziele motivieren und leiten die Planung.",
+      "source": "IST 4.1.2"
+    },
+    {
+      "id": "nisv-anamnese-06",
+      "unitId": "nisv-anamnese",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Worüber wird im Aufklärungsgespräch informiert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Funktionsweise und Wirkung der Impulse"
+        },
+        {
+          "id": "b",
+          "text": "Mögliche Nebenwirkungen wie starker Muskelkater"
+        },
+        {
+          "id": "c",
+          "text": "Verhalten vor und nach dem Training (Trinken, Regeneration)"
+        },
+        {
+          "id": "d",
+          "text": "Nur über den Preis"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Danach folgt die schriftliche Einverständniserklärung.",
+      "source": "IST 4.1.3"
+    },
+    {
+      "id": "nisv-anamnese-07",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welches Ziel hat die Intensität in der ersten Einheit?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Deutlich spürbar, aber nicht schmerzhaft"
+        },
+        {
+          "id": "b",
+          "text": "So hoch wie möglich"
+        },
+        {
+          "id": "c",
+          "text": "Gar nicht spürbar"
+        },
+        {
+          "id": "d",
+          "text": "Schmerz als Zeichen der Wirkung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Herausfordernd, aber kontrollierbar – auf Körpersprache und Feedback achten.",
+      "source": "IST 4.1.3"
+    },
+    {
+      "id": "nisv-anamnese-08",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie wird die Stromstärke gesteigert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nur kontrolliert und mit ständigem Feedback des Kunden"
+        },
+        {
+          "id": "b",
+          "text": "Automatisch alle 30 Sekunden"
+        },
+        {
+          "id": "c",
+          "text": "Ohne zu fragen, damit es effektiv ist"
+        },
+        {
+          "id": "d",
+          "text": "Nur vom Kunden selbst"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ständiges Feedback ist eine Sicherheitsregel.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-anamnese-09",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum soll der Kunde eine muskuläre Vorspannung aufbauen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Vor allem bei hohen Intensitäten schützt sie vor ruckartigen Kontraktionen"
+        },
+        {
+          "id": "b",
+          "text": "Damit der Strom besser leitet"
+        },
+        {
+          "id": "c",
+          "text": "Damit die Weste hält"
+        },
+        {
+          "id": "d",
+          "text": "Das ist nicht nötig"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Vorspannung ist ein Sicherheitsaspekt vor und während des Trainings.",
+      "source": "IST 4.4"
+    },
+    {
+      "id": "nisv-anamnese-10",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Was passiert in der allerersten Einheit zuerst?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Elektroden anlegen, Abläufe erklären, leichte Reize an einzelnen Muskelgruppen"
+        },
+        {
+          "id": "b",
+          "text": "Sofort Ganzkörper mit voller Stärke"
+        },
+        {
+          "id": "c",
+          "text": "Ein Krafttest an der Grenze"
+        },
+        {
+          "id": "d",
+          "text": "Ein Sprinttest"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Diese Impulsgewöhnung kommt vor der ersten Ganzkörper-Anwendung.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-11",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welche Übungen macht man in den ersten Einheiten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Statische Kraftübungen mit sehr niedriger Intensität"
+        },
+        {
+          "id": "b",
+          "text": "Sprünge mit hoher Intensität"
+        },
+        {
+          "id": "c",
+          "text": "Nur Laufband"
+        },
+        {
+          "id": "d",
+          "text": "Gar keine Bewegung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Danach folgen einfache dynamische Übungen, später spezifische.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-12",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie lange darf das Training in den ersten Einheiten höchstens dauern?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "12 Minuten"
+        },
+        {
+          "id": "b",
+          "text": "20 Minuten"
+        },
+        {
+          "id": "c",
+          "text": "30 Minuten"
+        },
+        {
+          "id": "d",
+          "text": "45 Minuten"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "In der Gewöhnung max. 12 Minuten, später max. 20 Minuten.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-13",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie lange darf eine EMS-Einheit grundsätzlich höchstens dauern?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "20 Minuten"
+        },
+        {
+          "id": "b",
+          "text": "12 Minuten"
+        },
+        {
+          "id": "c",
+          "text": "40 Minuten"
+        },
+        {
+          "id": "d",
+          "text": "60 Minuten"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Mehr als 20 Minuten pro Einheit sollten es nicht sein.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-14",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie oft pro Woche sollte in den ersten zehn Wochen trainiert werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Einmal"
+        },
+        {
+          "id": "b",
+          "text": "Zweimal"
+        },
+        {
+          "id": "c",
+          "text": "Dreimal"
+        },
+        {
+          "id": "d",
+          "text": "Täglich"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Erste zehn Wochen: eine EMS-Einheit pro Woche.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-15",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welches Belastungsempfinden (Skala 0–10) gilt für die ersten 2–3 Einheiten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Etwa 4–5"
+        },
+        {
+          "id": "b",
+          "text": "Etwa 8–9"
+        },
+        {
+          "id": "c",
+          "text": "10"
+        },
+        {
+          "id": "d",
+          "text": "0–1"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "„Leichte bis mittlere Kontraktionen – ein wenig anstrengend.“",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-16",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Auf welches Belastungsempfinden darf später gesteigert werden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Je nach Kunde auf 6–8"
+        },
+        {
+          "id": "b",
+          "text": "Immer auf 10"
+        },
+        {
+          "id": "c",
+          "text": "Höchstens 3"
+        },
+        {
+          "id": "d",
+          "text": "Nie über 4"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Steigerung sukzessive und an die Ziele angepasst.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-17",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was bedeutet auf der 10er-Skala eine „7“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mittlere bis starke Kontraktionen – anstrengend"
+        },
+        {
+          "id": "b",
+          "text": "Kein Strom spürbar"
+        },
+        {
+          "id": "c",
+          "text": "Maximale Anstrengung"
+        },
+        {
+          "id": "d",
+          "text": "Leichtes Kribbeln"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "0 = kein Strom, 10 = maximale Anstrengung.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-18",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was bedeutet auf der 10er-Skala eine „1–2“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kribbeln bzw. leichte Muskelzuckungen, sehr locker"
+        },
+        {
+          "id": "b",
+          "text": "Starke Kontraktionen"
+        },
+        {
+          "id": "c",
+          "text": "Maximale Anstrengung"
+        },
+        {
+          "id": "d",
+          "text": "Schmerz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Untere Stufen: Kribbeln, leichtes Zucken.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-19",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was soll der Kunde vor dem Training essen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Etwa 250 kcal kohlenhydratreich, rund zwei Stunden vorher"
+        },
+        {
+          "id": "b",
+          "text": "Nichts, nüchtern trainieren"
+        },
+        {
+          "id": "c",
+          "text": "Eine große Mahlzeit direkt davor"
+        },
+        {
+          "id": "d",
+          "text": "Nur Eiweißshake während des Trainings"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Mindesthinweis zur Ernährung laut Skript.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-20",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viel soll der Kunde rund ums Training trinken?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Mindestens 0,5 l jeweils ca. 60 Minuten vor und nach dem Training"
+        },
+        {
+          "id": "b",
+          "text": "Nichts, sonst leitet es schlechter"
+        },
+        {
+          "id": "c",
+          "text": "5 Liter direkt vor dem Training"
+        },
+        {
+          "id": "d",
+          "text": "Nur Kaffee"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ausreichend trinken – auch im Aufklärungsgespräch erwähnen.",
+      "source": "IST 4.5"
+    },
+    {
+      "id": "nisv-anamnese-21",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum soll die erste Einheit ohne Ausbelastung stattfinden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Weil gerade die erste Einheit extreme CK-Werte und Rhabdomyolyse auslösen kann"
+        },
+        {
+          "id": "b",
+          "text": "Weil das Gerät erst warmlaufen muss"
+        },
+        {
+          "id": "c",
+          "text": "Weil der Vertrag es verbietet"
+        },
+        {
+          "id": "d",
+          "text": "Damit der Kunde wiederkommt"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Nach der ersten Einheit schützt der repeated bout effect.",
+      "source": "IST 4.4–4.5"
+    },
+    {
+      "id": "nisv-anamnese-22",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was zeigt die Medikamentenanamnese bei Betablockern?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Herzfrequenz steigt unter Belastung weniger an"
+        },
+        {
+          "id": "b",
+          "text": "Der Kunde ermüdet nie"
+        },
+        {
+          "id": "c",
+          "text": "Die Haut leitet schlechter"
+        },
+        {
+          "id": "d",
+          "text": "Der Strom wirkt stärker"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Puls ist dann kein verlässliches Belastungssignal.",
+      "source": "IST 4.1.2"
+    },
+    {
+      "id": "nisv-anamnese-23",
+      "unitId": "nisv-anamnese",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Rahmenbedingungen gehören zu einer professionellen Einheit?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Angenehme Raumtemperatur"
+        },
+        {
+          "id": "b",
+          "text": "Ruhe und störungsfreie Umgebung"
+        },
+        {
+          "id": "c",
+          "text": "Geprüftes Gerät"
+        },
+        {
+          "id": "d",
+          "text": "Laute Musik ab 100 dB"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Organisation, Technik und Pädagogik greifen ineinander.",
+      "source": "IST 4.1.3"
+    },
+    {
+      "id": "nisv-anamnese-24",
+      "unitId": "nisv-anamnese",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was gehört NICHT zur Anamnese der allgemeinen Gesundheitsdaten?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Bankverbindung"
+        },
+        {
+          "id": "b",
+          "text": "Alter und Körpergewicht"
+        },
+        {
+          "id": "c",
+          "text": "Schlaf und Stress"
+        },
+        {
+          "id": "d",
+          "text": "Bekannte Erkrankungen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gesundheitsdaten: persönliche Daten, Gesundheitszustand, Lebensstil, Einschränkungen.",
+      "source": "IST 4.1.2"
+    },
+    {
+      "id": "nisv-parameter-01",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welcher Impulstyp wird im sportlichen EMS meist verwendet?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Biphasisch (Wechselstrom-Impulse)"
+        },
+        {
+          "id": "b",
+          "text": "Monophasisch (Gleichstrom)"
+        },
+        {
+          "id": "c",
+          "text": "Hochfrequenter Dauerstrom"
+        },
+        {
+          "id": "d",
+          "text": "Ultraschall"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Biphasisch: gleich großer positiver und negativer Anteil.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-02",
+      "unitId": "nisv-parameter",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Warum biphasische Impulse?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kaum Hautreizungen"
+        },
+        {
+          "id": "b",
+          "text": "Weniger Schmerz und stärkere Kontraktion"
+        },
+        {
+          "id": "c",
+          "text": "Weil sie billiger sind"
+        },
+        {
+          "id": "d",
+          "text": "Weil sie unsichtbar sind"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Deshalb auch in den meisten Studien verwendet. Monophasisch eher in der Medizin.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-03",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie hängen Stromstärke und Kontraktion zusammen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Linear: mehr Strom, stärkere Kontraktion"
+        },
+        {
+          "id": "b",
+          "text": "Gar nicht"
+        },
+        {
+          "id": "c",
+          "text": "Umgekehrt: mehr Strom, schwächere Kontraktion"
+        },
+        {
+          "id": "d",
+          "text": "Nur ab 1.000 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Deshalb muss die Stromstärke sorgfältig dosiert werden.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-04",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Warum lässt sich nicht sagen, wie viel Strom am Muskel ankommt?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Gewebe haben unterschiedliche Widerstände"
+        },
+        {
+          "id": "b",
+          "text": "Weil das Gerät keine Anzeige hat"
+        },
+        {
+          "id": "c",
+          "text": "Weil Strom verdunstet"
+        },
+        {
+          "id": "d",
+          "text": "Weil der Muskel Strom speichert"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Haut, Fett und Muskel haben verschiedene Widerstände – daher individuell ermitteln.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-05",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie ermittelt man die passende Stromstärke für einen Kunden?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Individuell – maximal tolerierbare Stärke testen und regelmäßig nachjustieren"
+        },
+        {
+          "id": "b",
+          "text": "Für alle gleich nach Tabelle"
+        },
+        {
+          "id": "c",
+          "text": "Nach Körpergröße"
+        },
+        {
+          "id": "d",
+          "text": "Nach Alter"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Das tolerierbare Maximum ist individuell und kann sich ändern.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-06",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Bei wie viel Prozent des individuellen Maximums sind Bewegungen gut möglich?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Etwa 70 %"
+        },
+        {
+          "id": "b",
+          "text": "Etwa 100 %"
+        },
+        {
+          "id": "c",
+          "text": "Etwa 20 %"
+        },
+        {
+          "id": "d",
+          "text": "Etwa 150 %"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "An der Schmerzgrenze sind kaum willentliche Bewegungen möglich.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-07",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was beschreibt die Impulsbreite?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Wie lange ein einzelner Impuls dauert – länger erreicht tieferes Gewebe"
+        },
+        {
+          "id": "b",
+          "text": "Wie viele Impulse pro Sekunde kommen"
+        },
+        {
+          "id": "c",
+          "text": "Die Größe der Elektrode"
+        },
+        {
+          "id": "d",
+          "text": "Die Pause zwischen den Übungen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gemessen in Mikrosekunden (µs).",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-08",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welche Impulsbreite gilt als besonders angenehm?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "250–400 µs"
+        },
+        {
+          "id": "b",
+          "text": "10–50 µs"
+        },
+        {
+          "id": "c",
+          "text": "1.000–2.000 µs"
+        },
+        {
+          "id": "d",
+          "text": "Über 1 Sekunde"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Dort entstehen die geringsten Schmerzen.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-09",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was beschreibt die Stimulationsfrequenz?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Die Zahl der Einzelimpulse pro Sekunde während der Anspannung"
+        },
+        {
+          "id": "b",
+          "text": "Die Dauer eines Impulses"
+        },
+        {
+          "id": "c",
+          "text": "Die Anzahl der Trainings pro Woche"
+        },
+        {
+          "id": "d",
+          "text": "Die Pause zwischen zwei Sätzen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Gemessen in Hertz, möglich sind etwa 2–200 Hz.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-10",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ab welcher Frequenz kommt es zu tetanischen (verschmolzenen) Kontraktionen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ab etwa 20 Hz"
+        },
+        {
+          "id": "b",
+          "text": "Ab 1 Hz"
+        },
+        {
+          "id": "c",
+          "text": "Ab 500 Hz"
+        },
+        {
+          "id": "d",
+          "text": "Ab 2.000 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Bei 20 Hz werden aber nur rund 65 % der möglichen Kraft erreicht.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-11",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Ab welcher Frequenz entstehen Reize, auf die der Muskel meist mit Hypertrophie reagiert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ab etwa 50 Hz"
+        },
+        {
+          "id": "b",
+          "text": "Ab 5 Hz"
+        },
+        {
+          "id": "c",
+          "text": "Ab 10 Hz"
+        },
+        {
+          "id": "d",
+          "text": "Ab 1.000 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Empfehlung für Kraft: 50–100 Hz.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-12",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welcher Frequenzbereich wird für Kraft wissenschaftlich empfohlen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "50–100 Hz"
+        },
+        {
+          "id": "b",
+          "text": "5–10 Hz"
+        },
+        {
+          "id": "c",
+          "text": "200–400 Hz"
+        },
+        {
+          "id": "d",
+          "text": "Über 1.000 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Hier lässt sich am ehesten die maximale Kraft entfalten.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-13",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist der „duty cycle“?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Das Verhältnis von Impulszeit (on) zu Pause (off)"
+        },
+        {
+          "id": "b",
+          "text": "Die Lebensdauer des Geräts"
+        },
+        {
+          "id": "c",
+          "text": "Die Zahl der Kunden pro Tag"
+        },
+        {
+          "id": "d",
+          "text": "Das Waschprogramm der Westen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Beispiel: 10 s on / 20 s off = Ratio 1:2.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-14",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Für wen eignet sich eine on/off-Ratio von 1:1?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Nur für fittere bzw. EMS-erfahrene Personen"
+        },
+        {
+          "id": "b",
+          "text": "Für alle Einsteiger"
+        },
+        {
+          "id": "c",
+          "text": "Für Senioren in der ersten Woche"
+        },
+        {
+          "id": "d",
+          "text": "Für Schwangere"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Einsteiger brauchen längere Pausen.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-15",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Welche Ratios empfiehlt das Skript für Einsteiger?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Längere Pausen, etwa 1:2 bis 1:9"
+        },
+        {
+          "id": "b",
+          "text": "1:1"
+        },
+        {
+          "id": "c",
+          "text": "2:1"
+        },
+        {
+          "id": "d",
+          "text": "Ohne Pause"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Je untrainierter, desto länger die Pause.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-16",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "10 s Impuls, 20 s Pause – welche Ratio ist das?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "1:2"
+        },
+        {
+          "id": "b",
+          "text": "2:1"
+        },
+        {
+          "id": "c",
+          "text": "1:1"
+        },
+        {
+          "id": "d",
+          "text": "1:10"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "on : off = 10 : 20 = 1 : 2.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-17",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie wählt man Impulsan- und -abstieg häufig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Langsamerer Anstieg (2–4 s) als Abstieg (1–2 s)"
+        },
+        {
+          "id": "b",
+          "text": "Anstieg sofort, Abstieg 10 s"
+        },
+        {
+          "id": "c",
+          "text": "Beides 0 Sekunden"
+        },
+        {
+          "id": "d",
+          "text": "Abstieg länger als Anstieg"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Ein langsamer Anstieg macht den Impuls angenehmer.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-18",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum sollen Impuls und Übung synchron laufen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Damit die Stimulation genau in die Bewegung bzw. Anspannung fällt"
+        },
+        {
+          "id": "b",
+          "text": "Wegen der Musik"
+        },
+        {
+          "id": "c",
+          "text": "Damit das Gerät nicht überhitzt"
+        },
+        {
+          "id": "d",
+          "text": "Das ist egal"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "On/off so wählen, dass die Impulse zur Übung passen.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-parameter-19",
+      "unitId": "nisv-parameter",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Frequenzbereiche nutzt EMS im Sport?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Über 50 Hz für Kraft und Leistung"
+        },
+        {
+          "id": "b",
+          "text": "Unter 20 Hz zur Regeneration"
+        },
+        {
+          "id": "c",
+          "text": "Nur 1.000 Hz"
+        },
+        {
+          "id": "d",
+          "text": "Nur 5 Hz"
+        }
+      ],
+      "correct": [
+        "a",
+        "b"
+      ],
+      "explanation": "Hauptunterschied ist die Frequenz.",
+      "source": "IST 4.6"
+    },
+    {
+      "id": "nisv-parameter-20",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was sagt die Studienlage zu EMS für die Regeneration?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Es fehlen belastbare Belege für einen klaren Vorteil"
+        },
+        {
+          "id": "b",
+          "text": "EMS halbiert die Regenerationszeit"
+        },
+        {
+          "id": "c",
+          "text": "Regeneration ist nur mit EMS möglich"
+        },
+        {
+          "id": "d",
+          "text": "EMS verhindert jeden Muskelkater"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Viele Profis nutzen es trotzdem – objektive Belege fehlen.",
+      "source": "IST 4.6"
+    },
+    {
+      "id": "nisv-parameter-21",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was ist für den Übertrag der EMS-Kraft auf die Sportleistung wichtig?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "EMS mit spezifischen Übungen wie Sprints, Sprüngen, Würfen kombinieren"
+        },
+        {
+          "id": "b",
+          "text": "Möglichst passiv liegen"
+        },
+        {
+          "id": "c",
+          "text": "Nur hohe Frequenzen"
+        },
+        {
+          "id": "d",
+          "text": "Nur Bauchgurte"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Mehr Kraft allein verbessert nicht automatisch Sprint oder Sprung.",
+      "source": "IST 4.6"
+    },
+    {
+      "id": "nisv-parameter-22",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welche Einstellung empfiehlt die Tabelle für Kraftaufbau bei trainierten Sportlern?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "80 Hz, über 400 µs, mind. 15 Min. pro Einheit"
+        },
+        {
+          "id": "b",
+          "text": "10 Hz, 50 µs, 5 Min."
+        },
+        {
+          "id": "c",
+          "text": "20 Hz, 100 µs, 2 Stunden"
+        },
+        {
+          "id": "d",
+          "text": "200 Hz ohne Pause"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Wichtig: starke willentliche und stromgesteuerte Kontraktionen.",
+      "source": "IST 4.6"
+    },
+    {
+      "id": "nisv-parameter-23",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welche Einstellung empfiehlt die Tabelle für Ausdauer?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "20–30 Hz, 400 µs, 2 s on/2 s off, „lockere“ Kontraktionen"
+        },
+        {
+          "id": "b",
+          "text": "80 Hz, 4 s on/4 s off"
+        },
+        {
+          "id": "c",
+          "text": "150 Hz Dauerreiz"
+        },
+        {
+          "id": "d",
+          "text": "5 Hz ohne Pause"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Max. 1 Stunde pro Tag.",
+      "source": "IST 4.6"
+    },
+    {
+      "id": "nisv-parameter-24",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welche Frequenz nennt die Tabelle für atrophierte Muskeln nach Verletzungen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Etwa 10 Hz mit „leichten“ Kontraktionen"
+        },
+        {
+          "id": "b",
+          "text": "80 Hz maximal"
+        },
+        {
+          "id": "c",
+          "text": "150 Hz"
+        },
+        {
+          "id": "d",
+          "text": "1.000 Hz"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "10 Hz, 400 µs, 2 s on/2 s off – sanft.",
+      "source": "IST 4.6"
+    },
+    {
+      "id": "nisv-parameter-25",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Wozu führt eine Stimulation über ca. 70 Hz bei lokaler EMS laut Skript?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Zu sehr schneller Ermüdung (neuromuskuläre Fehlfunktion)"
+        },
+        {
+          "id": "b",
+          "text": "Zu besonders langem Durchhalten"
+        },
+        {
+          "id": "c",
+          "text": "Zu Fettverbrennung ohne Ermüdung"
+        },
+        {
+          "id": "d",
+          "text": "Zu keiner Wirkung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Für lokale isometrische EMS gilt 20–50 Hz als optimal.",
+      "source": "IST 2.4"
+    },
+    {
+      "id": "nisv-parameter-26",
+      "unitId": "nisv-parameter",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Welcher Bereich von Impulsbreiten ist laut Parameter-Tabelle einstellbar?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "50–400 µs"
+        },
+        {
+          "id": "b",
+          "text": "1–5 µs"
+        },
+        {
+          "id": "c",
+          "text": "1–10 ms"
+        },
+        {
+          "id": "d",
+          "text": "Über 1 Sekunde"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Empfohlen sind davon 250–400 µs.",
+      "source": "IST 4.3.1"
+    },
+    {
+      "id": "nisv-uebungen-01",
+      "unitId": "nisv-uebungen",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Nach welchen Prinzipien wählt man EMS-Übungen aus?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Ganzkörperorientierung"
+        },
+        {
+          "id": "b",
+          "text": "Funktionalität"
+        },
+        {
+          "id": "c",
+          "text": "Individualisierung"
+        },
+        {
+          "id": "d",
+          "text": "Progression und Sicherheit"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "Fünf Grundprinzipien der Übungsauswahl.",
+      "source": "IST 4.2.1"
+    },
+    {
+      "id": "nisv-uebungen-02",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viel Muskulatur wird beim WB-EMS gleichzeitig stimuliert?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Bis zu 90 %"
+        },
+        {
+          "id": "b",
+          "text": "Etwa 10 %"
+        },
+        {
+          "id": "c",
+          "text": "Etwa 30 %"
+        },
+        {
+          "id": "d",
+          "text": "Nur der Bauch"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Deshalb großflächige Mehrgelenksübungen.",
+      "source": "IST 4.2.1"
+    },
+    {
+      "id": "nisv-uebungen-03",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist wichtiger als hohe Intensität oder komplexe Übungen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Saubere Bewegungsausführung"
+        },
+        {
+          "id": "b",
+          "text": "Laute Musik"
+        },
+        {
+          "id": "c",
+          "text": "Viele Wiederholungen"
+        },
+        {
+          "id": "d",
+          "text": "Schnelles Tempo"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Strom verändert das Belastungsempfinden – Technik geht vor.",
+      "source": "IST 4.2.1"
+    },
+    {
+      "id": "nisv-uebungen-04",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 1,
+      "prompt": "Wie ist eine EMS-Einheit methodisch aufgebaut?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Einstieg, Hauptteil, Ausklang"
+        },
+        {
+          "id": "b",
+          "text": "Nur Hauptteil"
+        },
+        {
+          "id": "c",
+          "text": "Ausklang, Hauptteil, Einstieg"
+        },
+        {
+          "id": "d",
+          "text": "Aufwärmen 30 Min., dann Stretching"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Einstieg statisch, Hauptteil dynamisch, Ausklang locker.",
+      "source": "IST 4.2.3"
+    },
+    {
+      "id": "nisv-uebungen-05",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was passiert im Einstieg der Einheit?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Einfache, statische Übungen, um in den Reiz „hineinzufühlen“"
+        },
+        {
+          "id": "b",
+          "text": "Sprünge mit voller Intensität"
+        },
+        {
+          "id": "c",
+          "text": "Ausdauerlauf"
+        },
+        {
+          "id": "d",
+          "text": "Dehnen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "So gewöhnt sich der Körper an den Reiz.",
+      "source": "IST 4.2.3"
+    },
+    {
+      "id": "nisv-uebungen-06",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Wie viele Übungen umfasst der Hauptteil üblicherweise?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "6–8 Übungen"
+        },
+        {
+          "id": "b",
+          "text": "1–2 Übungen"
+        },
+        {
+          "id": "c",
+          "text": "15–20 Übungen"
+        },
+        {
+          "id": "d",
+          "text": "Nur eine Übung"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Dynamische Mehrgelenksübungen – je nach Ziel.",
+      "source": "IST 4.2.3"
+    },
+    {
+      "id": "nisv-uebungen-07",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was gehört in den Ausklang?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Leichte Beweglichkeits- oder Atemübungen"
+        },
+        {
+          "id": "b",
+          "text": "Maximalkrafttest"
+        },
+        {
+          "id": "c",
+          "text": "Sprints"
+        },
+        {
+          "id": "d",
+          "text": "Neue, schwierige Übungen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Puls senken, Muskulatur entspannen.",
+      "source": "IST 4.2.3"
+    },
+    {
+      "id": "nisv-uebungen-08",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Worauf liegt der Fokus im Gesundheits- und Präventionstraining?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Haltung, Rumpfstabilität, moderate Ganzkörperübungen"
+        },
+        {
+          "id": "b",
+          "text": "Sprungkraft"
+        },
+        {
+          "id": "c",
+          "text": "Maximalkraft"
+        },
+        {
+          "id": "d",
+          "text": "Problemzonen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Je Zielgruppe andere Schwerpunkte.",
+      "source": "IST 4.2.2"
+    },
+    {
+      "id": "nisv-uebungen-09",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Worauf liegt der Fokus bei Fitness- und Figurtraining?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Dynamische Grundübungen plus Bauch, Beine, Po"
+        },
+        {
+          "id": "b",
+          "text": "Nur Atemübungen"
+        },
+        {
+          "id": "c",
+          "text": "Gleichgewicht"
+        },
+        {
+          "id": "d",
+          "text": "Sportartspezifische Würfe"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Grundübungen ergänzt um Problemzonen.",
+      "source": "IST 4.2.2"
+    },
+    {
+      "id": "nisv-uebungen-10",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist für Leistungssportler typisch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Sportartspezifische Bewegungen wie Sprünge oder Rotationen"
+        },
+        {
+          "id": "b",
+          "text": "Nur statische Übungen"
+        },
+        {
+          "id": "c",
+          "text": "Nur Liegen"
+        },
+        {
+          "id": "d",
+          "text": "Nur Dehnen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "So steigt der Übertrag auf die Sportart.",
+      "source": "IST 4.2.2"
+    },
+    {
+      "id": "nisv-uebungen-11",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was ist für Reha und ältere Erwachsene typisch?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Einfache, kontrollierte Bewegungen mit Fokus auf Gelenkschonung und Gleichgewicht"
+        },
+        {
+          "id": "b",
+          "text": "Sprünge und Sprints"
+        },
+        {
+          "id": "c",
+          "text": "Maximale Intensität"
+        },
+        {
+          "id": "d",
+          "text": "Komplexe Partnerübungen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Funktionale Kraft, Gleichgewicht, gelenkschonend.",
+      "source": "IST 4.2.2"
+    },
+    {
+      "id": "nisv-uebungen-12",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was bedeutet Progression bei der Übungsauswahl?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Von einfachen zu komplexeren Bewegungen steigern"
+        },
+        {
+          "id": "b",
+          "text": "Jede Woche doppelte Stromstärke"
+        },
+        {
+          "id": "c",
+          "text": "Immer dieselbe Übung"
+        },
+        {
+          "id": "d",
+          "text": "Mit der schwersten Übung beginnen"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "So vermeidet man Überforderung.",
+      "source": "IST 4.2.1"
+    },
+    {
+      "id": "nisv-uebungen-13",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Was bedeutet Funktionalität?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Übertragbarkeit auf Alltag oder Sport, z. B. Heben, Tragen, Aufstehen"
+        },
+        {
+          "id": "b",
+          "text": "Möglichst ungewöhnliche Übungen"
+        },
+        {
+          "id": "c",
+          "text": "Nur Maschinen"
+        },
+        {
+          "id": "d",
+          "text": "Nur isolierte Muskeln"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Übungen sollen im echten Leben helfen.",
+      "source": "IST 4.2.1"
+    },
+    {
+      "id": "nisv-uebungen-14",
+      "unitId": "nisv-uebungen",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Übungen gehören laut Katalog zu den Beinübungen im Stand?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Kniebeuge"
+        },
+        {
+          "id": "b",
+          "text": "Ausfallschritt"
+        },
+        {
+          "id": "c",
+          "text": "Sidestep"
+        },
+        {
+          "id": "d",
+          "text": "Bankdrücken"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Bankdrücken ist eine Brustübung auf der Matte.",
+      "source": "IST 4.2.4"
+    },
+    {
+      "id": "nisv-uebungen-15",
+      "unitId": "nisv-uebungen",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Übungen trainieren vor allem den Rumpf auf der Matte?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Plank"
+        },
+        {
+          "id": "b",
+          "text": "Seitstütz"
+        },
+        {
+          "id": "c",
+          "text": "Brücke"
+        },
+        {
+          "id": "d",
+          "text": "Butterfly"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Butterfly gehört zu Brust/Rücken.",
+      "source": "IST 4.2.4"
+    },
+    {
+      "id": "nisv-uebungen-16",
+      "unitId": "nisv-uebungen",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Übungen zählen zu Brust/Rücken?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Rudern"
+        },
+        {
+          "id": "b",
+          "text": "Butterfly"
+        },
+        {
+          "id": "c",
+          "text": "Butterfly Reverse"
+        },
+        {
+          "id": "d",
+          "text": "Mountain Climber"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Mountain Climber ist eine Rumpfübung.",
+      "source": "IST 4.2.4"
+    },
+    {
+      "id": "nisv-uebungen-17",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 3,
+      "prompt": "Was ist bei EMS-unterstützten Kniebeugen ein Vorteil, aber auch eine Grenze?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Schwachstellen wie Hüft- und Rückenstrecker werden mitstimuliert – die Koordination verbessert sich dadurch aber nicht automatisch"
+        },
+        {
+          "id": "b",
+          "text": "Kniebeugen werden überflüssig"
+        },
+        {
+          "id": "c",
+          "text": "Man braucht keine Technik mehr"
+        },
+        {
+          "id": "d",
+          "text": "Es gibt keinen Vorteil"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Passive Stimulation von Schwachpunkten dosiert einsetzen.",
+      "source": "IST 4.6"
+    },
+    {
+      "id": "nisv-uebungen-18",
+      "unitId": "nisv-uebungen",
+      "type": "multi",
+      "difficulty": 2,
+      "prompt": "Welche Übungen macht man mit Partner?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Rudern mit Partner"
+        },
+        {
+          "id": "b",
+          "text": "Rotation mit Partner"
+        },
+        {
+          "id": "c",
+          "text": "Antirotation mit Widerstand"
+        },
+        {
+          "id": "d",
+          "text": "Crunch allein"
+        }
+      ],
+      "correct": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Partnerübungen bringen Widerstand und Abwechslung.",
+      "source": "IST 4.2.4"
+    },
+    {
+      "id": "nisv-uebungen-19",
+      "unitId": "nisv-uebungen",
+      "type": "single",
+      "difficulty": 2,
+      "prompt": "Warum kombiniert man EMS mit funktionellen Bewegungen?",
+      "image": null,
+      "options": [
+        {
+          "id": "a",
+          "text": "Muskeln, Koordination und Alltagsfähigkeiten werden gleichzeitig geschult"
+        },
+        {
+          "id": "b",
+          "text": "Damit der Strom schwächer wirkt"
+        },
+        {
+          "id": "c",
+          "text": "Weil Bewegung Pflicht im Vertrag ist"
+        },
+        {
+          "id": "d",
+          "text": "Ohne Bewegung funktioniert das Gerät nicht"
+        }
+      ],
+      "correct": [
+        "a"
+      ],
+      "explanation": "Reiz + Bewegung = vielseitiges, wirksames Training.",
+      "source": "IST 4.2"
     }
   ]
 }
