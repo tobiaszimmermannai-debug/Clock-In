@@ -78,3 +78,20 @@ Heimatstudios stimmt zu/lehnt ab → Dominik gibt frei (Tobi bekommt nur Info pe
    Ziel ~150–200 Fragen (single/multi) mit Erklärung und Quelle, plus Karteikarten-Decks. Inhalte aus dem
    Schulungsmaterial des Nutzers; fehlt es, Entwurf aus Verordnung + Richtlinie, vom Nutzer gegenzulesen.
    `docs/wissen-fragen-und-loesungen.md` ergänzen, `wissen.test.ts` prüft Konsistenz (eindeutige IDs, korrekte Optionen).
+
+## Paket 6 – Aufgaben: Punkte, Serie, Blitzi (Notes-Repo, danach `sync:clockin`)
+Zuerst je Punkt einen Test schreiben, der den Fehler zeigt (`gamification/stats.test.ts`, `server/aufgaben.test.ts`).
+1. **Abhaken → wieder öffnen → abhaken**: Die Gutschrift wird gelöscht und mit neuem Datum neu angelegt
+   (`state.tsx` `recordCompletion`). Damit hält eine einzige Aufgabe die Serie täglich am Leben und alte Punkte wandern
+   in die aktuelle Woche. Lösung: Gutschrift serverseitig (RPC/Trigger), je Aufgabe und Person nur einmal; erneutes
+   Abhaken behält das erste Datum; Zurücknehmen nur am selben Tag punktwirksam. Wiederkehrende Aufgaben: je Fälligkeit einmal.
+2. **Punkte gehen bei Netzfehler still verloren**: `store.setCompletion(...).catch(() => undefined)` – Anzeige zeigt
+   Punkte, Server hat sie nicht. Lösung: Warteschlange mit erneutem Versuch + sichtbarer Hinweis.
+3. **Punkte werden nur in der App gerechnet** (Tageslimit 3 in `pointsByDay`), Rangliste/Telegram rechnen separat
+   (`server/aufgaben.ts`). Eine gemeinsame Quelle: View/RPC `note_points(from, to)`; App und Telegram nutzen sie.
+4. **Team-Wertung**: teilt durch alle Personen des Heimatstudios – auch Urlaub, Krank, Schule, ohne Zeiterfassung.
+   Teiler = Personen mit mindestens einem Arbeitstag in der Woche (aus `workDays`).
+5. **Serie/Blitzi**: ein verpasster Arbeitstag setzt von Stufe 29 auf 1. Vorschlag: 1 „Akku-Reserve“ je Woche
+   (verdient durch volles Tagesziel), die einen verpassten Tag überbrückt; Anzeige „Reserve: 1“.
+   Prüfen: Tag mit Arbeitsschicht, aber krank/früher gegangen → neutral.
+6. **Kleinkram**: `speech()` nutzt UTC-Tag statt Berliner Tag; `weekStart` nutzt Gerätezeit – auf Berliner Zeit vereinheitlichen.

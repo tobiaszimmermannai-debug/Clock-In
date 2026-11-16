@@ -80,18 +80,18 @@ Wer ist als Trainer dein erster Ansprechpartner?
 **werte-07** · S2 🔢 · _QM Geschäftsführung_  
 Für welche Themen ist Domi verantwortlich?  
 - ✅ **Urlaubsplanung**
-- ✅ **Lohnbuchhaltung**
+- Lohnbuchhaltung
 - ✅ **Zahlungsverkehr**
 - Marketing und Design
 - Inkasso
-> Domi: Zahlungsverkehr, Urlaubsplanung, Finanz- und Lohnbuchhaltung.
+> Domi: Zahlungsverkehr, Urlaubsplanung und Finanzbuchhaltung – nicht die Lohnbuchhaltung.
 
 **werte-08** · S2 🔢 · _QM Geschäftsführung_  
 Für welche Themen ist Tobi verantwortlich?  
 - ✅ **Talents gewinnen und einstellen**
 - ✅ **Bestellungen und Disposition**
 - ✅ **Ausbildung und Weiterbildung**
-- Lohnbuchhaltung
+- Zahlungsverkehr
 > Tobi: u. a. Talents gewinnen, Bestellungen/Disposition, Aus- und Weiterbildung, Inkasso, Controlling, Marketing.
 
 **werte-09** · S3 · _QM Geschäftsführung_  

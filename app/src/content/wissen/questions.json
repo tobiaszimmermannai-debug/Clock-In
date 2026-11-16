@@ -235,10 +235,9 @@
       ],
       "correct": [
         "a",
-        "b",
         "c"
       ],
-      "explanation": "Domi: Zahlungsverkehr, Urlaubsplanung, Finanz- und Lohnbuchhaltung.",
+      "explanation": "Domi: Zahlungsverkehr, Urlaubsplanung und Finanzbuchhaltung – nicht die Lohnbuchhaltung.",
       "source": "QM Geschäftsführung"
     },
     {
@@ -263,7 +262,7 @@
         },
         {
           "id": "d",
-          "text": "Lohnbuchhaltung"
+          "text": "Zahlungsverkehr"
         }
       ],
       "correct": [
