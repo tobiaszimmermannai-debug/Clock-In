@@ -3,7 +3,9 @@ import { CARDS, composeLesson, DECKS, earnsXp, isCorrect, levelOf, nextProgress,
 
 describe("Wissen-Inhalte", () => {
   it("alle richtigen Antworten existieren, IDs eindeutig, Units und Decks passen", () => {
-    expect(QUESTIONS).toHaveLength(220);
+    expect(QUESTIONS).toHaveLength(426);
+    expect(QUESTIONS.filter((q) => topicOf(UNITS.find((u) => u.id === q.unitId)!) === "nisv")).toHaveLength(206);
+    for (const u of UNITS) expect(QUESTIONS.filter((q) => q.unitId === u.id), u.id).toHaveLength(u.questionCount);
     expect(new Set(QUESTIONS.map((q) => q.id)).size).toBe(QUESTIONS.length);
     for (const q of QUESTIONS) {
       const ids = new Set(q.options.map((o) => o.id));
@@ -35,7 +37,7 @@ describe("Lernlogik", () => {
   });
   it("Unit 2 erst ab 80 % Box 2 in Unit 1", () => {
     const p: ProgressMap = new Map();
-    expect([...unlockedUnits(p)]).toEqual([UNITS[0].id]);
+    expect([...unlockedUnits(p)]).toEqual(TOPICS.map((t) => UNITS.find((u) => topicOf(u) === t.id)!.id)); // je Thema die erste Lektion
     const qs = QUESTIONS.filter((q) => q.unitId === UNITS[0].id);
     qs.slice(0, Math.ceil(qs.length * 0.8)).forEach((q) => p.set(q.id, { item_id: q.id, item_type: "question", box: 2, due_at: "2099-01-01T00:00:00Z", times_correct: 1, times_wrong: 0 }));
     expect(unlockedUnits(p).has(UNITS[1].id)).toBe(true);

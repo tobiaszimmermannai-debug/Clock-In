@@ -1,6 +1,6 @@
 # Wissen-Reiter – Übersicht Fragen & Lösungen
 
-**220 Fragen** in 14 Lektionen · **86 Karteikarten** in 26 Decks · Stand 2026.11.09
+**426 Fragen** in 23 Lektionen (davon 206 im Thema Strahlenschutz/NiSV, Teil 3) · **86 Karteikarten** in 26 Decks · Stand 2026.11.16
 
 Legende: ✅ = richtige Antwort · 🔢 = mehrere Antworten richtig · 🖼️ = mit Bild · Schwierigkeit 1 leicht / 2 mittel / 3 schwer
 
@@ -20,6 +20,15 @@ Legende: ✅ = richtige Antwort · 🔢 = mehrere Antworten richtig · 🖼️ =
 | 🥗 Ernährung – Grundlagen | 15 | 2 | 10 | 3 | 2 |
 | 🩺 Kontraindikatoren | 16 | 2 | 8 | 6 | 4 |
 | 📄 Verträge, Zahlungen & Recht | 18 | 2 | 12 | 4 | 2 |
+| 🔌 Strom & Physik (NiSV) | 30 | 6 | 20 | 4 | 4 |
+| 📜 EMS gestern & heute (NiSV) | 12 | 3 | 8 | 1 | 4 |
+| 🧠 Wirkung auf Nerv & Muskel (NiSV) | 26 | 2 | 15 | 9 | 2 |
+| ⚖️ NiSV: Recht & Pflichten (NiSV) | 22 | 4 | 16 | 2 | 8 |
+| 🦺 Kleidung, Geräte & Hygiene (NiSV) | 21 | 3 | 17 | 1 | 8 |
+| 🩺 Risiken & Kontraindikationen (NiSV) | 26 | 3 | 17 | 6 | 8 |
+| 📋 Anamnese, Aufklärung & Einstieg (NiSV) | 24 | 3 | 19 | 2 | 6 |
+| 🎛️ Parameter & Einstellungen (NiSV) | 26 | 0 | 17 | 9 | 2 |
+| 🤸 Übungen & Trainingsaufbau (NiSV) | 19 | 1 | 17 | 1 | 5 |
 
 ---
 
@@ -2053,3 +2062,1685 @@ Decks mit ⚠️ = Thema steht im Einarbeitungsbogen, Inhalt fehlt in den Unterl
 |---|---|---|
 | Was passiert in Woche 6? | Eigenen Aufgabenbereich im Studio übernehmen und allen vorstellen; eigenen Workshop übernehmen. | Einarbeitung W6 |
 | Wie geht es nach Woche 6 weiter? | Stärken & Schwächen der letzten Wochen zusammenfassen, passende Übungen/Times/Workshops bis inkl. Woche 10 fest in Magic Line einplanen. | Einarbeitung W6 |
+
+---
+
+## Teil 3 – Strahlenschutz (NiSV) · Quelle: IST-Studieninstitut „EMS/GEMS“ (02/2026)
+
+> Fehler im Skript, die bewusst **nicht** übernommen wurden: Formelzeichen und Einheit des Widerstands sind vertauscht (richtig: Formelzeichen R, Einheit Ohm Ω); Haushaltsspannung einmal 230 V, einmal 240 V (richtig: 230 V).
+
+
+### N1. 🔌 Strom & Physik (IST 1)
+
+
+**nisv-physik-01** · S1 · _IST 1.6_  
+In welcher Einheit wird die elektrische Stromstärke angegeben?  
+- ✅ **Ampere (A)**
+- Volt (V)
+- Watt (W)
+- Ohm (Ω)
+> Stromstärke: Formelzeichen I, Einheit Ampere.
+
+**nisv-physik-02** · S1 · _IST 1.7_  
+In welcher Einheit wird die elektrische Spannung angegeben?  
+- ✅ **Volt (V)**
+- Ampere (A)
+- Hertz (Hz)
+- Watt (W)
+> Spannung: Formelzeichen U, Einheit Volt.
+
+**nisv-physik-03** · S1 · _IST 1.9_  
+In welcher Einheit wird die elektrische Leistung angegeben?  
+- ✅ **Watt (W)**
+- Volt (V)
+- Ampere (A)
+- Ohm (Ω)
+> Leistung: Formelzeichen P, Einheit Watt.
+
+**nisv-physik-04** · S2 · _IST 1.6_  
+Welches Formelzeichen hat die Stromstärke?  
+- ✅ **I**
+- U
+- P
+- R
+> I = Stromstärke, U = Spannung, P = Leistung, R = Widerstand.
+
+**nisv-physik-05** · S2 · _IST 1.7_  
+Welches Formelzeichen hat die Spannung?  
+- ✅ **U**
+- I
+- V
+- S
+> Die Spannung hat das Formelzeichen U, die Einheit heißt Volt (V).
+
+**nisv-physik-06** · S2 · _IST 1.8_  
+Formelzeichen und Einheit des elektrischen Widerstands?  
+- ✅ **Formelzeichen R, Einheit Ohm (Ω)**
+- Formelzeichen Ω, Einheit R
+- Formelzeichen W, Einheit Watt
+- Formelzeichen I, Einheit Ampere
+> Widerstand: Formelzeichen R, Einheit Ohm mit dem Zeichen Ω. (Im Skript sind beide vertauscht.)
+
+**nisv-physik-07** · S2 · _IST 1.8_  
+Wie lautet das Ohm’sche Gesetz?  
+- ✅ **U = R · I**
+- P = R · I
+- I = U · R
+- U = P · I
+> Spannung = Widerstand × Stromstärke. Kennt man zwei Größen, lässt sich die dritte berechnen.
+
+**nisv-physik-08** · S2 · _IST 1.9_  
+Wie berechnet man die elektrische Leistung?  
+- ✅ **P = U · I**
+- P = U / I
+- P = R · I
+- P = U + I
+> Leistung = Spannung × Stromstärke.
+
+**nisv-physik-09** · S3 · _IST 1.9_  
+Eine 60-W-Lampe hängt an 230 V. Wie viel Strom fließt ungefähr?  
+- ✅ **Etwa 0,25 A**
+- Etwa 2,5 A
+- Etwa 25 A
+- Etwa 4 A
+> I = P / U = 60 W / 230 V ≈ 0,26 A, also rund 250 mA.
+
+**nisv-physik-10** · S2 · _IST 1.6_  
+Was ist elektrischer Strom?  
+- ✅ **Die gerichtete Bewegung freier Ladungsträger (Elektronen oder Ionen)**
+- Der Höhenunterschied zwischen zwei Punkten
+- Ein Hindernis für Ladungen
+- Die Wärme in einem Kabel
+> Strom fließt, wenn sich freie Ladungsträger gezielt in eine Richtung bewegen.
+
+**nisv-physik-11** · S1 · _IST 1.5_  
+Welche Ladung haben Elektronen?  
+- ✅ **Negativ**
+- Positiv
+- Neutral
+- Je nach Atom unterschiedlich
+> Elektronen sind negativ geladen, der Atomkern ist positiv.
+
+**nisv-physik-12** · S2 · _IST 1.5_  
+Was ist ein Ion?  
+- ✅ **Ein Atom mit mehr Elektronen als Protonen oder umgekehrt – also elektrisch geladen**
+- Ein elektrisch neutrales Atom
+- Ein Teil des Atomkerns ohne Ladung
+- Eine Einheit für Strom
+> Stimmen Protonen und Elektronen nicht überein, ist das Atom geladen – ein Ion.
+
+**nisv-physik-13** · S2 · _IST 1.7_  
+Was passt im Fluss-Vergleich zur Spannung?  
+- ✅ **Der Höhenunterschied, den das Wasser hinunterfließt**
+- Die Wassermenge
+- Die Steine im Flussbett
+- Die Fließrichtung
+> Spannung = Höhenunterschied, Stromstärke = Wassermenge, Widerstand = Hindernisse.
+
+**nisv-physik-14** · S2 · _IST 1.6_  
+Was passt im Fluss-Vergleich zur Stromstärke?  
+- ✅ **Die Wassermenge, die fließt**
+- Der Höhenunterschied
+- Die Länge des Flusses
+- Die Wassertemperatur
+> Je mehr Wasser fließt, desto höher die Stromstärke.
+
+**nisv-physik-15** · S2 · _IST 1.8_  
+Was passt im Fluss-Vergleich zum Widerstand?  
+- ✅ **Hindernisse wie Steine, Bewuchs und Biegungen**
+- Der Höhenunterschied
+- Die Wassermenge
+- Das Meer am Ende
+> Alles, was den Fluss bremst, entspricht dem Widerstand.
+
+**nisv-physik-16** · S2 · _IST 1.7, 1.11_  
+Was entscheidet vor allem, wie gefährlich Strom für den Menschen ist?  
+- ✅ **Die Stromstärke**
+- Allein die Spannung
+- Die Farbe des Kabels
+- Die Länge des Kabels
+> Entscheidend ist, wie viel Strom fließt. Ein Funke an der Türklinke hat tausende Volt, ist aber harmlos.
+
+**nisv-physik-17** · S3 · _IST 1.11_  
+Warum ist der Schlag an der Türklinke nach dem Teppich trotz mehrerer tausend Volt harmlos?  
+- ✅ **Weil dabei kaum Strom fließt**
+- Weil die Spannung zu niedrig ist
+- Weil Türklinken isoliert sind
+- Weil es Gleichstrom ist
+> Hohe Spannung, aber keine nennenswerte Stromstärke – deshalb kein Schaden.
+
+**nisv-physik-18** · S2 🔢 · _IST 1.6_  
+Welche Materialien leiten Strom gut?  
+- ✅ **Kupfer**
+- ✅ **Wasser**
+- Gummi
+- Trockene Luft
+> Metalle wie Kupfer und Wasser leiten gut. Gummi, Kunststoff und trockene Luft isolieren.
+
+**nisv-physik-19** · S2 🔢 · _IST 1.6_  
+Welche Materialien eignen sich zum Isolieren von Kabeln?  
+- ✅ **Gummi**
+- ✅ **Kunststoff**
+- Kupfer
+- Salzwasser
+> Isolatoren leiten nicht: Gummi, Kunststoffe, trockene Luft.
+
+**nisv-physik-20** · S1 · _IST 1.10_  
+Welchen Strom liefert eine Batterie?  
+- ✅ **Gleichstrom**
+- Wechselstrom
+- Hochfrequenzstrom
+- Drehstrom
+> Aus einer Batterie kommt immer Gleichstrom.
+
+**nisv-physik-21** · S2 · _IST 1.10_  
+Was kennzeichnet Wechselstrom?  
+- ✅ **Er ändert ständig Größe und Richtung**
+- Er fließt immer gleich stark in eine Richtung
+- Er kommt nur aus Batterien
+- Er fließt nur in Wasser
+> Beim Wechselstrom kehrt sich die Flussrichtung immer wieder um.
+
+**nisv-physik-22** · S1 · _IST 1.10_  
+Welche Spannung hat die normale Haushaltssteckdose?  
+- ✅ **230 Volt Wechselspannung**
+- 12 Volt Gleichspannung
+- 400 Volt Gleichspannung
+- 1.000 Volt Wechselspannung
+> Im Haushalt: 230 V Wechselspannung.
+
+**nisv-physik-23** · S2 · _IST 1.3_  
+Mit welcher Frequenz arbeitet das Stromnetz im Alltag?  
+- ✅ **50 Hz**
+- 1.000 Hz
+- 5 Hz
+- 100 kHz
+> Das Netz arbeitet mit 50 Hz – also im Niederfrequenzbereich.
+
+**nisv-physik-24** · S2 · _IST 1.3_  
+Welcher Frequenzbereich gilt als Niederfrequenz?  
+- ✅ **1 bis 1.000 Hz**
+- 1.000 bis 100.000 Hz
+- 100 kHz bis 300 GHz
+- Über 1 Million Hz
+> Niederfrequenz: 1–1.000 Hz, also bis zu 1.000 Impulse pro Sekunde.
+
+**nisv-physik-25** · S2 · _IST 1.3_  
+Warum eignet sich Niederfrequenz für EMS?  
+- ✅ **Sie ähnelt den körpereigenen Nervenimpulsen**
+- Sie erwärmt das Gewebe
+- Sie ist nicht spürbar
+- Sie wirkt nur auf die Haut
+> Niederfrequente Ströme liegen in dem Bereich, den das neuromuskuläre System umsetzen kann.
+
+**nisv-physik-26** · S2 · _IST Lösung 1.1_  
+In welchem Bereich hört der Mensch Töne?  
+- ✅ **Etwa 16 bis 20.000 Hz**
+- 1 bis 100 Hz
+- 20.000 bis 100.000 Hz
+- Über 1 MHz
+> Hörbarer Schall (Tonfrequenz): ca. 16–20.000 Hz.
+
+**nisv-physik-27** · S3 · _IST 1.4_  
+Warum ist „Hochfrequenz“ schwer eindeutig zu definieren?  
+- ✅ **Physik, Elektrotechnik, Akustik und Medizin setzen die Grenze unterschiedlich**
+- Weil sie nicht messbar ist
+- Weil es sie nur im Weltall gibt
+- Weil sie gesetzlich verboten ist
+> Mediziner sprechen schon ab 1 kHz von Hochfrequenz, Elektrotechniker ab 20 kHz, oft gilt 100 kHz–300 GHz.
+
+**nisv-physik-28** · S2 🔢 · _IST 1.11_  
+Was gehört zur sicheren Nutzung elektrischer Geräte im Studio?  
+- ✅ **Tägliche Sichtkontrolle durch den Anwender**
+- ✅ **Beschädigte Kabel oder Stecker sofort stilllegen**
+- Kleine Schäden selbst reparieren
+- Defekte ignorieren, solange es noch geht
+> Sichtkontrolle ist Pflicht. Bei Schäden Gerät stilllegen – nie selbst reparieren oder ignorieren.
+
+**nisv-physik-29** · S2 🔢 · _IST 1.11_  
+Was ist für die elektrische Sicherheit regelmäßig nötig?  
+- ✅ **Elektroprüfungen der Geräte**
+- ✅ **Prüfung von Sicherungen und FI-Schutzschalter**
+- Gerät nur bei Defekt anschauen
+- Kabel jährlich austauschen, egal in welchem Zustand
+> Regelmäßige Elektroprüfungen und Kontrolle der Schutzmaßnahmen – Details regeln VDE und Hersteller.
+
+**nisv-physik-30** · S3 · _IST 1.11_  
+Warum fließt beim Berühren der Steckdose Strom durch den Körper?  
+- ✅ **Die Ladung fließt vom höheren Potenzial (230 V) zur Erde (0 V), mit der wir meist Kontakt haben**
+- Weil der Körper selbst Strom erzeugt
+- Weil Steckdosen Gleichstrom liefern
+- Weil Luft gut leitet
+> Strom fließt vom höheren zum niedrigeren Potenzial. Gute Gummisohlen können das verhindern.
+
+### N2. 📜 EMS gestern & heute (IST 2.1–2.2)
+
+
+**nisv-geschichte-01** · S1 · _IST 2.2.1_  
+Wer zeigte mit Froschschenkeln, dass elektrische Impulse Muskeln zucken lassen?  
+- ✅ **Luigi Galvani**
+- Georg Simon Ohm
+- Niels Bohr
+- Ernest Rutherford
+> Galvani (18. Jh.) legte damit die Grundlage für bioelektrische Prozesse.
+
+**nisv-geschichte-02** · S2 · _IST 2.2.2_  
+Wann begann man EMS im Leistungssport zu erforschen?  
+- ✅ **In den 1960er- und 1970er-Jahren**
+- Im 18. Jahrhundert
+- Erst nach 2010
+- In den 1920er-Jahren
+> Vor allem in der Sowjetunion und der DDR.
+
+**nisv-geschichte-03** · S2 · _IST 2.2.2_  
+Wo wurde EMS im Leistungssport zuerst intensiv erforscht?  
+- ✅ **In der Sowjetunion und der DDR**
+- In Japan
+- In Brasilien
+- In Australien
+> Dort galt EMS als Ergänzung zum Kraft- und Athletiktraining.
+
+**nisv-geschichte-04** · S2 · _IST 2.2.3_  
+Was ermöglichte in den 2000er-Jahren den Weg zum EMS-Fitnesstraining?  
+- ✅ **Ganzkörper-EMS-Systeme mit Westen, Gurten oder Anzügen**
+- Batteriebetriebene Klebepads
+- Hochfrequenz-Geräte
+- Magnetfeld-Liegen
+> Mehrere Muskelgruppen gleichzeitig – in rund 20 Minuten.
+
+**nisv-geschichte-05** · S1 · _IST 2.2.1–2.2.2_  
+Wofür wurde Elektrostimulation ursprünglich vor allem genutzt?  
+- ✅ **In der Medizin und Rehabilitation**
+- Im Bodybuilding
+- In der Kosmetik
+- In der Unterhaltung
+> Z. B. gegen Muskelschwund nach Verletzungen, Operationen oder bei neurologischen Erkrankungen.
+
+**nisv-geschichte-06** · S2 🔢 · _IST 2.2.4_  
+Welche Hersteller machten EMS ab den 2010er-Jahren international bekannt?  
+- ✅ **miha bodytec**
+- ✅ **XBody**
+- Technogym
+- Peloton
+> Seit den 2010ern boomt EMS – u. a. durch miha bodytec und XBody.
+
+**nisv-geschichte-07** · S2 · _IST 2.2.5_  
+Wofür wird EMS bei älteren Menschen erforscht?  
+- ✅ **Zur Vorbeugung von Sarkopenie (altersbedingtem Muskelschwund)**
+- Gegen Haarausfall
+- Zur Senkung des Cholesterins ohne Training
+- Gegen Kurzsichtigkeit
+> Sarkopenie-Prävention ist ein aktuelles Forschungsfeld.
+
+**nisv-geschichte-08** · S1 · _IST 2.1_  
+Wie ordnet das Skript EMS im Verhältnis zum klassischen Training ein?  
+- ✅ **Als wertvolle Ergänzung, kein Ersatz**
+- Als vollständiger Ersatz
+- Als reine Therapie
+- Als Wellness ohne Trainingseffekt
+> EMS ergänzt klassisches Training – besonders für Menschen mit wenig Zeit oder Einschränkungen.
+
+**nisv-geschichte-09** · S2 🔢 · _IST 2.1, Lösung 2.2_  
+Warum ist EMS besonders zeiteffizient?  
+- ✅ **Viele Muskelgruppen werden gleichzeitig aktiviert**
+- ✅ **Auch tiefer liegende Muskelfasern werden erreicht**
+- Weil man nicht schwitzt
+- Weil keine Pausen nötig sind
+> Gleichzeitige, intensive Aktivierung – schon ~20 Minuten setzen einen starken Reiz.
+
+**nisv-geschichte-10** · S2 🔢 · _IST 2.6.6_  
+Für welche Zielgruppen ist EMS laut Skript besonders interessant?  
+- ✅ **Menschen mit wenig Zeit**
+- ✅ **Reha-Patienten**
+- ✅ **Sportler als gezielte Ergänzung**
+- Schwangere
+> Zeitknappe, Reha und Sportler. Schwangerschaft ist eine absolute Kontraindikation.
+
+**nisv-geschichte-11** · S3 · _IST 2.2.2_  
+Was war ein Meilenstein der frühen rehabilitativen Elektrostimulation (Liberson 1961)?  
+- ✅ **Ein System gegen den Fallfuß nach Halbseitenlähmung**
+- Der erste EMS-Anzug
+- Das erste Heimgerät
+- Die erste EMS-Studiokette
+> Funktionelle Elektrostimulation zur Korrektur des „Foot Drop“.
+
+**nisv-geschichte-12** · S2 🔢 · _IST 2.2.5_  
+Was zeichnet moderne EMS-Systeme aus?  
+- ✅ **Kabellose, individuell steuerbare Systeme**
+- ✅ **Verknüpfung mit Apps und Trainingsplänen**
+- Nur noch stationäre Großgeräte
+- Kein Einsatz mehr in der Reha
+> Heute: kabellos, App-gesteuert, auch in Reha und Leistungssport.
+
+### N3. 🧠 Wirkung auf Nerv & Muskel (IST 2.3–2.6)
+
+
+**nisv-wirkung-01** · S2 · _IST 2.4_  
+Worauf wirkt der EMS-Reiz in erster Linie?  
+- ✅ **Auf die Nerven der Muskulatur**
+- Direkt auf jede Muskelfaser
+- Auf die Knochen
+- Auf das Fettgewebe
+> Nervenfasern haben eine niedrigere Reizschwelle als die Muskelfasermembran – der Reiz läuft über den Nerv.
+
+**nisv-wirkung-02** · S2 · _IST 2.4_  
+Was ist der „motor point“?  
+- ✅ **Der Übergang vom Nerv in den Muskel – dort genügt am wenigsten Strom**
+- Der Mittelpunkt der Elektrode
+- Der Knopf zum Starten
+- Der schmerzhafteste Punkt am Muskel
+> Am motor point ist die Impedanz niedrig: wenig Strom, starke Kontraktion, wenig Schmerz.
+
+**nisv-wirkung-03** · S3 · _IST 2.4_  
+Warum ist der motor point am leichtesten zu reizen?  
+- ✅ **Sehr hohe Dichte an Natriumkanälen und damit niedrige Impedanz**
+- Weil dort die Haut am dicksten ist
+- Weil dort kein Nerv verläuft
+- Weil dort am meisten Fett liegt
+> Viele Natriumkanäle → niedriger Widerstand → leicht stimulierbar.
+
+**nisv-wirkung-04** · S2 · _IST 2.4, 2.5.1_  
+Wie werden motorische Einheiten bei willentlicher Bewegung aktiviert (Henneman)?  
+- ✅ **Erst kleine (Typ I), mit mehr Kraft dann große (Typ II)**
+- Alle gleichzeitig
+- Erst große, dann kleine
+- Zufällig
+> Größenprinzip nach Henneman: von klein/ausdauernd zu groß/kräftig.
+
+**nisv-wirkung-05** · S2 · _IST 2.4_  
+Wie rekrutiert EMS die motorischen Einheiten?  
+- ✅ **Kleine und große Einheiten nahezu gleichzeitig**
+- Nur Typ-I-Fasern
+- Nach dem Größenprinzip
+- Nur die Fasern an der Oberfläche
+> EMS hebelt das Größenprinzip aus: simultane, nicht-selektive Rekrutierung.
+
+**nisv-wirkung-06** · S2 · _IST 2.5.2_  
+Was ist ein Vorteil der gleichzeitigen Rekrutierung durch EMS?  
+- ✅ **Kräftige Typ-II-Fasern werden schon bei geringer Last mittrainiert**
+- Man ermüdet langsamer
+- Es gibt keinen Muskelkater
+- Der Kreislauf wird nicht belastet
+> Hochschwellige Fasern arbeiten früh mit – auch ohne schwere Gewichte.
+
+**nisv-wirkung-07** · S3 · _IST 2.4_  
+Warum ermüdet der Muskel bei EMS schneller?  
+- ✅ **Es gibt keine ruhenden Fasern, die ermüdete Fasern ablösen könnten**
+- Weil der Strom den Muskel kühlt
+- Weil weniger Fasern arbeiten
+- Weil das Herz langsamer schlägt
+> Willentlich wechseln sich Fasern ab. Unter EMS arbeiten alle parallel.
+
+**nisv-wirkung-08** · S3 · _IST 2.4_  
+Bis zu welchem Anteil der Maximalkraft werden willentlich nach und nach alle motorischen Einheiten rekrutiert?  
+- ✅ **Etwa 50 % der isometrischen Maximalkraft**
+- Etwa 10 %
+- Etwa 90 %
+- Erst bei 100 %
+> Danach steigt die Kraft über eine höhere Erregungsfrequenz.
+
+**nisv-wirkung-09** · S2 · _IST 2.4_  
+Welche Faserart ist ausdauernd und wird willentlich zuerst aktiviert?  
+- ✅ **Typ I (slow-twitch)**
+- Typ II (fast-twitch)
+- Typ IIx
+- Glatte Muskulatur
+> Typ I: klein, ausdauernd, zuerst aktiv. Typ II: groß, kräftig, später.
+
+**nisv-wirkung-10** · S3 · _IST 2.4_  
+Wie verändert sich der Stoffwechsel unter EMS?  
+- ✅ **Höherer Energieumsatz und höhere Laktatwerte als ohne EMS**
+- Weniger Sauerstoffverbrauch
+- Kein Unterschied
+- Nur Fettverbrennung, kein Laktat
+> Glykolytische Typ-II-Fasern arbeiten früh mit → mehr anaerobe Energie, mehr Laktat.
+
+**nisv-wirkung-11** · S3 · _IST 2.4_  
+Was zeigte sich bei isometrischer Beinarbeit mit EMS bei niedriger Stimulation (Banerjee 2005)?  
+- ✅ **Die Sauerstoffaufnahme verdreifachte sich**
+- Die Herzfrequenz sank
+- Der Laktatwert fiel auf null
+- Kein messbarer Effekt
+> Selbst bei niedriger Stärke steigt die metabolische Belastung deutlich.
+
+**nisv-wirkung-12** · S2 · _IST 2.3_  
+Mit welchen Frequenzen arbeitet klassisches EMS-Training?  
+- ✅ **Niederfrequent, maximal etwa 150 Hz**
+- Mittelfrequent, 1.000–100.000 Hz
+- Hochfrequent, im MHz-Bereich
+- Nur mit 1 Hz
+> Niederfrequenz-Bereich, beim EMS-Training bis max. ca. 150 Hz.
+
+**nisv-wirkung-13** · S2 · _IST 2.3_  
+Wofür wird mittelfrequenter Reizstrom (TENS) vor allem eingesetzt?  
+- ✅ **Zur Schmerzbehandlung**
+- Zum Muskelaufbau im EMS-Studio
+- Zur Fettverbrennung
+- Zum Aufwärmen
+> Mittelfrequente Impulse reizen Nerven, sind aber zu kurz für Muskelkontraktionen.
+
+**nisv-wirkung-14** · S3 · _IST 2.3_  
+Was ist die Wedensky-Hemmung?  
+- ✅ **Bei Dauerreizung über ca. 2.000 Hz reagieren Nerv bzw. Endplatte nicht mehr – die Kontraktion lässt nach**
+- Ein Not-Aus am Gerät
+- Die Hemmung des Muskels durch Kälte
+- Ein anderes Wort für Muskelkater
+> Ermüdung der motorischen Endplatte bei hochfrequenter Dauerreizung bis zur Blockade.
+
+**nisv-wirkung-15** · S3 · _IST 2.3_  
+Was beschreibt der Gildemeister-Effekt?  
+- ✅ **Mehrere Impulse summieren sich, bis die Reizschwelle erreicht ist**
+- Jeder Impuls löst sofort eine Kontraktion aus
+- Die Haut wird warm
+- Muskeln wachsen über Nacht
+> Summation: im Mittelfrequenzbereich depolarisiert jede Periode etwas mehr.
+
+**nisv-wirkung-16** · S3 · _IST 2.3_  
+Was bedeutet „periodensynchrone Reizung“ im Niederfrequenzbereich?  
+- ✅ **Jeder ausreichend starke Impuls löst ein Aktionspotenzial aus – im Takt der Frequenz**
+- Nur jeder zehnte Impuls wirkt
+- Der Muskel entspannt sich bei jedem Impuls
+- Impulse wirken nur nachts
+> Aktionspotenziale entstehen im gleichen Rhythmus wie die Stromfrequenz.
+
+**nisv-wirkung-17** · S2 · _IST 2.3_  
+Welche Wirkung haben Frequenzen von etwa 5–20 Hz?  
+- ✅ **Schütteln/Vibrieren, Entspannung und Aktivierung der Muskelpumpe**
+- Maximaler Muskelaufbau
+- Blockade der Nerven
+- Schmerzbehandlung wie TENS
+> „Schüttelfrequenzen“ – fördern Rückfluss von Venenblut und Lymphe.
+
+**nisv-wirkung-18** · S2 · _IST 2.3_  
+Welcher Bereich steigert den Tonus der Skelettmuskulatur und wird in der Reha zum Kräftigen empfohlen?  
+- ✅ **30–50 Hz, etwa 50 Hz**
+- 0–5 Hz
+- 100–200 Hz
+- Über 1.000 Hz
+> Ca. 50 Hz für die Muskelkräftigung in der Reha.
+
+**nisv-wirkung-19** · S2 · _IST 2.3_  
+Wie wirken Frequenzen über 100–200 Hz?  
+- ✅ **Eher entspannend auf Nervensystem und Muskulatur**
+- Maximal kräftigend
+- Gefäßverengend
+- Gar nicht
+> Hohe Frequenzen dämpfen den Sympathikus und senken den Muskeltonus.
+
+**nisv-wirkung-20** · S1 · _IST 2.6.6_  
+Wie oft pro Woche wird EMS laut Vergleichstabelle empfohlen?  
+- ✅ **1–2 Einheiten**
+- 5–6 Einheiten
+- Täglich
+- Einmal im Monat
+> Wegen der hohen Intensität reichen 1–2 Einheiten pro Woche.
+
+**nisv-wirkung-21** · S1 · _IST 2.6.6_  
+Welche Trainingsdauer reicht beim EMS laut Vergleichstabelle?  
+- ✅ **15–25 Minuten**
+- 45–90 Minuten
+- 5 Minuten
+- 2 Stunden
+> Klassisches Krafttraining: 45–90 Min., EMS: 15–25 Min.
+
+**nisv-wirkung-22** · S2 🔢 · _IST 2.5.2_  
+Womit steuert man die Intensität beim EMS – im Unterschied zum Krafttraining?  
+- ✅ **Stromstärke**
+- ✅ **Frequenz**
+- ✅ **Impulsbreite**
+- Hantelgewicht
+> EMS: Stromstärke, Frequenz, Impulsbreite, Zeit. Krafttraining: Last, Wiederholungen, Sätze, Pausen.
+
+**nisv-wirkung-23** · S2 · _IST 2.6.3_  
+Wie gilt das Prinzip der Spezifität beim EMS?  
+- ✅ **Der Körper passt sich an Elektrodenlage und Impulsparameter an – mit Bewegung kombiniert steigt der Übertrag**
+- EMS wirkt immer gleich, egal wie
+- Nur Bauchmuskeln passen sich an
+- Spezifität gibt es bei EMS nicht
+> Kombiniert man EMS mit funktionellen Bewegungen, wird es alltags- und sportnäher.
+
+**nisv-wirkung-24** · S2 🔢 · _IST 2.6_  
+Welche Trainingsprinzipien gelten für EMS und klassisches Krafttraining gleichermaßen?  
+- ✅ **Reizschwelle**
+- ✅ **Superkompensation**
+- ✅ **Individualisierung**
+- Gewichtssteigerung um 10 % pro Woche
+> Gleiche biologische Anpassungsgesetze, andere Belastungssteuerung.
+
+**nisv-wirkung-25** · S2 · _IST 2.6.5_  
+Wie variiert man das EMS-Training (Prinzip der Variation)?  
+- ✅ **Durch verschiedene Programme, z. B. Kraft, Ausdauer, Regeneration**
+- Durch andere Musik
+- Nur durch längere Einheiten
+- Gar nicht, immer gleich trainieren
+> Kraft: höhere Frequenz, lange Pausen. Ausdauer: niedriger, kürzere Pausen. Regeneration: sanft.
+
+**nisv-wirkung-26** · S3 · _IST 2.6.1_  
+Was gilt bei EMS für den Bereich der Kraftreize laut Prinzip der Reizschwelle?  
+- ✅ **Meist 50–85 Hz**
+- 1–5 Hz
+- 500–1.000 Hz
+- Über 2.000 Hz
+> Anpassung über Intensität, Frequenz (meist 50–85 Hz), Impulsbreite und Zeit.
+
+### N4. ⚖️ NiSV: Recht & Pflichten (IST 3.8)
+
+
+**nisv-recht-01** · S1 · _IST 3.8_  
+Wofür steht NiSV?  
+- ✅ **Verordnung zum Schutz vor schädlichen Wirkungen nichtionisierender Strahlung bei der Anwendung am Menschen**
+- Nationale indikationsbezogene Sportverordnung
+- Normierte internationale Sicherheitsvorschrift
+- Nichtmedizinische Sportversicherung
+> Die NiSV regelt nichtmedizinische Anwendungen nichtionisierender Strahlung am Menschen.
+
+**nisv-recht-02** · S1 · _IST 3.8_  
+Fällt Ganzkörper-EMS (WB-EMS) unter die NiSV?  
+- ✅ **Ja, seit Inkrafttreten der NiSV (2020)**
+- Nein, nur Laser
+- Nur in Kliniken
+- Nur bei Geräten über 100 Hz
+> EMS-Studios sind unmittelbar an die NiSV gebunden.
+
+**nisv-recht-03** · S2 · _IST 3.8_  
+Auf welchem Gesetz basiert die NiSV?  
+- ✅ **Strahlenschutzgesetz (StrlSchG)**
+- Medizinproduktegesetz
+- Arbeitszeitgesetz
+- Infektionsschutzgesetz
+> Die NiSV ist Teil des deutschen Strahlenschutzrechts.
+
+**nisv-recht-04** · S2 🔢 · _IST 3.8.1_  
+Welche Anwendungen fallen außer EMS unter die NiSV?  
+- ✅ **Laser**
+- ✅ **Ultraschall**
+- ✅ **Magnetfelder**
+- Röntgen
+> NiSV = nichtionisierend. Röntgen ist ionisierende Strahlung.
+
+**nisv-recht-05** · S1 · _IST 3.8.2_  
+Was brauchen Trainer, die WB-EMS anwenden?  
+- ✅ **Eine anerkannte NiSV-Fachkunde**
+- Nur einen Erste-Hilfe-Kurs
+- Ein Medizinstudium
+- Nichts Besonderes
+> Ohne Fachkunde-Nachweis darf kein EMS-Training angeboten werden.
+
+**nisv-recht-06** · S2 🔢 · _IST 3.8.2_  
+Was umfasst die NiSV-Fachkunde?  
+- ✅ **Theorie: Wirkung, Risiken, Kontraindikationen**
+- ✅ **Praxis: sicherer Umgang mit dem Gerät**
+- Nur Verkaufstraining
+- Nur die Gerätebedienung
+> Theoretisches Wissen und praktische Kenntnisse gehören zusammen.
+
+**nisv-recht-07** · S2 🔢 · _IST 3.8.2_  
+Welche Pflichten haben EMS-Anbieter laut NiSV?  
+- ✅ **Fachkunde**
+- ✅ **Aufklärung und Anamnese**
+- ✅ **Dokumentation**
+- ✅ **Gerätesicherheit**
+> Die vier Pflichten: Fachkunde, Aufklärung/Anamnese, Dokumentation, Gerätesicherheit.
+
+**nisv-recht-08** · S2 🔢 · _IST 3.8.2_  
+Was muss vor Beginn des Trainings passieren?  
+- ✅ **Eine umfassende Anamnese**
+- ✅ **Aufklärung über Wirkungen, Risiken und Nebenwirkungen**
+- ✅ **Schriftliches Einverständnis einholen**
+- Ein Vertrag über 24 Monate
+> Anamnese, Aufklärung und schriftliches, dokumentiertes Einverständnis.
+
+**nisv-recht-09** · S2 · _IST 3.8.2_  
+In welcher Form ist das Einverständnis einzuholen?  
+- ✅ **Schriftlich und dokumentiert**
+- Mündlich reicht
+- Per Handschlag
+- Gar nicht nötig
+> Schriftlich – das dient der Nachvollziehbarkeit und rechtlichen Absicherung.
+
+**nisv-recht-10** · S2 🔢 · _IST 3.8.2_  
+Was wird bei jeder EMS-Anwendung dokumentiert?  
+- ✅ **Datum**
+- ✅ **Dauer**
+- ✅ **Intensität**
+- ✅ **Besondere Vorkommnisse**
+> Jede Anwendung: Datum, Dauer, Intensität und Besonderheiten.
+
+**nisv-recht-11** · S2 · _IST 3.8.2_  
+Wozu dient die Dokumentation?  
+- ✅ **Nachvollziehbarkeit und rechtlicher Schutz des Betreibers**
+- Nur für Werbung
+- Für die Steuer
+- Sie ist freiwillig und ohne Zweck
+> Dokumentation schützt Kunden und Betreiber.
+
+**nisv-recht-12** · S2 🔢 · _IST 3.8.2_  
+Was gilt für die Geräte laut NiSV?  
+- ✅ **Sie müssen den Sicherheitsanforderungen entsprechen**
+- ✅ **Sie müssen regelmäßig geprüft und gewartet werden**
+- Prüfung nur bei Kaufpreis über 10.000 €
+- Geräte dürfen selbst umgebaut werden
+> Betreiber lassen Geräte regelmäßig prüfen und warten.
+
+**nisv-recht-13** · S2 · _IST 3.8.3_  
+Wer darf EMS-Training durchführen?  
+- ✅ **Geschultes nichtärztliches Personal mit NiSV-Fachkunde**
+- Nur Ärztinnen und Ärzte
+- Jeder ohne Schulung
+- Nur Physiotherapeuten
+> Ärzten vorbehalten sind z. B. invasive Laserbehandlungen – EMS nicht.
+
+**nisv-recht-14** · S2 · _IST 3.8.3_  
+Welche Anwendungen behält die NiSV Ärzten vor?  
+- ✅ **Z. B. invasive Laserbehandlungen und Eingriffe in tiefere Hautschichten**
+- EMS-Training
+- Körpervermessung
+- Ernährungsberatung
+> EMS darf geschultes Fachpersonal mit Fachkunde anwenden.
+
+**nisv-recht-15** · S2 🔢 · _IST 3.8.4_  
+Welche Folgen drohen bei Verstößen gegen die NiSV?  
+- ✅ **Bußgelder oder Auflagen**
+- ✅ **Untersagung des Betriebs**
+- ✅ **Haftung bei Gesundheitsschäden**
+- Nur eine mündliche Verwarnung
+> Verstöße können teuer werden – bis zur Schließung.
+
+**nisv-recht-16** · S2 · _IST 3.8.2_  
+Wer darf nach DIN 33961-5 nur nach ärztlicher Abklärung oder gar nicht trainieren?  
+- ✅ **Personen mit Kontraindikationen**
+- Alle über 40
+- Alle Frauen
+- Nur Profisportler
+> Kontraindikationen werden in der Anamnese abgefragt.
+
+**nisv-recht-17** · S1 · _IST 3.8.5_  
+Was bringt die NiSV den Studios laut Skript – neben mehr Verantwortung?  
+- ✅ **Mehr Professionalität und eine klare Legitimation durch nachweisbaren Qualitätsstandard**
+- Weniger Kunden
+- Weniger Dokumentation
+- Steuervorteile
+> Wer die Vorschriften einhält, kann hohe Qualität nachweisen.
+
+**nisv-recht-18** · S3 · _IST 3.7_  
+Welche Norm regelt die Kontraindikationen für EMS?  
+- ✅ **DIN 33961-5**
+- DIN 18040
+- ISO 9001
+- DIN EN 1176
+> DIN 33961-5 – darauf verweisen Skript und NiSV-Praxis.
+
+**nisv-recht-19** · S3 · _IST 4.2_  
+Ist reines „Passiv-EMS“ ohne Bewegung laut Skript fachlich vertretbar?  
+- ✅ **Nein – EMS-Einheiten sollen individuell und übungsbasiert sein**
+- Ja, das ist der Standard
+- Nur für Anfänger
+- Nur bei Profis
+> DIN 33961-5 und NiSV betonen übungsbasiertes Training.
+
+**nisv-recht-20** · S2 · _IST 4.5_  
+Wie schnell müssen Trainer das Bedienfeld erreichen können?  
+- ✅ **Innerhalb von einer Sekunde (max. ca. 120 cm Abstand)**
+- Innerhalb von 10 Sekunden
+- Innerhalb einer Minute
+- Es reicht, wenn eine Fernbedienung in der Nähe liegt
+> Bedienelemente und Abschaltung müssen jederzeit sofort erreichbar sein.
+
+**nisv-recht-21** · S2 🔢 · _IST 4.5_  
+Was müssen auch die Trainierenden wissen bzw. können?  
+- ✅ **Wie man abschaltet**
+- ✅ **Das Gerät innerhalb einer Sekunde erreichen**
+- Das Programm selbst umstellen
+- Die Elektroden reparieren
+> Auch Kunden müssen die Abschaltung kennen und erreichen.
+
+**nisv-recht-22** · S2 · _IST 4.5_  
+Was muss für Trainer immer eindeutig erkennbar sein?  
+- ✅ **Welcher Kunde an welchem Gerät angeschlossen ist**
+- Der Kontostand des Kunden
+- Die Marke der Kleidung
+- Die Raumtemperatur
+> Klare Zuordnung Kunde ↔ Gerät verhindert Fehlbedienung.
+
+### N5. 🦺 Kleidung, Geräte & Hygiene (IST 3.1–3.5)
+
+
+**nisv-ausruestung-01** · S2 🔢 · _IST 3.1.1_  
+Welche Aufgaben erfüllt die EMS-Bekleidung?  
+- ✅ **Leitfähigkeit zwischen Haut und Elektroden**
+- ✅ **Hautverträglichkeit und Komfort**
+- ✅ **Hygiene**
+- ✅ **Passform, damit Elektroden gut anliegen**
+> Die Kleidung ist die Schnittstelle zwischen Haut, Elektroden und Gerät.
+
+**nisv-ausruestung-02** · S1 · _IST 3.2_  
+Welche drei Schichten hat das EMS-Schichtsystem?  
+- ✅ **Basisschicht, Elektrodenschicht, (optional) Außenschicht**
+- Haut, Fett, Muskel
+- Unterhemd, Pulli, Jacke
+- Gurt, Kabel, Gerät
+> Basis (Unterwäsche), Elektroden (Weste/Gurte/Anzug), Außenschicht nur optional.
+
+**nisv-ausruestung-03** · S2 · _IST 3.2.1_  
+Wozu dient die Basisschicht?  
+- ✅ **Hygiene, Schweißaufnahme, weniger Hautreizungen**
+- Sie leitet den Strom ab
+- Sie ersetzt die Elektroden
+- Sie hält warm im Winter
+> Dünne, enge Funktionswäsche – nach jedem Training gewaschen.
+
+**nisv-ausruestung-04** · S1 · _IST 3.2.2_  
+Was ist das Kernstück des EMS-Equipments?  
+- ✅ **Die Elektrodenschicht (Weste, Gurte, Anzug)**
+- Die Außenschicht
+- Die Schuhe
+- Das Handtuch
+> Hier sitzen die Elektroden an den großen Muskelgruppen.
+
+**nisv-ausruestung-05** · S2 · _IST 3.2.2_  
+Warum werden die Elektroden angefeuchtet?  
+- ✅ **Für einen guten Stromfluss**
+- Zum Kühlen
+- Damit sie nicht rutschen
+- Aus hygienischen Gründen
+> Feuchte Elektroden leiten besser – die Stimulation wirkt gleichmäßig.
+
+**nisv-ausruestung-06** · S2 · _IST 3.2.4, 3.2.6_  
+Warum soll die Bekleidung eng anliegen?  
+- ✅ **Lockere Kleidung verschlechtert die Leitfähigkeit**
+- Wegen der Optik
+- Damit man mehr schwitzt
+- Damit sie schneller trocknet
+> Elektroden müssen nah am Muskel liegen.
+
+**nisv-ausruestung-07** · S2 🔢 · _IST 3.2.5_  
+Was soll man beim Waschen der Westen vermeiden?  
+- ✅ **Aggressive Waschmittel**
+- ✅ **Weichspüler**
+- Wasser
+- Herstellerangaben
+> Beides kann die Leitfähigkeit beeinträchtigen.
+
+**nisv-ausruestung-08** · S1 · _IST 3.2.5_  
+Was ist für jedes Mitglied Pflicht?  
+- ✅ **Eigene Unterwäsche (Basisschicht)**
+- Eigene Weste
+- Eigenes Gerät
+- Eigene Elektroden
+> Westen teilen sich viele – deshalb trägt jeder seine persönliche Basisschicht.
+
+**nisv-ausruestung-09** · S2 · _IST 3.2.5_  
+Wann werden Westen und Elektroden gereinigt bzw. desinfiziert?  
+- ✅ **Nach jedem Training**
+- Einmal pro Woche
+- Einmal im Monat
+- Nur wenn sie riechen
+> Gemeinsam genutzte Ausrüstung → nach jeder Einheit reinigen.
+
+**nisv-ausruestung-10** · S2 · _IST 3.2.6_  
+Warum regelmäßig die Elektrodenflächen prüfen?  
+- ✅ **Beschädigte Elektroden stimulieren ungleichmäßig**
+- Wegen der Farbe
+- Damit sie neu aussehen
+- Das ist nicht nötig
+> Schäden führen zu ungleichmäßiger Stimulation.
+
+**nisv-ausruestung-11** · S2 🔢 · _IST 3.2.4_  
+Welche Eigenschaften braucht EMS-Bekleidung?  
+- ✅ **Elastizität**
+- ✅ **Atmungsaktivität**
+- ✅ **Pflegeleichtigkeit und Langlebigkeit**
+- Wasserdicht und isolierend
+> Dazu Leitfähigkeit – aber sicher nicht isolierend.
+
+**nisv-ausruestung-12** · S2 🔢 · _IST 3.3_  
+Welche Gerätetypen unterscheidet das Skript?  
+- ✅ **Medizinische Geräte**
+- ✅ **Studio-/Ganzkörpergeräte (Whole Body EMS)**
+- ✅ **Kabellose Wearables**
+- ✅ **Heimgeräte mit Pads**
+> Vier Typen – mit unterschiedlicher Intensität, Steuerung und Einsatzort.
+
+**nisv-ausruestung-13** · S2 · _IST 3.3.2_  
+Was kennzeichnet Whole-Body-EMS-Studiogeräte?  
+- ✅ **Mehrere Muskelgruppen gleichzeitig über Westen/Gurte**
+- Ein einzelnes Klebepad
+- Nur Schmerztherapie
+- Nur zu Hause nutzbar
+> Ganzkörper: viele Muskelgruppen parallel.
+
+**nisv-ausruestung-14** · S2 · _IST 3.3.4_  
+Was gilt für Heimgeräte mit Klebepads meist?  
+- ✅ **Kompakt, für einzelne Muskelgruppen, begrenzte Intensität**
+- Leistungsstärker als Studiogeräte
+- Nur für Kliniken
+- Mit integrierter Weste
+> Für gezielte Bereiche wie Bauch oder Arme, eher schwächer.
+
+**nisv-ausruestung-15** · S2 🔢 · _IST 3.4_  
+Welche Kriterien sind bei der Geräteauswahl wichtig?  
+- ✅ **Anzahl der Kanäle**
+- ✅ **Einstellbare Stromparameter**
+- ✅ **Sicherheitsmechanismen**
+- ✅ **Wartung, Hygiene und Service**
+> Dazu Bedienung, kabelgebunden/kabellos, Kompatibilität und Kosten.
+
+**nisv-ausruestung-16** · S2 · _IST 3.4_  
+Was ist der Zielkonflikt bei kabellosen Geräten?  
+- ✅ **Mehr Bewegungsfreiheit gegen Signalstabilität**
+- Preis gegen Farbe
+- Gewicht gegen Geruch
+- Es gibt keinen
+> Kabelgebunden: stabil. Kabellos: frei beweglich.
+
+**nisv-ausruestung-17** · S2 🔢 · _IST 3.4, 3.5.1_  
+Welche Sicherheitsmechanismen sollte ein Gerät haben?  
+- ✅ **Begrenzung der Stromstärke**
+- ✅ **Abschaltung bei Fehlern**
+- ✅ **Not-Aus**
+- Automatische Steigerung auf Maximum
+> Moderne Geräte haben Begrenzungen und Not-Aus.
+
+**nisv-ausruestung-18** · S3 · _IST 3.4.1_  
+Welcher Hersteller gilt als Pionier des Ganzkörper-EMS und ist in vielen Studien vertreten?  
+- ✅ **miha bodytec**
+- Visionbody
+- EasyMotionSkin
+- Symbiont
+> Vor allem stationäre Studiosysteme, international etabliert.
+
+**nisv-ausruestung-19** · S2 🔢 · _IST 3.5.1_  
+Welche Werte gelten laut Sicherheitskapitel als üblich?  
+- ✅ **Frequenz meist 20–100 Hz**
+- ✅ **Impulsbreite meist 200–400 µs**
+- Frequenz 5.000 Hz
+- Impulsbreite 5 Sekunden
+> Stromstärke wird individuell angepasst und bleibt weit unter schädlichen Werten.
+
+**nisv-ausruestung-20** · S2 · _IST 3.5.1_  
+Welche Stromart fließt beim EMS durch die Muskulatur?  
+- ✅ **Niederfrequenter Wechselstrom**
+- Hochfrequenter Gleichstrom
+- Hochspannung aus dem Netz
+- Mikrowellen
+> Über die Elektroden fließt niederfrequenter Wechselstrom.
+
+**nisv-ausruestung-21** · S2 🔢 · _IST 4.1.3_  
+Was gehört organisatorisch zur Vorbereitung jeder Einheit?  
+- ✅ **Passende Funktionskleidung**
+- ✅ **Elektroden richtig positionieren und befeuchten**
+- ✅ **Gerät auf Funktion und Hygiene prüfen**
+- Lautstarke Musik
+> Dazu ein ruhiges, störungsfreies Umfeld mit passender Temperatur.
+
+### N6. 🩺 Risiken & Kontraindikationen (IST 3.6–3.7)
+
+
+**nisv-risiken-01** · S2 · _IST 3.6.1_  
+Was ist eine Rhabdomyolyse?  
+- ✅ **Zerfall von Muskelgewebe mit Freisetzung von Myoglobin**
+- Eine Hautrötung
+- Ein Muskelkrampf
+- Eine Gelenkentzündung
+> Gefahr bei Überlastung – besonders bei Einsteigern oder falscher Steuerung.
+
+**nisv-risiken-02** · S2 · _IST 3.6.1, 4.4_  
+Wer ist für eine Rhabdomyolyse besonders gefährdet?  
+- ✅ **Einsteiger mit zu intensivem Start**
+- Erfahrene Kunden mit leichtem Training
+- Kunden, die viel trinken
+- Kunden mit Funktionswäsche
+> Zu intensive Einstiege ohne Gewöhnung treiben die CK-Werte hoch.
+
+**nisv-risiken-03** · S2 · _IST 4.4_  
+Welches Organ kann bei sehr hohen CK-Werten geschädigt werden?  
+- ✅ **Die Nieren**
+- Die Augen
+- Die Lunge
+- Die Haut
+> Bei Rhabdomyolyse droht eine Nierenschädigung.
+
+**nisv-risiken-04** · S1 · _IST 3.6.2_  
+Was ist die häufigste, meist harmlose Nebenwirkung?  
+- ✅ **Hautrötungen oder -reizungen an den Elektroden**
+- Knochenbrüche
+- Haarausfall
+- Sehstörungen
+> Meist vorübergehend. Zu hohe Intensität oder schlechte Elektrodenpflege verstärken sie.
+
+**nisv-risiken-05** · S2 · _IST 3.6.3_  
+Wie wirkt EMS auf Herz und Kreislauf?  
+- ✅ **Herzfrequenz und Blutdruck können steigen**
+- Der Blutdruck sinkt immer
+- Keine Wirkung
+- Das Herz bleibt kurz stehen
+> Deshalb sind Herz-Kreislauf-Erkrankungen abzuklären.
+
+**nisv-risiken-06** · S2 · _IST 3.6.3_  
+Wie geht man mit ängstlichen Kunden um?  
+- ✅ **Behutsam heranführen und gut kommunizieren**
+- Gleich hoch einstellen, damit sie sich gewöhnen
+- Nicht ansprechen
+- Training absagen
+> Manche empfinden Impulse als beängstigend – Ruhe und Erklärung helfen.
+
+**nisv-risiken-07** · S2 · _IST 3.7_  
+Was ist der Unterschied zwischen absoluter und relativer Kontraindikation?  
+- ✅ **Absolut = kein EMS; relativ = nur eingeschränkt oder nach ärztlicher Abklärung**
+- Absolut = ärztliche Abklärung; relativ = kein EMS
+- Beides heißt: kein EMS
+- Beides ist nur eine Empfehlung
+> Relative Kontraindikationen lassen Spielraum, z. B. Ausschluss einzelner Körperregionen.
+
+**nisv-risiken-08** · S1 🔢 · _IST 3.7.2_  
+Welche dieser Punkte sind absolute Kontraindikationen?  
+- ✅ **Herzschrittmacher**
+- ✅ **Defibrillator**
+- ✅ **Hirnschrittmacher**
+- Bluthochdruck, gut eingestellt
+> Elektrische Implantate schließen EMS aus.
+
+**nisv-risiken-09** · S1 · _IST 3.7.2_  
+Darf eine Schwangere EMS trainieren?  
+- ✅ **Nein – Schwangerschaft ist eine absolute Kontraindikation**
+- Ja, mit halber Stärke
+- Ja, nur im ersten Drittel
+- Ja, wenn sie es möchte
+> Schwangerschaft gilt meist in allen Trimestern als absolute Kontraindikation.
+
+**nisv-risiken-10** · S2 🔢 · _IST 3.7.2_  
+Welche akuten Zustände schließen EMS aus?  
+- ✅ **Fieber, Erkältung, Grippe**
+- ✅ **Akute Thrombose oder Embolie**
+- Leichter Muskelkater
+- Müdigkeit
+> Akute Infekte und Thrombose/Embolie sind absolute Kontraindikationen.
+
+**nisv-risiken-11** · S2 🔢 · _IST 3.7.1–3.7.2_  
+Welche Erkrankungen sind absolute Kontraindikationen?  
+- ✅ **Fortgeschrittene Herzinsuffizienz (NYHA III–IV)**
+- ✅ **Epilepsie mit unkontrollierten Anfällen**
+- ✅ **Schwere Durchblutungsstörungen / arterielle Verschlusskrankheit**
+- Leichte Herzinsuffizienz (NYHA I–II)
+> NYHA I–II ist relativ, III–IV absolut.
+
+**nisv-risiken-12** · S2 · _IST 3.7.2_  
+Wie werden fortgeschrittene Tumorerkrankungen eingeordnet?  
+- ✅ **In der Regel Ausschluss (absolut), abhängig von ärztlicher Freigabe**
+- Kein Problem
+- Nur relative Kontraindikation ohne Arzt
+- Nur Bauchgurt weglassen
+> Fortgeschrittene Tumorerkrankungen führen in der Regel zum Ausschluss.
+
+**nisv-risiken-13** · S2 🔢 · _IST 3.7.1_  
+Welche dieser Punkte sind relative Kontraindikationen?  
+- ✅ **Bluthochdruck (v. a. schlecht eingestellt)**
+- ✅ **Diabetes mellitus**
+- ✅ **Schilddrüsenstörungen**
+- Herzschrittmacher
+> Relativ: Training nur angepasst oder nach ärztlicher Abklärung.
+
+**nisv-risiken-14** · S2 🔢 · _IST 3.7.1_  
+Welche neurologischen Erkrankungen sind relative Kontraindikationen?  
+- ✅ **Multiple Sklerose**
+- ✅ **Epilepsie, stabil und behandelt**
+- Epilepsie mit unkontrollierten Anfällen
+- Keine
+> Unkontrollierte Anfälle sind absolut, stabile Epilepsie relativ.
+
+**nisv-risiken-15** · S2 🔢 · _IST 3.7.1_  
+Welche Beschwerden am Bewegungsapparat sind relative Kontraindikationen?  
+- ✅ **Frische Verletzungen wie Muskelfaserriss**
+- ✅ **Akute oder chronische Rückenschmerzen**
+- ✅ **Arthrose**
+- Leichter Muskelkater
+> Training anpassen oder ärztlich abklären lassen.
+
+**nisv-risiken-16** · S2 🔢 · _IST 3.7.1_  
+Welche weiteren Faktoren sind relative Kontraindikationen?  
+- ✅ **Bestimmte Medikamente wie Betablocker**
+- ✅ **Hautprobleme im Elektrodenbereich**
+- ✅ **Zustand nach Operation (Wundheilung)**
+- Eine neue Frisur
+> Medikamente, Haut und frische OPs immer abfragen.
+
+**nisv-risiken-17** · S2 · _IST 3.7.1_  
+Leichte Herzinsuffizienz (NYHA I–II) ist …  
+- ✅ **eine relative Kontraindikation**
+- eine absolute Kontraindikation
+- kein Thema
+- ein Grund für doppelte Intensität
+> Erst ab NYHA III–IV absolut.
+
+**nisv-risiken-18** · S2 · _IST 3.7_  
+Wozu dient die Abfrage relativer Kontraindikationen vor allem?  
+- ✅ **Akute Beschwerden erfassen und Belastung sowie Übungen anpassen**
+- Kunden abweisen
+- Den Preis berechnen
+- Werbung planen
+> So lässt sich das Training an die aktuelle Belastbarkeit anpassen.
+
+**nisv-risiken-19** · S3 · _IST 3.7_  
+Ein Kunde hat einen frischen Muskelfaserriss im Oberschenkel. Was ist richtig?  
+- ✅ **Relative Kontraindikation: Region aussparen bzw. ärztlich abklären**
+- Absolute Kontraindikation für immer
+- Kein Problem, normal trainieren
+- Gerade dort stärker stimulieren
+> Relative Kontraindikationen können einzelne Körperregionen ausschließen.
+
+**nisv-risiken-20** · S3 · _IST 3.7.1, 4.1.2_  
+Ein Kunde nimmt Betablocker. Worauf achtest du?  
+- ✅ **Die Herzfrequenz reagiert schwächer – Belastung nicht nur am Puls messen, ggf. ärztlich abklären**
+- Betablocker spielen keine Rolle
+- Intensität verdoppeln
+- Er darf nie trainieren
+> Betablocker sind eine relative Kontraindikation und dämpfen die Herzfrequenzreaktion.
+
+**nisv-risiken-21** · S2 · _IST 4.4_  
+Wie hoch ist der CK-Ruhewert im Blut ungefähr?  
+- ✅ **Etwa 145 (Frauen) bis 170 U/l (Männer)**
+- Etwa 1.000 U/l
+- Etwa 28.000 U/l
+- Etwa 5 U/l
+> Referenzbereich nach IFCC, individuell verschieden.
+
+**nisv-risiken-22** · S2 · _IST 4.4_  
+Was ist Kreatinkinase (CK)?  
+- ✅ **Ein Enzym, das bei Schädigung von Muskelzellen ins Blut gelangt**
+- Ein Hormon für Muskelwachstum
+- Ein Vitamin
+- Ein Stromparameter am Gerät
+> Wichtigster Blutwert, um Muskelschäden einzuschätzen.
+
+**nisv-risiken-23** · S3 · _IST 4.4_  
+Welche CK-Werte wurden nach ausbelastendem Ganzkörper-EMS gemessen?  
+- ✅ **Über 28.000 U/l**
+- Höchstens 200 U/l
+- Etwa 500 U/l
+- Unter dem Ruhewert
+> Ausbelastende Ganzkörper-EMS kann extreme CK-Werte auslösen.
+
+**nisv-risiken-24** · S3 🔢 · _IST 4.4_  
+Was erhöht die CK-Werte zusätzlich?  
+- ✅ **Viel Oberkörpermuskulatur im Einsatz**
+- ✅ **Hohes Trainingsvolumen**
+- ✅ **Schnelle Bewegungen**
+- ✅ **Exzentrische Belastung**
+> Alle vier Punkte treffen auch bei EMS zu.
+
+**nisv-risiken-25** · S3 · _IST 4.4_  
+Was ist der „repeated bout effect“?  
+- ✅ **Nach der ersten Einheit gewöhnt sich der Muskel – sehr hohe CK-Werte treten danach kaum mehr auf**
+- Der Muskel wird bei jeder Einheit schwächer
+- Man muss jede Übung doppelt machen
+- Ein Stromfehler am Gerät
+> Die Gewöhnung tritt schon nach einer Einheit ein und hält bis zu sechs Monate.
+
+**nisv-risiken-26** · S3 · _IST 4.4_  
+Wie lange hält der „repeated bout effect“ etwa an?  
+- ✅ **Bis zu sechs Monate**
+- Einen Tag
+- Eine Woche
+- Lebenslang
+> Nach längerer Pause also wieder vorsichtig einsteigen.
+
+### N7. 📋 Anamnese, Aufklärung & Einstieg (IST 4.1, 4.4–4.5)
+
+
+**nisv-anamnese-01** · S1 🔢 · _IST 4.1.1_  
+Wozu dient die Anamnese?  
+- ✅ **Kontraindikationen erkennen**
+- ✅ **Entscheiden, ob Training möglich ist oder ein Arzt gefragt werden muss**
+- ✅ **Einen individuellen Trainingsplan erstellen**
+- Den Kunden zum Kauf überreden
+> Sie ist Grundlage für sicheres Training – und rechtlich Pflicht.
+
+**nisv-anamnese-02** · S2 🔢 · _IST 4.1.2_  
+Welche Bereiche gehören in die Anamnese?  
+- ✅ **Gesundheitsdaten und Lebensstil**
+- ✅ **Kontraindikationen und Medikamente**
+- ✅ **Sport- und EMS-Erfahrung**
+- ✅ **Ziele und Motive**
+> Strukturiert und nach einheitlichem Schema, mit standardisiertem Bogen.
+
+**nisv-anamnese-03** · S2 · _IST 4.1.2_  
+Womit wird die Anamnese durchgeführt?  
+- ✅ **Mit einem standardisierten Anamnesebogen**
+- Frei aus dem Gedächtnis
+- Nur per WhatsApp
+- Gar nicht schriftlich
+> Ein einheitlicher Bogen sorgt dafür, dass nichts vergessen wird.
+
+**nisv-anamnese-04** · S2 🔢 · _IST 4.1.2_  
+Welche Medikamente werden typischerweise abgefragt?  
+- ✅ **Betablocker**
+- ✅ **Blutverdünner**
+- ✅ **Insulin**
+- Hustenbonbons
+> Mögliche Wechselwirkungen mit dem Training bewerten.
+
+**nisv-anamnese-05** · S2 🔢 · _IST 4.1.2_  
+Welche Ziele nennt das Skript für die Zieldefinition?  
+- ✅ **Gewichtsreduktion**
+- ✅ **Muskelaufbau**
+- ✅ **Rehabilitation/Prävention**
+- ✅ **Beschwerdelinderung, z. B. Rücken**
+> Dazu Leistungssteigerung. Klare Ziele motivieren und leiten die Planung.
+
+**nisv-anamnese-06** · S2 🔢 · _IST 4.1.3_  
+Worüber wird im Aufklärungsgespräch informiert?  
+- ✅ **Funktionsweise und Wirkung der Impulse**
+- ✅ **Mögliche Nebenwirkungen wie starker Muskelkater**
+- ✅ **Verhalten vor und nach dem Training (Trinken, Regeneration)**
+- Nur über den Preis
+> Danach folgt die schriftliche Einverständniserklärung.
+
+**nisv-anamnese-07** · S2 · _IST 4.1.3_  
+Welches Ziel hat die Intensität in der ersten Einheit?  
+- ✅ **Deutlich spürbar, aber nicht schmerzhaft**
+- So hoch wie möglich
+- Gar nicht spürbar
+- Schmerz als Zeichen der Wirkung
+> Herausfordernd, aber kontrollierbar – auf Körpersprache und Feedback achten.
+
+**nisv-anamnese-08** · S2 · _IST 4.4_  
+Wie wird die Stromstärke gesteigert?  
+- ✅ **Nur kontrolliert und mit ständigem Feedback des Kunden**
+- Automatisch alle 30 Sekunden
+- Ohne zu fragen, damit es effektiv ist
+- Nur vom Kunden selbst
+> Ständiges Feedback ist eine Sicherheitsregel.
+
+**nisv-anamnese-09** · S2 · _IST 4.4_  
+Warum soll der Kunde eine muskuläre Vorspannung aufbauen?  
+- ✅ **Vor allem bei hohen Intensitäten schützt sie vor ruckartigen Kontraktionen**
+- Damit der Strom besser leitet
+- Damit die Weste hält
+- Das ist nicht nötig
+> Vorspannung ist ein Sicherheitsaspekt vor und während des Trainings.
+
+**nisv-anamnese-10** · S1 · _IST 4.5_  
+Was passiert in der allerersten Einheit zuerst?  
+- ✅ **Elektroden anlegen, Abläufe erklären, leichte Reize an einzelnen Muskelgruppen**
+- Sofort Ganzkörper mit voller Stärke
+- Ein Krafttest an der Grenze
+- Ein Sprinttest
+> Diese Impulsgewöhnung kommt vor der ersten Ganzkörper-Anwendung.
+
+**nisv-anamnese-11** · S2 · _IST 4.5_  
+Welche Übungen macht man in den ersten Einheiten?  
+- ✅ **Statische Kraftübungen mit sehr niedriger Intensität**
+- Sprünge mit hoher Intensität
+- Nur Laufband
+- Gar keine Bewegung
+> Danach folgen einfache dynamische Übungen, später spezifische.
+
+**nisv-anamnese-12** · S2 · _IST 4.5_  
+Wie lange darf das Training in den ersten Einheiten höchstens dauern?  
+- ✅ **12 Minuten**
+- 20 Minuten
+- 30 Minuten
+- 45 Minuten
+> In der Gewöhnung max. 12 Minuten, später max. 20 Minuten.
+
+**nisv-anamnese-13** · S1 · _IST 4.5_  
+Wie lange darf eine EMS-Einheit grundsätzlich höchstens dauern?  
+- ✅ **20 Minuten**
+- 12 Minuten
+- 40 Minuten
+- 60 Minuten
+> Mehr als 20 Minuten pro Einheit sollten es nicht sein.
+
+**nisv-anamnese-14** · S2 · _IST 4.5_  
+Wie oft pro Woche sollte in den ersten zehn Wochen trainiert werden?  
+- ✅ **Einmal**
+- Zweimal
+- Dreimal
+- Täglich
+> Erste zehn Wochen: eine EMS-Einheit pro Woche.
+
+**nisv-anamnese-15** · S2 · _IST 4.5_  
+Welches Belastungsempfinden (Skala 0–10) gilt für die ersten 2–3 Einheiten?  
+- ✅ **Etwa 4–5**
+- Etwa 8–9
+- 10
+- 0–1
+> „Leichte bis mittlere Kontraktionen – ein wenig anstrengend.“
+
+**nisv-anamnese-16** · S2 · _IST 4.5_  
+Auf welches Belastungsempfinden darf später gesteigert werden?  
+- ✅ **Je nach Kunde auf 6–8**
+- Immer auf 10
+- Höchstens 3
+- Nie über 4
+> Steigerung sukzessive und an die Ziele angepasst.
+
+**nisv-anamnese-17** · S2 · _IST 4.5_  
+Was bedeutet auf der 10er-Skala eine „7“?  
+- ✅ **Mittlere bis starke Kontraktionen – anstrengend**
+- Kein Strom spürbar
+- Maximale Anstrengung
+- Leichtes Kribbeln
+> 0 = kein Strom, 10 = maximale Anstrengung.
+
+**nisv-anamnese-18** · S2 · _IST 4.5_  
+Was bedeutet auf der 10er-Skala eine „1–2“?  
+- ✅ **Kribbeln bzw. leichte Muskelzuckungen, sehr locker**
+- Starke Kontraktionen
+- Maximale Anstrengung
+- Schmerz
+> Untere Stufen: Kribbeln, leichtes Zucken.
+
+**nisv-anamnese-19** · S2 · _IST 4.5_  
+Was soll der Kunde vor dem Training essen?  
+- ✅ **Etwa 250 kcal kohlenhydratreich, rund zwei Stunden vorher**
+- Nichts, nüchtern trainieren
+- Eine große Mahlzeit direkt davor
+- Nur Eiweißshake während des Trainings
+> Mindesthinweis zur Ernährung laut Skript.
+
+**nisv-anamnese-20** · S2 · _IST 4.5_  
+Wie viel soll der Kunde rund ums Training trinken?  
+- ✅ **Mindestens 0,5 l jeweils ca. 60 Minuten vor und nach dem Training**
+- Nichts, sonst leitet es schlechter
+- 5 Liter direkt vor dem Training
+- Nur Kaffee
+> Ausreichend trinken – auch im Aufklärungsgespräch erwähnen.
+
+**nisv-anamnese-21** · S2 · _IST 4.4–4.5_  
+Warum soll die erste Einheit ohne Ausbelastung stattfinden?  
+- ✅ **Weil gerade die erste Einheit extreme CK-Werte und Rhabdomyolyse auslösen kann**
+- Weil das Gerät erst warmlaufen muss
+- Weil der Vertrag es verbietet
+- Damit der Kunde wiederkommt
+> Nach der ersten Einheit schützt der repeated bout effect.
+
+**nisv-anamnese-22** · S3 · _IST 4.1.2_  
+Was zeigt die Medikamentenanamnese bei Betablockern?  
+- ✅ **Die Herzfrequenz steigt unter Belastung weniger an**
+- Der Kunde ermüdet nie
+- Die Haut leitet schlechter
+- Der Strom wirkt stärker
+> Puls ist dann kein verlässliches Belastungssignal.
+
+**nisv-anamnese-23** · S2 🔢 · _IST 4.1.3_  
+Welche Rahmenbedingungen gehören zu einer professionellen Einheit?  
+- ✅ **Angenehme Raumtemperatur**
+- ✅ **Ruhe und störungsfreie Umgebung**
+- ✅ **Geprüftes Gerät**
+- Laute Musik ab 100 dB
+> Organisation, Technik und Pädagogik greifen ineinander.
+
+**nisv-anamnese-24** · S3 · _IST 4.1.2_  
+Was gehört NICHT zur Anamnese der allgemeinen Gesundheitsdaten?  
+- ✅ **Die Bankverbindung**
+- Alter und Körpergewicht
+- Schlaf und Stress
+- Bekannte Erkrankungen
+> Gesundheitsdaten: persönliche Daten, Gesundheitszustand, Lebensstil, Einschränkungen.
+
+### N8. 🎛️ Parameter & Einstellungen (IST 4.3, 4.6)
+
+
+**nisv-parameter-01** · S2 · _IST 4.3.1_  
+Welcher Impulstyp wird im sportlichen EMS meist verwendet?  
+- ✅ **Biphasisch (Wechselstrom-Impulse)**
+- Monophasisch (Gleichstrom)
+- Hochfrequenter Dauerstrom
+- Ultraschall
+> Biphasisch: gleich großer positiver und negativer Anteil.
+
+**nisv-parameter-02** · S2 🔢 · _IST 4.3.1_  
+Warum biphasische Impulse?  
+- ✅ **Kaum Hautreizungen**
+- ✅ **Weniger Schmerz und stärkere Kontraktion**
+- Weil sie billiger sind
+- Weil sie unsichtbar sind
+> Deshalb auch in den meisten Studien verwendet. Monophasisch eher in der Medizin.
+
+**nisv-parameter-03** · S2 · _IST 4.3.1_  
+Wie hängen Stromstärke und Kontraktion zusammen?  
+- ✅ **Linear: mehr Strom, stärkere Kontraktion**
+- Gar nicht
+- Umgekehrt: mehr Strom, schwächere Kontraktion
+- Nur ab 1.000 Hz
+> Deshalb muss die Stromstärke sorgfältig dosiert werden.
+
+**nisv-parameter-04** · S3 · _IST 4.3.1_  
+Warum lässt sich nicht sagen, wie viel Strom am Muskel ankommt?  
+- ✅ **Die Gewebe haben unterschiedliche Widerstände**
+- Weil das Gerät keine Anzeige hat
+- Weil Strom verdunstet
+- Weil der Muskel Strom speichert
+> Haut, Fett und Muskel haben verschiedene Widerstände – daher individuell ermitteln.
+
+**nisv-parameter-05** · S2 · _IST 4.3.1_  
+Wie ermittelt man die passende Stromstärke für einen Kunden?  
+- ✅ **Individuell – maximal tolerierbare Stärke testen und regelmäßig nachjustieren**
+- Für alle gleich nach Tabelle
+- Nach Körpergröße
+- Nach Alter
+> Das tolerierbare Maximum ist individuell und kann sich ändern.
+
+**nisv-parameter-06** · S2 · _IST 4.3.1_  
+Bei wie viel Prozent des individuellen Maximums sind Bewegungen gut möglich?  
+- ✅ **Etwa 70 %**
+- Etwa 100 %
+- Etwa 20 %
+- Etwa 150 %
+> An der Schmerzgrenze sind kaum willentliche Bewegungen möglich.
+
+**nisv-parameter-07** · S2 · _IST 4.3.1_  
+Was beschreibt die Impulsbreite?  
+- ✅ **Wie lange ein einzelner Impuls dauert – länger erreicht tieferes Gewebe**
+- Wie viele Impulse pro Sekunde kommen
+- Die Größe der Elektrode
+- Die Pause zwischen den Übungen
+> Gemessen in Mikrosekunden (µs).
+
+**nisv-parameter-08** · S2 · _IST 4.3.1_  
+Welche Impulsbreite gilt als besonders angenehm?  
+- ✅ **250–400 µs**
+- 10–50 µs
+- 1.000–2.000 µs
+- Über 1 Sekunde
+> Dort entstehen die geringsten Schmerzen.
+
+**nisv-parameter-09** · S2 · _IST 4.3.1_  
+Was beschreibt die Stimulationsfrequenz?  
+- ✅ **Die Zahl der Einzelimpulse pro Sekunde während der Anspannung**
+- Die Dauer eines Impulses
+- Die Anzahl der Trainings pro Woche
+- Die Pause zwischen zwei Sätzen
+> Gemessen in Hertz, möglich sind etwa 2–200 Hz.
+
+**nisv-parameter-10** · S2 · _IST 4.3.1_  
+Ab welcher Frequenz kommt es zu tetanischen (verschmolzenen) Kontraktionen?  
+- ✅ **Ab etwa 20 Hz**
+- Ab 1 Hz
+- Ab 500 Hz
+- Ab 2.000 Hz
+> Bei 20 Hz werden aber nur rund 65 % der möglichen Kraft erreicht.
+
+**nisv-parameter-11** · S2 · _IST 4.3.1_  
+Ab welcher Frequenz entstehen Reize, auf die der Muskel meist mit Hypertrophie reagiert?  
+- ✅ **Ab etwa 50 Hz**
+- Ab 5 Hz
+- Ab 10 Hz
+- Ab 1.000 Hz
+> Empfehlung für Kraft: 50–100 Hz.
+
+**nisv-parameter-12** · S2 · _IST 4.3.1_  
+Welcher Frequenzbereich wird für Kraft wissenschaftlich empfohlen?  
+- ✅ **50–100 Hz**
+- 5–10 Hz
+- 200–400 Hz
+- Über 1.000 Hz
+> Hier lässt sich am ehesten die maximale Kraft entfalten.
+
+**nisv-parameter-13** · S2 · _IST 4.3.1_  
+Was ist der „duty cycle“?  
+- ✅ **Das Verhältnis von Impulszeit (on) zu Pause (off)**
+- Die Lebensdauer des Geräts
+- Die Zahl der Kunden pro Tag
+- Das Waschprogramm der Westen
+> Beispiel: 10 s on / 20 s off = Ratio 1:2.
+
+**nisv-parameter-14** · S2 · _IST 4.3.1_  
+Für wen eignet sich eine on/off-Ratio von 1:1?  
+- ✅ **Nur für fittere bzw. EMS-erfahrene Personen**
+- Für alle Einsteiger
+- Für Senioren in der ersten Woche
+- Für Schwangere
+> Einsteiger brauchen längere Pausen.
+
+**nisv-parameter-15** · S2 · _IST 4.3.1_  
+Welche Ratios empfiehlt das Skript für Einsteiger?  
+- ✅ **Längere Pausen, etwa 1:2 bis 1:9**
+- 1:1
+- 2:1
+- Ohne Pause
+> Je untrainierter, desto länger die Pause.
+
+**nisv-parameter-16** · S3 · _IST 4.3.1_  
+10 s Impuls, 20 s Pause – welche Ratio ist das?  
+- ✅ **1:2**
+- 2:1
+- 1:1
+- 1:10
+> on : off = 10 : 20 = 1 : 2.
+
+**nisv-parameter-17** · S2 · _IST 4.3.1_  
+Wie wählt man Impulsan- und -abstieg häufig?  
+- ✅ **Langsamerer Anstieg (2–4 s) als Abstieg (1–2 s)**
+- Anstieg sofort, Abstieg 10 s
+- Beides 0 Sekunden
+- Abstieg länger als Anstieg
+> Ein langsamer Anstieg macht den Impuls angenehmer.
+
+**nisv-parameter-18** · S2 · _IST 4.3.1_  
+Warum sollen Impuls und Übung synchron laufen?  
+- ✅ **Damit die Stimulation genau in die Bewegung bzw. Anspannung fällt**
+- Wegen der Musik
+- Damit das Gerät nicht überhitzt
+- Das ist egal
+> On/off so wählen, dass die Impulse zur Übung passen.
+
+**nisv-parameter-19** · S2 🔢 · _IST 4.6_  
+Welche Frequenzbereiche nutzt EMS im Sport?  
+- ✅ **Über 50 Hz für Kraft und Leistung**
+- ✅ **Unter 20 Hz zur Regeneration**
+- Nur 1.000 Hz
+- Nur 5 Hz
+> Hauptunterschied ist die Frequenz.
+
+**nisv-parameter-20** · S3 · _IST 4.6_  
+Was sagt die Studienlage zu EMS für die Regeneration?  
+- ✅ **Es fehlen belastbare Belege für einen klaren Vorteil**
+- EMS halbiert die Regenerationszeit
+- Regeneration ist nur mit EMS möglich
+- EMS verhindert jeden Muskelkater
+> Viele Profis nutzen es trotzdem – objektive Belege fehlen.
+
+**nisv-parameter-21** · S3 · _IST 4.6_  
+Was ist für den Übertrag der EMS-Kraft auf die Sportleistung wichtig?  
+- ✅ **EMS mit spezifischen Übungen wie Sprints, Sprüngen, Würfen kombinieren**
+- Möglichst passiv liegen
+- Nur hohe Frequenzen
+- Nur Bauchgurte
+> Mehr Kraft allein verbessert nicht automatisch Sprint oder Sprung.
+
+**nisv-parameter-22** · S3 · _IST 4.6_  
+Welche Einstellung empfiehlt die Tabelle für Kraftaufbau bei trainierten Sportlern?  
+- ✅ **80 Hz, über 400 µs, mind. 15 Min. pro Einheit**
+- 10 Hz, 50 µs, 5 Min.
+- 20 Hz, 100 µs, 2 Stunden
+- 200 Hz ohne Pause
+> Wichtig: starke willentliche und stromgesteuerte Kontraktionen.
+
+**nisv-parameter-23** · S3 · _IST 4.6_  
+Welche Einstellung empfiehlt die Tabelle für Ausdauer?  
+- ✅ **20–30 Hz, 400 µs, 2 s on/2 s off, „lockere“ Kontraktionen**
+- 80 Hz, 4 s on/4 s off
+- 150 Hz Dauerreiz
+- 5 Hz ohne Pause
+> Max. 1 Stunde pro Tag.
+
+**nisv-parameter-24** · S3 · _IST 4.6_  
+Welche Frequenz nennt die Tabelle für atrophierte Muskeln nach Verletzungen?  
+- ✅ **Etwa 10 Hz mit „leichten“ Kontraktionen**
+- 80 Hz maximal
+- 150 Hz
+- 1.000 Hz
+> 10 Hz, 400 µs, 2 s on/2 s off – sanft.
+
+**nisv-parameter-25** · S3 · _IST 2.4_  
+Wozu führt eine Stimulation über ca. 70 Hz bei lokaler EMS laut Skript?  
+- ✅ **Zu sehr schneller Ermüdung (neuromuskuläre Fehlfunktion)**
+- Zu besonders langem Durchhalten
+- Zu Fettverbrennung ohne Ermüdung
+- Zu keiner Wirkung
+> Für lokale isometrische EMS gilt 20–50 Hz als optimal.
+
+**nisv-parameter-26** · S3 · _IST 4.3.1_  
+Welcher Bereich von Impulsbreiten ist laut Parameter-Tabelle einstellbar?  
+- ✅ **50–400 µs**
+- 1–5 µs
+- 1–10 ms
+- Über 1 Sekunde
+> Empfohlen sind davon 250–400 µs.
+
+### N9. 🤸 Übungen & Trainingsaufbau (IST 4.2)
+
+
+**nisv-uebungen-01** · S2 🔢 · _IST 4.2.1_  
+Nach welchen Prinzipien wählt man EMS-Übungen aus?  
+- ✅ **Ganzkörperorientierung**
+- ✅ **Funktionalität**
+- ✅ **Individualisierung**
+- ✅ **Progression und Sicherheit**
+> Fünf Grundprinzipien der Übungsauswahl.
+
+**nisv-uebungen-02** · S2 · _IST 4.2.1_  
+Wie viel Muskulatur wird beim WB-EMS gleichzeitig stimuliert?  
+- ✅ **Bis zu 90 %**
+- Etwa 10 %
+- Etwa 30 %
+- Nur der Bauch
+> Deshalb großflächige Mehrgelenksübungen.
+
+**nisv-uebungen-03** · S2 · _IST 4.2.1_  
+Was ist wichtiger als hohe Intensität oder komplexe Übungen?  
+- ✅ **Saubere Bewegungsausführung**
+- Laute Musik
+- Viele Wiederholungen
+- Schnelles Tempo
+> Strom verändert das Belastungsempfinden – Technik geht vor.
+
+**nisv-uebungen-04** · S1 · _IST 4.2.3_  
+Wie ist eine EMS-Einheit methodisch aufgebaut?  
+- ✅ **Einstieg, Hauptteil, Ausklang**
+- Nur Hauptteil
+- Ausklang, Hauptteil, Einstieg
+- Aufwärmen 30 Min., dann Stretching
+> Einstieg statisch, Hauptteil dynamisch, Ausklang locker.
+
+**nisv-uebungen-05** · S2 · _IST 4.2.3_  
+Was passiert im Einstieg der Einheit?  
+- ✅ **Einfache, statische Übungen, um in den Reiz „hineinzufühlen“**
+- Sprünge mit voller Intensität
+- Ausdauerlauf
+- Dehnen
+> So gewöhnt sich der Körper an den Reiz.
+
+**nisv-uebungen-06** · S2 · _IST 4.2.3_  
+Wie viele Übungen umfasst der Hauptteil üblicherweise?  
+- ✅ **6–8 Übungen**
+- 1–2 Übungen
+- 15–20 Übungen
+- Nur eine Übung
+> Dynamische Mehrgelenksübungen – je nach Ziel.
+
+**nisv-uebungen-07** · S2 · _IST 4.2.3_  
+Was gehört in den Ausklang?  
+- ✅ **Leichte Beweglichkeits- oder Atemübungen**
+- Maximalkrafttest
+- Sprints
+- Neue, schwierige Übungen
+> Puls senken, Muskulatur entspannen.
+
+**nisv-uebungen-08** · S2 · _IST 4.2.2_  
+Worauf liegt der Fokus im Gesundheits- und Präventionstraining?  
+- ✅ **Haltung, Rumpfstabilität, moderate Ganzkörperübungen**
+- Sprungkraft
+- Maximalkraft
+- Problemzonen
+> Je Zielgruppe andere Schwerpunkte.
+
+**nisv-uebungen-09** · S2 · _IST 4.2.2_  
+Worauf liegt der Fokus bei Fitness- und Figurtraining?  
+- ✅ **Dynamische Grundübungen plus Bauch, Beine, Po**
+- Nur Atemübungen
+- Gleichgewicht
+- Sportartspezifische Würfe
+> Grundübungen ergänzt um Problemzonen.
+
+**nisv-uebungen-10** · S2 · _IST 4.2.2_  
+Was ist für Leistungssportler typisch?  
+- ✅ **Sportartspezifische Bewegungen wie Sprünge oder Rotationen**
+- Nur statische Übungen
+- Nur Liegen
+- Nur Dehnen
+> So steigt der Übertrag auf die Sportart.
+
+**nisv-uebungen-11** · S2 · _IST 4.2.2_  
+Was ist für Reha und ältere Erwachsene typisch?  
+- ✅ **Einfache, kontrollierte Bewegungen mit Fokus auf Gelenkschonung und Gleichgewicht**
+- Sprünge und Sprints
+- Maximale Intensität
+- Komplexe Partnerübungen
+> Funktionale Kraft, Gleichgewicht, gelenkschonend.
+
+**nisv-uebungen-12** · S2 · _IST 4.2.1_  
+Was bedeutet Progression bei der Übungsauswahl?  
+- ✅ **Von einfachen zu komplexeren Bewegungen steigern**
+- Jede Woche doppelte Stromstärke
+- Immer dieselbe Übung
+- Mit der schwersten Übung beginnen
+> So vermeidet man Überforderung.
+
+**nisv-uebungen-13** · S2 · _IST 4.2.1_  
+Was bedeutet Funktionalität?  
+- ✅ **Übertragbarkeit auf Alltag oder Sport, z. B. Heben, Tragen, Aufstehen**
+- Möglichst ungewöhnliche Übungen
+- Nur Maschinen
+- Nur isolierte Muskeln
+> Übungen sollen im echten Leben helfen.
+
+**nisv-uebungen-14** · S2 🔢 · _IST 4.2.4_  
+Welche Übungen gehören laut Katalog zu den Beinübungen im Stand?  
+- ✅ **Kniebeuge**
+- ✅ **Ausfallschritt**
+- ✅ **Sidestep**
+- Bankdrücken
+> Bankdrücken ist eine Brustübung auf der Matte.
+
+**nisv-uebungen-15** · S2 🔢 · _IST 4.2.4_  
+Welche Übungen trainieren vor allem den Rumpf auf der Matte?  
+- ✅ **Plank**
+- ✅ **Seitstütz**
+- ✅ **Brücke**
+- Butterfly
+> Butterfly gehört zu Brust/Rücken.
+
+**nisv-uebungen-16** · S2 🔢 · _IST 4.2.4_  
+Welche Übungen zählen zu Brust/Rücken?  
+- ✅ **Rudern**
+- ✅ **Butterfly**
+- ✅ **Butterfly Reverse**
+- Mountain Climber
+> Mountain Climber ist eine Rumpfübung.
+
+**nisv-uebungen-17** · S3 · _IST 4.6_  
+Was ist bei EMS-unterstützten Kniebeugen ein Vorteil, aber auch eine Grenze?  
+- ✅ **Schwachstellen wie Hüft- und Rückenstrecker werden mitstimuliert – die Koordination verbessert sich dadurch aber nicht automatisch**
+- Kniebeugen werden überflüssig
+- Man braucht keine Technik mehr
+- Es gibt keinen Vorteil
+> Passive Stimulation von Schwachpunkten dosiert einsetzen.
+
+**nisv-uebungen-18** · S2 🔢 · _IST 4.2.4_  
+Welche Übungen macht man mit Partner?  
+- ✅ **Rudern mit Partner**
+- ✅ **Rotation mit Partner**
+- ✅ **Antirotation mit Widerstand**
+- Crunch allein
+> Partnerübungen bringen Widerstand und Abwechslung.
+
+**nisv-uebungen-19** · S2 · _IST 4.2_  
+Warum kombiniert man EMS mit funktionellen Bewegungen?  
+- ✅ **Muskeln, Koordination und Alltagsfähigkeiten werden gleichzeitig geschult**
+- Damit der Strom schwächer wirkt
+- Weil Bewegung Pflicht im Vertrag ist
+- Ohne Bewegung funktioniert das Gerät nicht
+> Reiz + Bewegung = vielseitiges, wirksames Training.
