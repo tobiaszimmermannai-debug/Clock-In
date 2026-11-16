@@ -1,7 +1,8 @@
 // Mein Resturlaub: Anspruch − genommen − eingetragen (zählt runter, sobald Urlaub im Dienstplan steht)
-import { useEffect, useState } from "react";
-import { LeadingIcon, Row, Section } from "../components/ui";
-import { berlinDate, berlinToISO, fmtDay, vacationRanges } from "../lib/dates";
+import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { Field, LeadingIcon, Notice, Pill, Row, Section, Sheet } from "../components/ui";
+import { absenceDays, berlinDate, berlinToISO, fmtDay, rangeLabel, vacationRanges } from "../lib/dates";
+import { dbMessage } from "../lib/errors";
 import { portalDb } from "../lib/supabase";
 import { approvers } from "../lib/approvers";
 
@@ -67,7 +68,7 @@ export function VacationSection(props: { meId: string }) {
   const next = useMyVacation(props.meId, year + 1);
   const nextLeft = showNext && next ? vacationLeft(next) : null;
   return (
-    <Section title={`Mein Urlaub ${year}`} footer="Urlaub trägt deine Studioleitung im Dienstplan ein.">
+    <Section title={`Mein Urlaub ${year}`} footer="Urlaub beantragst du hier: erst stimmt die Studioleitung zu, dann gibt die Geschäftsführung frei.">
       {vacation === undefined && <p className="list-empty">Lädt …</p>}
       {vacation !== undefined && (!vacation || left === null) && (
         <Row title="Urlaubsanspruch noch nicht hinterlegt" subtitle={`Bitte ${approvers()} fragen.`} />
@@ -84,6 +85,7 @@ export function VacationSection(props: { meId: string }) {
         <Row title={`Resturlaub ${year + 1}`} subtitle={`Anspruch ${fmt(Number(next.allowance))} · eingetragen ${fmt(next.taken + next.planned)}`}
           trailing={<span className={`num${nextLeft < 0 ? " text-danger" : ""}`}>{days(nextLeft)}</span>} />
       )}
+      <VacationRequests meId={props.meId} left={left} />
       {ranges.slice(0, 6).map((r) => (
         <Row key={r.from} title={r.from === r.to ? fmtDay(r.from) : `${fmtDay(r.from)} – ${fmtDay(r.to)}`}
           subtitle="Urlaub geplant" trailing={<span className="num">{days(r.count)}</span>} />
@@ -109,5 +111,106 @@ export function VacationRow(props: { meId: string; onOpen?: () => void }) {
         onClick={props.onOpen}
       />
     </Section>
+  );
+}
+
+// Urlaub beantragen + eigene Anträge (offen, zuletzt entschieden)
+type MyRequest = { id: string; from_day: string; to_day: string; days: number; status: string; decision_note: string | null };
+const REQUEST_PILL: Record<string, { tone: "ok" | "warn" | "bad" | "muted"; text: string }> = {
+  pending_lead: { tone: "warn", text: "wartet auf Studioleitung" },
+  pending_final: { tone: "warn", text: "wartet auf Freigabe" },
+  approved: { tone: "ok", text: "genehmigt" },
+  rejected: { tone: "bad", text: "abgelehnt" },
+  cancelled: { tone: "muted", text: "zurückgezogen" },
+};
+
+function VacationRequests(props: { meId: string; left: number | null }) {
+  const today = berlinDate();
+  const [list, setList] = useState<MyRequest[]>([]);
+  const [open, setOpen] = useState(false);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [error, setError] = useState<string>();
+  const [message, setMessage] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const [available, setAvailable] = useState(true);
+
+  const load = useCallback(async () => {
+    const { data, error } = await portalDb
+      .from("vacation_requests")
+      .select("id, from_day, to_day, days, status, decision_note")
+      .eq("user_id", props.meId)
+      .order("created_at", { ascending: false })
+      .limit(6);
+    if (error) return setAvailable(false); // ältere Datenbank: Antrag noch nicht möglich
+    setList((data ?? []) as MyRequest[]);
+  }, [props.meId]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const count = from && to && to >= from ? absenceDays(from, to).length : 0;
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    const note = String(new FormData(e.currentTarget).get("note") ?? "");
+    const { error } = await portalDb.rpc("vacation_request_create", { p_from: from, p_to: to || from, p_note: note });
+    setBusy(false);
+    if (error) return setError(dbMessage(error).replace(/^Urlaub: /, ""));
+    setOpen(false);
+    setFrom("");
+    setTo("");
+    setError(undefined);
+    setMessage("Antrag gestellt – du bekommst eine Mitteilung, sobald entschieden ist.");
+    void load();
+  }
+
+  async function cancel(id: string) {
+    const { error } = await portalDb.rpc("vacation_request_cancel", { p_id: id });
+    setMessage(error ? dbMessage(error).replace(/^Urlaub: /, "") : "Antrag zurückgezogen.");
+    void load();
+  }
+
+  if (!available) return null;
+  return (
+    <>
+      {message && <Notice tone="ok">{message}</Notice>}
+      <div className="list-actions">
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => { setOpen(true); setMessage(undefined); }}>Urlaub beantragen</button>
+      </div>
+      {list.map((r) => (
+        <div key={r.id} className="list-item">
+          <Row
+            title={rangeLabel(r.from_day, r.to_day)}
+            subtitle={<>{days(r.days)}{r.status === "rejected" && r.decision_note ? <> · „{r.decision_note}“</> : null}</>}
+            trailing={<Pill tone={REQUEST_PILL[r.status]?.tone}>{REQUEST_PILL[r.status]?.text ?? r.status}</Pill>}
+          />
+          {(r.status === "pending_lead" || r.status === "pending_final") && (
+            <div className="list-actions indent">
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => void cancel(r.id)}>Antrag zurückziehen</button>
+            </div>
+          )}
+        </div>
+      ))}
+      {open && (
+        <Sheet title="Urlaub beantragen" onClose={() => setOpen(false)}
+          footer={<button type="submit" form="vac-form" className="btn btn-primary" disabled={busy || !from}>{busy ? "Sendet …" : "Antrag stellen"}</button>}>
+          <form id="vac-form" className="form" onSubmit={submit}>
+            <Field label="Von">
+              <input id="vac-from" type="date" min={today} value={from} onChange={(e) => { setFrom(e.target.value); if (!to || to < e.target.value) setTo(e.target.value); }} required />
+            </Field>
+            <Field label="Bis" hint={count > 0 ? `${days(count)} (Mo–Fr)${props.left !== null ? ` · danach noch ${fmt(props.left - count)} übrig` : ""}` : undefined}>
+              <input id="vac-to" type="date" min={from || today} value={to} onChange={(e) => setTo(e.target.value)} required />
+            </Field>
+            <Field label="Notiz (optional)">
+              <input id="vac-note" name="note" maxLength={200} placeholder="z. B. Familienurlaub" />
+            </Field>
+            {props.left !== null && count > props.left && <Notice tone="warn">Das sind mehr Tage, als du noch übrig hast.</Notice>}
+            {error && <Notice tone="error">{error}</Notice>}
+          </form>
+        </Sheet>
+      )}
+    </>
   );
 }

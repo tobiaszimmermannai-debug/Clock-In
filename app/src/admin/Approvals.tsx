@@ -7,6 +7,7 @@ import { adminDb } from "../lib/supabase";
 import { EVENT_LABEL, type EventType, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
 import { approvers } from "../lib/approvers";
+import { VacationApprovals } from "../components/VacationApprovals";
 
 type Person = { first_name: string; last_name: string } | null;
 type Booking = {
@@ -152,6 +153,7 @@ export function Approvals({ profile }: { profile: Profile }) {
           {loadError} <button type="button" className="btn btn-plain btn-sm" onClick={() => void load()}>Erneut versuchen</button>
         </Notice>
       )}
+      <VacationApprovals db={adminDb} meId={profile.id} />
       {empty && !loadError && (
         <div className="panel">
           <Empty icon="checkCircle" title="Alles erledigt">Keine offenen Freigaben.</Empty>

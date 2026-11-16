@@ -52,6 +52,7 @@ Notes-Repo ändern und per `npm run sync:clockin` übernehmen.
    „Rückgängig“ 8 Sek. nach Löschen. Ziehen zum Anlegen auch in der Wochenansicht.
 
 ## Paket 4 – Urlaubsantrag
+**Stand 16.11.: erledigt** – Migration `20261120090000_vacation_requests.sql`, Funktion `telegram` neu deployen. Studioleitungen haben kein Telegram: sie entscheiden in der App (Mitteilungen bzw. Verwaltung → Freigaben).
 Ablauf: Mitarbeiter beantragt (von–bis, Notiz; zeigt gezählte Tage und Resturlaub danach) → Studioleitung des
 Heimatstudios stimmt zu/lehnt ab → Dominik gibt frei (Tobi bekommt nur Info per Telegram) → Urlaub wird als
 `vacation`-Einträge in den Dienstplan geschrieben (Mo–Fr bzw. wie `absenceDays`), Resturlaub sinkt automatisch.

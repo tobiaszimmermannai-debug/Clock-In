@@ -125,6 +125,8 @@ async function handleNotify(
   if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
   if (body.type === "school_reminder") return await schoolReminder(typeof body.user_id === "string" ? body.user_id : undefined);
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
+  if (body.type === "vacation_request" && typeof body.id === "string") return await vacationRequest(body.id, false);
+  if (body.type === "vacation_decided" && typeof body.id === "string") return await vacationRequest(body.id, true);
   if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
   if (body.type === "not_checked_in") return await notCheckedIn(body as NotCheckedIn);
   if (body.type === "phone_registered") return await phoneRegistered(body as PhoneRegistered);
@@ -986,6 +988,8 @@ async function handleCallback(cq: CallbackQuery) {
       return await decideSwap(cq, admin, parts[1] === "ok", parts[2]);
     case "tm":
       return await decideTerminal(cq, admin, parts[1] === "ok", parts[2]);
+    case "va":
+      return await decideVacation(cq, admin, parts[1] === "ok", parts[2]);
     default:
       await tg("answerCallbackQuery", { callback_query_id: cq.id });
   }
@@ -1140,6 +1144,90 @@ async function decideSwap(cq: CallbackQuery, admin: Admin, approve: boolean, id:
     cq,
     approve ? "Tausch freigegeben ✅" : "Tausch abgelehnt ❌",
     approve ? `✅ Tausch freigegeben von ${by} – Dienstplan ist aktualisiert` : `❌ Tausch abgelehnt von ${by}`,
+  );
+}
+
+// -----------------------------------------------------------------------------
+// Urlaubsantrag: Der Freigeber (Dominik) entscheidet per Knopf, die anderen Admins werden nur informiert
+// -----------------------------------------------------------------------------
+type VacationRow = {
+  id: string; from_day: string; to_day: string; days: number; note: string | null; status: string; decision_note: string | null;
+  user: Person | null; lead: Person | null; final: Person | null;
+};
+
+// Wer gibt endgültig frei? (wie private.vacation_approver in der Datenbank; null = jeder Admin)
+async function vacationApprover(): Promise<string | null> {
+  const { data: settings } = await supabase.from("rule_settings").select("vacation_approver_user_id").maybeSingle();
+  const { data: admins } = await supabase.from("users").select("id, first_name").eq("role", "admin").eq("is_active", true).order("first_name");
+  const list = (admins ?? []) as { id: string; first_name: string }[];
+  const set = (settings as { vacation_approver_user_id?: string | null } | null)?.vacation_approver_user_id;
+  if (set && list.some((a) => a.id === set)) return set;
+  return list.find((a) => a.first_name.toLowerCase().startsWith("domi"))?.id ?? null;
+}
+
+const dayLabel = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.`;
+
+async function vacationRequest(id: string, decided: boolean): Promise<Response> {
+  const { data: v, error } = await supabase
+    .from("vacation_requests")
+    .select(`id, from_day, to_day, days, note, status, decision_note,
+      user:users!vacation_requests_user_id_fkey(first_name, last_name),
+      lead:users!vacation_requests_lead_by_fkey(first_name, last_name),
+      final:users!vacation_requests_final_by_fkey(first_name, last_name)`)
+    .eq("id", id)
+    .single<VacationRow>();
+  if (error || !v) return new Response("not found", { status: 404 });
+  const range = `${dayLabel(v.from_day)}–${dayLabel(v.to_day)}${v.to_day.slice(0, 4)}`;
+  const head = `${escapeHtml(fullName(v.user))}: ${range} (${v.days} ${v.days === 1 ? "Tag" : "Tage"})`;
+  const approver = await vacationApprover();
+  const admins = await adminChats();
+
+  if (decided) {
+    // Ergebnis als Info an alle Admins außer der Person, die entschieden hat (sie sieht es im Knopf-Ergebnis)
+    const text = [
+      v.status === "approved" ? "🌴 <b>Urlaub genehmigt</b>" : "🌴 <b>Urlaub abgelehnt</b>",
+      head,
+      v.status === "approved" ? `Freigegeben von ${escapeHtml(fullName(v.final))} – steht im Dienstplan.` : `Abgelehnt von ${escapeHtml(fullName(v.final ?? v.lead))}`,
+      ...(v.decision_note && v.decision_note !== "per Telegram" ? [`💬 ${escapeHtml(v.decision_note)}`] : []),
+    ].join("\n");
+    const { data: decider } = await supabase.from("vacation_requests").select("final_by, lead_by").eq("id", id).maybeSingle();
+    const by = (decider as { final_by: string | null; lead_by: string | null } | null);
+    await Promise.all(admins.filter((a) => a.user_id !== (by?.final_by ?? by?.lead_by)).map((a) => sendMessage(a.chat_id, text)));
+    return new Response("sent");
+  }
+
+  const lines = [
+    "🌴 <b>Urlaubsantrag</b>",
+    head,
+    ...(v.note ? [`💬 ${escapeHtml(v.note)}`] : []),
+    v.lead ? `👍 Studioleitung: ${escapeHtml(fullName(v.lead))} hat zugestimmt.` : "Direkt an die Geschäftsführung (keine Studioleitung nötig).",
+  ];
+  const keyboard = [[
+    { text: "✅ Urlaub freigeben", callback_data: `va:ok:${v.id}` },
+    { text: "❌ Ablehnen", callback_data: `va:no:${v.id}` },
+  ]];
+  await Promise.all(admins.map((a) =>
+    !approver || a.user_id === approver
+      ? sendMessage(a.chat_id, lines.join("\n"), keyboard)
+      : sendMessage(a.chat_id, [...lines, "ℹ️ Nur zur Info – die Freigabe macht Dominik."].join("\n"))
+  ));
+  return new Response("sent");
+}
+
+async function decideVacation(cq: CallbackQuery, admin: Admin, approve: boolean, id: string) {
+  const { data, error } = await supabase.rpc("vacation_request_decide", { p_id: id, p_ok: approve, p_note: "per Telegram", p_by: admin.user_id });
+  if (error) {
+    const text = error.message.replace(/^Urlaub: /, "");
+    // schon entschieden → Nachricht schließen; sonst (z. B. Schicht im Weg) nur Hinweis, der Antrag bleibt offen
+    if (/abgeschlossen|nicht gefunden/.test(text)) return await alreadyDone(cq, text);
+    await tg("answerCallbackQuery", { callback_query_id: cq.id, text, show_alert: true });
+    return;
+  }
+  const by = escapeHtml(fullName(admin.user));
+  await done(
+    cq,
+    data === "approved" ? "Urlaub freigegeben ✅" : "Urlaub abgelehnt ❌",
+    data === "approved" ? `✅ Urlaub freigegeben von ${by} – steht im Dienstplan` : `❌ Urlaub abgelehnt von ${by}`,
   );
 }
 

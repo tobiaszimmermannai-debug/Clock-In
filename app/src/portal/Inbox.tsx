@@ -4,6 +4,7 @@ import { Empty, Notice, PageHeader, Row, Section, LeadingIcon, type IconName } f
 import { berlinDate, berlinTime, fmtDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { portalDb } from "../lib/supabase";
+import { VacationApprovals } from "../components/VacationApprovals";
 
 type Item = { id: string; kind: string; title: string; body: string | null; created_at: string; read_at: string | null };
 
@@ -15,7 +16,7 @@ export async function unreadCount(): Promise<number> {
   return error ? 0 : (count ?? 0);
 }
 
-export function Inbox(props: { onRead: () => void; onOpenPlan: () => void }) {
+export function Inbox(props: { meId: string; isLead: boolean; onRead: () => void; onOpenPlan: () => void }) {
   const [items, setItems] = useState<Item[]>();
   const [error, setError] = useState<string>();
   const { onRead } = props;
@@ -36,6 +37,7 @@ export function Inbox(props: { onRead: () => void; onOpenPlan: () => void }) {
   return (
     <>
       <PageHeader title="Mitteilungen" />
+      {props.isLead && <VacationApprovals db={portalDb} meId={props.meId} />}
       {error && <Notice tone="error">{error}</Notice>}
       {!error && items === undefined && <p className="list-empty">Lädt …</p>}
       {items?.length === 0 && (

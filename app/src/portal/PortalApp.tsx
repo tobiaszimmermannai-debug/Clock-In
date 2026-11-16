@@ -177,7 +177,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
       {tab === "knowledge" && <Knowledge />}
       {tab === "tasks" && <ErrorBoundary label="Aufgaben"><Tasks db={portalDb} /></ErrorBoundary>}
       {tab === "account" && <Account me={me} onLogout={logout} />}
-      {tab === "inbox" && <Inbox onRead={refreshUnread} onOpenPlan={() => setTab("plan")} />}
+      {tab === "inbox" && <Inbox meId={me.id} isLead={me.role === "manager"} onRead={refreshUnread} onOpenPlan={() => setTab("plan")} />}
       {showReminder && tab !== "tasks" && (
         <Sheet title="Deine Aufgaben heute" onClose={closeReminder}>
           <TaskReminder
