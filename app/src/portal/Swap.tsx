@@ -13,6 +13,7 @@ type Request = {
   status: "pending" | "approved" | "rejected" | "cancelled";
   reason: string | null;
   decision_note?: string | null;
+  target_accepted_at?: string | null;
   is_cross_studio: boolean;
   approved_own_by: string | null;
   approved_other_by: string | null;
@@ -51,7 +52,7 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
     setShifts(await upcomingShifts(props.me.id));
     const { data, error } = await portalDb
       .from("swap_requests")
-      .select(`id, status, reason, decision_note, is_cross_studio, approved_own_by, approved_other_by, requester_id,
+      .select(`id, status, reason, decision_note, target_accepted_at, is_cross_studio, approved_own_by, approved_other_by, requester_id,
         requester:users!swap_requests_requester_id_fkey(first_name, last_name),
         target:users!swap_requests_target_user_id_fkey(first_name, last_name),
         requester_shift:shifts!swap_requests_requester_shift_id_fkey(id, starts_at, ends_at, location_id, location:locations(name)),
@@ -72,6 +73,13 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
     void load();
   }
 
+  // Angefragte Person: zustimmen oder ablehnen – erst danach entscheidet die Leitung
+  async function respond(id: string, accept: boolean) {
+    const { error } = await portalDb.rpc("swap_respond", { p_id: id, p_accept: accept });
+    setMessage(error ? dbMessage(error) : accept ? "Zugestimmt – jetzt entscheidet die Studioleitung." : "Abgelehnt.");
+    void load();
+  }
+
   const pendingFor = (shiftId: string) =>
     requests.some((r) => r.status === "pending" && r.requester_shift?.id === shiftId);
 
@@ -81,7 +89,7 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
       {message && <Notice tone="ok">{message}</Notice>}
       {loadError && <Notice tone="error">{loadError}</Notice>}
 
-      <Section title="Meine nächsten Schichten" footer="Tausch im eigenen Studio – „Anderes Studio“ braucht die Zustimmung beider Studioleitungen.">
+      <Section title="Meine nächsten Schichten" footer="Erst stimmt dein Kollege zu, dann die Studioleitung. „Anderes Studio“ braucht die Zustimmung beider Studioleitungen.">
         {shifts.length === 0 && <p className="list-empty">Keine Schichten in den nächsten 5 Wochen.</p>}
         {shifts.map((s) => (
           <div key={s.id} className="list-item">
@@ -122,8 +130,14 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
                     {r.status === "rejected" && r.decision_note && <><br />Abgelehnt: {r.decision_note}</>}
                   </>
                 }
-                trailing={<StatusPill status={r.status} cross={r.is_cross_studio} approvals={approvals} />}
+                trailing={<StatusPill status={r.status} cross={r.is_cross_studio} approvals={approvals} accepted={!!r.target_accepted_at} />}
               />
+              {!mine && r.status === "pending" && !r.target_accepted_at && (
+                <div className="list-actions indent">
+                  <button type="button" className="btn btn-outline btn-sm" onClick={() => void respond(r.id, false)}>Ablehnen</button>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => void respond(r.id, true)}>Zustimmen</button>
+                </div>
+              )}
               {mine && r.status === "pending" && (
                 <div className="list-actions indent">
                   <button type="button" className="btn btn-outline btn-sm" onClick={() => void cancel(r.id)}>Antrag zurückziehen</button>
@@ -152,11 +166,12 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
   );
 }
 
-function StatusPill(props: { status: Request["status"]; cross: boolean; approvals: number }) {
+function StatusPill(props: { status: Request["status"]; cross: boolean; approvals: number; accepted: boolean }) {
   if (props.status === "approved") return <Pill tone="ok">Freigegeben</Pill>;
   if (props.status === "rejected") return <Pill tone="bad">Abgelehnt</Pill>;
   if (props.status === "cancelled") return <Pill>Zurückgezogen</Pill>;
-  return <Pill tone="warn">{props.cross ? `${props.approvals}/2 Freigaben` : "Wartet"}</Pill>;
+  if (!props.accepted) return <Pill tone="warn">Wartet auf Zustimmung</Pill>;
+  return <Pill tone="warn">{props.cross ? `${props.approvals}/2 Freigaben` : "Wartet auf Leitung"}</Pill>;
 }
 
 function SwapForm(props: {
@@ -199,8 +214,8 @@ function SwapForm(props: {
     if (error) return setError(dbMessage(error));
     props.onSent(
       props.cross
-        ? "Antrag gestellt. Beide Studioleitungen müssen zustimmen – du siehst den Stand unten."
-        : "Antrag gestellt. Die Studioleitung entscheidet – du siehst den Stand unten.",
+        ? "Antrag gestellt. Erst stimmt dein Kollege zu, dann beide Studioleitungen – du siehst den Stand unten."
+        : "Antrag gestellt. Erst stimmt dein Kollege zu, dann entscheidet die Studioleitung – du siehst den Stand unten.",
     );
   }
 

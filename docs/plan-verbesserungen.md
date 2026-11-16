@@ -23,6 +23,7 @@ Notes-Repo ändern und per `npm run sync:clockin` übernehmen.
    App + Edge Functions lesen sie. „So wird gezählt“ nutzt Werte aus `rule_settings` statt 5/15/6,5.
 
 ## Paket 2 – Tausch, Stempeln, Früher gehen (SQL + App + Telegram)
+**Stand 16.11.: erledigt** – Migration `20261118090000_swap_accept_stamp_fixes.sql`, Funktion `telegram` neu deployen.
 1. **Tausch braucht Zustimmung der Zielperson**: `swap_requests.target_accepted_at`, Status-Ablauf
    Antrag → Zielperson „Annehmen/Ablehnen“ (Portal `Swap.tsx`, Mitteilung) → erst dann Telegram/Freigabe an Leitung.
    `swap_requests_validate` + RLS anpassen; Leitung sieht nur angenommene Anträge.

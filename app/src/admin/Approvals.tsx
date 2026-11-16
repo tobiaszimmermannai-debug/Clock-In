@@ -70,6 +70,7 @@ export function Approvals({ profile }: { profile: Profile }) {
           requester_shift:shifts!swap_requests_requester_shift_id_fkey(starts_at, ends_at, location:locations(name)),
           target_shift:shifts!swap_requests_target_shift_id_fkey(starts_at, ends_at, location:locations(name))`)
         .eq("status", "pending")
+        .not("target_accepted_at", "is", null)  // erst wenn die angefragte Person zugestimmt hat
         .order("created_at"),
       adminDb.from("time_logs").select(BOOKING_SELECT).eq("early_status", "pending").order("recorded_at"),
     ]);

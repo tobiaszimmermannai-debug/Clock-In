@@ -29,7 +29,7 @@ type Phase =
   | { kind: "choose"; token: string; check: StampCheck; ctx: Context; busy?: boolean }
   // mehr als 30 Min. vor Schichtende gehen: erst nach dem Grund fragen
   | { kind: "early"; choose: Extract<Phase, { kind: "choose" }>; minutes: number; end: string; busy?: boolean }
-  | { kind: "done"; event: EventType; at: string; location: string; note: ShiftNote | null; registered: boolean; pending: boolean; early?: boolean }
+  | { kind: "done"; event: EventType; at: string; location: string; note: ShiftNote | null; registered: boolean; pending: boolean; early?: boolean; slow?: boolean }
   // nach „Gehen“: erst Statistik, dann Feierabend-Blitzi, dann der Fertig-Screen
   | { kind: "report"; done: Extract<Phase, { kind: "done" }> }
   | { kind: "feierabend"; done: Extract<Phase, { kind: "done" }> }
@@ -124,7 +124,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
   }
 
   async function book(p: Extract<Phase, { kind: "choose" }>, event: EventType, earlyReason?: EarlyReason) {
-    // Früher gehen? Dann erst fragen: wenig los oder krank (Tobias/Dominik geben frei)
+    // Früher gehen? Dann erst fragen: wenig los (immer Minusstunden, nur Info) oder krank (Freigabe)
     if (event === "clock_out" && !earlyReason) {
       const shift = relevantShift(p.ctx.shifts, props.me.id, new Date());
       const minutes = shift ? Math.round((Date.parse(shift.ends_at) - Date.now()) / 60_000) : 0;
@@ -140,7 +140,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
       });
       const done = {
         kind: "done" as const, event, at: result.recorded_at, location: result.location, note,
-        registered: p.check.registered, pending: !!result.pending, early: !!result.early,
+        registered: p.check.registered, pending: !!result.pending, early: !!result.early, slow: earlyReason === "slow",
       };
       setPhase(event === "clock_out" ? { kind: "report", done } : done);
       void loadStatus();
@@ -177,7 +177,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         <div className="panel stamp-hero">
           <span className="stamp-hero-icon"><Icon name="clock" size={34} /></span>
           <h2>{phase.minutes ? `${fmtHM(phase.minutes)} Std. vor Schichtende` : "Warum gehst du früher?"}</h2>
-          <p className="muted">Warum gehst du früher? {approvers()} geben frei – sonst zählen die fehlenden Stunden als Minusstunden.</p>
+          <p className="muted">Warum gehst du früher? Bei „wenig los“ zählt die fehlende Zeit als Minusstunden. Bei „krank“ entscheiden {approvers()}.</p>
           <div className="early-actions">
             <button type="button" className="btn btn-outline btn-block btn-lg" disabled={phase.busy} onClick={() => void book(p, "clock_out", "slow")}>
               📉 Wenig los / weniger Trainings
@@ -252,6 +252,9 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         {phase.registered && <Notice tone="ok">Dieses Handy ist jetzt dein Stempel-Handy.</Notice>}
         {phase.pending && (
           <Notice tone="warn">Gespeichert – wartet auf Freigabe durch {approvers()} (anderes Handy/Browser).</Notice>
+        )}
+        {phase.slow && !phase.early && (
+          <Notice tone="info">Früher gegangen (wenig los) – die fehlende Zeit bis Schichtende zählt als Minusstunden.</Notice>
         )}
         {phase.early && (
           <Notice tone="warn">Früher gegangen – {approvers()} entscheiden, wie die restliche Zeit zählt. Gute Besserung, falls du krank bist!</Notice>

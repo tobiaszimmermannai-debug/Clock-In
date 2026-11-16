@@ -154,6 +154,8 @@ async function handleNotify(
   const isApproval = log.approval_status === "pending";
   const isOvertime = !isApproval && log.overtime_status === "pending";
   const isEarly = !isApproval && log.event_type === "clock_out" && log.early_status === "pending";
+  // „wenig los“: keine Entscheidung mehr – immer Minusstunden, die Admins bekommen nur die Info
+  const isEarlyInfo = !isApproval && log.event_type === "clock_out" && log.early_status === "rejected" && log.early_reason === "slow";
   // Erstes Einstempeln des Tages im Studio → "Studio besetzt" (auch für Admins mit /kurz)
   let isFirst = false;
   if (!isApproval && log.event_type === "clock_in") {
@@ -162,7 +164,7 @@ async function handleNotify(
   }
   // Entscheidungen gehen immer raus, einfache Meldungen nur bei notify_bookings
   const recipients = (await adminChats()).filter((l) =>
-    isApproval || isOvertime || isEarly || l.notify_bookings || (isFirst && l.notify_studio_status)
+    isApproval || isOvertime || isEarly || isEarlyInfo || l.notify_bookings || (isFirst && l.notify_studio_status)
   );
   if (recipients.length === 0) return new Response("no recipients");
 
@@ -192,6 +194,8 @@ async function handleNotify(
     const sick = { text: "🤒 Ab da krank anrechnen", callback_data: `el:sick:${log.id}` };
     const ok = { text: "✅ OK – bis Schichtende anrechnen", callback_data: `el:ok:${log.id}` };
     keyboard = log.early_reason === "sick" ? [[sick], [no]] : log.early_reason === "slow" ? [[ok], [no]] : [[sick], [ok], [no]];
+  } else if (isEarlyInfo) {
+    text = earlyText(log, true);
   } else if (isOvertime) {
     text = overtimeText(log);
     keyboard = [[
@@ -208,7 +212,7 @@ async function handleNotify(
 }
 
 // Früher gegangen (mehr als 30 Min. vor Schichtende) – Grund vom Handy, Entscheidung per Button
-function earlyText(log: TimeLog): string {
+function earlyText(log: TimeLog, infoOnly = false): string {
   const end = log.shift?.ends_at ?? log.recorded_at;
   const minutes = Math.max(0, Math.round((Date.parse(end) - Date.parse(log.recorded_at)) / 60_000));
   const reason = log.early_reason === "sick" ? "🤒 krank"
@@ -217,7 +221,7 @@ function earlyText(log: TimeLog): string {
     `🏃 <b>${escapeHtml(fullName(log.user))}</b> ist <b>${formatHours(minutes)}</b> vor Schichtende gegangen`,
     `${escapeHtml(log.location?.name ?? "")} · Schicht ${log.shift ? `${formatClock(log.shift.starts_at)}–${formatClock(log.shift.ends_at)}` : "?"} · gegangen ${formatClock(log.recorded_at)}`,
     `Grund: <b>${reason}</b>`,
-    "Ohne Freigabe zählt nur die gearbeitete Zeit (Minusstunden).",
+    infoOnly ? "ℹ️ Nur zur Info – die fehlende Zeit zählt als Minusstunden." : "Ohne Freigabe zählt nur die gearbeitete Zeit (Minusstunden).",
   ].join("\n");
 }
 
@@ -384,6 +388,7 @@ async function swapRequest(id: string): Promise<Response> {
     swap.target_shift
       ? `${escapeHtml(fullName(swap.target))} gibt dafür ab: ${shiftLabel(swap.target_shift)}`
       : `Übernehmen soll: ${escapeHtml(fullName(swap.target))}`,
+    `👍 ${escapeHtml(swap.target?.first_name ?? "Die angefragte Person")} hat zugestimmt.`,
     ...(swap.reason ? [`💬 ${escapeHtml(swap.reason)}`] : []),
     ...(swap.is_cross_studio
       ? ["🏢 Studioübergreifend: braucht beide Studioleitungen – dein Admin-OK gibt für beide frei."]
