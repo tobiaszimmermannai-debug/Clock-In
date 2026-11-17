@@ -3,7 +3,8 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { DayTable, type DaySummary, istMinutes, type Stamp, SummaryCard } from "../components/DayTable";
 import { Field, Icon, Notice, PageHeader, Sheet, WeekNav } from "../components/ui";
-import { addDays, berlinDate, berlinTime, berlinToISO, fmtLongDay, weekStart } from "../lib/dates";
+import { addDays, berlinDate, berlinTime, berlinToISO, fmtHM, fmtLongDay, weekStart } from "../lib/dates";
+import { type Block, blocksFromStamps, blocksToEvents, calcDay, newBlock } from "../lib/dayEdit";
 import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
 import { EVENT_LABEL, type EventType, type Location, studioShort } from "../lib/types";
@@ -123,7 +124,7 @@ export function Times({ profile }: { profile: Profile }) {
       {error && !entry && <Notice tone="error">{error}</Notice>}
       {message && <Notice tone="ok">{message}</Notice>}
       <DayTable days={days} stamps={stamps} onEdit={isAdmin ? setEditDay : undefined} />
-      {isAdmin && <p className="muted small">Tag antippen, um die Stempelungen zu korrigieren (z. B. falsche Pausen).</p>}
+      {isAdmin && <p className="muted small">Tag oder Uhrzeit antippen, um Kommen und Gehen zu ändern – die Pause wird automatisch abgezogen.</p>}
 
       {editDay && person && (
         <DayEditor
@@ -179,11 +180,8 @@ export function Times({ profile }: { profile: Profile }) {
   );
 }
 
-// Tag korrigieren: Buchungen bearbeiten/löschen/ergänzen → ersetzt alle Stempelungen des Tages (protokolliert)
-type EditRow = { key: number; event: EventType; time: string };
-const NEXT: Record<EventType, EventType> = { clock_in: "clock_out", break_start: "break_end", break_end: "clock_out", clock_out: "clock_in" };
-let rowKey = 0;
-
+// Tag korrigieren: nur Kommen und Gehen je Einsatz → ersetzt alle Stempelungen des Tages (protokolliert).
+// Pausen trägt niemand mehr von Hand ein – das System zieht die gesetzliche Pause automatisch ab.
 function DayEditor(props: {
   person: Staffer;
   day: string;
@@ -192,38 +190,40 @@ function DayEditor(props: {
   onClose: () => void;
   onSaved: (text: string) => void;
 }) {
-  const [rows, setRows] = useState<EditRow[]>(() =>
-    props.stamps.map((s) => ({ key: rowKey++, event: s.event_type as EventType, time: berlinTime(s.recorded_at) })));
+  const [blocks, setBlocks] = useState<Block[]>(() => {
+    const list = blocksFromStamps(props.stamps, berlinTime);
+    return list.length ? list : [newBlock()];
+  });
   const [location, setLocation] = useState(props.stamps.find((s) => s.location_id)?.location_id ?? props.person.home_location_id ?? props.locations[0]?.id ?? "");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const hadBreaks = props.stamps.some((s) => s.event_type === "break_start" || s.event_type === "break_end");
+  const calc = calcDay(blocks);
 
-  const update = (key: number, patch: Partial<EditRow>) => setRows((r) => r.map((x) => (x.key === key ? { ...x, ...patch } : x)));
-  const add = () => setRows((r) => {
-    const last = r.at(-1);
-    return [...r, { key: rowKey++, event: last ? NEXT[last.event] : "clock_in", time: last?.time ?? "09:00" }];
+  const update = (key: number, patch: Partial<Block>) => setBlocks((r) => r.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  const addBlock = () => setBlocks((r) => {
+    const last = [...r].sort((a, b) => a.from.localeCompare(b.from)).at(-1);
+    return [...r, newBlock(last?.to || "16:00", "")];
   });
-  const addBreak = () => setRows((r) => [...r,
-    { key: rowKey++, event: "break_start" as EventType, time: "12:00" }, { key: rowKey++, event: "break_end" as EventType, time: "12:30" }]
-    .sort((a, b) => a.time.localeCompare(b.time)));
 
-  async function save() {
+  async function save(clear = false) {
     setError(undefined);
     if (note.trim().length < 3) return setError("Bitte einen Grund angeben (mind. 3 Zeichen).");
-    const sorted = [...rows].sort((a, b) => a.time.localeCompare(b.time));
+    if (!clear && calc.problem) return setError(calc.problem);
+    const events = clear ? [] : blocksToEvents(blocks);
     setBusy(true);
     const { error } = await adminDb.rpc("replace_day_logs", {
       p_user: props.person.id,
       p_day: props.day,
       p_location: location || null,
-      p_events: sorted.map((r) => ({ event: r.event, at: berlinToISO(props.day, r.time) })),
+      p_events: events.map((e) => ({ event: e.event, at: berlinToISO(props.day, e.time) })),
       p_note: note.trim(),
     });
     setBusy(false);
     if (error) return setError(dbMessage(error));
-    props.onSaved(sorted.length
-      ? `${props.person.first_name}: ${fmtLongDay(props.day)} neu erfasst (${sorted.length} Buchungen). Pausen und Stunden sind neu berechnet.`
+    props.onSaved(events.length
+      ? `${props.person.first_name}: ${fmtLongDay(props.day)} neu erfasst – ${fmtHM(calc.presence)} Std. anwesend, ${calc.autoBreak} Min. Pause automatisch abgezogen.`
       : `${props.person.first_name}: alle Stempelungen am ${fmtLongDay(props.day)} gelöscht.`);
   }
 
@@ -234,25 +234,36 @@ function DayEditor(props: {
       onClose={props.onClose}
       footer={<button type="button" className="btn btn-primary" disabled={busy} onClick={() => void save()}>{busy ? "Speichert …" : "Tag neu speichern"}</button>}
     >
-      <Notice>Alle bisherigen Stempelungen dieses Tages werden durch diese Liste ersetzt. Pausen (gesetzlich), Schicht und Überstunden rechnet das System danach neu.</Notice>
+      <p className="muted small">Uhrzeit antippen und ändern. Pausen musst du nicht eintragen – die gesetzliche Pause wird automatisch abgezogen.</p>
       <div className="list day-edit">
-        {rows.length === 0 && <p className="list-empty">Keine Buchungen – speichern löscht den Tag.</p>}
-        {rows.map((r) => (
-          <div key={r.key} className="list-row day-edit-row">
-            <select aria-label="Buchung" value={r.event} onChange={(e) => update(r.key, { event: e.target.value as EventType })}>
-              {(Object.keys(EVENT_LABEL) as EventType[]).map((t) => <option key={t} value={t}>{EVENT_LABEL[t]}</option>)}
-            </select>
-            <input aria-label="Uhrzeit" type="time" value={r.time} onChange={(e) => update(r.key, { time: e.target.value })} required />
-            <button type="button" className="icon-btn" aria-label="Buchung löschen" onClick={() => setRows((x) => x.filter((y) => y.key !== r.key))}>
-              <Icon name="trash" size={18} />
-            </button>
+        {blocks.map((b, i) => (
+          <div key={b.key} className="list-row day-edit-block">
+            <label className="day-edit-time">
+              <span>{blocks.length > 1 ? `Kommen ${i + 1}` : "Kommen"}</span>
+              <input aria-label="Kommen" type="time" value={b.from} onChange={(e) => update(b.key, { from: e.target.value })} required />
+            </label>
+            <span className="day-edit-dash" aria-hidden="true">–</span>
+            <label className="day-edit-time">
+              <span>Gehen</span>
+              <input aria-label="Gehen" type="time" value={b.to} onChange={(e) => update(b.key, { to: e.target.value })} required />
+            </label>
+            {blocks.length > 1 ? (
+              <button type="button" className="icon-btn" aria-label="Einsatz löschen" onClick={() => setBlocks((x) => x.filter((y) => y.key !== b.key))}>
+                <Icon name="trash" size={18} />
+              </button>
+            ) : <span />}
           </div>
         ))}
       </div>
+      <div className="day-edit-sum">
+        <span>Anwesend <b>{fmtHM(calc.presence)} Std.</b></span>
+        <span>Pause automatisch <b>{calc.autoBreak} Min.</b>{calc.gaps > 0 ? ` (+ ${calc.gaps} Min. zwischen den Einsätzen)` : ""}</span>
+        <span>Zählt <b>{fmtHM(calc.counted)} Std.</b></span>
+      </div>
+      <p className="muted small">Ab Schichtbeginn bis Schichtende; Überstunden rechnet das System wie gewohnt.</p>
+      {hadBreaks && <Notice>Gestempelte Pausen dieses Tages werden ersetzt – es zählt die automatische Pause.</Notice>}
       <div className="list-actions">
-        <button type="button" className="btn btn-outline btn-sm" onClick={add}><Icon name="plus" size={16} /> Buchung</button>
-        <button type="button" className="btn btn-outline btn-sm" onClick={addBreak}><Icon name="plus" size={16} /> Pause</button>
-        {rows.length > 0 && <button type="button" className="btn btn-danger btn-sm" onClick={() => setRows([])}>Alle löschen</button>}
+        <button type="button" className="btn btn-outline btn-sm" onClick={addBlock}><Icon name="plus" size={16} /> Weiterer Einsatz (Splitschicht)</button>
       </div>
       <Field label="Studio">
         <select id="edit-location" value={location} onChange={(e) => setLocation(e.target.value)}>
@@ -260,9 +271,10 @@ function DayEditor(props: {
         </select>
       </Field>
       <Field label="Grund (Pflicht)">
-        <input id="edit-note" value={note} maxLength={200} placeholder="z. B. Pause falsch gestempelt" onChange={(e) => setNote(e.target.value)} />
+        <input id="edit-note" value={note} maxLength={200} placeholder="z. B. Ausstempeln vergessen" onChange={(e) => setNote(e.target.value)} />
       </Field>
       {error && <Notice tone="error">{error}</Notice>}
+      <button type="button" className="btn btn-plain btn-sm text-danger" disabled={busy} onClick={() => void save(true)}>Alle Stempelungen dieses Tages löschen</button>
     </Sheet>
   );
 }

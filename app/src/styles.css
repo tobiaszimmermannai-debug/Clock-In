@@ -708,3 +708,12 @@ input.switch:checked { background: var(--accent); }
 .head-tab .tab-badge { top: 2px; left: auto; right: 0; }
 .inbox-item.is-new .list-row-title::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 .plan-warnings { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+
+/* Tag korrigieren: Kommen – Gehen je Einsatz, große Zeitfelder */
+.day-edit-block { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) 40px; gap: 8px; align-items: end; }
+.day-edit-time { display: grid; gap: 4px; min-width: 0; }
+.day-edit-time span { font-size: .8rem; color: var(--muted); font-weight: 600; }
+.day-edit-time input { width: 100%; min-width: 0; font-size: 1.15rem; font-weight: 700; padding: 10px; }
+.day-edit-dash { padding-bottom: 12px; color: var(--muted); }
+.day-edit-sum { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: .9rem; }
+.text-danger { color: var(--danger); }
