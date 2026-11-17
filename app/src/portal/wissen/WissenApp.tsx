@@ -98,6 +98,12 @@ function useWissen() {
   return { ready, error, progress, days, xpTotal, save };
 }
 
+// Fällige Wiederholungen nur aus dem gewählten Thema (Einarbeitung und Strahlenschutz getrennt)
+const dueOfTopic = (progress: ProgressMap, topicId: string) => {
+  const units = new Set(unitsOf(topicId).map((u) => u.id));
+  return dueQuestions(progress).filter((q) => units.has(q.unitId));
+};
+
 // ---------------- Startseite ----------------
 type Screen =
   | { kind: "home" }
@@ -118,7 +124,7 @@ export default function WissenApp() {
     <Home
       {...w}
       onLesson={(u) => setScreen({ kind: "lesson", mode: "lesson", title: u.title, questions: composeLesson(u.id, w.progress) })}
-      onReview={() => setScreen({ kind: "lesson", mode: "review", title: "Wiederholen", questions: dueQuestions(w.progress).slice(0, LESSON_SIZE) })}
+      onReview={(topicId) => setScreen({ kind: "lesson", mode: "review", title: "Wiederholen", questions: dueOfTopic(w.progress, topicId).slice(0, LESSON_SIZE) })}
       onDeck={(deck) => setScreen({ kind: "deck", deck })}
       onBlitz={() => setScreen({ kind: "blitz" })}
     />
@@ -131,7 +137,7 @@ function Home(props: {
   xpTotal: number;
   error?: string;
   onLesson: (u: Unit) => void;
-  onReview: () => void;
+  onReview: (topicId: string) => void;
   onDeck: (d: Deck) => void;
   onBlitz: () => void;
 }) {
@@ -168,7 +174,7 @@ function Home(props: {
     }
     lastLevel.current = level.level;
   }, [level.level, props.xpTotal]);
-  const due = dueQuestions(progress).length;
+  const due = dueOfTopic(progress, topicId).length;
   const dueC = dueCards(progress).length;
   const streak = streakOf(days);
   const today = todayXp(days);
@@ -230,7 +236,7 @@ function Home(props: {
           <Notice tone="info">{topic.title}: Die Fragen zu diesem Thema werden gerade eingepflegt.</Notice>
         )}
         <div className="wi-actions-row">
-          <button type="button" className="wi-btn" disabled={!due} onClick={props.onReview}>🔁 Wiederholen{due ? ` (${due} fällig)` : ""}</button>
+          <button type="button" className="wi-btn" disabled={!due} onClick={() => props.onReview(topic.id)}>🔁 Wiederholen{due ? ` (${due} fällig)` : ""}</button>
           <button type="button" className="wi-btn is-blitz" onClick={props.onBlitz}>⚡ Blitzrunde · {BLITZ_SECONDS} s</button>
         </div>
       </div>
