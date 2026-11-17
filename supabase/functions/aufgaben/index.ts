@@ -811,6 +811,22 @@ function tasksOf(items, userId) {
 		return who.includes(userId) || !who.length && db.space === "private" && db.ownerId === userId;
 	});
 }
+/** Eigenschaften, die einen Eintrag erledigt (bzw. wieder offen) machen; null = Datenbank kennt kein "erledigt" */
+function doneProps(row, schema, done) {
+	const status = schema.properties.find((p) => p.type === "status");
+	if (status) {
+		const option = status.options?.find((o) => (o.group ?? "todo") === (done ? "done" : "todo"));
+		return option ? {
+			...row.props,
+			[status.id]: option.id
+		} : null;
+	}
+	const check = schema.properties.find((p) => p.type === "checkbox");
+	return check ? {
+		...row.props,
+		[check.id]: done
+	} : null;
+}
 
 // src/notes/daily/status.ts
 /** Lebt eine Seite noch (nicht archiviert/gelöscht, auch keine ihrer Eltern)? */
@@ -1218,6 +1234,49 @@ function rankingText(rows, info, studioName, teams) {
 	return lines.join("\n");
 }
 
+// src/notes/gamification/recur.ts
+const SERIES_KEY = "__series";
+const PHOTO_KEY = "__photo";
+const MOVES_KEY = "__moves";
+const PROOF_KEY = "__proof";
+const seriesOf = (row) => typeof row.props["__series"] === "string" ? row.props[SERIES_KEY] : row.id;
+const proofOf = (row) => {
+	const v = row.props[PROOF_KEY];
+	return v && typeof v === "object" && typeof v.url === "string" ? v : null;
+};
+/** Fälligkeits-Eigenschaft einer Aufgabenliste (erste Datums-Eigenschaft) */
+const dueProp = (schema) => schema.properties.find((p) => p.type === "date");
+/** Feste, gleich aussehende ID (UUID-Form) aus Teilen – dieselben Teile ergeben überall dieselbe ID */
+function stableId(...parts) {
+	const text = parts.join("|");
+	const hex = [];
+	for (let seed = 0; seed < 4; seed++) {
+		let h = 2166136261 ^ seed * 2654435761;
+		for (let i = 0; i < text.length; i++) {
+			h ^= text.charCodeAt(i);
+			h = Math.imul(h, 16777619) >>> 0;
+		}
+		hex.push(h.toString(16).padStart(8, "0"));
+	}
+	const s = hex.join("");
+	return `${s.slice(0, 8)}-${s.slice(8, 12)}-4${s.slice(13, 16)}-${"89ab"[parseInt(s[16], 16) % 4]}${s.slice(17, 20)}-${s.slice(20, 32)}`;
+}
+/** Eigenschaften der nächsten Aufgabe einer Serie: offen, ohne Fokus/Nachweis/Zähler */
+function freshProps(row, schema, extra) {
+	const next = {
+		...doneProps(row, schema, false) ?? { ...row.props },
+		...extra,
+		[SERIES_KEY]: seriesOf(row)
+	};
+	for (const key of [
+		"__focus",
+		"__doneAt",
+		PROOF_KEY,
+		MOVES_KEY
+	]) delete next[key];
+	return next;
+}
+
 // src/notes/store/rows.ts
 const META_COLUMNS = "id, parent_id, space, owner_id, kind, title, icon, cover, props, schema, options, position, archived_at, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by";
 const toMeta = (r) => ({
@@ -1310,6 +1369,33 @@ var Db = class {
 		});
 		if (!res.ok) throw new Error(`${fn} fehlgeschlagen: ${res.status} ${(await res.text()).slice(0, 200)}`);
 		return await res.json();
+	}
+	async patch(table, filter, row) {
+		const res = await fetch(`${this.url}/rest/v1/${table}?${filter}`, {
+			method: "PATCH",
+			headers: this.headers({ Prefer: "return=minimal" }),
+			body: JSON.stringify(row)
+		});
+		if (!res.ok) throw new Error(`Ändern ${table} fehlgeschlagen: ${res.status} ${(await res.text()).slice(0, 200)}`);
+	}
+	async remove(table, filter) {
+		const res = await fetch(`${this.url}/rest/v1/${table}?${filter}`, {
+			method: "DELETE",
+			headers: this.headers({ Prefer: "return=minimal" })
+		});
+		if (!res.ok) throw new Error(`Löschen ${table} fehlgeschlagen: ${res.status} ${(await res.text()).slice(0, 200)}`);
+	}
+	/** Zeitlich begrenzter Link auf eine Datei im Speicher „notes“ (für Telegram, das Foto selbst lädt) */
+	async signedUrl(path, seconds) {
+		const res = await fetch(`${this.url}/storage/v1/object/sign/notes/${path.split("/").map(encodeURIComponent).join("/")}`, {
+			method: "POST",
+			headers: this.headers(),
+			body: JSON.stringify({ expiresIn: seconds })
+		});
+		if (!res.ok) throw new Error(`Foto-Link fehlgeschlagen: ${res.status} ${(await res.text()).slice(0, 200)}`);
+		const data = await res.json();
+		const rel = data.signedURL ?? data.signedUrl ?? "";
+		return rel.startsWith("http") ? rel : `${this.url}/storage/v1${rel}`;
 	}
 	/** Einfügen; "exists" bei Doppel (Primärschlüssel) */
 	async insert(table, row) {
@@ -1460,6 +1546,111 @@ async function focusNew(cfg, db, b) {
 		sent: await sendTo(cfg, to, text, keyboard)
 	};
 }
+/** Prüfstand am Fotonachweis (props.__proofCheck) */
+const PROOF_CHECK_KEY = "__proofCheck";
+const FILE_PREFIX = "sb-notes://";
+async function loadPage(db, id) {
+	const rows = await db.get(`note_pages?select=${COLUMNS}&id=eq.${encodeURIComponent(id)}`);
+	return rows[0] ? toMeta(rows[0]) : null;
+}
+const tomorrowBerlin = () => {
+	const today = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
+	const d = /* @__PURE__ */ new Date(`${today}T12:00:00Z`);
+	d.setUTCDate(d.getUTCDate() + 1);
+	return d.toISOString().slice(0, 10);
+};
+async function proofNew(cfg, db, b) {
+	if (cfg.off) return { skipped: "AUFGABEN_TELEGRAM_AUS ist gesetzt" };
+	const page = await loadPage(db, b.page_id);
+	const proof = page ? proofOf(page) : null;
+	if (!page || page.deletedAt || !proof) return { skipped: "Aufgabe oder Foto gibt es nicht mehr" };
+	const parent = page.parentId ? await loadPage(db, page.parentId) : null;
+	const members = await loadMembers(db);
+	const by = members.find((m) => m.id === proof.by)?.name ?? "Unbekannt";
+	const ctx = {
+		pages: new Map([page, ...parent ? [parent] : []].map((p) => [p.id, p])),
+		members
+	};
+	const link = entryLink(cfg.appUrl, page.id);
+	const caption = [
+		"📸 Fotonachweis zur Prüfung",
+		`${by}: ${entrySummary(page, parent ?? void 0, ctx)}`,
+		...link ? [link] : [],
+		"Ablehnen = Aufgabe kommt morgen wieder (mit Fotonachweis)."
+	].join("\n").slice(0, 1e3);
+	const keyboard = [[{
+		text: "✅ Freigeben",
+		callback_data: `pa:${shortId(page.id)}`
+	}, {
+		text: "❌ Ablehnen",
+		callback_data: `pr:${shortId(page.id)}`
+	}]];
+	const photo = proof.url.startsWith(FILE_PREFIX) ? await db.signedUrl(proof.url.slice(11), 604800) : proof.url;
+	const results = [];
+	for (const r of cfg.recipients.recipients) {
+		let res = await telegram(cfg, "sendPhoto", {
+			chat_id: r.id,
+			photo,
+			caption,
+			reply_markup: { inline_keyboard: keyboard }
+		});
+		if (!res.ok) res = await telegram(cfg, "sendMessage", {
+			chat_id: r.id,
+			text: `${caption}\n(Foto konnte nicht angehängt werden – bitte in der App ansehen)`,
+			disable_web_page_preview: true,
+			reply_markup: { inline_keyboard: keyboard }
+		});
+		if (!res.ok) console.error(`Fotonachweis nicht zugestellt: ${r.name} – ${res.status} ${res.text.slice(0, 200)}`);
+		results.push({
+			to: r.name,
+			ok: res.ok,
+			status: res.status
+		});
+	}
+	return {
+		page: page.id,
+		sent: results
+	};
+}
+/** Freigeben: Vermerk an der Aufgabe. Ablehnen: Vermerk, keine Punkte, und morgen wieder – mit Fotonachweis. */
+async function proofDecide(db, pageId, ok, by) {
+	const page = await loadPage(db, pageId);
+	if (!page || page.deletedAt || !proofOf(page)) return "gone";
+	if (page.props["__proofCheck"]?.status) return "already";
+	const stamp = {
+		status: ok ? "approved" : "rejected",
+		at: (/* @__PURE__ */ new Date()).toISOString(),
+		by
+	};
+	await db.patch("note_pages", `id=eq.${encodeURIComponent(page.id)}`, { props: {
+		...page.props,
+		[PROOF_CHECK_KEY]: stamp
+	} });
+	if (ok) return "approved";
+	await db.remove("note_task_events", `page_id=eq.${encodeURIComponent(page.id)}`);
+	const parent = page.parentId ? await loadPage(db, page.parentId) : null;
+	if (parent?.schema) {
+		const due = dueProp(parent.schema);
+		const day = tomorrowBerlin();
+		const props = freshProps(page, parent.schema, {
+			...due ? { [due.id]: day } : {},
+			[PHOTO_KEY]: true
+		});
+		delete props[PROOF_CHECK_KEY];
+		await db.insert("note_pages", {
+			id: stableId(page.id, "nachweis-abgelehnt", day),
+			parent_id: page.parentId,
+			space: page.space,
+			owner_id: page.ownerId,
+			kind: page.kind,
+			title: page.title,
+			icon: page.icon,
+			props,
+			position: page.position + .5
+		});
+	}
+	return "rejected";
+}
 async function tick(cfg, db, at) {
 	if (cfg.off) return { skipped: "AUFGABEN_TELEGRAM_AUS ist gesetzt" };
 	const now = berlinNow(at ? new Date(at) : /* @__PURE__ */ new Date());
@@ -1570,8 +1761,47 @@ async function manualReminder(cfg, db, b) {
 async function telegramUpdate(cfg, db, update) {
 	const cq = update.callback_query;
 	if (!cq) return { ok: true };
-	const m = /^(fa|fr):([A-Za-z0-9_-]{22}):([A-Za-z0-9_-]{22})$/.exec(cq.data ?? "");
 	const who = cfg.recipients.recipients.find((r) => r.id === cq.from.id);
+	const p = /^(pa|pr):([A-Za-z0-9_-]{22})$/.exec(cq.data ?? "");
+	if (p) {
+		if (!who) {
+			await telegram(cfg, "answerCallbackQuery", {
+				callback_query_id: cq.id,
+				text: "Keine Berechtigung",
+				show_alert: true
+			});
+			return { ok: false };
+		}
+		const result = await proofDecide(db, longId(p[2]), p[1] === "pa", who.name);
+		const label = {
+			approved: `✅ Foto freigegeben von ${who.name}`,
+			rejected: `❌ Abgelehnt von ${who.name} – Aufgabe kommt morgen wieder (mit Foto)`,
+			already: "ℹ️ War schon entschieden",
+			gone: "ℹ️ Diese Aufgabe gibt es nicht mehr"
+		}[result];
+		await telegram(cfg, "answerCallbackQuery", {
+			callback_query_id: cq.id,
+			text: label.slice(0, 190)
+		});
+		if (cq.message) {
+			const msg = cq.message;
+			const res = msg.caption !== void 0 ? await telegram(cfg, "editMessageCaption", {
+				chat_id: msg.chat.id,
+				message_id: msg.message_id,
+				caption: `${msg.caption}\n\n${label}`.slice(0, 1024)
+			}) : await telegram(cfg, "editMessageText", {
+				chat_id: msg.chat.id,
+				message_id: msg.message_id,
+				text: `${msg.text ?? ""}\n\n${label}`
+			});
+			if (!res.ok) console.error(`Nachricht nicht aktualisiert (${who.name}): ${res.status} ${res.text.slice(0, 200)}`);
+		}
+		return {
+			ok: true,
+			result
+		};
+	}
+	const m = /^(fa|fr):([A-Za-z0-9_-]{22}):([A-Za-z0-9_-]{22})$/.exec(cq.data ?? "");
 	if (!m || !who) {
 		await telegram(cfg, "answerCallbackQuery", {
 			callback_query_id: cq.id,
@@ -1625,6 +1855,7 @@ async function handle(req) {
 			case "tick": return json(await tick(cfg, db, typeof body.at === "string" ? body.at : void 0));
 			case "reminder": return json(await manualReminder(cfg, db, body));
 			case "focus_new": return json(await focusNew(cfg, db, body));
+			case "proof_new": return json(await proofNew(cfg, db, body));
 			case "telegram_update": return json(await telegramUpdate(cfg, db, body.update ?? {}));
 			default: return json({ error: "unbekannte Aktion" }, 400);
 		}
@@ -1635,4 +1866,4 @@ async function handle(req) {
 }
 Deno.serve(handle);
 
-export { handle };
+export { PROOF_CHECK_KEY, handle };

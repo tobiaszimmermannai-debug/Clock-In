@@ -69,18 +69,22 @@ export function ProofBadge(props: { row: PageMeta; done: boolean }) {
   const notes = useNotes();
   const proof = proofOf(props.row);
   const need = needsPhoto(props.row);
+  // Prüfstand der Leitung (per Telegram): freigegeben / abgelehnt (dann kommt die Aufgabe morgen wieder)
+  const check = (props.row.props.__proofCheck ?? null) as { status?: string } | null;
+  const checked = check?.status === "approved" ? " ✅" : check?.status === "rejected" ? " ❌" : " ⏳";
   if (proof)
     return (
       <button
         type="button"
         className="nk-proof is-done"
-        title={`Fotonachweis vom ${new Date(proof.at).toLocaleString("de-DE")}`}
+        title={`Fotonachweis vom ${new Date(proof.at).toLocaleString("de-DE")} – ${
+          check?.status === "approved" ? "freigegeben" : check?.status === "rejected" ? "abgelehnt, kommt morgen wieder" : "wartet auf Prüfung"}`}
         onClick={async (e) => {
           e.stopPropagation();
           window.open(await notes.store.resolveUrl(proof.url), "_blank", "noopener");
         }}
       >
-        📷 Nachweis
+        📷 Nachweis{checked}
       </button>
     );
   if (need.required && !props.done)

@@ -5,6 +5,7 @@ import { FOCUS_KEY, focusTasks, reorderFocus, withFocus } from "./gamification/f
 import { dailyStatus, type DayPlan, type DayStatus } from "./daily/status";
 import { DONE_AT_KEY } from "./gamification/tasks";
 import { everyWhileVisible } from "./visibility";
+import { compressImage } from "./gamification/compress";
 import { dueProp, MOVES_KEY, movesOf, needsPhoto, nextOccurrence, postponed, PROOF_KEY, proofOf } from "./gamification/recur";
 import { blitziInfo, type BlitziInfo } from "./gamification/blitzi";
 import { dayOf, daysFor, pointsLeftToday } from "./gamification/stats";
@@ -1011,7 +1012,8 @@ export function NotesProvider(props: {
       setPhotoRequest(null);
       if (!req || !file) return;
       try {
-        const url = await store.upload(file, req.rowId);
+        // verkleinert hochladen (spart Datenvolumen – auch in der Telegram-Nachricht an die Leitung)
+        const url = await store.upload(await compressImage(file), req.rowId);
         const proof = { url, at: new Date().toISOString(), by: actorRef.current ?? meRef.current.id };
         updatePage(req.rowId, { props: { ...req.props, [PROOF_KEY]: proof as unknown as PropValue } }, { delay: 0 });
       } catch (e) {

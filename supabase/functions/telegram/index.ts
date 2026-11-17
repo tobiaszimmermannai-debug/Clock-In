@@ -967,7 +967,8 @@ async function handleMessage(msg: Message) {
 async function handleCallback(cq: CallbackQuery) {
   // Tagesaufgaben (Bereich „Aufgaben“) freigeben/ablehnen: an die Function "aufgaben" weiterreichen –
   // sie prüft selbst, wer freigeben darf (Empfängerliste). Alle anderen Knöpfe bleiben unverändert.
-  if (/^f[ar]:/.test(cq.data ?? "")) return await forwardToAufgaben(cq);
+  // Tagesaufgaben (fa/fr) und Fotonachweis (pa/pr) gehören zur Function „aufgaben“
+  if (/^(f[ar]|p[ar]):/.test(cq.data ?? "")) return await forwardToAufgaben(cq);
   const parts = (cq.data ?? "").split(":");
   const admin = await findAdminByTelegramId(cq.from.id);
   if (!admin) {
