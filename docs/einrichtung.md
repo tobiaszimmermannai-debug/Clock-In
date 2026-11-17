@@ -138,6 +138,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 49. `supabase/migrations/20261119090000_notifications.sql` (Mitteilungen im Portal (Glocke): Tausch, Dienstplan-Änderungen, Entscheidungen)
 50. `supabase/migrations/20261120090000_vacation_requests.sql` (Urlaubsantrag: Mitarbeiter → Studioleitung → Freigeber (rule_settings.vacation_approver_user_id, sonst Admin „Domi…“) – danach Funktion `telegram` neu deployen)
 51. `supabase/migrations/20261121090000_wissen_fair_xp.sql` (Wissen: Punkte vergibt die Datenbank (keine Punkte für falsche Antworten und reines Wiederholen), Gesamt-XP für das Level)
+52. `supabase/migrations/20261122090000_wissen_retry.sql` (Wissen: erst falsch, dann richtig = gelernt (keine sofortige Wiederholung); repariert bestehende Lernstände)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und

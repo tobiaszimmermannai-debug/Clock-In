@@ -14,7 +14,7 @@ import { Blitzi } from "../../notes/gamification/Blitzi";
 
 type Mode = "lesson" | "review" | "blitzi" | "blitzrunde";
 /** xp: was die App anzeigt (0, wenn es keine Punkte gibt); base: Punktwert der Frage/Karte für die Datenbank */
-type Save = (input: { id: string; type: ItemType; correct: boolean; mode: Mode; xp: number; base: number; answer?: string[]; leitner: boolean }) => void;
+type Save = (input: { id: string; type: ItemType; correct: boolean; mode: Mode; xp: number; base: number; answer?: string[]; leitner: boolean; retry?: boolean }) => void;
 
 // ---------------- Daten ----------------
 function useWissen() {
@@ -59,20 +59,38 @@ function useWissen() {
       });
       setXpTotal((x) => x + input.xp);
       const bonus = input.id.startsWith("bonus:");
-      // Wiederholung derselben Frage innerhalb einer Lektion: reine Übung, wird nicht gespeichert
-      if (!input.leitner && !bonus) return;
-      if (!bonus) {
-        const next = nextProgress(progressRef.current.get(input.id), input.id, input.type, input.correct);
-        setProgress((m) => new Map(m).set(input.id, next));
-      }
+      // Wiederholung derselben Frage in einer Lektion: nur speichern, wenn sie jetzt richtig ist (gilt dann als gelernt)
+      const retry = !input.leitner && !bonus && input.correct;
+      if (!input.leitner && !bonus && !retry) return;
+      const next = bonus ? undefined : nextProgress(progressRef.current.get(input.id), input.id, input.type, input.correct, new Date(), retry);
+      if (next) setProgress((m) => new Map(m).set(input.id, next));
       // Punkte und Lernstufe setzt die Datenbank (wissen_answer) – die App zeigt nur an
-      void portalDb
-        .rpc("wissen_answer", { p_item: input.id, p_type: input.type, p_correct: input.correct, p_mode: input.mode, p_answer: input.answer ?? null, p_xp: input.base })
-        .then(({ data, error }) => {
-          if (error) return setError(`Speichern fehlgeschlagen: ${error.message}`);
-          const r = data as { xp: number; xp_total: number } | null;
+      void (async () => {
+        const args = { p_item: input.id, p_type: input.type, p_correct: input.correct, p_mode: input.mode, p_answer: input.answer ?? null, p_xp: input.base };
+        let res = await portalDb.rpc("wissen_answer", retry ? { ...args, p_retry: true } : args);
+        // Datenbank-Update (Wiederholung) noch nicht eingespielt → ohne Wiederholungs-Kennzeichen
+        if (res.error && retry) res = await portalDb.rpc("wissen_answer", args);
+        if (!res.error) {
+          const r = res.data as { xp: number; xp_total: number } | null;
           if (r && typeof r.xp_total === "number") setXpTotal(r.xp_total);
-        });
+          return;
+        }
+        // Ältere Datenbank ohne wissen_answer: wie früher direkt speichern, damit kein Lernstand verloren geht
+        if (/wissen_answer|schema cache|PGRST202/i.test(`${res.error.message} ${res.error.code}`)) {
+          const writes = [
+            portalDb.from("wissen_attempts").insert({ user_id: uid, item_id: input.id, item_type: input.type, correct: input.correct,
+              answer: input.answer ?? null, mode: input.mode, xp_earned: input.xp }),
+          ];
+          if (next) {
+            const { best_box: _b, ...row } = next;
+            writes.push(portalDb.from("wissen_item_progress").upsert({ user_id: uid, ...row, last_seen_at: new Date().toISOString() }));
+          }
+          const failed = (await Promise.all(writes)).find((w) => w.error);
+          if (!failed) return;
+          return setError(`Speichern fehlgeschlagen: ${failed.error!.message}`);
+        }
+        setError(`Speichern fehlgeschlagen: ${res.error.message}`);
+      })();
     },
     [uid],
   );

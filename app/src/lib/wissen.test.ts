@@ -77,6 +77,14 @@ describe("Faire Punkte und Level", () => {
     const again = nextProgress(wrong, "x", "question", true, now); // Box 2
     expect(earnsXp(again, true, later)).toBe(true); // fällig und Box 3 = neue Bestmarke
   });
+  it("erst falsch, in derselben Lektion dann richtig: gilt als gelernt (Stufe 2, morgen fällig)", () => {
+    const wrong = nextProgress(undefined, "x", "question", false, now);
+    expect(wrong.box).toBe(1);
+    const fixed = nextProgress(wrong, "x", "question", true, now, true);
+    expect(fixed.box).toBe(2);
+    expect(fixed.due_at).toBe("2026-11-11T10:00:00.000Z");
+    expect(fixed.best_box ?? 0).toBe(0); // keine Bestmarke → keine Punkte für den zweiten Anlauf
+  });
   it("Level: 0 XP = Level 1, 100 = 2, 300 = 3; Fortschritt zum nächsten", () => {
     expect(levelOf(0)).toMatchObject({ level: 1, title: "Starter", next: 100 });
     expect(levelOf(99).level).toBe(1);

@@ -68,7 +68,13 @@ export function earnsXp(prev: Progress | undefined, correct: boolean, now = new 
   return Math.min(6, (prev?.box ?? 1) + 1) > (prev?.best_box ?? 0);
 }
 
-export function nextProgress(prev: Progress | undefined, id: string, type: ItemType, correct: boolean, now = new Date()): Progress {
+/** retry: in derselben Lektion erst falsch, dann richtig → gilt als gelernt (Stufe 2, morgen wieder fällig) */
+export function nextProgress(prev: Progress | undefined, id: string, type: ItemType, correct: boolean, now = new Date(), retry = false): Progress {
+  if (retry && correct && prev) {
+    const box = Math.max(prev.box, 2);
+    const due = Math.max(new Date(prev.due_at).getTime(), now.getTime() + BOX_DAYS[box] * 864e5);
+    return { ...prev, box, due_at: new Date(due).toISOString(), times_correct: prev.times_correct + 1 };
+  }
   if (isPractice(prev, correct, now)) return { ...prev!, times_correct: prev!.times_correct + 1 };
   const box = correct ? Math.min(6, (prev?.box ?? 1) + 1) : 1;
   const due = new Date(now.getTime() + BOX_DAYS[box] * 864e5);
