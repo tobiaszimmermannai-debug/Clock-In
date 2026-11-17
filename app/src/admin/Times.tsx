@@ -158,7 +158,8 @@ export function Times({ profile }: { profile: Profile }) {
             <div className="grid-2">
               <Field label="Buchung">
                 <select id="entry-event" name="event" defaultValue="clock_in">
-                  {(Object.keys(EVENT_LABEL) as EventType[]).map((t) => <option key={t} value={t}>{EVENT_LABEL[t]}</option>)}
+                  {/* Pausen werden nie nachgetragen – die gesetzliche Pause zieht das System automatisch ab */}
+                  {(["clock_in", "clock_out"] as EventType[]).map((t) => <option key={t} value={t}>{EVENT_LABEL[t]}</option>)}
                 </select>
               </Field>
               <Field label="Studio">
@@ -169,6 +170,7 @@ export function Times({ profile }: { profile: Profile }) {
               <Field label="Datum"><input id="entry-date" name="date" type="date" defaultValue={berlinDate()} max={berlinDate()} required /></Field>
               <Field label="Uhrzeit"><input id="entry-time" name="time" type="time" defaultValue={berlinTime(new Date())} required /></Field>
             </div>
+            <p className="muted small">Pausen musst du nicht nachtragen – die gesetzliche Pause (ab 6 Std. 30 Min., ab 9 Std. 45 Min.) wird automatisch abgezogen.</p>
             <Field label="Grund (Pflicht)">
               <input id="entry-note" name="note" required minLength={3} maxLength={200} placeholder="z. B. Anruf, Tablet defekt" />
             </Field>
