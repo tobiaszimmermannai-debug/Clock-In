@@ -141,7 +141,10 @@ export const dueCards = (progress: ProgressMap, now = new Date()) => CARDS.filte
  * Unit (leicht → schwer). Sind keine neuen mehr übrig, Fragen der Unit mit der niedrigsten Box.
  */
 export function composeLesson(unitId: string, progress: ProgressMap, now = new Date()): Question[] {
-  const reviews = dueQuestions(progress, now).slice(0, MAX_REVIEWS_IN_LESSON);
+  // Wiederholungen nur aus demselben Thema (Einarbeitung und Strahlenschutz bleiben getrennt)
+  const topic = topicOf(UNITS.find((u) => u.id === unitId) ?? UNITS[0]);
+  const sameTopic = new Set(unitsOf(topic).map((u) => u.id));
+  const reviews = dueQuestions(progress, now).filter((q) => sameTopic.has(q.unitId)).slice(0, MAX_REVIEWS_IN_LESSON);
   const picked = new Set(reviews.map((q) => q.id));
   const own = questionsOf(unitId).filter((q) => !picked.has(q.id));
   const fresh = own.filter((q) => !progress.has(q.id)).sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id));
