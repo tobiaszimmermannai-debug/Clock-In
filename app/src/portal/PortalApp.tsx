@@ -98,7 +98,8 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
         .select("*, employment_details(weekly_target_minutes, work_days_per_week)")
         .eq("auth_user_id", data.session.user.id)
         .maybeSingle(),
-      portalDb.from("users").select("id, first_name, last_name, home_location_id").eq("is_active", true).order("first_name"),
+      // * statt Spaltenliste: is_test fehlt evtl. noch, falls das SQL nicht eingespielt ist
+      portalDb.from("users").select("*").eq("is_active", true).order("first_name"),
       portalDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
       loadApprovers(portalDb),
     ]);
@@ -114,7 +115,7 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
     setMe(meData);
     // Ohne Zeiterfassung: kein Stempeln/Stunden/Tausch – direkt zu den Aufgaben
     if (meData.time_tracking === false) setTab((t) => (t === "stamp" || t === "hours" ? "tasks" : t));
-    setColleagues((people.data ?? []) as Colleague[]);
+    setColleagues(((people.data ?? []) as (Colleague & { is_test?: boolean })[]).filter((c) => !c.is_test || c.id === meData.id));
     setLocations((locs.data ?? []) as Location[]);
     registerStudios((locs.data ?? []) as Location[]);
   }, []);
@@ -231,7 +232,7 @@ function PlanView(props: { me: Me; locations: Location[]; view: "list" | "calend
   const [start, setStart] = useState(weekStart(berlinDate()));
   const [studio, setStudio] = useState("");
   const { view } = props;
-  const { shifts, error, blockOf } = useWeekShifts(portalDb, start);
+  const { shifts, error, blockOf } = useWeekShifts(portalDb, start, props.me.id);
   const wishes = useWishes(portalDb, start);
   return (
     <>

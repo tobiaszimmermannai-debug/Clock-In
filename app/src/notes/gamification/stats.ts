@@ -148,7 +148,7 @@ export function leaderboard(completions: Completion[], members: Member[], fromDa
     sums.set(c.userId, s);
   }
   const rows = members
-    .filter((m) => !m.device && sums.has(m.id))
+    .filter((m) => !m.device && !m.test && sums.has(m.id))
     .map((m) => ({ member: m, ...sums.get(m.id)!, rank: 0 }))
     .sort((a, b) => b.points - a.points || b.count - a.count || a.member.name.localeCompare(b.member.name, "de"));
   rows.forEach((r, i) => (r.rank = i > 0 && rows[i - 1].points === r.points ? rows[i - 1].rank : i + 1));
@@ -157,7 +157,7 @@ export function leaderboard(completions: Completion[], members: Member[], fromDa
 
 /** Wer zählt für ein Studio: Heimatstudio, keine Geräte-Konten, keine Admins */
 export const teamMembers = (members: Member[], studioId: string) =>
-  members.filter((m) => !m.device && m.role !== "admin" && m.studioId === studioId);
+  members.filter((m) => !m.device && !m.test && m.role !== "admin" && m.studioId === studioId);
 
 export type TeamRow = {
   studio: Studio;

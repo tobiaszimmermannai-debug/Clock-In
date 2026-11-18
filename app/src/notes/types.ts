@@ -154,6 +154,8 @@ export type Member = {
   studioId?: string | null;
   /** Studio-PC statt Person */
   device?: boolean;
+  /** Testkonto (Clock-In): zählt in keiner Rangliste */
+  test?: boolean;
   /** Heute eingecheckt in diesem Studio (Aushilfe: anderes als das Heimatstudio) */
   hereId?: string | null;
 };

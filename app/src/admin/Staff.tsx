@@ -18,6 +18,7 @@ export type Person = {
   username: string | null;
   auth_user_id: string | null;
   any_phone?: boolean; // darf mit verschiedenen Handys/Browsern stempeln (ohne Freigabe)
+  is_test?: boolean; // Testkonto: taucht in Statistik, Ranglisten und Kollegenlisten nicht auf
   time_tracking?: boolean; // false = ohne Zeiterfassung (Praktikum): kein Stempeln, keine Meldungen
   employment_details: { weekly_target_minutes: number; work_days_per_week: number } | null;
 };
@@ -135,7 +136,7 @@ export function Staff({ profile }: { profile: Profile }) {
               leading={<Avatar first={p.first_name} last={p.last_name} color={p.role === "admin" ? undefined : studioColor(p.home_location_id)} />}
               title={`${p.first_name} ${p.last_name}`}
               subtitle={[ROLE_LABEL[p.role], contract(p), vacationShort(vacation[p.id])].filter(Boolean).join(" · ")}
-              trailing={p.role !== "admin" && <ReadyPill person={p} hasPhone={!!phones[p.id]} />}
+              trailing={p.is_test ? <Pill tone="warn">Test</Pill> : p.role !== "admin" && <ReadyPill person={p} hasPhone={!!phones[p.id]} />}
               chevron
               onClick={() => setSelected(p.id)}
             />
@@ -201,6 +202,15 @@ function PersonDetail(props: {
     setMessage({ tone: "ok", text: on
       ? `${person.first_name} stempelt wieder (Zeiterfassung an).`
       : `${person.first_name} stempelt nicht (z. B. Praktikum): nur Dienstplan und Aufgaben, keine Meldungen, nicht im Wochenbericht.` });
+    await props.onChanged();
+  }
+
+  async function toggleTest(on: boolean) {
+    const { error } = await adminDb.from("users").update({ is_test: on }).eq("id", person.id);
+    if (error) return setMessage({ tone: "error", text: error.message });
+    setMessage({ tone: "ok", text: on
+      ? `${person.first_name} ist jetzt ein Testkonto – nicht in Statistik, Ranglisten und Kollegenlisten.`
+      : `${person.first_name} ist wieder ein normales Konto.` });
     await props.onChanged();
   }
 
@@ -302,6 +312,16 @@ function PersonDetail(props: {
               </span>
               <input id="any-phone" type="checkbox" role="switch" className="switch" checked={!!person.any_phone}
                 onChange={(e) => void toggleAnyPhone(e.target.checked)} />
+            </label>
+          )}
+          {isAdmin && (
+            <label className="list-row">
+              <span className="list-row-main">
+                <span className="list-row-title">Testkonto</span>
+                <span className="list-row-sub">Zum Ausprobieren: zählt nicht in Statistik, Stunden-Auswertung und Ranglisten, Kollegen sehen es nicht</span>
+              </span>
+              <input id="is-test" type="checkbox" role="switch" className="switch" checked={!!person.is_test}
+                onChange={(e) => void toggleTest(e.target.checked)} />
             </label>
           )}
         </Section>

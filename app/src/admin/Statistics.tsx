@@ -12,7 +12,7 @@ import { type Location, studioShort } from "../lib/types";
 import type { Profile } from "./AdminApp";
 import { HoursTable } from "./StatisticsHours";
 
-type Person = { id: string; first_name: string; last_name: string; home_location_id: string | null };
+type Person = { id: string; first_name: string; last_name: string; home_location_id: string | null; is_test?: boolean };
 type SortKey = "label" | "shifts" | "sum" | ReportKey;
 
 const PERIODS: { id: Period; label: string }[] = [
@@ -39,7 +39,7 @@ export function Statistics({ profile }: { profile: Profile }) {
 
   useEffect(() => {
     void Promise.all([
-      adminDb.from("users").select("id, first_name, last_name, home_location_id").order("first_name"),
+      adminDb.from("users").select("*").order("first_name"),
       adminDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
       adminDb.from("location_managers").select("location_id").eq("user_id", profile.id),
     ]).then(([u, l, m]) => {
@@ -68,7 +68,7 @@ export function Statistics({ profile }: { profile: Profile }) {
   const studioName = (id: string | null | undefined) => studioShort(locations.find((l) => l.id === id)?.name ?? "Ohne Studio");
 
   const table = useMemo(() => {
-    const filtered = (rows ?? []).filter((r) => !studio || r.location_id === studio);
+    const filtered = (rows ?? []).filter((r) => (!studio || r.location_id === studio) && !personOf.get(r.user_id)?.is_test);
     const list: StatRow[] = group === "person"
       ? groupReports(filtered, (r) => r.user_id, (id) => {
           const p = personOf.get(id);

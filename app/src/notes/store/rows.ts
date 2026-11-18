@@ -56,7 +56,7 @@ export const colorFor = (id: string): Color => {
   return COLORS[1 + (h % (COLORS.length - 1))];
 };
 
-export type UserRow = { auth_user_id: string; first_name: string | null; last_name: string | null; role: string | null; home_location_id: string | null };
+export type UserRow = { auth_user_id: string; first_name: string | null; last_name: string | null; role: string | null; home_location_id: string | null; is_test?: boolean };
 
 export const memberFromUser = (u: UserRow): Member => ({
   id: u.auth_user_id,
@@ -64,4 +64,5 @@ export const memberFromUser = (u: UserRow): Member => ({
   color: colorFor(u.auth_user_id),
   role: u.role ?? undefined,
   studioId: u.home_location_id ?? null,
+  ...(u.is_test ? { test: true } : {}),
 });

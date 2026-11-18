@@ -71,7 +71,7 @@ export function PcPlan() {
 function ReadOnlyPlan(props: { lockedNote: boolean; onUnlocked: (u: Unlocked) => void }) {
   const [start, setStart] = useState(weekStart(berlinDate()));
   const [locations, setLocations] = useState<Location[]>([]);
-  const { shifts, error, blockOf } = useWeekShifts(kioskDb, start);
+  const { shifts, error, blockOf } = useWeekShifts(kioskDb, start, null);
   const wishes = useWishes(kioskDb, start);
   const [qr, setQr] = useState(false);
 

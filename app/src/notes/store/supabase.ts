@@ -227,7 +227,8 @@ export class SupabaseStore implements NotesStore {
   async members(): Promise<Member[]> {
     const { data, error } = await this.db
       .from("users")
-      .select("auth_user_id, first_name, last_name, role, home_location_id")
+      // * statt Spaltenliste: is_test fehlt evtl. noch, falls das SQL nicht eingespielt ist
+      .select("*")
       .eq("is_active", true)
       .not("auth_user_id", "is", null)
       .order("first_name");

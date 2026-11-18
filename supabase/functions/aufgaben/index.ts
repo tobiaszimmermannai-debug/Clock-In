@@ -960,7 +960,7 @@ function leaderboard(completions, members, fromDay, toDay) {
 		if (!c.bonus) s.count++;
 		sums.set(c.userId, s);
 	}
-	const rows = members.filter((m) => !m.device && sums.has(m.id)).map((m) => ({
+	const rows = members.filter((m) => !m.device && !m.test && sums.has(m.id)).map((m) => ({
 		member: m,
 		...sums.get(m.id),
 		rank: 0
@@ -969,7 +969,7 @@ function leaderboard(completions, members, fromDay, toDay) {
 	return rows;
 }
 /** Wer zählt für ein Studio: Heimatstudio, keine Geräte-Konten, keine Admins */
-const teamMembers = (members, studioId) => members.filter((m) => !m.device && m.role !== "admin" && m.studioId === studioId);
+const teamMembers = (members, studioId) => members.filter((m) => !m.device && !m.test && m.role !== "admin" && m.studioId === studioId);
 /**
 * Team-Wertung: Wochenpunkte aller Personen eines Studios ÷ Anzahl dieser Personen (wer die ganze Woche fehlt –
 * Urlaub, krank, Schule – zählt nicht mit, wenn „active“ bekannt ist). So hat jedes Studio die
@@ -1310,7 +1310,8 @@ const memberFromUser = (u) => ({
 	name: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || "Unbekannt",
 	color: colorFor(u.auth_user_id),
 	role: u.role ?? void 0,
-	studioId: u.home_location_id ?? null
+	studioId: u.home_location_id ?? null,
+	...u.is_test ? { test: true } : {}
 });
 
 // server/aufgaben.ts
@@ -1419,7 +1420,7 @@ async function loadPages(db) {
 	}
 	return pages;
 }
-const loadMembers = async (db) => (await db.get("users?select=auth_user_id,first_name,last_name,role,home_location_id&is_active=eq.true&auth_user_id=not.is.null&order=first_name")).map(memberFromUser);
+const loadMembers = async (db) => (await db.get("users?select=*&is_active=eq.true&auth_user_id=not.is.null&order=first_name")).map(memberFromUser);
 async function loadPlan(db, day) {
 	const rows = await db.rpc("note_day_plan", { p_day: day });
 	return {

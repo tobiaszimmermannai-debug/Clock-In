@@ -30,7 +30,8 @@ export type AbsenceBlock = { key: string; from: string; to: string };
 type AbsenceStub = Pick<PlanShift, "id" | "user_id" | "shift_type" | "starts_at" | "note" | "credit_by_time">;
 const BLOCK_WEEKS = 6;
 
-export function useWeekShifts(db: SupabaseClient, start: string) {
+/** hideTestExcept: Testkonten ausblenden (außer dieser Person) – für Mitarbeiter- und Studio-PC-Ansicht */
+export function useWeekShifts(db: SupabaseClient, start: string, hideTestExcept?: string | null) {
   const [shifts, setShifts] = useState<PlanShift[]>([]);
   const [around, setAround] = useState<AbsenceStub[]>([]);
   const [error, setError] = useState<string>();
@@ -41,7 +42,7 @@ export function useWeekShifts(db: SupabaseClient, start: string) {
         .from("shifts")
         .select(
           // * statt Spaltenliste: neue Spalten (z. B. is_herold) brechen die Ansicht nicht, falls das SQL noch fehlt
-          "*, user:users!shifts_user_id_fkey(first_name, last_name, home_location_id), location:locations(name)",
+          "*, user:users!shifts_user_id_fkey(*), location:locations(name)",
         )
         .gte("starts_at", berlinToISO(start))
         .lt("starts_at", berlinToISO(addDays(start, 7)))
@@ -56,9 +57,11 @@ export function useWeekShifts(db: SupabaseClient, start: string) {
         .order("starts_at"),
     ]);
     setError(week.error ? dbMessage(week.error) : undefined);
-    setShifts((week.data ?? []) as unknown as PlanShift[]);
+    const hide = (s: { user_id?: string; user?: { is_test?: boolean } | null }) =>
+      hideTestExcept !== undefined && !!s.user?.is_test && s.user_id !== hideTestExcept;
+    setShifts(((week.data ?? []) as unknown as (PlanShift & { user?: { is_test?: boolean } | null })[]).filter((s) => !hide(s)));
     setAround((absences.data ?? []) as AbsenceStub[]);
-  }, [db, start]);
+  }, [db, start, hideTestExcept]);
 
   useEffect(() => {
     void reload();
