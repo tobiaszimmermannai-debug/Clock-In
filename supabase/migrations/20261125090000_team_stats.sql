@@ -14,7 +14,7 @@ returns table (
   user_id uuid, first_name text, last_name text, role public.user_role, home_location_id uuid,
   weekly_target_minutes integer, target_minutes integer, worked_minutes integer, credit_minutes integer,
   late_count integer, late_minutes integer, overtime_pending_minutes integer, overtime_approved_minutes integer,
-  open_days integer, forgotten_count integer, early_count integer,
+  open_days integer, forgotten_count integer, early_count integer, early_minutes integer,
   sick_days integer, vacation_days integer, school_days integer, work_shifts integer,
   counted_from date   -- ab hier zählt das Soll (null = noch nie gestempelt)
 )
@@ -73,11 +73,19 @@ begin
       end loop;
       v_from := v_end + 1;
     end loop;
-    select count(*) filter (where t.source = 'auto_checkout'),
-           count(*) filter (where t.event_type = 'clock_out' and t.early_reason is not null)
-      into forgotten_count, early_count
+    select count(*) filter (where t.source = 'auto_checkout')
+      into forgotten_count
     from public.time_logs t
     where t.user_id = u.id and t.approval_status <> 'rejected'
+      and t.recorded_at >= private.berlin_day_start(p_from) and t.recorded_at < private.berlin_day_start(v_to + 1);
+    -- Früher gegangen: Minusstunden = Zeit bis Schichtende, wenn nicht „bis Schichtende angerechnet“ oder „krank“
+    select count(*), coalesce(sum(floor(extract(epoch from sh.ends_at - t.recorded_at) / 60)), 0)::integer
+      into early_count, early_minutes
+    from public.time_logs t
+    join public.shifts sh on sh.id = t.shift_id
+    where t.user_id = u.id and t.event_type = 'clock_out' and t.approval_status <> 'rejected'
+      and t.early_status is not null and t.early_status not in ('approved', 'sick')
+      and t.recorded_at < sh.ends_at
       and t.recorded_at >= private.berlin_day_start(p_from) and t.recorded_at < private.berlin_day_start(v_to + 1);
     select count(distinct sh.shift_date) filter (where sh.shift_type = 'sick'),
            count(distinct sh.shift_date) filter (where sh.shift_type = 'vacation'),

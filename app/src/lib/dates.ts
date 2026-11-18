@@ -68,6 +68,13 @@ export function absenceDays(from: string, to: string, saturdays = false): string
   return out;
 }
 
+/** Alle Kalendertage von–bis (inkl. Wochenende), z. B. für Krankheit laut AU */
+export function calendarDays(from: string, to: string): string[] {
+  const out: string[] = [];
+  for (let d = from; d <= (to < from ? from : to); d = addDays(d, 1)) out.push(d);
+  return out;
+}
+
 export const fmtDay = (date: string) => dayFmt.format(new Date(`${date}T12:00:00Z`));
 export const fmtLongDay = (date: string) => longDayFmt.format(new Date(`${date}T12:00:00Z`));
 

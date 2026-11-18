@@ -13,7 +13,7 @@ import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
 import { type PlanShift, ShiftRow, blockRange, isHelpShift, isSickSwap, useWeekShifts } from "../components/WeekPlan";
 import { Avatar, DayStrip, Empty, Field, Icon, Notice, PageHeader, Row, Section, Segmented, Sheet, StudioFilter, WeekNav } from "../components/ui";
-import { absenceDays, addDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtHM, fmtLongDay, isSunday, weekStart } from "../lib/dates";
+import { absenceDays, addDays, calendarDays, berlinDate, berlinTime, berlinToISO, fmtDay, fmtHM, fmtLongDay, isSunday, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { planWarnings } from "../lib/planChecks";
 import { registerStudios, studioColor } from "../lib/studios";
@@ -727,7 +727,8 @@ function AddShift(props: {
     ? free.filter((p) => p.home_location_id !== props.studio && (!foreign || props.canPlanAt(p.home_location_id ?? "")))
     : [];
   const person = [...own, ...others].find((p) => p.id === userId);
-  const days = absenceDays(props.day, until, saturdays);
+  // Krank: alle Kalendertage wie auf der AU (auch Sa/So – für die Krankenkasse); Stunden zählen am Wochenende nicht
+  const days = cat === "sick" ? calendarDays(props.day, until) : absenceDays(props.day, until, saturdays);
   const sickShift = props.sickCandidates.find((s) => s.id === sickShiftId);
   const request = props.helpRequests.find((r) => r.id === requestId);
   const targetName = studioShort(props.locations.find((l) => l.id === (request?.location_id ?? target))?.name ?? "");
@@ -861,15 +862,23 @@ function AddShift(props: {
     }
     if (days.length > MAX_ABSENCE_DAYS) return setError(`Bitte höchstens ${MAX_ABSENCE_DAYS} Tage auf einmal eintragen.`);
     setBusy(true);
-    const { error } = await db.from("shifts").insert(
-      days.map((d) => ({
-        user_id: person.id,
-        shift_type: cat,
-        location_id: null,
-        starts_at: berlinToISO(d, ABSENCE_TIMES.from),
-        ends_at: berlinToISO(d, ABSENCE_TIMES.to),
-      })),
-    );
+    const row = (d: string) => ({ user_id: person.id, shift_type: cat, location_id: null, starts_at: berlinToISO(d, ABSENCE_TIMES.from), ends_at: berlinToISO(d, ABSENCE_TIMES.to) });
+    if (cat === "sick" && days.length > 1) {
+      // Krank über Kalendertage: Tag für Tag, Tage mit schon vorhandenem Eintrag überspringen
+      const skipped: string[] = [];
+      for (const d of days) {
+        const { error } = await db.from("shifts").insert(row(d));
+        if (error?.code === "23P01") skipped.push(fmtDay(d));
+        else if (error) {
+          setBusy(false);
+          return setError(dbMessage(error));
+        }
+      }
+      setBusy(false);
+      return props.onSaved(`${fullName(person)}: Krank ${fmtDay(days[0])} – ${fmtDay(days[days.length - 1])} eingetragen` +
+        (skipped.length ? ` (übersprungen, dort steht schon etwas: ${skipped.join(", ")}).` : "."));
+    }
+    const { error } = await db.from("shifts").insert(days.map(row));
     setBusy(false);
     if (error?.code === "23P01") {
       return setError("An mindestens einem dieser Tage ist schon etwas eingetragen (z. B. eine Schicht). Bitte dort zuerst löschen.");
@@ -1050,11 +1059,14 @@ function AddShift(props: {
                 onChange={(e) => setUntil(e.target.value || props.day)} />
             </Field>
           </div>
-          {until > props.day && (
+          {until > props.day && cat !== "sick" && (
             <SwitchRow title="Samstage mitzählen" subtitle="Sonntage zählen nie" checked={saturdays} onChange={setSaturdays} />
           )}
+          {cat === "sick" && until > props.day && (
+            <p className="muted small">Krank wird über alle Kalendertage eingetragen – auch Samstag und Sonntag (wie auf der AU, für die Krankenkasse). Am Wochenende gibt es keine Stunden-Gutschrift.</p>
+          )}
           <p className="muted small">
-            {days.length === 1 ? "1 Tag" : `${days.length} Tage (${saturdays ? "Mo–Sa" : "Mo–Fr"})`} ·{" "}
+            {days.length === 1 ? "1 Tag" : `${days.length} Tage (${cat === "sick" ? "Kalendertage" : saturdays ? "Mo–Sa" : "Mo–Fr"})`} ·{" "}
             {cat === "day_off" ? "zählt keine Stunden"
               : cat === "vocational_school" ? `zählt je Tag ${fmtHM(SCHOOL_CREDIT_MINUTES)} Std.`
               : "zählt je Tag "}

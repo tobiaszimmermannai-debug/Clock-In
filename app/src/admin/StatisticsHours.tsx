@@ -10,7 +10,7 @@ export type HoursRow = {
   user_id: string; first_name: string; last_name: string; home_location_id: string | null;
   weekly_target_minutes: number; target_minutes: number; worked_minutes: number; credit_minutes: number;
   late_count: number; late_minutes: number; overtime_pending_minutes: number; overtime_approved_minutes: number;
-  open_days: number; forgotten_count: number; early_count: number;
+  open_days: number; forgotten_count: number; early_count: number; early_minutes?: number;
   sick_days: number; vacation_days: number; school_days: number; work_shifts: number;
   counted_from?: string | null;
 };
@@ -26,8 +26,9 @@ const COLS: Col[] = [
   { key: "vacation", label: "Urlaub", title: "Urlaubstage", value: (r) => r.vacation_days, show: (r) => String(r.vacation_days) },
   { key: "school", label: "Schule", title: "Schultage", value: (r) => r.school_days, show: (r) => String(r.school_days) },
   { key: "late", label: "Verspätet", title: "Anzahl (Minuten gesamt)", value: (r) => r.late_minutes, show: (r) => (r.late_count ? `${r.late_count}× (${r.late_minutes} Min.)` : "0"), warn: (r) => r.late_count > 0 },
+  { key: "early", label: "Früher gegangen", title: "Anzahl (Minusstunden bis Schichtende – „wenig los“ oder nicht freigegeben)", value: (r) => r.early_minutes ?? 0,
+    show: (r) => (r.early_count ? `${r.early_count}× (−${fmtHM(r.early_minutes ?? 0)})` : "0"), warn: (r) => r.early_count > 0 },
   { key: "ot", label: "Überstunden", title: "freigegeben (offen)", value: (r) => r.overtime_approved_minutes, show: (r) => `${fmtHM(r.overtime_approved_minutes)}${r.overtime_pending_minutes ? ` (+${fmtHM(r.overtime_pending_minutes)} offen)` : ""}` },
-  { key: "early", label: "Früher gegangen", value: (r) => r.early_count, show: (r) => String(r.early_count) },
   { key: "forgot", label: "Ausstempeln vergessen", value: (r) => r.forgotten_count, show: (r) => String(r.forgotten_count), warn: (r) => r.forgotten_count > 0 },
 ];
 
@@ -94,7 +95,8 @@ export function HoursTable(props: { from: string | null; to: string | null; labe
           <div className="stat"><span className="stat-label">Ist / Soll</span><span className="stat-value">{fmtHM(sum(ist))} <small>/ {fmtHM(sum((r) => r.target_minutes))} Std.</small></span></div>
           <div className="stat"><span className="stat-label">Krankheitstage</span><span className="stat-value">{sum((r) => r.sick_days)}</span></div>
           <div className="stat"><span className="stat-label">Urlaubstage</span><span className="stat-value">{sum((r) => r.vacation_days)}</span></div>
-          <div className="stat"><span className="stat-label">Verspätungen</span><span className="stat-value">{sum((r) => r.late_count)}</span></div>
+          <div className="stat"><span className="stat-label">Verspätet / früher gegangen</span><span className="stat-value">{sum((r) => r.late_count)} <small>/ {sum((r) => r.early_count)}</small></span></div>
+          <div className="stat"><span className="stat-label">Überstunden</span><span className="stat-value">{fmtHM(sum((r) => r.overtime_approved_minutes))} <small>Std.{sum((r) => r.overtime_pending_minutes) ? ` · ${fmtHM(sum((r) => r.overtime_pending_minutes))} offen` : ""}</small></span></div>
         </div>
       )}
       {rows !== null && list.length === 0 && !error && <div className="panel"><Empty icon="inbox" title="Keine Daten">Für diesen Zeitraum gibt es nichts anzuzeigen.</Empty></div>}

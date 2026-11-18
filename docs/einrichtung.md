@@ -142,6 +142,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 53. `supabase/migrations/20261123090000_wissen_fix_level_due.sql` (Wissen einmalig korrigieren: Level aus fairen Punkten neu berechnen, gelernte Fragen verteilt wiedervorlegen)
 54. `supabase/migrations/20261124090000_notes_proof_telegram.sql` (Aufgaben: Fotonachweis per Telegram an die Empfänger mit Freigeben/Ablehnen (Ablehnen = morgen wieder mit Foto) – danach Functions `aufgaben` und `telegram` neu deployen)
 55. `supabase/migrations/20261125090000_team_stats.sql` (Statistik für Admins und Studioleitungen: Stunden, Krank, Urlaub, Verspätungen, Überstunden je Person (team_stats))
+56. `supabase/migrations/20261126090000_sick_weekends.sql` (Krank auch Sa/So eintragen (Kalendertage für die Krankenkasse) – am Wochenende ohne Stunden-Gutschrift)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
