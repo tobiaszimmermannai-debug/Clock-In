@@ -96,23 +96,29 @@ const unitQuestions = new Map<string, Question[]>();
 for (const q of QUESTIONS) unitQuestions.set(q.unitId, [...(unitQuestions.get(q.unitId) ?? []), q]);
 export const questionsOf = (unitId: string) => unitQuestions.get(unitId) ?? [];
 
-const share = (unitId: string, progress: ProgressMap, minBox: number) => {
+/**
+ * Gelernt = schon einmal richtig (Bestmarke ≥ Stufe 2). Ein späterer Fehler macht die Frage wieder fällig,
+ * nimmt aber den Fortschritt (Ring, Prozent, Freischaltung, „gewusst“) nicht mehr weg.
+ */
+export const isLearned = (p: Progress | undefined) => Boolean(p && (p.box >= 2 || (p.best_box ?? 0) >= 2 || p.times_correct > 0));
+
+const share = (unitId: string, progress: ProgressMap) => {
   const list = questionsOf(unitId);
   if (!list.length) return 0;
-  return list.filter((q) => (progress.get(q.id)?.box ?? 0) >= minBox).length / list.length;
+  return list.filter((q) => isLearned(progress.get(q.id))).length / list.length;
 };
 
-/** Fortschrittsring: Anteil der Fragen in Box ≥ 3 */
-export const unitRing = (unitId: string, progress: ProgressMap) => share(unitId, progress, 3);
+/** Fortschrittsring: Anteil der gelernten Fragen der Unit */
+export const unitRing = (unitId: string, progress: ProgressMap) => share(unitId, progress);
 
-/** Freigeschaltet: Unit 1 immer; Unit n+1, wenn in Unit n ≥ 80 % der Fragen mindestens Box 2 haben */
+/** Freigeschaltet: Unit 1 immer; Unit n+1, wenn in Unit n ≥ 80 % der Fragen gelernt sind */
 export function unlockedUnits(progress: ProgressMap): Set<string> {
   // je Thema eine eigene Kette: die erste Unit ist offen, nach der ersten gesperrten ist der Rest gesperrt
   const result = new Set<string>();
   for (const t of TOPICS) {
     const list = unitsOf(t.id);
     for (let i = 0; i < list.length; i++) {
-      if (i > 0 && share(list[i - 1].id, progress, 2) < UNLOCK_SHARE) break;
+      if (i > 0 && share(list[i - 1].id, progress) < UNLOCK_SHARE) break;
       result.add(list[i].id);
     }
   }
@@ -132,11 +138,7 @@ export function currentUnit(progress: ProgressMap, topicId = DEFAULT_TOPIC): Uni
  */
 export function topicMastery(topicId: string, progress: ProgressMap): number {
   const list = unitsOf(topicId).flatMap((u) => questionsOf(u.id));
-  const learned = (id: string) => {
-    const p = progress.get(id);
-    return Boolean(p && (p.box >= 2 || (p.best_box ?? 0) >= 2 || p.times_correct > 0));
-  };
-  return list.length ? list.filter((q) => learned(q.id)).length / list.length : 0;
+  return list.length ? list.filter((q) => isLearned(progress.get(q.id))).length / list.length : 0;
 }
 
 /** Fällige Wiederholungen (nur schon gesehene Fragen) aus freigeschalteten Units */

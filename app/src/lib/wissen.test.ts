@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { topicMastery } from "./wissen";
+import { isLearned, topicMastery } from "./wissen";
 import { CARDS, composeLesson, DECKS, earnsXp, isCorrect, levelOf, nextProgress, type ProgressMap, QUESTIONS, streakOf, TOPICS, topicOf, UNITS, unlockedUnits, weekXp, xpForLevel } from "./wissen";
 
 describe("Wissen-Inhalte", () => {
@@ -107,5 +107,13 @@ describe("Fortschritt je Thema", () => {
     list.forEach((q) => p.set(q.id, { item_id: q.id, item_type: "question", box: 2, due_at: "2099-01-01T00:00:00Z", times_correct: 1, times_wrong: 0 }));
     expect(topicMastery("einarbeitung", p)).toBeCloseTo(list.length / total);
     expect(topicMastery("nisv", p)).toBe(0);
+  });
+});
+
+describe("isLearned", () => {
+  it("bleibt gelernt nach einem späteren Fehler", () => {
+    const p = { item_id: "x", item_type: "question" as const, box: 1, best_box: 3, due_at: new Date().toISOString(), times_correct: 4, times_wrong: 1 };
+    expect(isLearned(p)).toBe(true);
+    expect(isLearned(undefined)).toBe(false);
   });
 });

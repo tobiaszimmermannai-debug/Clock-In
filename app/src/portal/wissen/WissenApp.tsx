@@ -7,7 +7,7 @@ import { isMuted, setMuted, sounds } from "../../lib/sounds";
 import { portalDb } from "../../lib/supabase";
 import {
   BLITZ_SECONDS, CARD_XP, CARDS, composeLesson, currentUnit, DAILY_GOAL_XP, type DayXp, DECK_KIND, type Deck, DECKS, DEFAULT_TOPIC, dueCards,
-  dueQuestions, earnsXp, type Flashcard, isCorrect, type ItemType, LESSON_SIZE, levelOf, nextProgress, PERFECT_BONUS, type Progress, type ProgressMap,
+  dueQuestions, earnsXp, isLearned, type Flashcard, isCorrect, type ItemType, LESSON_SIZE, levelOf, nextProgress, PERFECT_BONUS, type Progress, type ProgressMap,
   type Question, QUESTIONS, questionsOf, shuffle, streakOf, todayXp, topicMastery, TOPICS, type Unit, unitRing, unitsOf, unlockedUnits, weekXp, XP_BY_DIFFICULTY,
 } from "../../lib/wissen";
 import { Blitzi } from "../../notes/gamification/Blitzi";
@@ -283,7 +283,7 @@ function Home(props: {
                 <ul className="wi-decks">
                   {decks.map((d) => {
                     const cards = CARDS.filter((c) => c.deckId === d.id);
-                    const known = cards.filter((c) => (progress.get(c.id)?.box ?? 0) >= 2).length;
+                    const known = cards.filter((c) => isLearned(progress.get(c.id))).length;
                     return (
                       <li key={d.id}>
                         <button type="button" className="wi-deck" disabled={!cards.length} onClick={() => props.onDeck(d)}>
