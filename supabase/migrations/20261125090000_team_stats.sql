@@ -3,22 +3,26 @@
 -- =============================================================================
 -- team_stats(von, bis): je Person Soll/Ist-Stunden, Gutschriften, Krank-/Urlaubs-/Schultage, Verspätungen,
 -- Überstunden, früher gegangen und vergessenes Ausstempeln. Sichtbar: Admins alle, Studioleitung die Leute
--- ihres Studios (gleiche Regel wie überall: private.manages_user). Höchstens 366 Tage, Ende spätestens heute.
--- (Mehrfach ausführbar.)
+-- ihres Studios (gleiche Regel wie überall: private.manages_user). Höchstens 366 Tage, Ende spätestens gestern.
+-- Soll je Person erst ab Beginn der Zählung: frühestens Arbeitsbeginn (employment_start) und erste Stempelung
+-- in Clock-In – vorher gibt es keine Ist-Stunden, also auch kein Soll. (Mehrfach ausführbar.)
 -- =============================================================================
 
-create or replace function public.team_stats(p_from date, p_to date)
+drop function if exists public.team_stats(date, date);
+create function public.team_stats(p_from date, p_to date)
 returns table (
   user_id uuid, first_name text, last_name text, role public.user_role, home_location_id uuid,
   weekly_target_minutes integer, target_minutes integer, worked_minutes integer, credit_minutes integer,
   late_count integer, late_minutes integer, overtime_pending_minutes integer, overtime_approved_minutes integer,
   open_days integer, forgotten_count integer, early_count integer,
-  sick_days integer, vacation_days integer, school_days integer, work_shifts integer
+  sick_days integer, vacation_days integer, school_days integer, work_shifts integer,
+  counted_from date   -- ab hier zählt das Soll (null = noch nie gestempelt)
 )
 language plpgsql stable security definer set search_path = '' as $$
 declare
-  v_to   date := least(p_to, (now() at time zone 'Europe/Berlin')::date);
+  v_to   date := least(p_to, (now() at time zone 'Europe/Berlin')::date - 1);  -- bis gestern (heute läuft noch)
   v_days integer;
+  v_start date;
   u      record;
   s      record;
   v_from date;
@@ -33,11 +37,12 @@ begin
   if v_to - p_from > 366 then
     raise exception 'Zeitraum zu lang (höchstens ein Jahr).';
   end if;
-  -- Werktage (Mo–Fr) im Zeitraum für das anteilige Soll
-  select count(*) into v_days from generate_series(p_from, v_to, interval '1 day') d where extract(isodow from d) < 6;
 
   for u in
-    select x.id, x.first_name, x.last_name, x.role, x.home_location_id, coalesce(e.weekly_target_minutes, 0) as weekly
+    select x.id, x.first_name, x.last_name, x.role, x.home_location_id, coalesce(e.weekly_target_minutes, 0) as weekly,
+           e.employment_start,
+           (select min((t.recorded_at at time zone 'Europe/Berlin')::date) from public.time_logs t
+            where t.user_id = x.id and t.approval_status <> 'rejected') as first_stamp
     from public.users x
     left join public.employment_details e on e.user_id = x.id
     where x.is_active and x.role <> 'admin' and x.time_tracking
@@ -46,7 +51,11 @@ begin
   loop
     user_id := u.id; first_name := u.first_name; last_name := u.last_name; role := u.role;
     home_location_id := u.home_location_id; weekly_target_minutes := u.weekly;
-    target_minutes := round(u.weekly / 5.0 * v_days);
+    -- Soll: Wochenstunden ÷ 5 je Werktag (Mo–Fr) ab Beginn der Zählung bis heute
+    v_start := greatest(p_from, u.employment_start, u.first_stamp);
+    counted_from := case when u.first_stamp is null then null else v_start end;
+    select count(*) into v_days from generate_series(v_start, v_to, interval '1 day') d where extract(isodow from d) < 6;
+    target_minutes := case when u.first_stamp is null then 0 else round(u.weekly / 5.0 * coalesce(v_days, 0)) end;
     worked_minutes := 0; credit_minutes := 0; late_count := 0; late_minutes := 0;
     overtime_pending_minutes := 0; overtime_approved_minutes := 0; open_days := 0;
     -- Stundenberechnung in Blöcken von 90 Tagen (work_day_summary erlaubt höchstens 93)

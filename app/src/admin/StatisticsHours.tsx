@@ -12,12 +12,13 @@ export type HoursRow = {
   late_count: number; late_minutes: number; overtime_pending_minutes: number; overtime_approved_minutes: number;
   open_days: number; forgotten_count: number; early_count: number;
   sick_days: number; vacation_days: number; school_days: number; work_shifts: number;
+  counted_from?: string | null;
 };
 
 type Col = { key: string; label: string; title?: string; value: (r: HoursRow) => number; show: (r: HoursRow) => string; warn?: (r: HoursRow) => boolean };
 const ist = (r: HoursRow) => r.worked_minutes + r.credit_minutes;
 const COLS: Col[] = [
-  { key: "target", label: "Soll", title: "Wochenstunden ÷ 5 je Werktag bis heute", value: (r) => r.target_minutes, show: (r) => fmtHM(r.target_minutes) },
+  { key: "target", label: "Soll", title: "Wochenstunden ÷ 5 je Werktag – ab Beginn der Zählung bis gestern", value: (r) => r.target_minutes, show: (r) => fmtHM(r.target_minutes) },
   { key: "ist", label: "Ist", title: "Gearbeitet + Gutschriften (Urlaub, Krank, Schule)", value: ist, show: (r) => fmtHM(ist(r)) },
   { key: "diff", label: "Differenz", value: (r) => ist(r) - r.target_minutes, show: (r) => `${ist(r) >= r.target_minutes ? "+" : ""}${fmtHM(ist(r) - r.target_minutes)}`, warn: (r) => ist(r) - r.target_minutes < -120 },
   { key: "shifts", label: "Schichten", value: (r) => r.work_shifts, show: (r) => String(r.work_shifts) },
@@ -41,7 +42,7 @@ export function HoursTable(props: { from: string | null; to: string | null; labe
   const today = berlinDate();
   // „Alles“: höchstens das letzte Jahr (Stundenberechnung je Tag)
   const from = props.from ?? addDays(today, -365);
-  const to = props.to ? addDays(props.to, -1) : today;
+  const to = props.to ? addDays(props.to, -1) : today; // die Datenbank rechnet höchstens bis gestern
   const [rows, setRows] = useState<HoursRow[] | null>(null);
   const [error, setError] = useState<string>();
   const [sort, setSort] = useState<{ key: string; desc: boolean }>({ key: "name", desc: false });
@@ -85,7 +86,7 @@ export function HoursTable(props: { from: string | null; to: string | null; labe
   const sum = (f: (r: HoursRow) => number) => list.reduce((n, r) => n + f(r), 0);
   return (
     <>
-      {!props.from && <Notice>Bei „Alles“ zeigen die Stunden das letzte Jahr.</Notice>}
+      {!props.from && <Notice>Bei „Alles“ zeigen die Stunden höchstens das letzte Jahr – je Person ab dem ersten Stempeln.</Notice>}
       {error && <Notice tone="error">{error}</Notice>}
       {rows === null && !error && <p className="list-empty">Lädt … (bei langen Zeiträumen ein paar Sekunden)</p>}
       {rows !== null && (
@@ -106,14 +107,18 @@ export function HoursTable(props: { from: string | null; to: string | null; labe
               <tbody>
                 {list.map((r) => (
                   <tr key={r.user_id}>
-                    <th scope="row">{r.first_name} {r.last_name}<small>{props.studioName(r.home_location_id)} · {fmtHM(r.weekly_target_minutes)} Std./Woche</small></th>
+                    <th scope="row">{r.first_name} {r.last_name}<small>{props.studioName(r.home_location_id)} · {fmtHM(r.weekly_target_minutes)} Std./Woche{r.counted_from ? ` · ab ${r.counted_from.slice(8, 10)}.${r.counted_from.slice(5, 7)}.` : " · noch nie gestempelt"}</small></th>
                     {COLS.map((c) => <td key={c.key} className={c.warn?.(r) ? "is-warn" : c.value(r) ? "" : "is-zero"}>{c.show(r)}</td>)}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="muted small">Soll: Wochenstunden ÷ 5 je Werktag (Mo–Fr) bis heute. Ist: gezählte Arbeitszeit plus Gutschriften für Urlaub, Krank und Schule – wie unter Zeiten.</p>
+          <p className="muted small">
+            Soll: Wochenstunden ÷ 5 je Werktag (Mo–Fr), gezählt ab dem ersten Stempeln in Clock-In (bzw. Arbeitsbeginn) bis gestern.
+            Ist: gezählte Arbeitszeit plus Gutschriften für Urlaub, Krank und Schule – wie unter Zeiten. Verspätungen sind darin schon
+            abgezogen (gezählt wird ab dem echten Kommen), freigegebene Überstunden schon dazugerechnet; offene Überstunden zählen erst nach Freigabe.
+          </p>
         </>
       )}
     </>
