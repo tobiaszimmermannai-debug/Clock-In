@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { topicMastery } from "./wissen";
 import { CARDS, composeLesson, DECKS, earnsXp, isCorrect, levelOf, nextProgress, type ProgressMap, QUESTIONS, streakOf, TOPICS, topicOf, UNITS, unlockedUnits, weekXp, xpForLevel } from "./wissen";
 
 describe("Wissen-Inhalte", () => {
@@ -95,5 +96,16 @@ describe("Faire Punkte und Level", () => {
   });
   it("jede Unit gehört zu einem bekannten Thema; jedes Thema hat eine eigene erste offene Unit", () => {
     for (const u of UNITS) expect(TOPICS.some((t) => t.id === topicOf(u)), u.id).toBe(true);
+  });
+});
+
+describe("Fortschritt je Thema", () => {
+  it("zählt Fragen, die schon richtig beantwortet wurden – nicht erst ab Stufe 4", () => {
+    const list = QUESTIONS.filter((q) => q.unitId === UNITS[0].id);
+    const total = QUESTIONS.filter((q) => !q.unitId.startsWith("nisv-")).length;
+    const p: ProgressMap = new Map();
+    list.forEach((q) => p.set(q.id, { item_id: q.id, item_type: "question", box: 2, due_at: "2099-01-01T00:00:00Z", times_correct: 1, times_wrong: 0 }));
+    expect(topicMastery("einarbeitung", p)).toBeCloseTo(list.length / total);
+    expect(topicMastery("nisv", p)).toBe(0);
   });
 });

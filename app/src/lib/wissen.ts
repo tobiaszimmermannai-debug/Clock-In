@@ -126,10 +126,17 @@ export function currentUnit(progress: ProgressMap, topicId = DEFAULT_TOPIC): Uni
   return [...list].reverse().find((u) => open.has(u.id)) ?? list[0];
 }
 
-/** Meisterschaft eines Themas: Anteil der Fragen in Stufe ≥ 4 */
+/**
+ * Fortschritt eines Themas: Anteil der Fragen, die schon mindestens einmal (am Ende) richtig beantwortet wurden.
+ * (Früher Stufe ≥ 4 – die erreicht man erst nach Wiederholungen über eine Woche, daher stand dort lange 0 %.)
+ */
 export function topicMastery(topicId: string, progress: ProgressMap): number {
   const list = unitsOf(topicId).flatMap((u) => questionsOf(u.id));
-  return list.length ? list.filter((q) => (progress.get(q.id)?.box ?? 0) >= 4).length / list.length : 0;
+  const learned = (id: string) => {
+    const p = progress.get(id);
+    return Boolean(p && (p.box >= 2 || (p.best_box ?? 0) >= 2 || p.times_correct > 0));
+  };
+  return list.length ? list.filter((q) => learned(q.id)).length / list.length : 0;
 }
 
 /** Fällige Wiederholungen (nur schon gesehene Fragen) aus freigeschalteten Units */

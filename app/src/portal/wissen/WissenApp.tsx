@@ -223,7 +223,7 @@ function Home(props: {
             <button key={t.id} type="button" role="tab" aria-selected={t.id === topic.id} className={`wi-topic${t.id === topic.id ? " is-on" : ""}`} onClick={() => pickTopic(t.id)}>
               <span className="wi-topic-icon" aria-hidden>{t.icon}</span>
               <b>{t.title}</b>
-              <span className="muted small">{unitsOf(t.id).length ? `${Math.round(topicMastery(t.id, progress) * 100)} % gemeistert` : "Inhalte folgen"}</span>
+              <span className="muted small">{unitsOf(t.id).length ? `${Math.round(topicMastery(t.id, progress) * 100)} % gelernt` : "Inhalte folgen"}</span>
             </button>
           ))}
         </div>
