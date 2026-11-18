@@ -717,3 +717,18 @@ input.switch:checked { background: var(--accent); }
 .day-edit-dash { padding-bottom: 12px; color: var(--muted); }
 .day-edit-sum { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: .9rem; }
 .text-danger { color: var(--danger); }
+
+/* Statistik (Verwaltung) */
+.stat-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.stat-table-wrap { padding: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.stat-table { width: 100%; border-collapse: collapse; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.stat-table th, .stat-table td { padding: 8px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.stat-table thead th { position: sticky; top: 0; background: var(--surface); font-size: .78rem; color: var(--muted); }
+.stat-table thead th button { all: unset; cursor: pointer; }
+.stat-table th[scope="row"], .stat-table thead th:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+.stat-table th[scope="row"] small { display: block; color: var(--muted); font-weight: 500; }
+.stat-table td.is-zero { color: var(--faint); }
+.stat-table tfoot th, .stat-table tfoot td { font-weight: 700; }
+.stat-table tr.is-avg th, .stat-table tr.is-avg td { font-weight: 500; color: var(--muted); }
+.content > * { min-width: 0; }
+.stat-table-wrap { max-width: 100%; }

@@ -14,6 +14,7 @@ import { QrLogin } from "./QrLogin";
 import { SchoolImport } from "./SchoolImport";
 import { Sickness } from "./Sickness";
 import { Staff } from "./Staff";
+import { Statistics } from "./Statistics";
 import { Tablets } from "./Tablets";
 import { Times } from "./Times";
 import { Vacations } from "./Vacations";
@@ -227,7 +228,7 @@ function CodeForm(props: {
   );
 }
 
-type TabId = "plan" | "team" | "times" | "tasks" | "settings";
+type TabId = "plan" | "team" | "times" | "tasks" | "stats" | "settings";
 type TeamView = "people" | "vacation" | "sick" | "school";
 type TimesView = "presence" | "approvals" | "times";
 
@@ -270,7 +271,7 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
     { id: "team", label: "Team", icon: "users" },
     { id: "times", label: "Zeiten", icon: "clock", badge: open },
     { id: "tasks", label: "Aufgaben", icon: "tasks" },
-    ...(isAdmin ? [{ id: "settings", label: "Einstellungen", icon: "settings" } as const] : []),
+    ...(isAdmin ? [{ id: "stats", label: "Statistik", icon: "chart" } as const, { id: "settings", label: "Einstellungen", icon: "settings" } as const] : []),
   ];
 
   // Zeiten öffnen: mit offenen Freigaben zuerst die Freigaben, sonst „Wer ist da?“ (Admin) bzw. Stempelzeiten
@@ -321,6 +322,7 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
         </>
       )}
       {tab === "tasks" && <Tasks db={adminDb} initialPage={taskLink} />}
+      {tab === "stats" && isAdmin && <Statistics />}
       {tab === "settings" && isAdmin && <Tablets />}
     </Shell>
   );
