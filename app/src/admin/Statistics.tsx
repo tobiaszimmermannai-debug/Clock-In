@@ -1,5 +1,6 @@
-// Statistik (nur Admins): Kennzahlen aus dem Ausstempeln (shift_reports) je Person oder Studio.
-// Zeitraum wählbar (Woche, Monat, Jahr, alles), Studio-Filter, Spalte antippen = sortieren, Export als CSV (Excel).
+// Statistik (Admins: alle Studios, Studioleitung: eigene Studios – die Datenbank prüft das ebenfalls):
+// 1) Ausstempel-Zahlen (shift_reports) je Person oder Studio, 2) Stunden & Abwesenheit (team_stats).
+// Zeitraum wählbar, Studio-Filter, Spalte antippen = sortieren, Export als CSV (Excel).
 import { useEffect, useMemo, useState } from "react";
 import { Empty, Notice, PageHeader, Segmented, StudioFilter } from "../components/ui";
 import { berlinDate, berlinToISO } from "../lib/dates";
@@ -8,6 +9,8 @@ import { REPORT_FIELDS, type ReportKey } from "../lib/shiftReport";
 import { groupReports, type Period, periodRange, type ReportRow, type StatRow, toCsv, totalRow } from "../lib/statistics";
 import { adminDb } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
+import type { Profile } from "./AdminApp";
+import { HoursTable } from "./StatisticsHours";
 
 type Person = { id: string; first_name: string; last_name: string; home_location_id: string | null };
 type SortKey = "label" | "shifts" | "sum" | ReportKey;
@@ -19,7 +22,9 @@ const PERIODS: { id: Period; label: string }[] = [
   { id: "all", label: "Alles" },
 ];
 
-export function Statistics() {
+export function Statistics({ profile }: { profile: Profile }) {
+  const isAdmin = profile.role === "admin";
+  const [area, setArea] = useState<"reports" | "hours">("reports");
   const today = berlinDate();
   const [period, setPeriod] = useState<Period>("month");
   const [offset, setOffset] = useState(0);
@@ -36,11 +41,17 @@ export function Statistics() {
     void Promise.all([
       adminDb.from("users").select("id, first_name, last_name, home_location_id").order("first_name"),
       adminDb.from("locations").select("id, code, name").eq("is_active", true).order("name"),
-    ]).then(([u, l]) => {
+      adminDb.from("location_managers").select("location_id").eq("user_id", profile.id),
+    ]).then(([u, l, m]) => {
       setPeople((u.data ?? []) as Person[]);
-      setLocations((l.data ?? []) as Location[]);
+      // Studioleitung: nur die eigenen Studios zur Auswahl
+      const mine = new Set((m.data ?? []).map((x) => x.location_id as string));
+      const all = (l.data ?? []) as Location[];
+      const list = isAdmin ? all : all.filter((x) => mine.has(x.id));
+      setLocations(list);
+      if (!isAdmin && list.length === 1) setStudio(list[0].id);
     });
-  }, []);
+  }, [profile.id, isAdmin]);
 
   useEffect(() => {
     setRows(null);
@@ -96,9 +107,11 @@ export function Statistics() {
     <>
       <PageHeader
         title="Statistik"
-        subtitle="Zahlen aus dem Ausstempeln"
-        actions={<button type="button" className="btn btn-outline" disabled={!table.list.length} onClick={exportCsv}>Export (Excel)</button>}
+        subtitle={isAdmin ? "Alle Studios" : `Dein Studio${locations.length > 1 ? "s" : ""}`}
+        actions={area === "reports" ? <button type="button" className="btn btn-outline" disabled={!table.list.length} onClick={exportCsv}>Export (Excel)</button> : undefined}
       />
+      <Segmented label="Bereich" value={area} onChange={setArea} fill
+        options={[{ id: "reports", label: "Zahlen beim Ausstempeln" }, { id: "hours", label: "Stunden & Abwesenheit" }]} />
       <Segmented label="Zeitraum" value={period} onChange={(p) => { setPeriod(p); setOffset(0); }} fill options={PERIODS} />
       {period !== "all" && (
         <div className="weeknav">
@@ -108,9 +121,11 @@ export function Statistics() {
         </div>
       )}
       <div className="stat-filters">
-        <Segmented label="Gruppieren" value={group} onChange={setGroup} options={[{ id: "person", label: "Je Person" }, { id: "studio", label: "Je Studio" }]} />
-        <StudioFilter locations={locations} value={studio} onChange={setStudio} />
+        {area === "reports" && <Segmented label="Gruppieren" value={group} onChange={setGroup} options={[{ id: "person", label: "Je Person" }, { id: "studio", label: "Je Studio" }]} />}
+        {locations.length > 1 && <StudioFilter locations={locations} value={studio} onChange={setStudio} />}
       </div>
+      {area === "hours" && <HoursTable from={range.from} to={range.to} label={range.label} studio={studio} studioName={studioName} />}
+      {area === "reports" && <>
       {error && <Notice tone="error">{error}</Notice>}
       {rows === null && !error && <p className="list-empty">Lädt …</p>}
 
@@ -168,6 +183,7 @@ export function Statistics() {
         </div>
       )}
       <p className="muted small">Spaltenkopf antippen zum Sortieren. Am Handy die Tabelle seitlich wischen.</p>
+      </>}
     </>
   );
 }

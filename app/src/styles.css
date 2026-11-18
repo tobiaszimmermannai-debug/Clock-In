@@ -732,3 +732,4 @@ input.switch:checked { background: var(--accent); }
 .stat-table tr.is-avg th, .stat-table tr.is-avg td { font-weight: 500; color: var(--muted); }
 .content > * { min-width: 0; }
 .stat-table-wrap { max-width: 100%; }
+.stat-table td.is-warn { color: var(--danger); font-weight: 600; }

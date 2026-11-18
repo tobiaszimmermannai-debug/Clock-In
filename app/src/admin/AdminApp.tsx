@@ -271,7 +271,8 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
     { id: "team", label: "Team", icon: "users" },
     { id: "times", label: "Zeiten", icon: "clock", badge: open },
     { id: "tasks", label: "Aufgaben", icon: "tasks" },
-    ...(isAdmin ? [{ id: "stats", label: "Statistik", icon: "chart" } as const, { id: "settings", label: "Einstellungen", icon: "settings" } as const] : []),
+    { id: "stats", label: "Statistik", icon: "chart" },
+    ...(isAdmin ? [{ id: "settings", label: "Einstellungen", icon: "settings" } as const] : []),
   ];
 
   // Zeiten öffnen: mit offenen Freigaben zuerst die Freigaben, sonst „Wer ist da?“ (Admin) bzw. Stempelzeiten
@@ -322,7 +323,7 @@ function AdminHome(props: { profile: Profile; onLogout: () => void }) {
         </>
       )}
       {tab === "tasks" && <Tasks db={adminDb} initialPage={taskLink} />}
-      {tab === "stats" && isAdmin && <Statistics />}
+      {tab === "stats" && <Statistics profile={profile} />}
       {tab === "settings" && isAdmin && <Tablets />}
     </Shell>
   );

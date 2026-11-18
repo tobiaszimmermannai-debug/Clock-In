@@ -1,0 +1,85 @@
+-- =============================================================================
+-- Clock-In · Statistik für Admins und Studioleitungen
+-- =============================================================================
+-- team_stats(von, bis): je Person Soll/Ist-Stunden, Gutschriften, Krank-/Urlaubs-/Schultage, Verspätungen,
+-- Überstunden, früher gegangen und vergessenes Ausstempeln. Sichtbar: Admins alle, Studioleitung die Leute
+-- ihres Studios (gleiche Regel wie überall: private.manages_user). Höchstens 366 Tage, Ende spätestens heute.
+-- (Mehrfach ausführbar.)
+-- =============================================================================
+
+create or replace function public.team_stats(p_from date, p_to date)
+returns table (
+  user_id uuid, first_name text, last_name text, role public.user_role, home_location_id uuid,
+  weekly_target_minutes integer, target_minutes integer, worked_minutes integer, credit_minutes integer,
+  late_count integer, late_minutes integer, overtime_pending_minutes integer, overtime_approved_minutes integer,
+  open_days integer, forgotten_count integer, early_count integer,
+  sick_days integer, vacation_days integer, school_days integer, work_shifts integer
+)
+language plpgsql stable security definer set search_path = '' as $$
+declare
+  v_to   date := least(p_to, (now() at time zone 'Europe/Berlin')::date);
+  v_days integer;
+  u      record;
+  s      record;
+  v_from date;
+  v_end  date;
+begin
+  if auth.uid() is not null and not (private.is_admin() or private.is_manager()) then
+    raise exception 'Statistik nur für Admins und Studioleitungen.';
+  end if;
+  if p_from is null or v_to < p_from then
+    return;
+  end if;
+  if v_to - p_from > 366 then
+    raise exception 'Zeitraum zu lang (höchstens ein Jahr).';
+  end if;
+  -- Werktage (Mo–Fr) im Zeitraum für das anteilige Soll
+  select count(*) into v_days from generate_series(p_from, v_to, interval '1 day') d where extract(isodow from d) < 6;
+
+  for u in
+    select x.id, x.first_name, x.last_name, x.role, x.home_location_id, coalesce(e.weekly_target_minutes, 0) as weekly
+    from public.users x
+    left join public.employment_details e on e.user_id = x.id
+    where x.is_active and x.role <> 'admin' and x.time_tracking
+      and (auth.uid() is null or private.manages_user(x.id))
+    order by x.first_name, x.last_name
+  loop
+    user_id := u.id; first_name := u.first_name; last_name := u.last_name; role := u.role;
+    home_location_id := u.home_location_id; weekly_target_minutes := u.weekly;
+    target_minutes := round(u.weekly / 5.0 * v_days);
+    worked_minutes := 0; credit_minutes := 0; late_count := 0; late_minutes := 0;
+    overtime_pending_minutes := 0; overtime_approved_minutes := 0; open_days := 0;
+    -- Stundenberechnung in Blöcken von 90 Tagen (work_day_summary erlaubt höchstens 93)
+    v_from := p_from;
+    while v_from <= v_to loop
+      v_end := least(v_from + 89, v_to);
+      for s in select * from public.work_day_summary(u.id, v_from, v_end) loop
+        worked_minutes := worked_minutes + s.worked_minutes;
+        credit_minutes := credit_minutes + s.credit_minutes;
+        late_count := late_count + (s.late_minutes > 0)::int;
+        late_minutes := late_minutes + s.late_minutes;
+        overtime_pending_minutes := overtime_pending_minutes + s.overtime_pending_minutes;
+        overtime_approved_minutes := overtime_approved_minutes + s.overtime_approved_minutes;
+        open_days := open_days + (s.open_session and s.day < v_to)::int;
+      end loop;
+      v_from := v_end + 1;
+    end loop;
+    select count(*) filter (where t.source = 'auto_checkout'),
+           count(*) filter (where t.event_type = 'clock_out' and t.early_reason is not null)
+      into forgotten_count, early_count
+    from public.time_logs t
+    where t.user_id = u.id and t.approval_status <> 'rejected'
+      and t.recorded_at >= private.berlin_day_start(p_from) and t.recorded_at < private.berlin_day_start(v_to + 1);
+    select count(distinct sh.shift_date) filter (where sh.shift_type = 'sick'),
+           count(distinct sh.shift_date) filter (where sh.shift_type = 'vacation'),
+           count(distinct sh.shift_date) filter (where sh.shift_type = 'vocational_school'),
+           count(*) filter (where sh.shift_type = 'work')
+      into sick_days, vacation_days, school_days, work_shifts
+    from public.shifts sh
+    where sh.user_id = u.id and sh.shift_date between p_from and v_to;
+    return next;
+  end loop;
+end $$;
+
+revoke execute on function public.team_stats(date, date) from public, anon;
+grant execute on function public.team_stats(date, date) to authenticated, service_role;
