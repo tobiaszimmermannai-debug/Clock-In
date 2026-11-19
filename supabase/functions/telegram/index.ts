@@ -125,6 +125,7 @@ async function handleNotify(
   if (body.type === "absence_check" && typeof body.date === "string") return await absenceCheck(body.date);
   if (body.type === "school_reminder") return await schoolReminder(typeof body.user_id === "string" ? body.user_id : undefined);
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
+  if (body.type === "swap_new" && typeof body.id === "string") return await swapRequest(body.id, true);
   if (body.type === "vacation_request" && typeof body.id === "string") return await vacationRequest(body.id, false);
   if (body.type === "vacation_decided" && typeof body.id === "string") return await vacationRequest(body.id, true);
   if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
@@ -361,8 +362,9 @@ async function phoneRegistered(b: PhoneRegistered): Promise<Response> {
   return new Response("sent");
 }
 
-// Neuer Schichttausch-Antrag → Freigabe durch Admin per Button
-async function swapRequest(id: string): Promise<Response> {
+// Schichttausch: infoOnly = neue Anfrage, angefragte Person hat noch nicht zugestimmt (ohne Knöpfe);
+// sonst nach der Zustimmung → Freigabe durch Admin per Button
+async function swapRequest(id: string, infoOnly = false): Promise<Response> {
   const { data: swap, error } = await supabase
     .from("swap_requests")
     .select(`
@@ -385,12 +387,14 @@ async function swapRequest(id: string): Promise<Response> {
   if (error || !swap) return new Response("not found", { status: 404 });
 
   const lines = [
-    "🔄 <b>Schichttausch-Antrag</b>",
+    infoOnly ? "🔄 <b>Neue Tauschanfrage</b>" : "🔄 <b>Schichttausch-Antrag</b>",
     `${escapeHtml(fullName(swap.requester))} gibt ab: ${shiftLabel(swap.requester_shift)}`,
     swap.target_shift
       ? `${escapeHtml(fullName(swap.target))} gibt dafür ab: ${shiftLabel(swap.target_shift)}`
       : `Übernehmen soll: ${escapeHtml(fullName(swap.target))}`,
-    `👍 ${escapeHtml(swap.target?.first_name ?? "Die angefragte Person")} hat zugestimmt.`,
+    infoOnly
+      ? `⏳ Wartet auf die Zustimmung von ${escapeHtml(swap.target?.first_name ?? "der angefragten Person")} – danach kommt die Freigabe.`
+      : `👍 ${escapeHtml(swap.target?.first_name ?? "Die angefragte Person")} hat zugestimmt.`,
     ...(swap.reason ? [`💬 ${escapeHtml(swap.reason)}`] : []),
     ...(swap.is_cross_studio
       ? ["🏢 Studioübergreifend: braucht beide Studioleitungen – dein Admin-OK gibt für beide frei."]
@@ -401,7 +405,7 @@ async function swapRequest(id: string): Promise<Response> {
     { text: "❌ Ablehnen", callback_data: `sw:no:${swap.id}` },
   ]];
   const admins = await adminChats();
-  await Promise.all(admins.map((a) => sendMessage(a.chat_id, lines.join("\n"), keyboard)));
+  await Promise.all(admins.map((a) => (infoOnly ? sendMessage(a.chat_id, lines.join("\n")) : sendMessage(a.chat_id, lines.join("\n"), keyboard))));
   return new Response("sent");
 }
 

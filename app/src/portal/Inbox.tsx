@@ -5,6 +5,7 @@ import { berlinDate, berlinTime, fmtDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { portalDb } from "../lib/supabase";
 import { VacationApprovals } from "../components/VacationApprovals";
+import { SwapOfferList } from "./SwapOffers";
 
 type Item = { id: string; kind: string; title: string; body: string | null; created_at: string; read_at: string | null };
 
@@ -37,6 +38,7 @@ export function Inbox(props: { meId: string; isLead: boolean; onRead: () => void
   return (
     <>
       <PageHeader title="Mitteilungen" />
+      <SwapOfferList meId={props.meId} />
       {props.isLead && <VacationApprovals db={portalDb} meId={props.meId} />}
       {error && <Notice tone="error">{error}</Notice>}
       {!error && items === undefined && <p className="list-empty">Lädt …</p>}

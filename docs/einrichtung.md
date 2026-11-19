@@ -144,6 +144,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 55. `supabase/migrations/20261125090000_team_stats.sql` (Statistik für Admins und Studioleitungen: Stunden, Krank, Urlaub, Verspätungen, Überstunden je Person (team_stats))
 56. `supabase/migrations/20261126090000_sick_weekends.sql` (Krank auch Sa/So eintragen (Kalendertage für die Krankenkasse) – am Wochenende ohne Stunden-Gutschrift)
 57. `supabase/migrations/20261127090000_test_account.sql` (Testkonto (users.is_test): nicht in Statistik, Team-Wertung und Kollegenlisten)
+58. `supabase/migrations/20261128090000_swap_offer_notify.sql` (Tauschanfragen: Mitteilung an Leitung, Telegram-Info, keine gegenseitige Doppel-Anfrage)
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und

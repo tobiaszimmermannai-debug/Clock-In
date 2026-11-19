@@ -31,6 +31,7 @@ type SwapRow = {
   is_cross_studio: boolean;
   approved_own_by: string | null;
   approved_other_by: string | null;
+  target_accepted_at: string | null;
   requester: Person;
   target: Person;
   requester_shift: ShiftRef;
@@ -53,6 +54,8 @@ export function Approvals({ profile }: { profile: Profile }) {
   const [overtime, setOvertime] = useState<Booking[]>([]);
   const [early, setEarly] = useState<Booking[]>([]);
   const [swaps, setSwaps] = useState<SwapRow[]>([]);
+  // Tauschanfragen, bei denen die angefragte Person noch nicht zugestimmt hat (nur zur Info)
+  const [waiting, setWaiting] = useState<SwapRow[]>([]);
   const [message, setMessage] = useState<{ tone: "ok" | "info" | "error"; text: string }>();
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState<string>();
@@ -65,13 +68,12 @@ export function Approvals({ profile }: { profile: Profile }) {
       adminDb.from("time_logs").select(BOOKING_SELECT).eq("overtime_status", "pending").order("recorded_at"),
       adminDb
         .from("swap_requests")
-        .select(`id, reason, is_cross_studio, approved_own_by, approved_other_by,
+        .select(`id, reason, is_cross_studio, approved_own_by, approved_other_by, target_accepted_at,
           requester:users!swap_requests_requester_id_fkey(first_name, last_name),
           target:users!swap_requests_target_user_id_fkey(first_name, last_name),
           requester_shift:shifts!swap_requests_requester_shift_id_fkey(starts_at, ends_at, location:locations(name)),
           target_shift:shifts!swap_requests_target_shift_id_fkey(starts_at, ends_at, location:locations(name))`)
         .eq("status", "pending")
-        .not("target_accepted_at", "is", null)  // erst wenn die angefragte Person zugestimmt hat
         .order("created_at"),
       adminDb.from("time_logs").select(BOOKING_SELECT).eq("early_status", "pending").order("recorded_at"),
     ]);
@@ -80,7 +82,10 @@ export function Approvals({ profile }: { profile: Profile }) {
     setEarly((e.data ?? []) as unknown as Booking[]);
     setBookings((b.data ?? []) as unknown as Booking[]);
     setOvertime((o.data ?? []) as unknown as Booking[]);
-    setSwaps((s.data ?? []) as unknown as SwapRow[]);
+    const allSwaps = (s.data ?? []) as unknown as SwapRow[];
+    // entscheiden erst, wenn die angefragte Person zugestimmt hat; vorher nur sichtbar
+    setSwaps(allSwaps.filter((x) => x.target_accepted_at));
+    setWaiting(allSwaps.filter((x) => !x.target_accepted_at));
   }, []);
 
   useEffect(() => {
@@ -233,6 +238,26 @@ export function Approvals({ profile }: { profile: Profile }) {
               </div>
             );
           })}
+        </Section>
+      )}
+
+      {waiting.length > 0 && (
+        <Section title="Tausch – wartet auf Kollegen" aside={<span>{waiting.length}</span>} footer="Zur Info: Entscheiden kannst du, sobald die angefragte Person zugestimmt hat.">
+          {waiting.map((s) => (
+            <Row
+              key={s.id}
+              leading={avatar(s.requester)}
+              title={`${name(s.requester)} → ${name(s.target)}`}
+              subtitle={
+                <>
+                  Abgabe: {shiftText(s.requester_shift)}
+                  {s.target_shift && <><br />Dafür: {shiftText(s.target_shift)}</>}
+                  {s.reason && <><br />„{s.reason}“</>}
+                </>
+              }
+              trailing={<Pill tone="warn">wartet auf {s.target?.first_name ?? "Kollegen"}</Pill>}
+            />
+          ))}
         </Section>
       )}
 

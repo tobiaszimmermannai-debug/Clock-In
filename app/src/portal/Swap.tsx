@@ -18,6 +18,7 @@ type Request = {
   approved_own_by: string | null;
   approved_other_by: string | null;
   requester_id: string;
+  target_user_id: string;
   requester: { first_name: string; last_name: string } | null;
   target: { first_name: string; last_name: string } | null;
   requester_shift: MyShift | null;
@@ -52,7 +53,7 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
     setShifts(await upcomingShifts(props.me.id));
     const { data, error } = await portalDb
       .from("swap_requests")
-      .select(`id, status, reason, decision_note, target_accepted_at, is_cross_studio, approved_own_by, approved_other_by, requester_id,
+      .select(`id, status, reason, decision_note, target_accepted_at, is_cross_studio, approved_own_by, approved_other_by, requester_id, target_user_id,
         requester:users!swap_requests_requester_id_fkey(first_name, last_name),
         target:users!swap_requests_target_user_id_fkey(first_name, last_name),
         requester_shift:shifts!swap_requests_requester_shift_id_fkey(id, starts_at, ends_at, location_id, location:locations(name)),
@@ -115,13 +116,14 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
         {requests.length === 0 && <p className="list-empty">Noch keine Anträge.</p>}
         {requests.map((r) => {
           const mine = r.requester_id === props.me.id;
+          const forMe = r.target_user_id === props.me.id;
           const other = mine ? r.target : r.requester;
           const approvals = (r.approved_own_by ? 1 : 0) + (r.approved_other_by ? 1 : 0);
           return (
             <div key={r.id} className="list-item">
               <Row
                 leading={<Avatar first={other?.first_name ?? "?"} last={other?.last_name} />}
-                title={mine ? `An ${name(r.target)}` : `Von ${name(r.requester)}`}
+                title={mine ? `An ${name(r.target)}` : forMe ? `Von ${name(r.requester)}` : `${name(r.requester)} → ${name(r.target)}`}
                 subtitle={
                   <>
                     Abgabe: {shiftText(r.requester_shift)}
@@ -132,7 +134,7 @@ export function Swap(props: { me: Me; colleagues: Colleague[]; locations: Locati
                 }
                 trailing={<StatusPill status={r.status} cross={r.is_cross_studio} approvals={approvals} accepted={!!r.target_accepted_at} />}
               />
-              {!mine && r.status === "pending" && !r.target_accepted_at && (
+              {forMe && r.status === "pending" && !r.target_accepted_at && (
                 <div className="list-actions indent">
                   <button type="button" className="btn btn-outline btn-sm" onClick={() => void respond(r.id, false)}>Ablehnen</button>
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => void respond(r.id, true)}>Zustimmen</button>

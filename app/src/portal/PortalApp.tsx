@@ -26,6 +26,7 @@ import { useWishes } from "../lib/wishes";
 import { approvers, loadApprovers } from "../lib/approvers";
 import { everyWhileVisible } from "../lib/visibility";
 import { Inbox, unreadCount } from "./Inbox";
+import { SwapOfferPopup } from "./SwapOffers";
 
 export type Me = {
   id: string;
@@ -81,6 +82,9 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
   const [offline, setOffline] = useState(false);
   const [unread, setUnread] = useState(0);
   const refreshUnread = useCallback(() => void unreadCount().then(setUnread), []);
+  // Erst offene Tauschanfragen an mich (Fenster beim Start), danach die Aufgaben-Erinnerung
+  const [swapDone, setSwapDone] = useState(false);
+  const finishSwaps = useCallback(() => setSwapDone(true), []);
   // Mitteilungen: beim Start und alle 2 Min., solange die App sichtbar ist
   useEffect(() => {
     if (!me) return;
@@ -179,7 +183,8 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
       {tab === "tasks" && <ErrorBoundary label="Aufgaben"><Tasks db={portalDb} /></ErrorBoundary>}
       {tab === "account" && <Account me={me} onLogout={logout} />}
       {tab === "inbox" && <Inbox meId={me.id} isLead={me.role === "manager"} onRead={refreshUnread} onOpenPlan={() => setTab("plan")} />}
-      {showReminder && tab !== "tasks" && (
+      {me && !swapDone && !props.stampToken && !props.pcToken && !props.qrToken && <SwapOfferPopup meId={me.id} onDone={finishSwaps} />}
+      {showReminder && swapDone && tab !== "tasks" && (
         <Sheet title="Deine Aufgaben heute" onClose={closeReminder}>
           <TaskReminder
             db={portalDb}
