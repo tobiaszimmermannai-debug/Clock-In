@@ -9,6 +9,7 @@ import { QrCode } from "../components/QrCode";
 import { StudioCalendar } from "../components/StudioCalendar";
 import { useWeekShifts } from "../components/WeekPlan";
 import { Notice, WeekNav } from "../components/ui";
+import { dbMessage } from "../lib/errors";
 import { publicAppUrl } from "../lib/config";
 import { berlinDate, weekStart } from "../lib/dates";
 import { registerStudios } from "../lib/studios";
@@ -70,13 +71,15 @@ export function PcPlan() {
 
 function ReadOnlyPlan(props: { lockedNote: boolean; onUnlocked: (u: Unlocked) => void }) {
   const [start, setStart] = useState(weekStart(berlinDate()));
+  const [locError, setLocError] = useState<string>();
   const [locations, setLocations] = useState<Location[]>([]);
   const { shifts, error, blockOf } = useWeekShifts(kioskDb, start, null);
   const wishes = useWishes(kioskDb, start);
   const [qr, setQr] = useState(false);
 
   useEffect(() => {
-    void kioskDb.from("locations").select("id, code, name").eq("is_active", true).order("name").then(({ data }) => {
+    void kioskDb.from("locations").select("id, code, name").eq("is_active", true).order("name").then(({ data, error }) => {
+      if (error) return setLocError(`Studios konnten nicht geladen werden: ${dbMessage(error)}`);
       const all = (data ?? []) as Location[];
       registerStudios(all);
       setLocations(all);
@@ -89,6 +92,7 @@ function ReadOnlyPlan(props: { lockedNote: boolean; onUnlocked: (u: Unlocked) =>
         <span>👀 Dienstplan aller Studios · nur lesen</span>
         {!qr && <button type="button" className="btn btn-primary btn-sm" onClick={() => setQr(true)}>Schichtplanung freischalten</button>}
       </div>
+      {locError && <Notice tone="error">{locError}</Notice>}
       {props.lockedNote && <Notice tone="warn">{LOCKED_TEXT}</Notice>}
       {qr && <UnlockQr onCancel={() => setQr(false)} onUnlocked={props.onUnlocked} />}
       <WeekNav start={start} onChange={setStart} />

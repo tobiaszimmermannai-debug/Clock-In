@@ -10,7 +10,7 @@ import { MAX_PRESTIGE, MAX_STAGE, stageName, stageOf, UNLOCKS } from "./evolutio
 import { blitziName } from "./items";
 import { PrestigeModal } from "./Prestige";
 import { RewardOverlay } from "./Reward";
-import { fmtAvg, moodFor, myStats, speech, teamLeaderboard, weekStart, type MyStats } from "./stats";
+import { DAILY_POINTS, fmtAvg, moodFor, myStats, speech, teamLeaderboard, weekStart, type MyStats } from "./stats";
 
 /** Akku: füllt sich mit jeder erledigten Aufgabe bis zum Tagesziel */
 export function Energy(props: { value: number; goal: number }) {
@@ -192,7 +192,7 @@ export function Celebration() {
       ? "Akku voll – Tagesziel geschafft!"
       : undefined;
   const line = [
-    c.points > 0 ? `+${c.points} ⚡` : "⚡ Tagesmaximum (3 Punkte) erreicht – zählt für die Serie",
+    c.points > 0 ? `+${c.points} ⚡` : `⚡ Tagesmaximum (${DAILY_POINTS} Punkte) erreicht – zählt für die Serie`,
     c.levelUp ? stageName(c.stage) : "",
     !c.levelUp && c.goal && c.streak > 1 ? `${c.streak} Tage Serie!` : "",
     c.prestige > 0 ? `Prestige ${c.prestige}` : "",

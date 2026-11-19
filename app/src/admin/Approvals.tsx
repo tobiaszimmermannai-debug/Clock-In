@@ -1,6 +1,6 @@
 // Offene Freigaben: Nachträge und Überstunden (Admin), Schichttausch (beteiligte Studioleitung oder Admin)
 import { useCallback, useEffect, useState } from "react";
-import { Avatar, Empty, Field, Notice, PageHeader, Pill, Row, Section, Sheet } from "../components/ui";
+import { Avatar, Empty, Field, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet } from "../components/ui";
 import { berlinDate, berlinTime, fmtDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
@@ -158,10 +158,13 @@ export function Approvals({ profile }: { profile: Profile }) {
           {loadError} <button type="button" className="btn btn-plain btn-sm" onClick={() => void load()}>Erneut versuchen</button>
         </Notice>
       )}
+      {isAdmin && <HealthCheck />}
       <VacationApprovals db={adminDb} meId={profile.id} />
       {empty && !loadError && (
         <div className="panel">
-          <Empty icon="checkCircle" title="Alles erledigt">Keine offenen Freigaben.</Empty>
+          <Empty icon="checkCircle" title={waiting.length ? "Nichts zu entscheiden" : "Alles erledigt"}>
+            {waiting.length ? "Unten stehen nur Tauschanfragen, die noch auf den Kollegen warten." : "Keine offenen Freigaben."}
+          </Empty>
         </div>
       )}
 
@@ -328,5 +331,25 @@ function Decision(props: { enabled: boolean; busy?: boolean; onDecide: (approve:
       <button type="button" className="btn btn-outline btn-sm" disabled={props.busy} onClick={() => props.onDecide(false)}>Ablehnen</button>
       <button type="button" className="btn btn-primary btn-sm" disabled={props.busy} onClick={() => props.onDecide(true)}>Freigeben</button>
     </div>
+  );
+}
+
+// „Was hängt?“ – Dinge, die zu lange liegen (nur Admins; ohne Testkonten). Unsichtbar, wenn alles passt.
+type Health = { area: string; items: number; hint: string };
+function HealthCheck() {
+  const [rows, setRows] = useState<Health[]>([]);
+  useEffect(() => {
+    void adminDb.rpc("health_check").then(({ data, error }) => {
+      if (error) return console.warn("health_check:", error.message); // Datenbank-Update evtl. noch nicht eingespielt
+      setRows((data ?? []) as Health[]);
+    });
+  }, []);
+  if (!rows.length) return null;
+  return (
+    <Section title="Was hängt?" aside={<span>{rows.reduce((s, r) => s + r.items, 0)}</span>}>
+      {rows.map((r) => (
+        <Row key={r.area} leading={<LeadingIcon name="info" />} title={`${r.area}: ${r.items}`} subtitle={r.hint} />
+      ))}
+    </Section>
   );
 }

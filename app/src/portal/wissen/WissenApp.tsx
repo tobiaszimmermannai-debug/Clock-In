@@ -5,6 +5,7 @@ import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState }
 import { Notice } from "../../components/ui";
 import { isMuted, setMuted, sounds } from "../../lib/sounds";
 import { portalDb } from "../../lib/supabase";
+import { studioShort } from "../../lib/types";
 import {
   BLITZ_SECONDS, CARD_XP, CARDS, composeLesson, currentUnit, DAILY_GOAL_XP, type DayXp, DECK_KIND, type Deck, DECKS, DEFAULT_TOPIC, dueCards,
   dueQuestions, earnsXp, isLearned, type Flashcard, isCorrect, type ItemType, LESSON_SIZE, levelOf, nextProgress, PERFECT_BONUS, type Progress, type ProgressMap,
@@ -240,6 +241,8 @@ function Home(props: {
           <button type="button" className="wi-btn is-blitz" onClick={props.onBlitz}>⚡ Blitzrunde · {BLITZ_SECONDS} s</button>
         </div>
       </div>
+
+      <StudioBoard />
 
       <h2 className="wi-h2">Lernpfad</h2>
       <ol className="wi-path">
@@ -554,5 +557,32 @@ function BlitzRound(props: { progress: ProgressMap; save: Save; onClose: () => v
         <FlipCard key={`c-${pos}`} card={it.c} onAnswer={(ok) => (scored(it.c.id, "card", ok, CARD_XP), next())} />
       )}
     </div>
+  );
+}
+
+// ---------------- Studio-Wertung der Woche (nur Durchschnitt je Studio, keine Einzelnen) ----------------
+type BoardRow = { location_id: string; name: string; people: number; xp: number; avg_xp: number; rank: number };
+function StudioBoard() {
+  const [rows, setRows] = useState<BoardRow[]>([]);
+  useEffect(() => {
+    // Datenbank-Update noch nicht eingespielt → einfach ohne Wertung
+    void portalDb.rpc("wissen_week_board").then(({ data, error }) => !error && setRows((data ?? []) as BoardRow[]));
+  }, []);
+  if (!rows.length || rows.every((r) => Number(r.xp) === 0)) return null;
+  const medal = ["🥇", "🥈", "🥉"];
+  return (
+    <>
+      <h2 className="wi-h2">🏆 Studio-Wertung diese Woche</h2>
+      <ol className="wi-board">
+        {rows.map((r) => (
+          <li key={r.location_id}>
+            <span className="wi-board-rank">{medal[r.rank - 1] ?? `${r.rank}.`}</span>
+            <span className="wi-board-name">{studioShort(r.name)}</span>
+            <span className="wi-board-xp">Ø {String(Number(r.avg_xp)).replace(".", ",")} XP</span>
+          </li>
+        ))}
+      </ol>
+      <p className="muted small wi-hint">Durchschnitt der XP pro Person im Studio – jede Lektion zählt fürs Team.</p>
+    </>
   );
 }

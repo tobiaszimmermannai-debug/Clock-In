@@ -89,17 +89,20 @@ export function SwapOfferList(props: { meId: string; onChanged?: () => void }) {
   );
 }
 
+// „Später“: Anfrage bis morgen nicht mehr als Fenster zeigen (unter Mitteilungen bleibt sie sichtbar)
 const SKIP_KEY = "clockin.swapSkip";
+const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
 const skipped = (): string[] => {
   try {
-    return JSON.parse(sessionStorage.getItem(SKIP_KEY) ?? "[]") as string[];
+    const v = JSON.parse(localStorage.getItem(SKIP_KEY) ?? "{}") as { day?: string; ids?: string[] };
+    return v.day === today() ? (v.ids ?? []) : [];
   } catch {
     return [];
   }
 };
 const skip = (id: string) => {
   try {
-    sessionStorage.setItem(SKIP_KEY, JSON.stringify([...skipped(), id]));
+    localStorage.setItem(SKIP_KEY, JSON.stringify({ day: today(), ids: [...skipped(), id] }));
   } catch {
     /* ohne Speicher: nur für diese Ansicht */
   }
@@ -157,7 +160,7 @@ export function SwapOfferPopup(props: { meId: string; onDone: () => void }) {
       <Section>
         <Row leading={<Avatar first={o.requester?.first_name ?? "?"} last={o.requester?.last_name} />} title={offerTitle(o)} subtitle={<OfferText offer={o} />} />
       </Section>
-      <p className="muted small">Nach deiner Zustimmung entscheidet die Studioleitung. „Später“ findest du unter Mitteilungen (Glocke).</p>
+      <p className="muted small">Nach deiner Zustimmung entscheidet die Studioleitung. Mit „Später“ erinnern wir dich morgen wieder – die Anfrage steht auch unter Mitteilungen (Glocke).</p>
     </Sheet>
   );
 }

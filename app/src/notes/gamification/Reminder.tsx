@@ -11,6 +11,7 @@ import { requestFocusTask } from "./requestFocus";
 import { Energy } from "./GamePanel";
 import { daysFor, moodFor, speech, type MyStats } from "./stats";
 import { allTasks, byDue, tasksOf, type TaskItem } from "./tasks";
+import { liveCheck } from "./count";
 
 export type ReminderReason = "login" | "clock_in" | "break";
 
@@ -57,15 +58,7 @@ export function TaskReminder(props: { store: NotesStore; reason: ReminderReason;
       ]);
       if (me.device) return;
       const pages = new Map(list.map((p) => [p.id, p]));
-      const isLive = (id: string) => {
-        let p: PageMeta | undefined = pages.get(id);
-        for (let i = 0; p && i < 50; i++) {
-          if (p.archivedAt || p.deletedAt) return false;
-          if (!p.parentId) return true;
-          p = pages.get(p.parentId);
-        }
-        return false;
-      };
+      const isLive = liveCheck(pages);
       const items = allTasks(pages, isLive, (db) => db.space === "team" || db.ownerId === me.id);
       const byId = new Map(items.map((t) => [t.row.id, t]));
       const open = tasksOf(items, me.id)

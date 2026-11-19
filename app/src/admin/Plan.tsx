@@ -714,7 +714,9 @@ function AddShift(props: {
   const year = Number(props.day.slice(0, 4));
 
   useEffect(() => {
-    void db.rpc("vacation_overview", { p_year: year }).then(({ data }) => {
+    // nur Zusatzinfo (Resturlaub neben dem Namen) – bei Fehler einfach ohne anzeigen
+    void db.rpc("vacation_overview", { p_year: year }).then(({ data, error }) => {
+      if (error) return console.warn("Urlaubsstand nicht geladen:", error.message);
       setVacation(Object.fromEntries(((data ?? []) as Vacation[]).map((v) => [v.user_id, v])));
     });
   }, [year]);

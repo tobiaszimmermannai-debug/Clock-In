@@ -171,6 +171,8 @@ export function PortalApp(props: { stampToken?: string; pcToken?: string; qrToke
           onOpenVacation={() => setTab("account")}
           onOpenTasks={() => setTab("tasks")}
           onOpenPlan={() => setTab("plan")}
+          onOpenWissen={() => setTab("knowledge")}
+          onOpenInbox={() => setTab("inbox")}
           onTokenUsed={() => {
             setToken(undefined);
             location.replace("#/portal"); // Code nicht erneut verwenden (Neuladen, Zurück-Taste)

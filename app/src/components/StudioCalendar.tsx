@@ -1,7 +1,7 @@
 // Dienstplan aller Studios im Kalender-Stil: Woche (Einträge je Tag) oder Tag (Zeitachse, Spalte je Studio).
 // Jede Schicht erscheint in der Farbe ihres Studios, mit Name und Uhrzeit; Akquise gestreift.
 // Krank/Urlaub/Schule/Frei: in der Woche als durchgehender Balken über die Tage (wie im Google Kalender).
-import { type CSSProperties, type MouseEvent, type PointerEvent, useEffect, useState } from "react";
+import { type CSSProperties, type MouseEvent, type PointerEvent, useEffect, useRef, useState } from "react";
 import { addDays, berlinDate, berlinTime, dayOfMonth, rangeLabel, weekdayShort } from "../lib/dates";
 import { studioColor } from "../lib/studios";
 import { type Location, SHIFT_TYPE_LABEL, studioShort } from "../lib/types";
@@ -197,8 +197,22 @@ export function StudioCalendar(props: {
     return Math.min(to * 60, Math.max(from * 60, Math.round(raw / SNAP) * SNAP));
   };
   const creatable = (col: string) => !!props.onCreate && (props.canCreate?.(col) ?? true);
+  // Handy/Tablet: Ziehen würde das Scrollen stören → kurz auf eine freie Stelle tippen (Schicht ab dort, 7,5 h vorbelegt)
+  const tap = useRef<{ col: string; m: number; x: number; y: number; t: number } | null>(null);
+  const tapStart = (col: string, e: PointerEvent<HTMLDivElement>) => {
+    tap.current = creatable(col) && e.target === e.currentTarget ? { col, m: minuteAt(e), x: e.clientX, y: e.clientY, t: Date.now() } : null;
+  };
+  const tapEnd = (e: PointerEvent<HTMLDivElement>) => {
+    const t = tap.current;
+    tap.current = null;
+    if (!t || Math.hypot(e.clientX - t.x, e.clientY - t.y) > 10 || Date.now() - t.t > 600) return;
+    const lo = Math.floor(t.m / 30) * 30;
+    const hi = Math.min(lo + 450, 24 * 60);
+    props.onCreate?.({ day, locationId: t.col, from: hhmm(lo), to: hi >= 24 * 60 ? "23:59" : hhmm(hi) });
+  };
   const dragStart = (col: string, e: PointerEvent<HTMLDivElement>) => {
-    if (!creatable(col) || e.button !== 0 || e.pointerType === "touch" || e.target !== e.currentTarget) return;
+    if (e.pointerType === "touch") return tapStart(col, e);
+    if (!creatable(col) || e.button !== 0 || e.target !== e.currentTarget) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     const m = minuteAt(e);
     setDrag({ col, a: m, b: m });
@@ -251,9 +265,11 @@ export function StudioCalendar(props: {
           )}
         </div>
       </div>
-      {props.onCreate && !narrow && (
+      {props.onCreate && (
         <p className="muted small cal-drag-hint">
-          {mode === "day"
+          {narrow
+            ? mode === "day" ? "Tipp: Auf eine freie Stelle im Raster tippen, um ab dort eine Schicht einzutragen." : "Tipp: In der Ansicht „Tag“ auf eine freie Stelle tippen, um eine Schicht einzutragen."
+            : mode === "day"
             ? "Tipp: Im Raster mit der Maus ziehen, um eine Schicht einzutragen (wie im Google Kalender)."
             : "Tipp: In der Ansicht „Tag“ kannst du Schichten mit der Maus ins Raster ziehen."}
         </p>
@@ -362,7 +378,8 @@ export function StudioCalendar(props: {
             {columns.map((c) => (
               <div key={c.key} className={`cal-col${creatable(c.key) ? " is-creatable" : ""}`}
                 style={{ height, "--hour": `${hourPx}px`, ...(c.color ? { "--studio": c.color } : {}) } as CSSProperties}
-                onPointerDown={(e) => dragStart(c.key, e)} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={() => setDrag(null)}>
+                onPointerDown={(e) => dragStart(c.key, e)} onPointerMove={dragMove} onPointerUp={(e) => (e.pointerType === "touch" ? tapEnd(e) : dragEnd())}
+                onPointerCancel={() => { setDrag(null); tap.current = null; }}>
                 {drag?.col === c.key && (
                   <div className="cal-ghost" style={{ top: y(Math.min(drag.a, drag.b)), height: Math.max(y(Math.max(drag.a, drag.b)) - y(Math.min(drag.a, drag.b)), 4) }}>
                     {hhmm(Math.min(drag.a, drag.b))}–{hhmm(Math.max(drag.a, drag.b))}

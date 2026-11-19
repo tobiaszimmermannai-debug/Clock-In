@@ -135,7 +135,9 @@ function PersonVacation(props: { person: Person; year: number; overview?: Overvi
       .select("year, days")
       .eq("user_id", props.person.id)
       .in("year", [thisYear, thisYear + 1])
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        // Bei Ladefehler NICHT den Standard vorbelegen – sonst würde Speichern den echten Anspruch überschreiben
+        if (error) return setError(`Urlaubsanspruch konnte nicht geladen werden: ${dbMessage(error)}`);
         const found = Object.fromEntries((data ?? []).map((r) => [r.year as number, fmt(Number(r.days))]));
         setAllowance({ [thisYear]: found[thisYear] ?? fmt(DEFAULT_VACATION_DAYS), [thisYear + 1]: found[thisYear + 1] ?? fmt(DEFAULT_VACATION_DAYS) });
       });
@@ -160,7 +162,10 @@ function PersonVacation(props: { person: Person; year: number; overview?: Overvi
       .gte("starts_at", berlinToISO(`${props.year}-01-01`))
       .lt("starts_at", berlinToISO(`${props.year + 1}-01-01`))
       .order("starts_at")
-      .then(({ data }) => setList((data ?? []).map((r) => berlinDate(r.starts_at as string))));
+      .then(({ data, error }) => {
+        if (error) return setError(`Urlaubstage konnten nicht geladen werden: ${dbMessage(error)}`);
+        setList((data ?? []).map((r) => berlinDate(r.starts_at as string)));
+      });
   }, [props.person.id, props.year]);
 
   const v = props.overview;

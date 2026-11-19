@@ -126,6 +126,7 @@ async function handleNotify(
   if (body.type === "school_reminder") return await schoolReminder(typeof body.user_id === "string" ? body.user_id : undefined);
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
   if (body.type === "swap_new" && typeof body.id === "string") return await swapRequest(body.id, true);
+  if (body.type === "swap_stale") return await swapStale();
   if (body.type === "vacation_request" && typeof body.id === "string") return await vacationRequest(body.id, false);
   if (body.type === "vacation_decided" && typeof body.id === "string") return await vacationRequest(body.id, true);
   if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
@@ -406,6 +407,31 @@ async function swapRequest(id: string, infoOnly = false): Promise<Response> {
   ]];
   const admins = await adminChats();
   await Promise.all(admins.map((a) => (infoOnly ? sendMessage(a.chat_id, lines.join("\n")) : sendMessage(a.chat_id, lines.join("\n"), keyboard))));
+  return new Response("sent");
+}
+
+// Tauschanfragen, die seit über 24 h auf die angefragte Person warten (Info an die Admins)
+async function swapStale(): Promise<Response> {
+  const since = new Date(Date.now() - 24 * 3600e3).toISOString();
+  const { data, error } = await supabase
+    .from("swap_requests")
+    .select(`requester:users!swap_requests_requester_id_fkey(first_name, last_name, is_test),
+      target:users!swap_requests_target_user_id_fkey(first_name, last_name),
+      requester_shift:shifts!swap_requests_requester_shift_id_fkey(starts_at, ends_at, location:locations(name))`)
+    .eq("status", "pending")
+    .is("target_accepted_at", null)
+    .lt("created_at", since)
+    .order("created_at");
+  if (error) return new Response("error", { status: 500 });
+  const rows = ((data ?? []) as unknown as { requester: (Person & { is_test?: boolean }) | null; target: Person | null; requester_shift: ShiftInfo | null }[])
+    .filter((r) => !r.requester?.is_test);
+  if (!rows.length) return new Response("nothing");
+  const text = [
+    "⏳ <b>Tauschanfragen ohne Antwort (über 24 h)</b>",
+    ...rows.map((r) => `• ${escapeHtml(fullName(r.requester))} → ${escapeHtml(fullName(r.target))}: ${shiftLabel(r.requester_shift)}`),
+    "Die angefragten Personen wurden in der App erinnert.",
+  ].join("\n");
+  await Promise.all((await adminChats()).map((a) => sendMessage(a.chat_id, text)));
   return new Response("sent");
 }
 

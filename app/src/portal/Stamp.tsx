@@ -19,6 +19,8 @@ import { parseQrLoginToken } from "../lib/qrLogin";
 import type { Me } from "./PortalApp";
 import { VacationRow } from "./Vacation";
 import { approvers } from "../lib/approvers";
+import type { Progress, ProgressMap } from "../lib/wissen";
+import { loadSwapOffers } from "./SwapOffers";
 
 
 type Context = { shifts: Shift[]; rules: RuleSettings };
@@ -66,8 +68,35 @@ function errorPhase(e: unknown): Phase {
 // „Heute“: die nächsten eigenen Einträge im Dienstplan auf einen Blick
 type Upcoming = { id: string; shift_type: ShiftType; starts_at: string; ends_at: string; location: { name: string } | null };
 
-function Today(props: { meId: string; onOpenPlan?: () => void; onOpenTasks?: () => void }) {
+// Kleiner Tagesüberblick: offene Aufgaben, fällige Wissensfragen, Tauschanfragen an mich (jeweils nur, wenn > 0)
+function useTodayCounts(meId: string) {
+  const [counts, setCounts] = useState<{ tasks: number | null; wissen: number; swaps: number }>({ tasks: null, wissen: 0, swaps: 0 });
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const [tasks, wissen, swaps] = await Promise.all([
+        import("../notes/reminder").then((m) => m.countOpenTasks(portalDb)).catch(() => null),
+        (async () => {
+          const { data, error } = await portalDb.from("wissen_item_progress").select("item_id, item_type, box, best_box, due_at, times_correct, times_wrong");
+          if (error) return 0;
+          const w = await import("../lib/wissen");
+          const progress: ProgressMap = new Map(((data ?? []) as Progress[]).map((p) => [p.item_id, p]));
+          return w.dueQuestions(progress).length + w.dueCards(progress).length;
+        })().catch(() => 0),
+        loadSwapOffers(meId).then((l) => l.length).catch(() => 0),
+      ]);
+      if (alive) setCounts({ tasks, wissen, swaps });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [meId]);
+  return counts;
+}
+
+function Today(props: { meId: string; onOpenPlan?: () => void; onOpenTasks?: () => void; onOpenWissen?: () => void; onOpenInbox?: () => void }) {
   const [list, setList] = useState<Upcoming[]>();
+  const counts = useTodayCounts(props.meId);
   useEffect(() => {
     void portalDb
       .from("shifts")
@@ -95,7 +124,18 @@ function Today(props: { meId: string; onOpenPlan?: () => void; onOpenTasks?: () 
           subtitle={s.shift_type === "work" ? studioShort(s.location?.name ?? "") : undefined}
           chevron={!!props.onOpenPlan} onClick={props.onOpenPlan} />
       ))}
-      {props.onOpenTasks && <Row leading={<LeadingIcon name="tasks" />} title="Meine Aufgaben" subtitle="3 Tagesaufgaben – offen, erledigt, anfragen" chevron onClick={props.onOpenTasks} />}
+      {counts.swaps > 0 && (
+        <Row leading={<LeadingIcon name="swap" />} title={`${counts.swaps} Tauschanfrage${counts.swaps === 1 ? "" : "n"} an dich`} subtitle="Bitte zustimmen oder ablehnen"
+          trailing={<Pill tone="warn">offen</Pill>} chevron={!!props.onOpenInbox} onClick={props.onOpenInbox} />
+      )}
+      {props.onOpenTasks && (
+        <Row leading={<LeadingIcon name="tasks" />} title="Meine Aufgaben"
+          subtitle={counts.tasks === null ? "Tagesaufgaben – offen, erledigt, anfragen" : counts.tasks === 0 ? "Alles erledigt 🎉" : `${counts.tasks} offen`}
+          chevron onClick={props.onOpenTasks} />
+      )}
+      {counts.wissen > 0 && (
+        <Row leading={<LeadingIcon name="book" />} title="Wissen" subtitle={`${counts.wissen} Fragen zum Wiederholen fällig`} chevron={!!props.onOpenWissen} onClick={props.onOpenWissen} />
+      )}
     </Section>
   );
 }
@@ -103,7 +143,7 @@ function Today(props: { meId: string; onOpenPlan?: () => void; onOpenTasks?: () 
 // Nur das eigene Handy stempelt (prüft auch der Server) – nicht Studio-PC oder -Tablet
 const IS_PHONE = typeof navigator === "undefined" || !navigator.userAgent || /mobi|iphone|ipod/i.test(navigator.userAgent);
 
-export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void; onOpenTasks?: () => void; onOpenPlan?: () => void }) {
+export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void; onOpenTasks?: () => void; onOpenPlan?: () => void; onOpenWissen?: () => void; onOpenInbox?: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const [status, setStatus] = useState<{ state: WorkState; since?: string }>();
   const onTokenUsed = useRef(props.onTokenUsed);
@@ -328,7 +368,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
           <Notice tone="warn">Stempeln geht nur mit deinem eigenen Handy – nicht am PC oder Tablet.</Notice>
         )}
       </div>
-      <Today meId={props.me.id} onOpenPlan={props.onOpenPlan} onOpenTasks={props.onOpenTasks} />
+      <Today meId={props.me.id} onOpenPlan={props.onOpenPlan} onOpenTasks={props.onOpenTasks} onOpenWissen={props.onOpenWissen} onOpenInbox={props.onOpenInbox} />
       <VacationRow meId={props.me.id} onOpen={props.onOpenVacation} />
       <Section title="So geht's" footer={`Kein Handy dabei oder Probleme? Bitte ${approvers()} anrufen.`}>
         <Row leading={<LeadingIcon name="wifi" />} title="Mit dem Studio-WLAN verbinden" subtitle="Mobile Daten am besten ausschalten" />

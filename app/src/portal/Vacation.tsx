@@ -16,8 +16,9 @@ export const vacationLeft = (v: MyVacation) => (v.allowance === null ? null : Nu
 export function useMyVacation(meId: string, year: number) {
   const [vacation, setVacation] = useState<MyVacation | null>();
   useEffect(() => {
-    void portalDb.rpc("vacation_overview", { p_year: year }).then(({ data }) =>
-      setVacation(((data ?? []) as MyVacation[]).find((v) => v.user_id === meId) ?? null));
+    // Fehler: nichts anzeigen statt „Anspruch nicht hinterlegt“ (das wäre falsch)
+    void portalDb.rpc("vacation_overview", { p_year: year }).then(({ data, error }) =>
+      setVacation(error ? undefined : ((data ?? []) as MyVacation[]).find((v) => v.user_id === meId) ?? null));
   }, [meId, year]);
   return vacation;
 }
@@ -48,6 +49,7 @@ export function VacationSection(props: { meId: string }) {
   const year = Number(today.slice(0, 4));
   const vacation = useMyVacation(props.meId, year);
   const [upcoming, setUpcoming] = useState<string[]>([]);
+  const [loadError, setLoadError] = useState<string>();
 
   useEffect(() => {
     void portalDb
@@ -58,7 +60,10 @@ export function VacationSection(props: { meId: string }) {
       .gte("starts_at", berlinToISO(today))
       .order("starts_at")
       .limit(120)
-      .then(({ data }) => setUpcoming((data ?? []).map((r) => berlinDate(r.starts_at as string))));
+      .then(({ data, error }) => {
+        setLoadError(error ? `Urlaubstage konnten nicht geladen werden: ${dbMessage(error)}` : undefined);
+        setUpcoming((data ?? []).map((r) => berlinDate(r.starts_at as string)));
+      });
   }, [props.meId, today]);
 
   const left = vacation ? vacationLeft(vacation) : null;
@@ -69,7 +74,8 @@ export function VacationSection(props: { meId: string }) {
   const nextLeft = showNext && next ? vacationLeft(next) : null;
   return (
     <Section title={`Mein Urlaub ${year}`} footer="Urlaub beantragst du hier: erst stimmt die Studioleitung zu, dann gibt die Geschäftsführung frei.">
-      {vacation === undefined && <p className="list-empty">Lädt …</p>}
+      {loadError && <Notice tone="error">{loadError}</Notice>}
+      {vacation === undefined && !loadError && <p className="list-empty">Lädt …</p>}
       {vacation !== undefined && (!vacation || left === null) && (
         <Row title="Urlaubsanspruch noch nicht hinterlegt" subtitle={`Bitte ${approvers()} fragen.`} />
       )}
