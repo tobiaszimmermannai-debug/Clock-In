@@ -103,7 +103,14 @@ export function KioskApp() {
     void resolve();
   };
   // Studio-PC: Aufgaben für alle Mitarbeiter – das Tablet bleibt reines Stempelgerät
-  if (phase.session.device.kind === "pc") return <StudioPc session={phase.session} onReset={onReset} />;
+  // Studio-PC abmelden: Sitzung beenden, Studio vergessen → zurück zur Anmeldung (Neu-Einrichtung braucht wieder eine Freigabe)
+  const onLogout = async () => {
+    await setCache("locationId", undefined);
+    await kioskDb.auth.signOut({ scope: "local" }).catch(() => undefined);
+    location.replace("#/kiosk/pc");
+    setPhase({ kind: "terminal-request" });
+  };
+  if (phase.session.device.kind === "pc") return <StudioPc session={phase.session} onReset={onReset} onLogout={onLogout} />;
   return <Kiosk session={phase.session} onReset={onReset} />;
 }
 

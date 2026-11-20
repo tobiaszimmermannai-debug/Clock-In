@@ -9,8 +9,10 @@ import { studioShort } from "../lib/types";
 import { Kiosk, type KioskSession } from "./Kiosk";
 import { PcPlan } from "./PcPlan";
 
-export function StudioPc(props: { session: KioskSession; onReset: () => void }) {
+export function StudioPc(props: { session: KioskSession; onReset: () => void; onLogout: () => void }) {
   const [view, setView] = useState<"tasks" | "plan" | "qr">("tasks");
+  // Zweistufig, damit niemand den PC aus Versehen abmeldet (danach muss er neu freigegeben werden)
+  const [confirm, setConfirm] = useState(false);
   return (
     <div className="studio-pc">
       <header className="studio-pc-bar">
@@ -31,6 +33,15 @@ export function StudioPc(props: { session: KioskSession; onReset: () => void }) 
             { id: "qr", label: "Stempel-QR" },
           ]}
         />
+        {confirm ? (
+          <span className="studio-pc-logout">
+            <span className="muted small">PC wirklich abmelden? Danach muss er neu freigegeben werden.</span>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setConfirm(false)}>Nein</button>
+            <button type="button" className="btn btn-danger btn-sm" onClick={props.onLogout}>Abmelden</button>
+          </span>
+        ) : (
+          <button type="button" className="btn btn-plain btn-sm" onClick={() => setConfirm(true)}>Abmelden</button>
+        )}
       </header>
       <div className="studio-pc-body">
         {/* Aufgaben bleiben eingehängt (Personenwahl „Wer bist du?“ läuft weiter) */}
