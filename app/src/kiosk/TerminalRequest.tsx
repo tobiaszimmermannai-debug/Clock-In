@@ -4,6 +4,7 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { AuthLayout } from "../admin/AdminApp";
 import { Field, Notice } from "../components/ui";
+import { markKioskLogin } from "../lib/kioskLogout";
 import { kioskLoginEmail, staffLoginEmail } from "../lib/config";
 import { clearAll } from "../lib/db";
 import { kioskDb, tempClient } from "../lib/supabase";
@@ -151,6 +152,7 @@ export function TerminalWait(props: { request: StoredRequest; onReady: () => voi
         if (r.status === "ready" && r.username) {
           const login = await kioskDb.auth.signInWithPassword({ email: kioskLoginEmail(r.username), password: secret });
           if (!login.error) {
+            markKioskLogin();
             forget();
             await clearAll();
             return done.current.onReady();

@@ -5,6 +5,7 @@ import { kioskLoginEmail } from "../lib/config";
 import { clearAll, getCache, setCache } from "../lib/db";
 import { AuthLayout } from "../admin/AdminApp";
 import { Field, Notice } from "../components/ui";
+import { forgetKioskLogin, kioskLogoutRequested, LOGOUT_CHECK_MS, markKioskLogin } from "../lib/kioskLogout";
 import { kioskDb } from "../lib/supabase";
 import { type KioskDevice, type Location, studioShort } from "../lib/types";
 import { Kiosk, type KioskSession } from "./Kiosk";
@@ -63,6 +64,31 @@ export function KioskApp() {
     void resolve();
   }, [resolve]);
 
+  // Gerät abmelden (selbst per Knopf am PC oder zentral durch einen Admin): Sitzung beenden, Studio vergessen
+  const logoutDevice = useCallback(async (pc: boolean) => {
+    await setCache("locationId", undefined);
+    forgetKioskLogin();
+    await kioskDb.auth.signOut({ scope: "local" }).catch(() => undefined);
+    location.replace(pc ? "#/kiosk/pc" : "#/kiosk");
+    setPhase(pc ? { kind: "terminal-request" } : { kind: "login", error: "Dieses Gerät wurde von der Verwaltung abgemeldet. Bitte neu anmelden." });
+  }, []);
+
+  // Zentrale Abmeldung: beim Start und jede Minute nachfragen
+  const readyPc = phase.kind === "ready" ? phase.session.device.kind === "pc" : null;
+  useEffect(() => {
+    if (readyPc === null) return;
+    let alive = true;
+    const check = async () => {
+      if (alive && (await kioskLogoutRequested(kioskDb))) void logoutDevice(readyPc);
+    };
+    void check();
+    const t = setInterval(() => void check(), LOGOUT_CHECK_MS);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [readyPc, logoutDevice]);
+
   if (phase.kind === "loading") return <div className="screen center muted">Lädt …</div>;
   if (phase.kind === "login") {
     return <KioskLogin error={phase.error} onDone={resolve} onTerminal={() => setPhase({ kind: "terminal-request" })} />;
@@ -103,14 +129,8 @@ export function KioskApp() {
     void resolve();
   };
   // Studio-PC: Aufgaben für alle Mitarbeiter – das Tablet bleibt reines Stempelgerät
-  // Studio-PC abmelden: Sitzung beenden, Studio vergessen → zurück zur Anmeldung (Neu-Einrichtung braucht wieder eine Freigabe)
-  const onLogout = async () => {
-    await setCache("locationId", undefined);
-    await kioskDb.auth.signOut({ scope: "local" }).catch(() => undefined);
-    location.replace("#/kiosk/pc");
-    setPhase({ kind: "terminal-request" });
-  };
-  if (phase.session.device.kind === "pc") return <StudioPc session={phase.session} onReset={onReset} onLogout={onLogout} />;
+  // Studio-PC selbst abmelden → zurück zur Anmeldung (Neu-Einrichtung braucht wieder eine Freigabe)
+  if (phase.session.device.kind === "pc") return <StudioPc session={phase.session} onReset={onReset} onLogout={() => void logoutDevice(true)} />;
   return <Kiosk session={phase.session} onReset={onReset} />;
 }
 
@@ -129,6 +149,7 @@ function KioskLogin(props: { error?: string; onDone: () => void; onTerminal: () 
     });
     setBusy(false);
     if (error) return setError("Anmeldung fehlgeschlagen. Benutzername und Passwort prüfen.");
+    markKioskLogin();
     await clearAll();
     props.onDone();
   }

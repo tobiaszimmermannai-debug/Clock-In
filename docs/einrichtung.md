@@ -146,6 +146,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 57. `supabase/migrations/20261127090000_test_account.sql` (Testkonto (users.is_test): nicht in Statistik, Team-Wertung und Kollegenlisten)
 58. `supabase/migrations/20261128090000_swap_offer_notify.sql` (Tauschanfragen: Mitteilung an Leitung, Telegram-Info, keine gegenseitige Doppel-Anfrage)
 59. `supabase/migrations/20261129090000_pruef_paket.sql` (Prüf-Paket: Tausch-Ablauf/Erinnerung/Sperre, Testkonten raus aus Wochenbericht, Wissen-Studio-Wertung, health_check)
+60. `supabase/migrations/20261130090000_kiosk_logout.sql` (Geräte abmelden: Admin meldet Tablets/Studio-PCs zentral ab (kiosk_logout_all, kiosk_logout_check))
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und

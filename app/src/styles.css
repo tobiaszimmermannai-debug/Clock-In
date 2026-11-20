@@ -734,3 +734,6 @@ input.switch:checked { background: var(--accent); }
 .content > * { min-width: 0; }
 .stat-table-wrap { max-width: 100%; }
 .stat-table td.is-warn { color: var(--danger); font-weight: 600; }
+.logout-box { padding: 14px 16px; display: grid; gap: 12px; }
+.logout-box .list-actions { padding: 0; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.logout-box .notice { margin: 0; }

@@ -3,6 +3,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Field, Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet } from "../components/ui";
 import { accountAdmin, generatePassword } from "../lib/accountAdmin";
+import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
 import { type Location, studioShort } from "../lib/types";
 import { StudiosSection } from "./Studios";
@@ -163,6 +164,8 @@ export function Tablets() {
           </div>
         ))}
       </Section>
+      <LogoutDevices locations={locations} />
+
       <StudiosSection onChanged={() => void load()} />
       {creating && (
         <NewTablet
@@ -232,5 +235,51 @@ function NewTablet(props: { locations: Location[]; onCancel: () => void; onCreat
         {error && <Notice tone="error">{error}</Notice>}
       </form>
     </Sheet>
+  );
+}
+
+// Alle Studio-Geräte (oder die eines Studios) abmelden – nichts wird gelöscht; Geräte fragen jede Minute nach
+function LogoutDevices(props: { locations: Location[] }) {
+  const [studio, setStudio] = useState("");
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ tone: "ok" | "error"; text: string }>();
+  const target = studio ? `alle Geräte in ${studioShort(props.locations.find((l) => l.id === studio)?.name ?? "")}` : "alle Studio-Geräte";
+
+  async function run() {
+    setBusy(true);
+    const { data, error } = await adminDb.rpc("kiosk_logout_all", { p_location: studio || null });
+    setBusy(false);
+    setConfirm(false);
+    if (error) return setResult({ tone: "error", text: dbMessage(error) });
+    const n = Number(data ?? 0);
+    setResult({ tone: "ok", text: n === 0 ? "Keine aktiven Geräte gefunden." : `${n} ${n === 1 ? "Gerät wird" : "Geräte werden"} innerhalb von 1 Minute abgemeldet.` });
+  }
+
+  return (
+    <Section title="Geräte abmelden" footer="Tablets und Studio-PCs melden sich innerhalb einer Minute ab und zeigen wieder die Anmeldung. Es wird nichts gelöscht; ein danach neu angemeldetes Gerät bleibt angemeldet.">
+      <div className="logout-box">
+        {result && <Notice tone={result.tone}>{result.text}</Notice>}
+        <Field label="Welche Geräte?">
+          <select id="logout-studio" value={studio} onChange={(e) => { setStudio(e.target.value); setConfirm(false); setResult(undefined); }}>
+            <option value="">Alle Studios</option>
+            {props.locations.map((l) => <option key={l.id} value={l.id}>{studioShort(l.name)}</option>)}
+          </select>
+        </Field>
+        <div className="list-actions">
+          {confirm ? (
+            <>
+              <span className="muted small">Wirklich {target} abmelden?</span>
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setConfirm(false)} disabled={busy}>Nein</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => void run()} disabled={busy}>Ja, abmelden</button>
+            </>
+          ) : (
+            <button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirm(true)}>
+              {studio ? "Geräte dieses Studios abmelden" : "Alle Studio-Geräte abmelden"}
+            </button>
+          )}
+        </div>
+      </div>
+    </Section>
   );
 }
