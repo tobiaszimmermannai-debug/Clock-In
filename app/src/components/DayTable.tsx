@@ -1,5 +1,6 @@
 // Tagesübersicht (Portal und Verwaltung): Stempelzeiten, gezählte Zeit, Pause, Hinweise
 import { berlinDate, berlinTime, fmtDay, fmtHM } from "../lib/dates";
+import { holidayName } from "../lib/holidays";
 import { SHIFT_TYPE_LABEL, type ShiftType } from "../lib/types";
 import { Pill, Row, Section } from "./ui";
 
@@ -31,7 +32,9 @@ export function DayTable(props: { days: DaySummary[]; stamps: Stamp[]; onEdit?: 
       {props.days.map((d) => {
         const stamps = props.stamps.filter((s) => berlinDate(s.recorded_at) === d.day);
         const counted = d.worked_minutes + d.credit_minutes;
+        const holiday = holidayName(d.day);
         const badges = [
+          holiday && <Pill key="h" tone="accent">🎉 {holiday}</Pill>,
           d.absence && <Pill key="a" tone="ok">{SHIFT_TYPE_LABEL[d.absence]}</Pill>,
           d.late_minutes > 0 && <Pill key="l" tone="warn">{d.late_minutes} Min. zu spät</Pill>,
           d.overtime_pending_minutes > 0 && <Pill key="op" tone="warn">{d.overtime_pending_minutes} Min. Ü offen</Pill>,

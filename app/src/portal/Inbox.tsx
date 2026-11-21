@@ -1,5 +1,6 @@
 // Mitteilungen (Glocke): Tausch, Dienstplan-Änderungen, Entscheidungen zu Buchungen, Überstunden und Urlaub
 import { useEffect, useState } from "react";
+import { PushHint } from "../components/PushSettings";
 import { Empty, Notice, PageHeader, Row, Section, LeadingIcon, type IconName } from "../components/ui";
 import { berlinDate, berlinTime, fmtDay } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
@@ -38,6 +39,7 @@ export function Inbox(props: { meId: string; isLead: boolean; onRead: () => void
   return (
     <>
       <PageHeader title="Mitteilungen" />
+      <PushHint />
       <SwapOfferList meId={props.meId} />
       {props.isLead && <VacationApprovals db={portalDb} meId={props.meId} />}
       {error && <Notice tone="error">{error}</Notice>}

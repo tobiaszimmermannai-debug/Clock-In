@@ -1,5 +1,6 @@
 // Mein Resturlaub: Anspruch − genommen − eingetragen (zählt runter, sobald Urlaub im Dienstplan steht)
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { holidayName } from "../lib/holidays";
 import { Field, LeadingIcon, Notice, Pill, Row, Section, Sheet } from "../components/ui";
 import { absenceDays, berlinDate, berlinToISO, fmtDay, rangeLabel, vacationRanges } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
@@ -155,7 +156,8 @@ function VacationRequests(props: { meId: string; left: number | null }) {
     void load();
   }, [load]);
 
-  const count = from && to && to >= from ? absenceDays(from, to).length : 0;
+  // wie in der Datenbank: Wochenende und Feiertage zählen nicht
+  const count = from && to && to >= from ? absenceDays(from, to).filter((d, _i, all) => all.length === 1 || !holidayName(d)).length : 0;
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

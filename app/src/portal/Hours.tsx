@@ -4,6 +4,7 @@ import { DayTable, type DaySummary, istMinutes, type Stamp, SummaryCard } from "
 import { Notice, PageHeader, WeekNav } from "../components/ui";
 import { addDays, berlinDate, berlinToISO, fmtHM, isoWeek, monthStart, weekStart } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
+import { workdaysBetween } from "../lib/holidays";
 import { portalDb } from "../lib/supabase";
 import { ABSENCE_WEEK_DAYS, SCHOOL_CREDIT_MINUTES } from "../lib/types";
 import type { Me } from "./PortalApp";
@@ -42,9 +43,8 @@ export function Hours({ me }: { me: Me }) {
     const from = monthStart(today);
     void portalDb.rpc("work_day_summary", { p_user: me.id, p_from: from, p_to: today }).then(({ data, error }) => {
       if (error) return setMonth(undefined);
-      let weekdays = 0;
-      for (let d = from; d <= today; d = addDays(d, 1)) if (new Date(`${d}T12:00:00Z`).getUTCDay() % 6 !== 0) weekdays++;
-      setMonth({ ist: istMinutes((data ?? []) as DaySummary[]), soll: Math.round((target / 5) * weekdays) });
+      // Feiertage (Bayern) zählen nicht fürs Soll
+      setMonth({ ist: istMinutes((data ?? []) as DaySummary[]), soll: Math.round((target / 5) * workdaysBetween(from, today)) });
     });
   }, [me.id, target, today]);
 
@@ -57,7 +57,9 @@ export function Hours({ me }: { me: Me }) {
   const isCurrent = start === weekStart(today);
   const untilToday = days.filter((d) => d.day <= today);
   const sollNow = untilToday.reduce((n, d) => n + d.planned_minutes + d.credit_minutes, 0);
-  const partial = isCurrent && sollNow > 0 && sollNow < target;
+  // Wochen-Soll ohne Feiertage (z. B. Ostermontag: 4 × Wochenstunden ÷ 5)
+  const weekSoll = Math.round((target / 5) * workdaysBetween(start, addDays(start, 6)));
+  const partial = isCurrent && sollNow > 0 && sollNow < weekSoll;
   const rules = currentRules();
 
   return (
@@ -67,8 +69,8 @@ export function Hours({ me }: { me: Me }) {
         <SummaryCard
           title={isCurrent ? "Diese Woche" : `KW ${isoWeek(start)}`}
           ist={istMinutes(partial ? untilToday : days)}
-          soll={partial ? sollNow : target}
-          hint={partial ? `bis heute · Woche ${fmtHM(target)} Std.` : undefined}
+          soll={partial ? sollNow : weekSoll}
+          hint={partial ? `bis heute · Woche ${fmtHM(weekSoll)} Std.` : weekSoll < target ? "mit Feiertag" : undefined}
         />
         {month && <SummaryCard title="Monat bis heute" ist={month.ist} soll={month.soll} hint="Soll anteilig" />}
         <VacationCard year={year} vacation={vacation} />

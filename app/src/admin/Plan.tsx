@@ -8,6 +8,7 @@
 // Krank: geplante Schicht tauschen (ganz oder ab Uhrzeit) oder ganzer Tag ohne Schicht – Studioleitung und Admin.
 // Unter dem Tag: „Noch ohne Schicht“ – eigene Leute ohne Eintrag; planen oder (nur Vollzeit) auf frei setzen.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { holidayName } from "../lib/holidays";
 import type { ReactNode } from "react";
 import { type CSSProperties, useCallback, useEffect, useState } from "react";
 import { StudioCalendar } from "../components/StudioCalendar";
@@ -384,7 +385,7 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
       {flashNotice}
       {helpBoard}
 
-      <Section title={fmtLongDay(day)} aside={<span>{dayEntries.length} {dayEntries.length === 1 ? "Eintrag" : "Einträge"}</span>}>
+      <Section title={holidayName(day) ? `${fmtLongDay(day)} · 🎉 ${holidayName(day)}` : fmtLongDay(day)} aside={<span>{dayEntries.length} {dayEntries.length === 1 ? "Eintrag" : "Einträge"}</span>}>
         {dayEntries.length === 0 && dayRequests.length === 0 && <p className="list-empty">Noch niemand eingetragen.</p>}
         {dayEntries.map((s) => (
           <ShiftRow key={s.id} shift={s} showStudio={!!s.location_id && s.location_id !== studio}
@@ -730,7 +731,9 @@ function AddShift(props: {
     : [];
   const person = [...own, ...others].find((p) => p.id === userId);
   // Krank: alle Kalendertage wie auf der AU (auch Sa/So – für die Krankenkasse); Stunden zählen am Wochenende nicht
-  const days = cat === "sick" ? calendarDays(props.day, until) : absenceDays(props.day, until, saturdays);
+  // Feiertage auslassen (kein Urlaubstag, keine Gutschrift) – außer ein einzelner, bewusst gewählter Tag; Krank läuft über alle Kalendertage
+  const days = cat === "sick" ? calendarDays(props.day, until)
+    : absenceDays(props.day, until, saturdays).filter((d, _i, all) => all.length === 1 || !holidayName(d));
   const sickShift = props.sickCandidates.find((s) => s.id === sickShiftId);
   const request = props.helpRequests.find((r) => r.id === requestId);
   const targetName = studioShort(props.locations.find((l) => l.id === (request?.location_id ?? target))?.name ?? "");

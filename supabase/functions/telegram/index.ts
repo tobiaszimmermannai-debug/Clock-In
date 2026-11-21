@@ -7,6 +7,7 @@
 // JWT-Prüfung der Function muss AUS sein; abgesichert wird über die beiden Secrets.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as XLSX from "npm:xlsx@0.18.5";
+import webpush from "npm:web-push@3.6.7";
 
 const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const NOTIFY_SECRET = Deno.env.get("NOTIFY_SECRET") ?? "";
@@ -127,6 +128,10 @@ async function handleNotify(
   if (body.type === "swap_request" && typeof body.id === "string") return await swapRequest(body.id);
   if (body.type === "swap_new" && typeof body.id === "string") return await swapRequest(body.id, true);
   if (body.type === "swap_stale") return await swapStale();
+  if (body.type === "push_init") return await pushInit();
+  if (body.type === "push" && typeof body.user_id === "string") {
+    return await pushSend(body.user_id, String(body.title ?? "Clock-In"), typeof body.body === "string" ? body.body : "", String(body.kind ?? "info"));
+  }
   if (body.type === "vacation_request" && typeof body.id === "string") return await vacationRequest(body.id, false);
   if (body.type === "vacation_decided" && typeof body.id === "string") return await vacationRequest(body.id, true);
   if (body.type === "studio_unstaffed") return await studioUnstaffed(body as Unstaffed);
@@ -410,6 +415,51 @@ async function swapRequest(id: string, infoOnly = false): Promise<Response> {
   return new Response("sent");
 }
 
+// ---------------- Push-Nachrichten (Web-Push) ----------------
+type PushConfig = { public_key: string | null; private_key: string | null; subject: string | null };
+const pushConfig = async () =>
+  (await supabase.from("push_config").select("public_key, private_key, subject").eq("id", 1).maybeSingle<PushConfig>()).data;
+
+// Schlüsselpaar einmalig erzeugen (nur wenn noch keins da ist – sonst würden bestehende Abos ungültig)
+async function pushInit(): Promise<Response> {
+  const cfg = await pushConfig();
+  if (cfg?.public_key && cfg.private_key) return new Response("ok");
+  const keys = webpush.generateVAPIDKeys();
+  await supabase.from("push_config").upsert({ id: 1 }, { onConflict: "id", ignoreDuplicates: true });
+  const { error } = await supabase.from("push_config")
+    .update({ public_key: keys.publicKey, private_key: keys.privateKey, updated_at: new Date().toISOString() })
+    .eq("id", 1).is("public_key", null);
+  return new Response(error ? "error" : "created", { status: error ? 500 : 200 });
+}
+
+async function pushSend(userId: string, title: string, body: string, kind: string): Promise<Response> {
+  const cfg = await pushConfig();
+  if (!cfg?.public_key || !cfg.private_key) {
+    await pushInit();
+    return new Response("no keys");
+  }
+  const { data: subs } = await supabase.from("push_subscriptions").select("id, endpoint, p256dh, auth").eq("user_id", userId);
+  if (!subs?.length) return new Response("no subscriptions");
+  const payload = JSON.stringify({ title, body, tag: kind, url: "#/portal" });
+  const options = {
+    vapidDetails: { subject: cfg.subject || "mailto:push@clockin.app", publicKey: cfg.public_key, privateKey: cfg.private_key },
+    TTL: 24 * 3600,
+  };
+  let sent = 0;
+  for (const s of subs) {
+    try {
+      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload, options);
+      sent++;
+    } catch (e) {
+      const code = (e as { statusCode?: number }).statusCode;
+      // Abo abgelaufen oder auf dem Handy entfernt → aufräumen
+      if (code === 404 || code === 410) await supabase.from("push_subscriptions").delete().eq("id", s.id);
+      else console.error("Push fehlgeschlagen:", code, (e as Error).message);
+    }
+  }
+  return new Response(`sent ${sent}`);
+}
+
 // Tauschanfragen, die seit über 24 h auf die angefragte Person warten (Info an die Admins)
 async function swapStale(): Promise<Response> {
   const since = new Date(Date.now() - 24 * 3600e3).toISOString();
@@ -645,8 +695,27 @@ function isoWeek(day: string): number {
 }
 const employedOn = (p: ReportPerson, day: string) =>
   (!p.employment_start || p.employment_start <= day) && (!p.employment_end || p.employment_end >= day);
+// Feiertage Bayern (gleiche Liste wie app/src/lib/holidays.ts und public.holiday_name)
+function easterSunday(year: number): string {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4;
+  const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+const shiftDay = (day: string, n: number) => new Date(Date.parse(`${day}T12:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
+function isHoliday(day: string): boolean {
+  const e = easterSunday(Number(day.slice(0, 4)));
+  return ["01-01", "01-06", "05-01", "08-15", "10-03", "11-01", "12-25", "12-26"].includes(day.slice(5))
+    || [-2, 1, 39, 50, 60].some((n) => shiftDay(e, n) === day);
+}
+const isWorkday = (day: string) => {
+  const dow = new Date(`${day}T12:00:00Z`).getUTCDay();
+  return dow !== 0 && dow !== 6 && !isHoliday(day);
+};
+// Soll = Wochenstunden ÷ 5 je Werktag (Mo–Fr ohne Feiertage) – wie Portal und Statistik
 const sollFor = (p: ReportPerson, days: string[]) =>
-  Math.round(((p.weekly_target_minutes ?? 0) / 7) * days.filter((d) => employedOn(p, d)).length);
+  Math.round(((p.weekly_target_minutes ?? 0) / 5) * days.filter((d) => employedOn(p, d) && isWorkday(d)).length);
 const shortDate = (day: string) => `${day.slice(8, 10)}.${day.slice(5, 7)}.`;
 
 async function monthlyReport(month?: string): Promise<{ ok: boolean; text: string }> {
@@ -874,7 +943,7 @@ function reportHtml(r: ReportData, months: Month[], stats: Stats[], title: strin
   }
 
   out.push(`<p style="margin:24px 0 0;color:${C.grey};font-size:12px">Im Excel-Anhang: Übersicht, Wochen, Ausblick, kompletter Dienstplan und je Mitarbeiter ein Stundenzettel (Tag für Tag). ` +
-    `Soll = Wochenstunden ÷ 7 × Kalendertage (wie im Portal, Feiertage nicht abgezogen). Automatisch erstellt von Clock-In.</p></div>`);
+    `Soll = Wochenstunden ÷ 5 je Werktag (Mo–Fr, Feiertage in Bayern abgezogen – wie im Portal). Automatisch erstellt von Clock-In.</p></div>`);
   return out.join("\n");
 }
 

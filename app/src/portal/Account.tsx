@@ -1,5 +1,6 @@
 // Konto: Urlaub, Stempel-Handy, Passwort ändern, abmelden
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { PushSettings } from "../components/PushSettings";
 import { Field, LeadingIcon, Notice, PageHeader, Pill, Row, Section } from "../components/ui";
 import { existingPhoneKey, sha256Hex } from "../lib/stamp";
 import { portalDb } from "../lib/supabase";
@@ -62,6 +63,8 @@ export function Account(props: { me: Me; onLogout: () => void }) {
           />
         )}
       </Section>
+
+      <PushSettings />
 
       <Section title="Passwort ändern" plain>
         <form className="panel form" onSubmit={changePassword}>

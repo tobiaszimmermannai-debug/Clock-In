@@ -26,6 +26,8 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,webp}"],
         // Aufgaben-Editor ist ein großer Baustein (wird erst beim Öffnen geladen, aber offline mit vorgehalten)
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        // Push-Nachrichten (public/push-sw.js)
+        importScripts: ["push-sw.js"],
       },
     }),
   ],

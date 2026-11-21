@@ -2,6 +2,7 @@
 // Ganztägige Abwesenheiten (Krank, Urlaub, Schule, Frei) an aufeinanderfolgenden Tagen werden zu Blöcken
 // zusammengefasst (wie ein mehrtägiger Termin im Google Kalender); dafür werden die Wochen davor/danach mitgeladen.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { holidayName } from "../lib/holidays";
 import { type CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 import { addDays, berlinDate, berlinTime, berlinToISO, fmtLongDay, groupDays, rangeLabel } from "../lib/dates";
 import { dbMessage } from "../lib/errors";
@@ -153,7 +154,7 @@ export function WeekPlan(props: {
       {Array.from({ length: 7 }, (_, i) => addDays(props.start, i)).map((day) => {
         const items = visible.filter((s) => berlinDate(s.starts_at) === day);
         return (
-          <Section key={day} title={<>{fmtLongDay(day)}{day === today && " · Heute"}</>}>
+          <Section key={day} title={<>{fmtLongDay(day)}{day === today && " · Heute"}{holidayName(day) && ` · 🎉 ${holidayName(day)}`}</>}>
             {items.length === 0 && <p className="list-empty">Nichts geplant</p>}
             {items.map((s) => (
               <ShiftRow key={s.id} shift={s} mine={s.user_id === props.highlightUserId} showStudio={!props.studio}

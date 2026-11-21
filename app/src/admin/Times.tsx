@@ -4,6 +4,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { DayTable, type DaySummary, istMinutes, type Stamp, SummaryCard } from "../components/DayTable";
 import { Field, Icon, Notice, PageHeader, Sheet, WeekNav } from "../components/ui";
 import { addDays, berlinDate, berlinTime, berlinToISO, fmtHM, fmtLongDay, weekStart } from "../lib/dates";
+import { workdaysBetween } from "../lib/holidays";
 import { type Block, blocksFromStamps, blocksToEvents, calcDay, newBlock } from "../lib/dayEdit";
 import { dbMessage } from "../lib/errors";
 import { adminDb } from "../lib/supabase";
@@ -118,7 +119,7 @@ export function Times({ profile }: { profile: Profile }) {
       <WeekNav start={start} onChange={setStart} />
       {person && (
         <div className="stats">
-          <SummaryCard title={`${person.first_name} · Woche`} ist={istMinutes(days)} soll={person.employment_details?.weekly_target_minutes ?? 0} />
+          <SummaryCard title={`${person.first_name} · Woche`} ist={istMinutes(days)} soll={Math.round(((person.employment_details?.weekly_target_minutes ?? 0) / 5) * workdaysBetween(start, addDays(start, 6)))} />
         </div>
       )}
       {error && !entry && <Notice tone="error">{error}</Notice>}

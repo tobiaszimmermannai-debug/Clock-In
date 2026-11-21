@@ -2,6 +2,7 @@
 // Jede Schicht erscheint in der Farbe ihres Studios, mit Name und Uhrzeit; Akquise gestreift.
 // Krank/Urlaub/Schule/Frei: in der Woche als durchgehender Balken über die Tage (wie im Google Kalender).
 import { type CSSProperties, type MouseEvent, type PointerEvent, useEffect, useRef, useState } from "react";
+import { holidayName } from "../lib/holidays";
 import { addDays, berlinDate, berlinTime, dayOfMonth, rangeLabel, weekdayShort } from "../lib/dates";
 import { studioColor } from "../lib/studios";
 import { type Location, SHIFT_TYPE_LABEL, studioShort } from "../lib/types";
@@ -283,8 +284,8 @@ export function StudioCalendar(props: {
         <div className="cal cal-week">
           <div className="cal-weekgrid">
             {days.map((d) => (
-              <div key={d} className={d === today ? "cal-colhead is-today" : "cal-colhead"}>
-                <span>{weekdayShort(d)}</span>
+              <div key={d} className={d === today ? "cal-colhead is-today" : "cal-colhead"} title={holidayName(d) ?? undefined}>
+                <span>{weekdayShort(d)}{holidayName(d) && " 🎉"}</span>
                 <strong>{dayOfMonth(d)}</strong>
               </div>
             ))}
