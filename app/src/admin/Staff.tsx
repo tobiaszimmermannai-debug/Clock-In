@@ -391,7 +391,9 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
     });
     const role = String(f.get("role"));
     const location = String(f.get("location"));
-    const userSave = await adminDb.from("users").update({ role, home_location_id: location }).eq("id", person.id);
+    const first_name = String(f.get("first_name") ?? "").trim() || person.first_name;
+    const last_name = String(f.get("last_name") ?? "").trim() || person.last_name;
+    const userSave = await adminDb.from("users").update({ first_name, last_name, role, home_location_id: location }).eq("id", person.id);
     // Studioleitung leitet ihr Heimatstudio (Nachtragsrecht bleibt erhalten)
     let managerSave: { error: { message: string } | null } = { error: null };
     if (role === "manager" && !userSave.error) {
@@ -411,6 +413,10 @@ function ContractForm(props: { person: Person; locations: Location[]; onSaved: (
   return (
     <Section title="Arbeitsvertrag" plain>
       <form className="panel form" onSubmit={submit}>
+        <div className="grid-2">
+          <Field label="Vorname (Anzeigename)"><input id="edit-first-name" name="first_name" defaultValue={person.first_name} autoComplete="off" required /></Field>
+          <Field label="Nachname"><input id="edit-last-name" name="last_name" defaultValue={person.last_name} autoComplete="off" required /></Field>
+        </div>
         <div className="grid-2">
           <Field label="Wochenstunden (Soll)">
             <input id="edit-weekly-hours" name="weekly_hours" type="number" min="0" max="60" step="0.5"
