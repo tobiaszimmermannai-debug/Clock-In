@@ -1036,11 +1036,11 @@ Ein Mitglied hat im Training Druck im Oberbauch („Schlag in den Magen“). Was
 
 **ems-07** · S3 🔢 · _QM 3.3.1_  
 Was tust du bei Druck im Oberbauch?  
-- ✅ **Oberen Rücken (Regler 4) langsam aufbauen**
+- ✅ **Oberen Rücken (Regler 4) runterdrehen**
 - ✅ **Mitglied beruhigen: unangenehm, aber ungefährlich**
 - Bauch (Regler 6) runterdrehen
 - Training sofort abbrechen
-> Regler 4 langsam aufbauen – NICHT den Bauch (Regler 6) runterdrehen, der ist unbeteiligt.
+> Oberen Rücken (Regler 4) runterdrehen und das Mitglied beruhigen – NICHT den Bauch (Regler 6) runterdrehen, der ist unbeteiligt.
 
 **ems-08** · S2 🔢 · _QM 3.3.1_  
 Welche Schichten erhöhen den Widerstand zwischen Elektrode und Muskel (Ohmscher Widerstand)?  
@@ -1904,7 +1904,7 @@ Decks mit ⚠️ = Thema steht im Einarbeitungsbogen, Inhalt fehlt in den Unterl
 | Was hat immer Vorrang? | Haltung vor Intensität – beim Ersttraining ganz besonders. | QM 3.3.2 |
 | Bandscheibenbeschwerden: intensivieren oder korrigieren? | Korrigieren! Keine Intensivierung, viel statisch und aufrecht, wenig Belastung für die Wirbelsäule. | QM 3.6 |
 | Elektrode fällt ab – Ablauf? | Muskelgruppe auf 0 → Mitglied beruhigen → abkabeln, Elektrode neu befeuchten → anschließen, langsam hochdrehen. | QM 3.2.10 f |
-| Druck im Oberbauch – was drehst du? | Oberen Rücken (Regler 4) langsam aufbauen. NICHT den Bauch (Regler 6) runter – der ist unbeteiligt. | QM 3.3.1 |
+| Druck im Oberbauch – was drehst du? | Oberen Rücken (Regler 4) runterdrehen und Mitglied beruhigen (unangenehm, aber ungefährlich). NICHT den Bauch (Regler 6) runter – der ist unbeteiligt. | QM 3.3.1 |
 
 ### Woche 2
 

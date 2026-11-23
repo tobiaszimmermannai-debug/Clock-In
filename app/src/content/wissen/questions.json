@@ -3883,7 +3883,7 @@
       "options": [
         {
           "id": "a",
-          "text": "Oberen Rücken (Regler 4) langsam aufbauen"
+          "text": "Oberen Rücken (Regler 4) runterdrehen"
         },
         {
           "id": "b",
@@ -3902,7 +3902,7 @@
         "a",
         "b"
       ],
-      "explanation": "Regler 4 langsam aufbauen – NICHT den Bauch (Regler 6) runterdrehen, der ist unbeteiligt.",
+      "explanation": "Oberen Rücken (Regler 4) runterdrehen und das Mitglied beruhigen – NICHT den Bauch (Regler 6) runterdrehen, der ist unbeteiligt.",
       "source": "QM 3.3.1"
     },
     {
