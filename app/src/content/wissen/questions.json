@@ -6326,7 +6326,7 @@
       "options": [
         {
           "id": "a",
-          "text": "Nein, niemals"
+          "text": "Ja, aber nur mit OK von Tobias oder Dominik"
         },
         {
           "id": "b",
@@ -6338,13 +6338,13 @@
         },
         {
           "id": "d",
-          "text": "Ja, nach Absprache mit dem Trainer"
+          "text": "Nein, niemals"
         }
       ],
       "correct": [
         "a"
       ],
-      "explanation": "Ruhezeiten sind niemals rückwirkend möglich.",
+      "explanation": "Rückwirkend nur mit OK von Tobias oder Dominik – nie eigenmächtig, auch nicht mit Attest.",
       "source": "QM 3.7"
     },
     {

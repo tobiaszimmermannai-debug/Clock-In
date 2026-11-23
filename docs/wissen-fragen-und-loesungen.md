@@ -1735,11 +1735,11 @@ Auch nach der 3. Mahnung kommt kein Geld. Was passiert?
 
 **vertrag-07** · S2 · _QM 3.7_  
 Kann eine Ruhezeit rückwirkend eingetragen werden?  
-- ✅ **Nein, niemals**
+- ✅ **Ja, aber nur mit OK von Tobias oder Dominik**
 - Ja, mit Attest
 - Ja, bis 4 Wochen rückwirkend
-- Ja, nach Absprache mit dem Trainer
-> Ruhezeiten sind niemals rückwirkend möglich.
+- Nein, niemals
+> Rückwirkend nur mit OK von Tobias oder Dominik – nie eigenmächtig, auch nicht mit Attest.
 
 **vertrag-08** · S3 · _QM 3.7_  
 Ein Mitglied bringt ein Attest über weniger als 4 Wochen Krankheit. Was passiert?  
@@ -1995,7 +1995,7 @@ Decks mit ⚠️ = Thema steht im Einarbeitungsbogen, Inhalt fehlt in den Unterl
 
 | Vorderseite | Rückseite | Quelle |
 |---|---|---|
-| Ruhezeit rückwirkend? | Niemals. Attest < 4 Wochen: Ruhezeit mit Beitrag + Verlängerung um die Attestdauer zu 0,00 €. | QM 3.7 |
+| Ruhezeit rückwirkend? | Nur mit OK von Tobias oder Dominik – nie eigenmächtig. Attest < 4 Wochen: Ruhezeit mit Beitrag + Verlängerung um die Attestdauer zu 0,00 €. | QM 3.7 |
 | Ausland, Schwangerschaft – Ruhezeit? | Ausland ab 2 Monaten mit Arbeitgeberbestätigung. Schwangerschaft max. 12 Monate (oder Mitgliedschaft übertragen). | QM 3.7 |
 | Flextarif kündigen? | Erstlaufzeit mind. 8 Wochen; 4 Wochen zum Monatsende schriftlich. Start + 8 Wo − 4 Wo = letzter Termin, sonst +4 Wochen. | QM 3.7 |
 | Umzug oder Attest = Kündigung? | Umzug: kein Rechtsanspruch (Kulanz nur mit GF). Attest: generell kein Kündigungsgrund – an Studioleitung, keine Versprechen. | QM 3.7 |
