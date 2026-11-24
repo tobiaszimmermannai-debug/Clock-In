@@ -246,6 +246,7 @@ export function Plan({ profile, db: client, onlyStudio, embedded }: { profile: P
   const warnings = planWarnings(
     shifts,
     people.filter((p) => p.home_location_id === studio).map((p) => ({ ...p, weekly_target_minutes: p.employment_details?.weekly_target_minutes })),
+    start,
   );
 
   const done = (text: string) => {
