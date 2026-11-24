@@ -19,6 +19,7 @@ import { parseQrLoginToken } from "../lib/qrLogin";
 import type { Me } from "./PortalApp";
 import { VacationRow } from "./Vacation";
 import { approvers } from "../lib/approvers";
+import { clearPendingReport, pendingReport, savePendingReport } from "../lib/pendingReport";
 import type { Progress, ProgressMap } from "../lib/wissen";
 import { loadSwapOffers } from "./SwapOffers";
 
@@ -145,6 +146,22 @@ const IS_PHONE = typeof navigator === "undefined" || !navigator.userAgent || /mo
 
 export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; onOpenVacation?: () => void; onOpenTasks?: () => void; onOpenPlan?: () => void; onOpenWissen?: () => void; onOpenInbox?: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
+  // Offene Schicht-Statistik von vorhin? (App neu geladen, Reiter gewechselt, iPhone im Hintergrund) → wieder abfragen,
+  // außer die Zahlen sind laut Datenbank schon da
+  useEffect(() => {
+    const p = pendingReport<Extract<Phase, { kind: "done" }>>(props.me.id);
+    if (!p) return;
+    let alive = true;
+    void portalDb.from("shift_reports").select("id").eq("user_id", props.me.id).gte("created_at", p.at).limit(1)
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (!error && data?.length) return clearPendingReport();
+        setPhase((cur) => (cur.kind === "idle" ? { kind: "report", done: p.done } : cur));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [props.me.id]);
   const [status, setStatus] = useState<{ state: WorkState; since?: string }>();
   const onTokenUsed = useRef(props.onTokenUsed);
   onTokenUsed.current = props.onTokenUsed;
@@ -219,6 +236,9 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
         kind: "done" as const, event, at: result.recorded_at, location: result.location, note,
         registered: p.check.registered, pending: !!result.pending, early: !!result.early, slow: earlyReason === "slow",
       };
+      // Gehen → Statistik offen merken; jede andere Buchung (z. B. wieder Kommen) beendet eine alte offene Abfrage
+      if (event === "clock_out") savePendingReport(props.me.id, result.recorded_at, done);
+      else clearPendingReport();
       setPhase(event === "clock_out" ? { kind: "report", done } : done);
       void loadStatus();
     } catch (e) {
@@ -309,7 +329,7 @@ export function Stamp(props: { me: Me; token?: string; onTokenUsed: () => void; 
 
   if (phase.kind === "report") {
     const done = phase.done;
-    return <ShiftReportForm db={portalDb} firstName={props.me.first_name} onSaved={() => setPhase({ kind: "feierabend", done })} />;
+    return <ShiftReportForm db={portalDb} firstName={props.me.first_name} onSaved={() => (clearPendingReport(), setPhase({ kind: "feierabend", done }))} />;
   }
 
   if (phase.kind === "feierabend") {

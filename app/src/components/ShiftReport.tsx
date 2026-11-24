@@ -1,7 +1,8 @@
 // Nach „Gehen“: Statistik-Feedback der Schicht (alles vorausgefüllt mit 0, überall 0 geht nicht),
 // danach Feierabend-Nachricht mit dem eigenen Blitzi (+1 Punkt).
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { lazy, Suspense, useState } from "react";
+import { reportDraft, saveReportDraft } from "../lib/pendingReport";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { dbMessage } from "../lib/errors";
 import { emptyReport, REPORT_FIELDS, type ReportValues, reportProblem } from "../lib/shiftReport";
 import { Notice, PageHeader } from "./ui";
@@ -9,7 +10,9 @@ import { Notice, PageHeader } from "./ui";
 const Feierabend = lazy(() => import("../notes/feierabend"));
 
 export function ShiftReportForm(props: { db: SupabaseClient; firstName: string; onSaved: () => void }) {
-  const [values, setValues] = useState<ReportValues>(emptyReport);
+  // Eingetipptes überlebt Neuladen/Reiterwechsel
+  const [values, setValues] = useState<ReportValues>(() => ({ ...emptyReport, ...(reportDraft<ReportValues>() ?? {}) }) as ReportValues);
+  useEffect(() => saveReportDraft(values), [values]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const problem = reportProblem(values);
@@ -19,7 +22,8 @@ export function ShiftReportForm(props: { db: SupabaseClient; firstName: string; 
     setBusy(true);
     const { error } = await props.db.rpc("shift_report_submit", { p_values: values });
     setBusy(false);
-    if (error) return setError(dbMessage(error));
+    // schon gespeichert (z. B. doppelt abgeschickt) → einfach weiter
+    if (error && !/schon gespeichert/.test(error.message)) return setError(dbMessage(error));
     props.onSaved();
   }
 
