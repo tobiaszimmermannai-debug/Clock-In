@@ -33,6 +33,8 @@ export function PhotoProofModal() {
         <p className="nk-muted">
           {req.reason === "lead"
             ? "Die Studioleitung möchte für diese Aufgabe ein Foto sehen."
+            : req.reason === "person"
+            ? "Die Studioleitung möchte bei deinen Aufgaben ein Foto als Nachweis sehen."
             : `Diese Aufgabe wurde ${PHOTO_AFTER_MOVES}× oder öfter verschoben – bitte ein Foto als Nachweis.`}{" "}
           Erst mit Foto gilt sie als erledigt.
         </p>
@@ -68,7 +70,9 @@ export function PhotoProofModal() {
 export function ProofBadge(props: { row: PageMeta; done: boolean }) {
   const notes = useNotes();
   const proof = proofOf(props.row);
-  const need = needsPhoto(props.row);
+  // Person, der die Aufgabe gehört bzw. die gerade arbeitet (Studio-PC: „Wer bist du?“)
+  const person = notes.members.find((m) => m.id === (notes.actor?.id ?? notes.me.id));
+  const need = needsPhoto(props.row, person);
   // Prüfstand der Leitung (per Telegram): freigegeben / abgelehnt (dann kommt die Aufgabe morgen wieder)
   const check = (props.row.props.__proofCheck ?? null) as { status?: string } | null;
   const checked = check?.status === "approved" ? " ✅" : check?.status === "rejected" ? " ❌" : " ⏳";
@@ -89,7 +93,7 @@ export function ProofBadge(props: { row: PageMeta; done: boolean }) {
     );
   if (need.required && !props.done)
     return (
-      <span className="nk-proof" title={need.reason === "lead" ? "Die Leitung möchte ein Foto" : `${movesOf(props.row)}× verschoben`}>
+      <span className="nk-proof" title={need.reason === "lead" || need.reason === "person" ? "Die Leitung möchte ein Foto" : `${movesOf(props.row)}× verschoben`}>
         📷 Foto nötig
       </span>
     );

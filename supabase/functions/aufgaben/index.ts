@@ -1311,7 +1311,8 @@ const memberFromUser = (u) => ({
 	color: colorFor(u.auth_user_id),
 	role: u.role ?? void 0,
 	studioId: u.home_location_id ?? null,
-	...u.is_test ? { test: true } : {}
+	...u.is_test ? { test: true } : {},
+	...u.photo_required ? { photoAll: true } : {}
 });
 
 // server/aufgaben.ts

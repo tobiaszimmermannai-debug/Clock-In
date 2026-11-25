@@ -33,9 +33,13 @@ export const proofOf = (row: PageMeta): Proof | null => {
   return v && typeof v === "object" && typeof (v as Proof).url === "string" ? (v as Proof) : null;
 };
 
-/** Braucht die Aufgabe einen Fotonachweis (von der Leitung verlangt oder zu oft verschoben)? */
-export function needsPhoto(row: PageMeta): { required: boolean; reason: "lead" | "moved" | null } {
+/**
+ * Braucht die Aufgabe einen Fotonachweis? Von der Leitung für die Aufgabe verlangt, für die Person bei allen Aufgaben
+ * verlangt (person.photoAll) oder zu oft verschoben.
+ */
+export function needsPhoto(row: PageMeta, person?: { photoAll?: boolean } | null): { required: boolean; reason: "lead" | "person" | "moved" | null } {
   if (row.props[PHOTO_KEY] === true) return { required: true, reason: "lead" };
+  if (person?.photoAll) return { required: true, reason: "person" };
   if (movesOf(row) >= PHOTO_AFTER_MOVES) return { required: true, reason: "moved" };
   return { required: false, reason: null };
 }

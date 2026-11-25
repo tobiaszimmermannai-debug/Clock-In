@@ -156,6 +156,8 @@ export type Member = {
   device?: boolean;
   /** Testkonto (Clock-In): zählt in keiner Rangliste */
   test?: boolean;
+  /** Leitung verlangt bei allen Aufgaben dieser Person ein Foto (Clock-In users.photo_required) */
+  photoAll?: boolean;
   /** Heute eingecheckt in diesem Studio (Aushilfe: anderes als das Heimatstudio) */
   hereId?: string | null;
 };

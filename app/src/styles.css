@@ -212,6 +212,7 @@ label.list-row { cursor: pointer; }
 .list-row.is-danger .list-row-title { color: var(--danger); }
 .list-row.is-accent .list-row-title { color: var(--accent); }
 .list-row input[type="radio"], .list-row input[type="checkbox"] { width: 20px; height: 20px; min-height: 0; margin: 0; accent-color: var(--accent); flex: none; }
+.list-row input.switch { width: 46px; height: 28px; } /* Schalter nicht wie Ankreuzkästchen verkleinern */
 .list-empty { padding: 18px 16px; color: var(--muted); font-size: .95rem; }
 .list-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 14px 16px; }
 .list-row.has-leading ~ .list-actions, .list-actions.indent { padding-left: 64px; }
@@ -737,3 +738,12 @@ input.switch:checked { background: var(--accent); }
 .logout-box { padding: 14px 16px; display: grid; gap: 12px; }
 .logout-box .list-actions { padding: 0; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .logout-box .notice { margin: 0; }
+
+/* Fotonachweise */
+.proof-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 12px; }
+.proof-card { display: grid; gap: 6px; text-decoration: none; color: inherit; background: var(--surface); border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
+.proof-card img, .proof-missing { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: grid; place-items: center; background: var(--line); font-size: .8rem; color: var(--muted); }
+.proof-meta { display: grid; gap: 4px; padding: 0 10px 10px; min-width: 0; }
+.proof-meta b { font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proof-meta small { color: var(--muted); }
+.proof-meta .pill { justify-self: start; }

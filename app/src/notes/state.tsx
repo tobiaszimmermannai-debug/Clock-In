@@ -87,7 +87,7 @@ export type CreateOptions = {
 };
 
 /** Abhaken wartet auf einen Fotonachweis */
-export type PhotoRequest = { rowId: string; title: string; reason: "lead" | "moved"; props: Record<string, PropValue> };
+export type PhotoRequest = { rowId: string; title: string; reason: "lead" | "person" | "moved"; props: Record<string, PropValue> };
 
 type Ctx = {
   store: NotesStore;
@@ -762,7 +762,8 @@ export function NotesProvider(props: {
         const before = isDone(page, db.schema);
         const after = isDone({ ...page, props: incoming }, db.schema);
         if (!before && after) {
-          const need = needsPhoto({ ...page, props: incoming });
+          const actingId = actorRef.current ?? meRef.current.id;
+          const need = needsPhoto({ ...page, props: incoming }, membersRef.current.find((m) => m.id === actingId));
           if (need.required && !proofOf({ ...page, props: incoming })) {
             // Erst Foto, dann erledigt
             setPhotoRequest({ rowId: id, title: page.title, reason: need.reason!, props: incoming });

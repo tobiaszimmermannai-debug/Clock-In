@@ -1,5 +1,7 @@
 // Team: Liste nach Studio → Detailseite (Vertrag, Urlaub, Login, Stempel-Handy, Ausscheiden)
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { dbMessage } from "../lib/errors";
+import { ProofGallery } from "../components/ProofGallery";
 import { Avatar, Field, Icon, LeadingIcon, Notice, PageHeader, Pill, Row, Section, Sheet, StudioFilter } from "../components/ui";
 import { accountAdmin, generatePassword, suggestUsername } from "../lib/accountAdmin";
 import { berlinDate, fmtHours } from "../lib/dates";
@@ -18,6 +20,7 @@ export type Person = {
   username: string | null;
   auth_user_id: string | null;
   any_phone?: boolean; // darf mit verschiedenen Handys/Browsern stempeln (ohne Freigabe)
+  photo_required?: boolean; // Leitung verlangt bei allen Aufgaben ein Foto
   is_test?: boolean; // Testkonto: taucht in Statistik, Ranglisten und Kollegenlisten nicht auf
   time_tracking?: boolean; // false = ohne Zeiterfassung (Praktikum): kein Stempeln, keine Meldungen
   employment_details: { weekly_target_minutes: number; work_days_per_week: number } | null;
@@ -135,7 +138,7 @@ export function Staff({ profile }: { profile: Profile }) {
               key={p.id}
               leading={<Avatar first={p.first_name} last={p.last_name} color={p.role === "admin" ? undefined : studioColor(p.home_location_id)} />}
               title={`${p.first_name} ${p.last_name}`}
-              subtitle={[ROLE_LABEL[p.role], contract(p), vacationShort(vacation[p.id])].filter(Boolean).join(" · ")}
+              subtitle={[ROLE_LABEL[p.role], contract(p), vacationShort(vacation[p.id]), p.photo_required ? "📷 Foto bei allen Aufgaben" : ""].filter(Boolean).join(" · ")}
               trailing={p.is_test ? <Pill tone="warn">Test</Pill> : p.role !== "admin" && <ReadyPill person={p} hasPhone={!!phones[p.id]} />}
               chevron
               onClick={() => setSelected(p.id)}
@@ -143,6 +146,8 @@ export function Staff({ profile }: { profile: Profile }) {
           ))}
         </Section>
       ))}
+      {/* Fotonachweise der angezeigten Leute (Studioleitung: nur die eigenen) */}
+      <ProofGallery db={adminDb} people={groups.flatMap((g) => g.members).filter((p) => p.role !== "admin")} />
       {creating && (
         <NewPerson
           locations={locations}
@@ -193,6 +198,15 @@ function PersonDetail(props: {
     setConfirmReset(false);
     if (error) return setMessage({ tone: "error", text: error.message });
     setMessage({ tone: "ok", text: `Stempel-Handy zurückgesetzt. Das nächste Handy, mit dem ${person.first_name} stempelt, wird registriert.` });
+    await props.onChanged();
+  }
+
+  async function togglePhoto(on: boolean) {
+    const { error } = await adminDb.rpc("set_photo_required", { p_user: person.id, p_on: on });
+    if (error) return setMessage({ tone: "error", text: dbMessage(error) });
+    setMessage({ tone: "ok", text: on
+      ? `${person.first_name} muss jetzt bei allen Aufgaben ein Foto als Nachweis hochladen.`
+      : `${person.first_name} braucht nur noch bei markierten Aufgaben ein Foto.` });
     await props.onChanged();
   }
 
@@ -251,6 +265,22 @@ function PersonDetail(props: {
         <Section title="Arbeitsvertrag">
           <Row title="Soll pro Woche" trailing={<span className="num">{contract(person)}</span>} />
         </Section>
+      )}
+
+      {person.role !== "admin" && (
+        <>
+          <Section title="Aufgaben" footer="Gilt beim Abhaken in der App und am Studio-PC. Einzelne Aufgaben kannst du zusätzlich in der Aufgabe selbst mit „📷 Fotonachweis“ markieren.">
+            <label className="list-row">
+              <span className="list-row-main">
+                <span className="list-row-title">📷 Fotonachweis bei allen Aufgaben</span>
+                <span className="list-row-sub">{person.first_name} kann eine Aufgabe nur mit Foto abhaken</span>
+              </span>
+              <input id="photo-required" type="checkbox" role="switch" className="switch" checked={!!person.photo_required}
+                onChange={(e) => void togglePhoto(e.target.checked)} />
+            </label>
+          </Section>
+          <ProofGallery db={adminDb} people={[person]} days={30} title={`📷 Fotonachweise von ${person.first_name} (30 Tage)`} />
+        </>
       )}
 
       {person.role !== "admin" && (

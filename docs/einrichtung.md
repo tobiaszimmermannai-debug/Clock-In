@@ -149,6 +149,7 @@ Testeintrag danach löschen: `delete from public.time_logs where note = 'Test';`
 60. `supabase/migrations/20261130090000_kiosk_logout.sql` (Geräte abmelden: Admin meldet Tablets/Studio-PCs zentral ab (kiosk_logout_all, kiosk_logout_check))
 61. `supabase/migrations/20261201090000_feiertage_push.sql` (Feiertage Bayern (Soll, Urlaub, Berichte) und Push-Nachrichten aufs Handy)
 62. `supabase/migrations/20261202090000_report_window.sql` (Schicht-Statistik bis 12 Std. nach dem Ausstempeln speicherbar)
+63. `supabase/migrations/20261203090000_photo_required.sql` (Fotonachweis bei allen Aufgaben pro Mitarbeiter (users.photo_required, set_photo_required))
 
 Danach `select jobname, schedule from cron.job;` → Zeilen `clockin-hourly` (Auto-Checkout, 18-Uhr-Abfrage,
 Wochenbericht) und `clockin-staffing` (Studio besetzt?). Fehlen sie: **Integrations → Cron** aktivieren und
